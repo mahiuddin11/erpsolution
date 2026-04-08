@@ -1,0 +1,72 @@
+# -------------------------------
+# Git Version Control - Cheat Sheet
+# -------------------------------
+
+# 1️⃣ Repository Setup
+git init                # Create new Git repository in current folder
+git clone <repo_url>    # Clone remote repository to local
+git remote -v           # Show remote repository info
+git remote add origin <repo_url>  # Link local repo to remote
+git branch -M main      # Rename default branch to main
+
+# 2️⃣ Check Status & History
+git status              # Show modified/untracked files
+git log                 # Show full commit history
+git log --oneline       # Show short commit history
+git diff                # Show changes not staged
+git diff --staged       # Show staged changes
+
+# 3️⃣ Stage & Commit Changes
+git add .               # Stage all changes
+git add <file>          # Stage specific file
+git commit -m "message" # Commit staged changes
+git commit -am "message" # Commit tracked files directly
+
+# 4️⃣ Branch Management
+git branch              # List all local branches
+git branch <name>       # Create new branch
+git checkout <branch>   # Switch to branch
+git checkout -b <name>  # Create and switch to new branch
+git merge <branch>      # Merge another branch into current
+git branch -d <branch>  # Delete local branch
+git push -u origin <branch> # Push branch and set upstream
+
+# 5️⃣ Sync with Remote
+git pull origin main    # Pull latest changes from remote
+git push origin main    # Push local changes to remote
+git push -f origin main # Force push (replace remote history)
+git fetch               # Fetch remote changes without merging
+
+# 6️⃣ Undo / Reset
+git reset --soft HEAD~1 # Undo last commit, keep staged changes
+git reset --hard HEAD~1 # Undo last commit and remove changes
+git checkout -- <file>  # Discard changes in specific file
+git clean -fd           # Remove untracked files/directories
+
+# 7️⃣ History & Comparison
+git log --graph --all --decorate  # Visual branch & commit graph
+git show <commit_hash>            # Show details of specific commit
+git diff <commit1> <commit2>      # Show diff between commits
+git reflog                        # Show local reference log
+
+# 8️⃣ Ignore & Config
+# Create .gitignore file to ignore files/folders like:
+# vendor/, .env, node_modules/
+git config --global user.name "Name"   # Set Git username globally
+git config --global user.email "email@example.com"  # Set Git email globally
+
+# 9️⃣ Useful Shortcuts
+git stash             # Save changes temporarily
+git stash pop         # Apply saved changes
+git tag <tag_name>    # Tag specific commit (e.g., release)
+git log --since="2026-04-01"  # Show commits after a certain date
+
+cd /home/wtblcom/test.wtbl.com.bd
+git pull origin main        # Get latest changes
+/opt/alt/php81/usr/bin/php ~/composer install  # Update dependencies
+php artisan migrate --force # Run DB migrations
+php artisan cache:clear     # Clear Laravel cache
+
+git add .
+git commit -m "Update XYZ"
+git push origin main

@@ -1,0 +1,9 @@
+/node_modules
+/vendor
+*.zip
+*.rar
+/.vscode
+.env
+/.idea
+/public/storage/
+/public/backend/

@@ -1,0 +1,179 @@
+<?php
+
+namespace App\Http\Controllers\Backend\Settings;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use App\Models\Branch;
+use App\Services\Settings\warehouseService;
+use App\Services\Settings\WarehousesService;
+use App\Transformers\BranchTransformer;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Validator;
+
+class WarehousesController extends Controller
+{
+
+    /**
+     * @var warehouseService
+     */
+    private $systemService;
+    /**
+     * @var BranchTransformer
+     */
+    private $systemTransformer;
+
+    /**
+     * CategoryController constructor.
+     * @param warehouseService $systemService
+     * @param BranchTransformer $systemTransformer
+     */
+    public function __construct(WarehousesService $warehouseService, BranchTransformer $branchTransformer)
+    {
+        $this->systemService = $warehouseService;
+        $this->systemTransformer = $branchTransformer;
+    }
+
+    /**
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function index(Request $request)
+    {
+        $title = 'Warehouses List';
+        return view('backend.pages.settings.warehouses.index', get_defined_vars());
+    }
+
+
+    public function dataProcessingBranch(Request $request)
+    {
+        $json_data = $this->systemService->getList($request);
+        return json_encode($this->systemTransformer->dataTable($json_data));
+    }
+
+
+
+    /**
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function create()
+    {
+        $title = 'Add New Warehouses';
+        $BranchlastData = Branch::latest('id')->where("parent_id",0)->first();
+        if($BranchlastData):
+            $BranchData = $BranchlastData->id+1;
+        else:
+            $BranchData = 1;
+        endif;
+        $parents = Branch::where('parent_id',0)->get();
+        $branchCode = 'BR' . str_pad($BranchData, 5, "0", STR_PAD_LEFT);
+        return view('backend.pages.settings.warehouses.create', get_defined_vars());
+    }
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function store(Request $request)
+    {
+        try {
+            $this->validate($request, $this->systemService->storeValidation($request));
+        } catch (ValidationException $e) {
+            session()->flash('error', 'Validation error !!');
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        }
+        $this->systemService->store($request);
+        session()->flash('success', 'Data successfully save!!');
+        return redirect()->route('settings.warehouses.index');
+    }
+    /**
+     * @param $slug
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function edit($id)
+    {
+        if (!is_numeric($id)) {
+            session()->flash('error', 'Edit id must be numeric!!');
+            return redirect()->back();
+        }
+        $editInfo =   $this->systemService->details($id);
+        if (!$editInfo) {
+            session()->flash('error', 'Edit info is invalid!!');
+            return redirect()->back();
+        }
+        $parents = Branch::where('parent_id',0)->get();
+        $title = 'Edit Branch';
+        return view('backend.pages.settings.warehouses.edit', get_defined_vars());
+    }
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function update(Request $request, $id)
+    {
+        if (!is_numeric($id)) {
+            session()->flash('error', 'Edit id must be numeric!!');
+            return redirect()->back();
+        }
+        $editInfo = $this->systemService->details($id);
+        if (!$editInfo) {
+            session()->flash('error', 'Edit info is invalid!!');
+            return redirect()->back();
+        }
+        try {
+            $this->validate($request, $this->systemService->updateValidation($request, $id));
+        } catch (ValidationException $e) {
+            session()->flash('error', 'Validation error !!');
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        }
+        $this->systemService->update($request, $id);
+        session()->flash('success', 'Data successfully updated!!');
+        return redirect()->route('settings.warehouses.index');
+    }
+
+    /**
+     * @param $slug
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function statusUpdate($id, $status)
+    {
+        if (!is_numeric($id)) {
+            return response()->json($this->systemTransformer->invalidId($id), 200);
+        }
+        $detailsInfo =   $this->systemService->details($id);
+        if (!$detailsInfo) {
+            return response()->json($this->systemTransformer->notFound($detailsInfo), 200);
+        }
+        $statusInfo =  $this->systemService->statusUpdate($id, $status);
+        if ($statusInfo) {
+            return response()->json($this->systemTransformer->statusUpdate($statusInfo), 200);
+        }
+    }
+
+
+    /**
+     * @param $slug
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function destroy($id)
+    {
+        if (!is_numeric($id)) {
+            return response()->json($this->systemTransformer->invalidId($id), 200);
+        }
+        $detailsInfo =   $this->systemService->details($id);
+        if (!$detailsInfo) {
+            return response()->json($this->systemTransformer->notFound($detailsInfo), 200);
+        }
+        $deleteInfo =  $this->systemService->destroy($id);
+        if ($deleteInfo) {
+            return response()->json($this->systemTransformer->delete($deleteInfo), 200);
+        }
+    }
+
+    function getSubWare($branchId) {
+     
+        $subWarehouses = Branch::where('parent_id', $branchId)
+        ->select('id', 'name') // Only select the needed columns
+        ->get();
+
+        return response()->json($subWarehouses);
+    }
+}
