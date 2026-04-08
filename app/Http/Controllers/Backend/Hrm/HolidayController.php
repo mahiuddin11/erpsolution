@@ -34,6 +34,7 @@ class HolidayController extends Controller
             $previousYears[$y] = $this->buildMonthsForYear($y);
         }
 
+       
         return view('backend.pages.hrm.holiday.index', get_defined_vars());
     }
 
@@ -134,6 +135,8 @@ class HolidayController extends Controller
             ->groupBy('month')
             ->pluck('total', 'month')
             ->toArray();
+
+
 
         $months = [];
         for ($m = 1; $m <= 12; $m++) {

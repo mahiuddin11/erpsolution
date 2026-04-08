@@ -1488,10 +1488,13 @@
                 .then(r => r.json())
                 .then(res => {
                     const data = res.result ?? res; // support both {result:[]} and []
-                    const totalEmployees = res.totalemployee ?? '—';
-                    const present = data.filter(r => r.status === 'Present' || r.status === 'Late').length;
-                    const late = data.filter(r => r.status === 'Late').length;
-                    const absent = data.filter(r => r.status === 'Absent').length;
+                    const totalEmployees = res.totalemployee ?? '0';
+                    const present = res.presentEmploye ?? '0';
+                    // const present = data.filter(r => r.status == 'Present' || r.status == 'Late').length;
+                    const late = data.filter(r => r.status == 'Late').length;
+                    // const absent = data.filter(r => r.status == 'Absent').length;
+                    const absent = (totalEmployees - present) ?? '0';
+
 
 
                     $('#kpiTotalEmp').text(totalEmployees);

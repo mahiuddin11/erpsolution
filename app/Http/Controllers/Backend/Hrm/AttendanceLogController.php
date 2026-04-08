@@ -23,7 +23,6 @@ class AttendanceLogController extends Controller
     {
         $title = 'Attendance Log';
         $employees = Employee::all();
-       
         if ($request->method() == "POST") {
             $attendances = Attendance::selectRaw('DATE(date) date,emplyee_id,sign_in,sign_out')->with('employe');
 
@@ -89,9 +88,13 @@ class AttendanceLogController extends Controller
 
     public function attandanceLog(Request $request)
     {
+
+        $month = $request->month ?? now()->month;
+        $year  = $request->year ?? now()->year;
+
         /* ── Date range ── */
-        $start = $request->start_date ?? today()->toDateString();
-        $end   = $request->end_date   ?? today()->toDateString();
+        $start = $request->start_date ?? Carbon::create($year, $month, 1)->toDateString();
+        $end   = $request->end_date   ?? Carbon::create($year, $month, 1)->endOfMonth()->toDateString();
 
         if ($end < $start) {
             $end = $start;
@@ -133,6 +136,9 @@ class AttendanceLogController extends Controller
         $attendances = Attendance::whereBetween('date', [$start, $end])
             ->get()
             ->groupBy(fn($item) => $item->emplyee_id . '_' . $item->date);
+
+       
+    
 
         $period = CarbonPeriod::create($start, $end);
 
@@ -217,13 +223,10 @@ class AttendanceLogController extends Controller
                 if ($checkInTime && $checkOutTime && $checkOutTime->gt($checkInTime)) {
 
                     $diffMin = $checkInTime->diffInMinutes($checkOutTime);
-
                     $hours = floor($diffMin / 60) . 'h ' . ($diffMin % 60) . 'm';
 
                     if ($diffMin > 480) {
-
                         $ot = $diffMin - 480;
-
                         $overtime = floor($ot / 60) . 'h ' . ($ot % 60) . 'm';
                     }
                 }
@@ -250,12 +253,14 @@ class AttendanceLogController extends Controller
         usort($result, fn($a, $b) => strcmp($b['date'], $a['date']));
 
         $totalEmploye = $employees->count();
+        $presentEmploye =  $attendances->count();
 
         return response()->json([
             'status' => true,
             'massage' => 'dataload succes',
             'result' =>  $result,
-            'totalemployee' =>   $totalEmploye
+            'totalemployee' =>   $totalEmploye,
+            'presentEmploye' =>  $presentEmploye
         ]);
     }
 
