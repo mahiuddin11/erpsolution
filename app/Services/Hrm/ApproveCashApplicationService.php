@@ -9,18 +9,16 @@ use App\Repositories\Hrm\ApproveLoneApplicationRepositories;
 class ApproveCashApplicationService
 {
 
-    /**
-     * @var $CustomerPaymentRepositories
-     */
-    private $systemRepositories;
+    
+    private $ApproveCashReqApplicationRepositories;
 
     /**
      * AdminCourseService constructor.
      * @param $CustomerPaymentRepositories $branchRepositories
      */
-    public function __construct(ApproveCashReqApplicationRepositories $systemRepositories)
+    public function __construct(ApproveCashReqApplicationRepositories $ApproveCashReqApplicationRepositories)
     {
-        $this->systemRepositories = $systemRepositories;
+        $this->ApproveCashReqApplicationRepositories = $ApproveCashReqApplicationRepositories;
     }
 
     /**
@@ -29,7 +27,8 @@ class ApproveCashApplicationService
      */
     public function getList($request)
     {
-        return $this->systemRepositories->getList($request);
+        // dd('service');
+        return $this->ApproveCashReqApplicationRepositories->getList($request);
     }
 
     /**
@@ -38,7 +37,7 @@ class ApproveCashApplicationService
      */
     public function getAllList()
     {
-        return $this->systemRepositories->getAllList();
+        return $this->ApproveCashReqApplicationRepositories->getAllList();
     }
 
     /**
@@ -47,7 +46,7 @@ class ApproveCashApplicationService
      */
     public function statusUpdate($request, $id)
     {
-        return $this->systemRepositories->statusUpdate($request, $id);
+        return $this->ApproveCashReqApplicationRepositories->statusUpdate($request, $id);
     }
 
     public function statusValidation($request)
@@ -85,7 +84,7 @@ class ApproveCashApplicationService
      */
     public function store($request)
     {
-        return $this->systemRepositories->store($request);
+        return $this->ApproveCashReqApplicationRepositories->store($request);
     }
 
     /**
@@ -94,7 +93,7 @@ class ApproveCashApplicationService
      */
     public function update($request, $id)
     {
-        return $this->systemRepositories->update($request, $id);
+        return $this->ApproveCashReqApplicationRepositories->update($request, $id);
     }
 
     /**
@@ -104,7 +103,7 @@ class ApproveCashApplicationService
     public function details($id)
     {
 
-        return $this->systemRepositories->details($id);
+        return $this->ApproveCashReqApplicationRepositories->details($id);
     }
 
 
@@ -115,6 +114,6 @@ class ApproveCashApplicationService
      */
     public function destroy($id)
     {
-        return $this->systemRepositories->destroy($id);
+        return $this->ApproveCashReqApplicationRepositories->destroy($id);
     }
 }

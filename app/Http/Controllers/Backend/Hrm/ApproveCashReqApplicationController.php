@@ -14,24 +14,14 @@ use Illuminate\Validation\ValidationException;
 
 class ApproveCashReqApplicationController extends Controller
 {
-    /**
-     * @var ApproveCashApplicationService
-     */
-    private $systemService;
-    /**
-     * @var ApproveCashApplicationService
-     */
-    private $systemTransformer;
+    
+    private $ApproveCashApplicationService;
 
-    /**
-     * CategoryController constructor.
-     * @param ApproveCashApplicationService $systemService
-     * @param ApproveCashApplicationService $systemTransformer
-     */
+    private $systemTransformer;
 
     public function __construct(ApproveCashApplicationService $ApproveLoneApplicationService, Transformers $transformers)
     {
-        $this->systemService = $ApproveLoneApplicationService;
+        $this->ApproveCashApplicationService = $ApproveLoneApplicationService;
 
         $this->systemTransformer = $transformers;
     }
@@ -50,7 +40,7 @@ class ApproveCashReqApplicationController extends Controller
     public function dataProcessing(Request $request)
     {
 
-        $json_data = $this->systemService->getList($request);
+        $json_data =  $this->ApproveCashApplicationService->getList($request);
         return json_encode($this->systemTransformer->dataTable($json_data));
     }
 
@@ -72,12 +62,12 @@ class ApproveCashReqApplicationController extends Controller
     public function store(Request $request)
     {
         try {
-            $this->validate($request, $this->systemService->storeValidation($request));
+            $this->validate($request,  $this->ApproveCashApplicationService->storeValidation($request));
         } catch (ValidationException $e) {
             session()->flash('error', 'Validation error !!');
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
-        $this->systemService->store($request);
+         $this->ApproveCashApplicationService->store($request);
         session()->flash('success', 'Data successfully save!!');
         return redirect()->route('hrm.cash-req.index');
     }
@@ -120,18 +110,19 @@ class ApproveCashReqApplicationController extends Controller
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
         }
-        $editInfo = $this->systemService->details($id);
+        $editInfo =  $this->ApproveCashApplicationService->details($id);
         if (!$editInfo) {
             session()->flash('error', 'Edit info is invalid!!');
             return redirect()->back();
         }
+
         try {
-            $this->validate($request, $this->systemService->updateValidation($request, $id));
+            $this->validate($request,  $this->ApproveCashApplicationService->updateValidation($request, $id));
         } catch (ValidationException $e) {
             session()->flash('error', 'Validation error !!');
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
-        $this->systemService->update($request, $id);
+         $this->ApproveCashApplicationService->update($request, $id);
         session()->flash('success', 'Data successfully updated!!');
         return redirect()->route('hrm.cash-req.index');
     }
@@ -152,11 +143,11 @@ class ApproveCashReqApplicationController extends Controller
         if (!is_numeric($id)) {
             return response()->json($this->systemTransformer->invalidId($id), 200);
         }
-        $detailsInfo =   $this->systemService->details($id);
+        $detailsInfo =    $this->ApproveCashApplicationService->details($id);
         if (!$detailsInfo) {
             return response()->json($this->systemTransformer->notFound($detailsInfo), 200);
         }
-        $statusInfo =  $this->systemService->statusUpdate($id, $status);
+        $statusInfo =   $this->ApproveCashApplicationService->statusUpdate($id, $status);
         if ($statusInfo) {
             return response()->json($this->systemTransformer->statusUpdate($statusInfo), 200);
         }
@@ -172,11 +163,11 @@ class ApproveCashReqApplicationController extends Controller
         if (!is_numeric($id)) {
             return response()->json($this->systemTransformer->invalidId($id), 200);
         }
-        $detailsInfo =   $this->systemService->details($id);
+        $detailsInfo =    $this->ApproveCashApplicationService->details($id);
         if (!$detailsInfo) {
             return response()->json($this->systemTransformer->notFound($detailsInfo), 200);
         }
-        $deleteInfo =  $this->systemService->destroy($id);
+        $deleteInfo =   $this->ApproveCashApplicationService->destroy($id);
         if ($deleteInfo) {
             return response()->json($this->systemTransformer->delete($deleteInfo), 200);
         }
