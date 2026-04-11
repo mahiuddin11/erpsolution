@@ -8,9 +8,9 @@ use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\Lone;
 use App\Transformers\AdjustTransformer;
-use App\Services\Hrm\LoneApplicationService;
 use App\Services\InventorySetup\AdjustService;
 use App\Transformers\Transformers;
+use App\Services\Hrm\LoneApplicationService;
 use Illuminate\Validation\ValidationException;
 
 
@@ -18,19 +18,17 @@ class LoneApplicationController extends Controller
 {
 
     /**
-     * @var adjustService
+     * @var LoneApplicationService
      */
+
     private $systemService;
+
     /**
      * @var adjustTransformer
      */
     private $systemTransformer;
 
-    /**
-     * CategoryController constructor.
-     * @param adjustService $systemService
-     * @param adjustTransformer $systemTransformer
-     */
+    
     public function __construct(LoneApplicationService $LoneApplicationService, Transformers $transformers)
     {
         $this->systemService = $LoneApplicationService;
@@ -43,7 +41,6 @@ class LoneApplicationController extends Controller
      */
     public function index(Request $request)
     {
-
         $title = 'Lone application List';
         return view('backend.pages.hrm.lone_application.index', get_defined_vars());
     }
@@ -51,6 +48,7 @@ class LoneApplicationController extends Controller
 
     public function dataProcessingLoneApplication(Request $request)
     {
+        // dd('Loan Controller',$request->all());
         $json_data = $this->systemService->getList($request);
         return json_encode($this->systemTransformer->dataTable($json_data));
     }

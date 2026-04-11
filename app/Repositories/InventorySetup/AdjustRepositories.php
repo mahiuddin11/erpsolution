@@ -57,6 +57,7 @@ class AdjustRepositories
     {
 
         $type = session()->get('type');
+        
         $columns = array(
             0 => 'id',
             1 => 'account_id',

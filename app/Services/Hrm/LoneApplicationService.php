@@ -8,18 +8,12 @@ use App\Repositories\Hrm\LoneApplicationRepositories;
 class LoneApplicationService
 {
 
-    /**
-     * @var $CustomerPaymentRepositories
-     */
-    private $systemRepositories;
+    
+    private $loaneRepositorys;
 
-    /**
-     * AdminCourseService constructor.
-     * @param $CustomerPaymentRepositories $branchRepositories
-     */
-    public function __construct(LoneApplicationRepositories $systemRepositories)
+    public function __construct(LoneApplicationRepositories $loaneRepositorys)
     {
-        $this->systemRepositories = $systemRepositories;
+        $this->loaneRepositorys = $loaneRepositorys;
     }
 
     /**
@@ -28,7 +22,8 @@ class LoneApplicationService
      */
     public function getList($request)
     {
-        return $this->systemRepositories->getList($request);
+        // dd('lonaneApicaitonservice',$request->all());
+        return $this->loaneRepositorys->getList($request);
     }
 
     /**
@@ -37,7 +32,7 @@ class LoneApplicationService
      */
     public function getAllList()
     {
-        return $this->systemRepositories->getAllList();
+        return $this->loaneRepositorys->getAllList();
     }
 
     /**
@@ -46,7 +41,7 @@ class LoneApplicationService
      */
     public function statusUpdate($request, $id)
     {
-        return $this->systemRepositories->statusUpdate($request, $id);
+        return $this->loaneRepositorys->statusUpdate($request, $id);
     }
 
     public function statusValidation($request)
@@ -100,7 +95,7 @@ class LoneApplicationService
      */
     public function store($request)
     {
-        return $this->systemRepositories->store($request);
+        return $this->loaneRepositorys->store($request);
     }
 
     /**
@@ -109,7 +104,7 @@ class LoneApplicationService
      */
     public function update($request, $id)
     {
-        return $this->systemRepositories->update($request, $id);
+        return $this->loaneRepositorys->update($request, $id);
     }
 
     /**
@@ -119,7 +114,7 @@ class LoneApplicationService
     public function details($id)
     {
 
-        return $this->systemRepositories->details($id);
+        return $this->loaneRepositorys->details($id);
     }
 
 
@@ -130,6 +125,6 @@ class LoneApplicationService
      */
     public function destroy($id)
     {
-        return $this->systemRepositories->destroy($id);
+        return $this->loaneRepositorys->destroy($id);
     }
 }

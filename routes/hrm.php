@@ -3,7 +3,9 @@
 use App\Http\Controllers\Backend\Hrm\AttendanceController;
 use App\Http\Controllers\Backend\Hrm\EmployeeController;
 use App\Http\Controllers\Backend\Hrm\AttendanceLogController;
+use App\Http\Controllers\Backend\Hrm\CashApplicationController;
 use App\Http\Controllers\Backend\Hrm\HolidayController;
+use App\Http\Controllers\Backend\Hrm\LoneApplicationController;
 use App\Http\Controllers\Backend\Hrm\PaySheetController;
 use Illuminate\Support\Facades\Route;
 
@@ -66,25 +68,25 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         // Leave Approve End
 
         //Lone Application crud operation start
-        Route::get('/hrm-lone-applicaitn-list', 'LoneApplicationController@index')->name('hrm.lone.index');
-        Route::get('/dataProcessingLoneApplication', 'LoneApplicationController@dataProcessingLoneApplication')->name('hrm.lone.dataProcessingLoneApplication');
-        Route::get('/hrm-lone-applicaitn-create', 'LoneApplicationController@create')->name('hrm.lone.create');
-        Route::post('/hrm-lone-applicaitn-store', 'LoneApplicationController@store')->name('hrm.lone.store');
-        Route::get('/hrm-lone-applicaitn-edit/{id}', 'LoneApplicationController@edit')->name('hrm.lone.edit');
-        Route::get('/hrm-lone-applicaitn-show/{lone:id}', 'LoneApplicationController@show')->name('hrm.lone.show');
-        Route::post('/hrm-lone-applicaitn-update/{id}', 'LoneApplicationController@update')->name('hrm.lone.update');
-        Route::get('/hrm-lone-applicaitn-delete/{id}', 'LoneApplicationController@destroy')->name('hrm.lone.destroy');
+        Route::get('/hrm-lone-applicaitn-list', [LoneApplicationController::class, 'index'])->name('hrm.lone.index');
+        Route::get('/dataProcessingLoneApplication', [LoneApplicationController::class, 'dataProcessingLoneApplication'])->name('hrm.lone.dataProcessingLoneApplication');
+        Route::get('/hrm-lone-applicaitn-create', [LoneApplicationController::class, 'create'])->name('hrm.lone.create');
+        Route::post('/hrm-lone-applicaitn-store', [LoneApplicationController::class, 'store'])->name('hrm.lone.store');
+        Route::get('/hrm-lone-applicaitn-edit/{id}', [LoneApplicationController::class, 'edit'])->name('hrm.lone.edit');
+        Route::get('/hrm-lone-applicaitn-show/{lone:id}', [LoneApplicationController::class, 'show'])->name('hrm.lone.show');
+        Route::post('/hrm-lone-applicaitn-update/{id}', [LoneApplicationController::class, 'update'])->name('hrm.lone.update');
+        Route::get('/hrm-lone-applicaitn-delete/{id}', [LoneApplicationController::class, 'destroy'])->name('hrm.lone.destroy');
         //Lone Application crud operation end
 
         //Cash Application crud operation start
-        Route::get('/hrm-cash-req-applicaitn-list', 'CashApplicationController@index')->name('hrm.cashapplicaon.index');
-        Route::get('/cash-loan-dataProcessing', 'CashApplicationController@dataProcessing')->name('hrm.cashapplicaon.dataProcessing');
-        Route::get('/hrm-cash-req-applicaitn-create', 'CashApplicationController@create')->name('hrm.cashapplicaon.create');
-        Route::post('/hrm-cash-req-applicaitn-store', 'CashApplicationController@store')->name('hrm.cashapplicaon.store');
-        Route::get('/hrm-cash-req-applicaitn-edit/{id}', 'CashApplicationController@edit')->name('hrm.cashapplicaon.edit');
-        Route::get('/hrm-cash-req-applicaitn-show/{lone:id}', 'CashApplicationController@show')->name('hrm.cashapplicaon.show');
-        Route::post('/hrm-cash-req-applicaitn-update/{id}', 'CashApplicationController@update')->name('hrm.cashapplicaon.update');
-        Route::get('/hrm-cash-req-applicaitn-delete/{id}', 'CashApplicationController@destroy')->name('hrm.cashapplicaon.destroy');
+        Route::get('/hrm-cash-req-applicaitn-list', [CashApplicationController::class, 'index'])->name('hrm.cashapplicaon.index');
+        Route::get('/cash-loan-dataProcessing', [CashApplicationController::class, 'dataProcessing'])->name('hrm.cashapplicaon.dataProcessing');
+        Route::get('/hrm-cash-req-applicaitn-create', [CashApplicationController::class, 'create'])->name('hrm.cashapplicaon.create');
+        Route::post('/hrm-cash-req-applicaitn-store', [CashApplicationController::class, 'store'])->name('hrm.cashapplicaon.store');
+        Route::get('/hrm-cash-req-applicaitn-edit/{id}', [CashApplicationController::class, 'edit'])->name('hrm.cashapplicaon.edit');
+        Route::get('/hrm-cash-req-applicaitn-show/{lone:id}', [CashApplicationController::class, 'show'])->name('hrm.cashapplicaon.show');
+        Route::post('/hrm-cash-req-applicaitn-update/{id}', [CashApplicationController::class, 'update'])->name('hrm.cashapplicaon.update');
+        Route::get('/hrm-cash-req-applicaitn-delete/{id}', [CashApplicationController::class, 'destroy'])->name('hrm.cashapplicaon.destroy');
         //Cash Application crud operation end
 
         // Cash Approve start

@@ -29,11 +29,13 @@ class AdjustService
      */
     public function getList($request)
     {
+        // dd('adjust service ',$request->all());
         return $this->systemRepositories->getList($request);
     }
 
     public function getreturnList($request)
     {
+        // dd('adjust service ', $request->all());
         return $this->systemRepositories->getreturnList($request);
     }
 
@@ -43,6 +45,7 @@ class AdjustService
      */
     public function getAllList()
     {
+       
         return $this->systemRepositories->getAllList();
     }
 
