@@ -29,7 +29,7 @@ class AdjustService
      */
     public function getList($request)
     {
-        // dd('adjust service ',$request->all());
+        dd('adjust service ',$request->all());
         return $this->systemRepositories->getList($request);
     }
 

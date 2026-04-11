@@ -8,18 +8,12 @@ use App\Repositories\Hrm\ApproveLoneApplicationRepositories;
 class ApproveLoneApplicationService
 {
 
-    /**
-     * @var $CustomerPaymentRepositories
-     */
-    private $systemRepositories;
+    
+    private $approveLoneApplicationRepositories;
 
-    /**
-     * AdminCourseService constructor.
-     * @param $CustomerPaymentRepositories $branchRepositories
-     */
-    public function __construct(ApproveLoneApplicationRepositories $systemRepositories)
+    public function __construct(ApproveLoneApplicationRepositories $approveLoneApplicationRepositories)
     {
-        $this->systemRepositories = $systemRepositories;
+        $this->approveLoneApplicationRepositories = $approveLoneApplicationRepositories;
     }
 
     /**
@@ -28,7 +22,8 @@ class ApproveLoneApplicationService
      */
     public function getList($request)
     {
-        return $this->systemRepositories->getList($request);
+        // dd($request->all(), 'ApprovalLone');
+        return $this->approveLoneApplicationRepositories->getList($request);
     }
 
     /**
@@ -37,7 +32,7 @@ class ApproveLoneApplicationService
      */
     public function getAllList()
     {
-        return $this->systemRepositories->getAllList();
+        return $this->approveLoneApplicationRepositories->getAllList();
     }
 
     /**
@@ -46,7 +41,7 @@ class ApproveLoneApplicationService
      */
     public function statusUpdate($request, $id)
     {
-        return $this->systemRepositories->statusUpdate($request, $id);
+        return $this->approveLoneApplicationRepositories->statusUpdate($request, $id);
     }
 
     public function statusValidation($request)
@@ -84,7 +79,7 @@ class ApproveLoneApplicationService
      */
     public function store($request)
     {
-        return $this->systemRepositories->store($request);
+        return $this->approveLoneApplicationRepositories->store($request);
     }
 
     /**
@@ -93,7 +88,7 @@ class ApproveLoneApplicationService
      */
     public function update($request, $id)
     {
-        return $this->systemRepositories->update($request, $id);
+        return $this->approveLoneApplicationRepositories->update($request, $id);
     }
 
     /**
@@ -103,7 +98,7 @@ class ApproveLoneApplicationService
     public function details($id)
     {
 
-        return $this->systemRepositories->details($id);
+        return $this->approveLoneApplicationRepositories->details($id);
     }
 
 
@@ -114,6 +109,6 @@ class ApproveLoneApplicationService
      */
     public function destroy($id)
     {
-        return $this->systemRepositories->destroy($id);
+        return $this->approveLoneApplicationRepositories->destroy($id);
     }
 }

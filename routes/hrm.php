@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Backend\Hrm\ApproveLoneApplicationController;
 use App\Http\Controllers\Backend\Hrm\AttendanceController;
 use App\Http\Controllers\Backend\Hrm\EmployeeController;
 use App\Http\Controllers\Backend\Hrm\AttendanceLogController;
@@ -97,11 +98,11 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/hrm-cash-req-approve-applicaitn-cancel/{lone:id}', 'ApproveCashReqApplicationController@cancel')->name('hrm.cash-req.cancel');
         // Cash Approve End
         // Lone Approve start
-        Route::get('/hrm-lone-approve-applicaitn-lists', 'ApproveLoneApplicationController@index')->name('hrm.loneapprove.index');
-        Route::get('/dataProcessingApproveLoneApplication', 'ApproveLoneApplicationController@dataProcessingApproveLoneApplication')->name('hrm.loneapprove.dataProcessingApproveLoneApplication');
-        Route::get('/hrm-lone-approve-applicaitn-update/{lone:id}', 'ApproveLoneApplicationController@edit')->name('hrm.loneapprove.approve');
-        Route::get('/hrm-lone-approve-applicaitn-show/{lone:id}', 'ApproveLoneApplicationController@show')->name('hrm.loneapprove.show');
-        Route::get('/hrm-lone-approve-applicaitn-cancel/{lone:id}', 'ApproveLoneApplicationController@cancel')->name('hrm.loneapprove.cancel');
+        Route::get('/hrm-lone-approve-applicaitn-lists', [ApproveLoneApplicationController::class, 'index'])->name('hrm.loneapprove.index');
+        Route::get('/dataProcessingApproveLoneApplication', [ApproveLoneApplicationController::class, 'dataProcessingApproveLoneApplication'])->name('hrm.loneapprove.dataProcessingApproveLoneApplication');
+        Route::get('/hrm-lone-approve-applicaitn-update/{lone:id}', [ApproveLoneApplicationController::class, 'edit'])->name('hrm.loneapprove.approve');
+        Route::get('/hrm-lone-approve-applicaitn-show/{lone:id}', [ApproveLoneApplicationController::class, 'show'])->name('hrm.loneapprove.show');
+        Route::get('/hrm-lone-approve-applicaitn-cancel/{lone:id}', [ApproveLoneApplicationController::class, 'cancel'])->name('hrm.loneapprove.cancel');
         // Lone Approve End
 
         //Salary Sheet crud operation start

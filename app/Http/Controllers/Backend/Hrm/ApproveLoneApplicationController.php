@@ -17,21 +17,11 @@ use Illuminate\Validation\ValidationException;
 class ApproveLoneApplicationController extends Controller
 {
 
-    /**
-     * @var adjustService
-     */
     private $systemService;
-    /**
-     * @var adjustTransformer
-     */
+   
     private $systemTransformer;
 
-    /**
-     * CategoryController constructor.
-     * @param adjustService $systemService
-     * @param adjustTransformer $systemTransformer
-     */
-
+   
     public function __construct(ApproveLoneApplicationService $ApproveLoneApplicationService, Transformers $transformers)
     {
         $this->systemService = $ApproveLoneApplicationService;
@@ -52,7 +42,7 @@ class ApproveLoneApplicationController extends Controller
 
     public function dataProcessingApproveLoneApplication(Request $request)
     {
-
+        // dd($request->all());
         $json_data = $this->systemService->getList($request);
         return json_encode($this->systemTransformer->dataTable($json_data));
     }

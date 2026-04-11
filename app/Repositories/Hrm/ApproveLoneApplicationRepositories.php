@@ -44,87 +44,168 @@ class ApproveLoneApplicationRepositories
      * @return mixed
      */
 
+    // public function getList($request)
+    // {
+
+
+    //     $columns = array(
+    //         0 => 'id',
+    //         1 => 'name',
+    //     );
+
+    //     $edit = Helper::roleAccess('hrm.loneapprove.edit') ? 1 : 0;
+    //     $cancel = Helper::roleAccess('hrm.loneapprove.cancel') ? 1 : 0;
+    //     $view = Helper::roleAccess('hrm.loneapprove.show') ? 1 : 0;
+    //     $ced = $edit + $cancel + $view;
+
+    //     $totalData = $this->model::count();
+
+    //     $limit = $request->input('length');
+    //     $start = $request->input('start');
+    //     $order = $columns[$request->input('order.0.column')];
+    //     $dir = $request->input('order.0.dir');
+
+    //     if (empty($request->input('search.value'))) {
+    //         $Lone = $this->model::offset($start)
+    //             ->where('status', 'pending')
+    //             ->limit($limit)
+    //             ->orderBy($order, $dir)
+    //             //->orderBy('status', 'desc')
+    //             ->get();
+    //         $totalFiltered = $this->model::count();
+    //     } else {
+    //         $search = $request->input('search.value');
+    //         $Lone = $this->model::where('name', 'like', "%{$search}%")
+    //             ->where('status', 'pending')
+    //             ->offset($start)
+    //             ->limit($limit)
+    //             ->orderBy($order, $dir)
+    //             // ->orderBy('status', 'desc')
+    //             ->get();
+    //         $totalFiltered = $this->model::where('name', 'like', "%{$search}%")->count();
+    //     }
+
+
+    //     $data = array();
+    //     if ($Lone) {
+    //         foreach ($Lone as $key => $value) {
+    //             $nestedData['id'] = $key + 1;
+    //             $nestedData['employee_id'] = $value->employee->name ?? "";
+    //             $nestedData['branch_id'] = $value->branch->name ?? "";
+    //             $nestedData['amount'] = $value->amount;
+    //             $nestedData['lone_adjustment'] = $value->lone_adjustment;
+    //             $nestedData['reason'] = $value->reason;
+    //             $nestedData['status'] = $value->status;
+
+
+    //             if ($ced != 0) :
+    //                 if ($edit != 0)
+    //                     $edit_data = '<a href="' . route('hrm.loneapprove.approve', $value->id) . '"  onclick="return confirm(`Are You Sure`)"  class="btn btn-xs btn-success"><i class="fa fa-check" aria-hidden="true"></i></a>';
+    //                 else
+    //                     $edit_data = '';
+    //                 if ($view != 0)
+    //                     $view_data = '<a href="' . route('hrm.loneapprove.show', $value->id) . '" class="btn btn-xs btn-primary"><i class="fa fa-eye" aria-hidden="true"></i></a>';
+    //                 else
+    //                     $view_data = '';
+    //                 if ($cancel != 0)
+    //                     $cancel_data = '<a href="' . route('hrm.loneapprove.cancel', $value->id) . '" title="Cancel" class="btn btn-xs btn-danger"><i class="fa fa-times" aria-hidden="true"></i></a>';
+    //                 else
+    //                     $cancel_data = '';
+    //                 $nestedData['action'] = $edit_data . ' ' . $view_data . ' ' . $cancel_data;
+    //             else :
+    //                 $nestedData['action'] = '';
+    //             endif;
+    //             $data[] = $nestedData;
+    //         }
+    //     }
+    //     $json_data = array(
+    //         "draw" => intval($request->input('draw')),
+    //         "recordsTotal" => intval($totalData),
+    //         "recordsFiltered" => intval($totalFiltered),
+    //         "data" => $data
+    //     );
+
+    //     return $json_data;
+    // }
+
     public function getList($request)
     {
-
-        $columns = array(
+        $columns = [
             0 => 'id',
-            1 => 'name',
-        );
+            1 => 'id'
+        ];
 
         $edit = Helper::roleAccess('hrm.loneapprove.edit') ? 1 : 0;
         $cancel = Helper::roleAccess('hrm.loneapprove.cancel') ? 1 : 0;
         $view = Helper::roleAccess('hrm.loneapprove.show') ? 1 : 0;
         $ced = $edit + $cancel + $view;
 
-        $totalData = $this->model::count();
-
         $limit = $request->input('length');
         $start = $request->input('start');
-        $order = $columns[$request->input('order.0.column')];
-        $dir = $request->input('order.0.dir');
+        $order = $columns[$request->input('order.0.column')] ?? 'id';
+        $dir = $request->input('order.0.dir') ?? 'desc';
+        $search = $request->input('search.value');
 
-        if (empty($request->input('search.value'))) {
-            $Lone = $this->model::offset($start)
-                ->where('status', 'pending')
-                ->limit($limit)
-                ->orderBy($order, $dir)
-                //->orderBy('status', 'desc')
-                ->get();
-            $totalFiltered = $this->model::count();
-        } else {
-            $search = $request->input('search.value');
-            $Lone = $this->model::where('name', 'like', "%{$search}%")
-                ->where('status', 'pending')
-                ->offset($start)
-                ->limit($limit)
-                ->orderBy($order, $dir)
-                // ->orderBy('status', 'desc')
-                ->get();
-            $totalFiltered = $this->model::where('name', 'like', "%{$search}%")->count();
+        // base query
+        $query = $this->model::with(['employee', 'branch'])
+            ->where('status', 'pending');
+
+        // total records
+        $totalData = $query->count();
+
+        // search
+        if (!empty($search)) {
+            $query->whereHas('employee', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
+            });
         }
 
+        // filtered count
+        $totalFiltered = $query->count();
 
-        $data = array();
-        if ($Lone) {
-            foreach ($Lone as $key => $value) {
-                $nestedData['id'] = $key + 1;
-                $nestedData['employee_id'] = $value->employee->name ?? "";
-                $nestedData['branch_id'] = $value->branch->name ?? "";
-                $nestedData['amount'] = $value->amount;
-                $nestedData['lone_adjustment'] = $value->lone_adjustment;
-                $nestedData['reason'] = $value->reason;
-                $nestedData['status'] = $value->status;
+        // data
+        $Lone = $query->offset($start)
+            ->limit($limit)
+            ->orderBy($order, $dir)
+            ->get();
 
+        $data = [];
 
-                if ($ced != 0) :
-                    if ($edit != 0)
-                        $edit_data = '<a href="' . route('hrm.loneapprove.approve', $value->id) . '"  onclick="return confirm(`Are You Sure`)"  class="btn btn-xs btn-success"><i class="fa fa-check" aria-hidden="true"></i></a>';
-                    else
-                        $edit_data = '';
-                    if ($view = !0)
-                        $view_data = '<a href="' . route('hrm.loneapprove.show', $value->id) . '" class="btn btn-xs btn-primary"><i class="fa fa-eye" aria-hidden="true"></i></a>';
-                    else
-                        $view_data = '';
-                    if ($cancel != 0)
-                        $cancel_data = '<a href="' . route('hrm.loneapprove.cancel', $value->id) . '" title="Cancel" class="btn btn-xs btn-danger"><i class="fa fa-times" aria-hidden="true"></i></a>';
-                    else
-                        $cancel_data = '';
-                    $nestedData['action'] = $edit_data . ' ' . $view_data . ' ' . $cancel_data;
-                else :
-                    $nestedData['action'] = '';
-                endif;
-                $data[] = $nestedData;
+        foreach ($Lone as $key => $value) {
+
+            $nestedData['id'] = $start + $key + 1;
+            $nestedData['employee_id'] = $value->employee->name ?? "";
+            $nestedData['branch_id'] = $value->branch->name ?? "";
+            $nestedData['amount'] = $value->amount;
+            $nestedData['lone_adjustment'] = $value->lone_adjustment;
+            $nestedData['reason'] = $value->reason;
+            $nestedData['status'] = $value->status;
+
+            $edit_data = $view_data = $cancel_data = '';
+
+            if ($edit != 0) {
+                $edit_data = '<a href="' . route('hrm.loneapprove.approve', $value->id) . '" onclick="return confirm(`Are You Sure`)" class="btn btn-xs btn-success"><i class="fa fa-check"></i></a>';
             }
+
+            if ($view != 0) {
+                $view_data = '<a href="' . route('hrm.loneapprove.show', $value->id) . '" class="btn btn-xs btn-primary"><i class="fa fa-eye"></i></a>';
+            }
+
+            if ($cancel != 0) {
+                $cancel_data = '<a href="' . route('hrm.loneapprove.cancel', $value->id) . '" class="btn btn-xs btn-danger"><i class="fa fa-times"></i></a>';
+            }
+
+            $nestedData['action'] = $edit_data . ' ' . $view_data . ' ' . $cancel_data;
+
+            $data[] = $nestedData;
         }
-        $json_data = array(
+
+        return [
             "draw" => intval($request->input('draw')),
             "recordsTotal" => intval($totalData),
             "recordsFiltered" => intval($totalFiltered),
             "data" => $data
-        );
-
-        return $json_data;
+        ];
     }
     /**
      * @param $request
