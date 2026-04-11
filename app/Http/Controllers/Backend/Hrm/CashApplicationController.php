@@ -18,23 +18,15 @@ use Illuminate\Validation\ValidationException;
 class CashApplicationController extends Controller
 {
 
-    /**
-     * @var CashApplicationService
-     */
-    private $systemService;
-    /**
-     * @var CashApplicationService
-     */
+   
+    private $CashApplicationService;
+
     private $systemTransformer;
 
-    /**
-     * CategoryController constructor.
-     * @param CashApplicationService $systemService
-     * @param adjustTransformer $systemTransformer
-     */
-    public function __construct(CashApplicationService $LoneApplicationService, Transformers $transformers)
+ 
+    public function __construct(CashApplicationService $CashApplicationService, Transformers $transformers)
     {
-        $this->systemService = $LoneApplicationService;
+        $this->CashApplicationService = $CashApplicationService;
 
         $this->systemTransformer = $transformers;
     }
@@ -52,7 +44,7 @@ class CashApplicationController extends Controller
 
     public function dataProcessing(Request $request)
     {
-        $json_data = $this->systemService->getList($request);
+        $json_data =  $this->CashApplicationService->getList($request);
         return json_encode($this->systemTransformer->dataTable($json_data));
     }
 
@@ -75,12 +67,12 @@ class CashApplicationController extends Controller
     public function store(Request $request)
     {
         try {
-            $this->validate($request, $this->systemService->storeValidation($request));
+            $this->validate($request,  $this->CashApplicationService->storeValidation($request));
         } catch (ValidationException $e) {
             session()->flash('error', 'Validation error !!');
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
-        $this->systemService->store($request);
+         $this->CashApplicationService->store($request);
         session()->flash('success', 'Data successfully save!!');
         return redirect()->route('hrm.cashapplicaon.index');
     }
@@ -94,7 +86,7 @@ class CashApplicationController extends Controller
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
         }
-        $editInfo =   $this->systemService->details($id);
+        $editInfo =    $this->CashApplicationService->details($id);
         if (!$editInfo) {
             session()->flash('error', 'Edit info is invalid!!');
             return redirect()->back();
@@ -117,18 +109,18 @@ class CashApplicationController extends Controller
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
         }
-        $editInfo = $this->systemService->details($id);
+        $editInfo =  $this->CashApplicationService->details($id);
         if (!$editInfo) {
             session()->flash('error', 'Edit info is invalid!!');
             return redirect()->back();
         }
         try {
-            $this->validate($request, $this->systemService->updateValidation($request, $id));
+            $this->validate($request,  $this->CashApplicationService->updateValidation($request, $id));
         } catch (ValidationException $e) {
             session()->flash('error', 'Validation error !!');
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
-        $this->systemService->update($request, $id);
+         $this->CashApplicationService->update($request, $id);
         session()->flash('success', 'Data successfully updated!!');
         return redirect()->route('hrm.cashapplicaon.index');
     }
@@ -150,11 +142,11 @@ class CashApplicationController extends Controller
         if (!is_numeric($id)) {
             return response()->json($this->systemTransformer->invalidId($id), 200);
         }
-        $detailsInfo =   $this->systemService->details($id);
+        $detailsInfo =    $this->CashApplicationService->details($id);
         if (!$detailsInfo) {
             return response()->json($this->systemTransformer->notFound($detailsInfo), 200);
         }
-        $statusInfo =  $this->systemService->statusUpdate($id, $status);
+        $statusInfo =   $this->CashApplicationService->statusUpdate($id, $status);
         if ($statusInfo) {
             return response()->json($this->systemTransformer->statusUpdate($statusInfo), 200);
         }
@@ -171,11 +163,11 @@ class CashApplicationController extends Controller
         if (!is_numeric($id)) {
             return response()->json($this->systemTransformer->invalidId($id), 200);
         }
-        $detailsInfo =   $this->systemService->details($id);
+        $detailsInfo =    $this->CashApplicationService->details($id);
         if (!$detailsInfo) {
             return response()->json($this->systemTransformer->notFound($detailsInfo), 200);
         }
-        $deleteInfo =  $this->systemService->destroy($id);
+        $deleteInfo =   $this->CashApplicationService->destroy($id);
         if ($deleteInfo) {
             return response()->json($this->systemTransformer->delete($deleteInfo), 200);
         }

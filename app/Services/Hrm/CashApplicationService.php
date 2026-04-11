@@ -9,18 +9,13 @@ use App\Repositories\Hrm\LoneApplicationRepositories;
 class CashApplicationService
 {
 
-    /**
-     * @var $CustomerPaymentRepositories
-     */
-    private $systemRepositories;
+  
+    private $CashApplicationRepositories;
 
-    /**
-     * AdminCourseService constructor.
-     * @param $CustomerPaymentRepositories $branchRepositories
-     */
-    public function __construct(CashApplicationRepositories $systemRepositories)
+   
+    public function __construct(CashApplicationRepositories $CashApplicationRepositories)
     {
-        $this->systemRepositories = $systemRepositories;
+        $this->CashApplicationRepositories = $CashApplicationRepositories;
     }
 
     /**
@@ -29,7 +24,8 @@ class CashApplicationService
      */
     public function getList($request)
     {
-        return $this->systemRepositories->getList($request);
+       
+        return $this->CashApplicationRepositories ->getList($request);
     }
 
     /**
@@ -38,7 +34,7 @@ class CashApplicationService
      */
     public function getAllList()
     {
-        return $this->systemRepositories->getAllList();
+        return $this->CashApplicationRepositories ->getAllList();
     }
 
     /**
@@ -47,7 +43,7 @@ class CashApplicationService
      */
     public function statusUpdate($request, $id)
     {
-        return $this->systemRepositories->statusUpdate($request, $id);
+        return $this->CashApplicationRepositories ->statusUpdate($request, $id);
     }
 
     public function statusValidation($request)
@@ -94,7 +90,7 @@ class CashApplicationService
      */
     public function store($request)
     {
-        return $this->systemRepositories->store($request);
+        return $this->CashApplicationRepositories ->store($request);
     }
 
     /**
@@ -103,7 +99,7 @@ class CashApplicationService
      */
     public function update($request, $id)
     {
-        return $this->systemRepositories->update($request, $id);
+        return $this->CashApplicationRepositories ->update($request, $id);
     }
 
     /**
@@ -113,7 +109,7 @@ class CashApplicationService
     public function details($id)
     {
 
-        return $this->systemRepositories->details($id);
+        return $this->CashApplicationRepositories ->details($id);
     }
 
 
@@ -124,6 +120,6 @@ class CashApplicationService
      */
     public function destroy($id)
     {
-        return $this->systemRepositories->destroy($id);
+        return $this->CashApplicationRepositories ->destroy($id);
     }
 }
