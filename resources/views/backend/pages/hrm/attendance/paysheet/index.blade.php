@@ -282,7 +282,7 @@
                         <tfoot>
                             <tr>
                                 <td colspan="6" class="text-success" class="text-right">In Word:
-                                    {{ ucfirst(Terbilang::make($total_salary)) }}</td>
+                                    {{ numberToWords($total_salary) }}</td>
                                 <td class="text-right">{{ $total_salary }}</td>
                                 <td colspan="10" class="text-right">{{ $employee_payable_salary }}</td>
                             </tr>

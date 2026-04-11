@@ -46,18 +46,7 @@
             --transition: 0.2s ease;
         }
 
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: var(--font-body);
-            background: var(--bg-page);
-            color: var(--text-primary);
-        }
-
+    
         .profile_information a {
             font-size: 18px;
             font-weight: 600;
@@ -1487,15 +1476,12 @@
             fetch(`${ATTENDANCE_API}?start_date=${todayStr}&end_date=${todayStr}`)
                 .then(r => r.json())
                 .then(res => {
+
                     const data = res.result ?? res; // support both {result:[]} and []
                     const totalEmployees = res.totalemployee ?? '0';
                     const present = res.presentEmploye ?? '0';
-                    // const present = data.filter(r => r.status == 'Present' || r.status == 'Late').length;
                     const late = data.filter(r => r.status == 'Late').length;
-                    // const absent = data.filter(r => r.status == 'Absent').length;
                     const absent = (totalEmployees - present) ?? '0';
-
-
 
                     $('#kpiTotalEmp').text(totalEmployees);
                     $('#kpiPresent').text(present);

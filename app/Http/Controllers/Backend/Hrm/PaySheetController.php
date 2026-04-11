@@ -22,12 +22,20 @@ class PaySheetController extends Controller
 
     public function index(Request $request)
     {
+
+    
        global $conveyance;
+
         $title = 'Pay Sheet';
         $employees = new Employee();
+    
         $accounts = Accounts::whereIn('id', [4, 5, 6])->get();
+       
         if ($request->method() == "GET") {
+
             $MonthlyPaySheetscheck = MonthlyPayableSalary::whereMonth('date', date('m', strtotime($request->month)))->exists();
+
+            
             if (!$MonthlyPaySheetscheck) {
                 $tables = [];
 
@@ -38,6 +46,7 @@ class PaySheetController extends Controller
                 $takeEmployee = $takeEmployee->where("employee_status","present")->get();
 
                 foreach ($takeEmployee as $employee) {
+                    
                     $tables[] = [
                         "employee_id" =>  $employee->id,
                         "name" => $employee->name,

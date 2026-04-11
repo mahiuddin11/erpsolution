@@ -4,6 +4,7 @@ use App\Http\Controllers\Backend\Hrm\AttendanceController;
 use App\Http\Controllers\Backend\Hrm\EmployeeController;
 use App\Http\Controllers\Backend\Hrm\AttendanceLogController;
 use App\Http\Controllers\Backend\Hrm\HolidayController;
+use App\Http\Controllers\Backend\Hrm\PaySheetController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -39,9 +40,9 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //Employe crud operation end
 
         //Salary Pay crud operation start
-        Route::any('/hrm-salary-pay-sheet-list', 'PaySheetController@index')->name('hrm.paysheet.index');
-        Route::get('/hrm-salary-pay-sheet-show/{pay:id}', 'PaySheetController@show')->name('hrm.paysheet.show');
-        Route::post('/hrm-salary-pay-details-store/{monthlyPayableSalary:id}', 'PaySheetController@empPayDetailsStore')->name('hrm.paysheet.empPayDetailsStore');
+        Route::any('/hrm-salary-pay-sheet-list', [PaySheetController::class, "index"])->name('hrm.paysheet.index');
+        Route::get('/hrm-salary-pay-sheet-show/{pay:id}', [PaySheetController::class,'show'])->name('hrm.paysheet.show');
+        Route::post('/hrm-salary-pay-details-store/{monthlyPayableSalary:id}', [PaySheetController::class,'empPayDetailsStore'])->name('hrm.paysheet.empPayDetailsStore');
         //Salary Pay crud operation end
 
         //Leave Application crud operation start
