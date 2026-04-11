@@ -8,18 +8,12 @@ use App\Repositories\Hrm\LeaveApplicationRepositories;
 class LeaveApplicationService
 {
 
-    /**
-     * @var $CustomerPaymentRepositories
-     */
-    private $systemRepositories;
+   
+    private $LeaveApplicationRepositories;
 
-    /**
-     * AdminCourseService constructor.
-     * @param $CustomerPaymentRepositories $branchRepositories
-     */
-    public function __construct(LeaveApplicationRepositories $systemRepositories)
+    public function __construct(LeaveApplicationRepositories $LeaveApplicationRepositories)
     {
-        $this->systemRepositories = $systemRepositories;
+        $this->LeaveApplicationRepositories = $LeaveApplicationRepositories;
     }
 
     /**
@@ -28,7 +22,7 @@ class LeaveApplicationService
      */
     public function getList($request)
     {
-        return $this->systemRepositories->getList($request);
+        return $this->LeaveApplicationRepositories->getList($request);
     }
 
     /**
@@ -37,7 +31,7 @@ class LeaveApplicationService
      */
     public function getAllList()
     {
-        return $this->systemRepositories->getAllList();
+        return $this->LeaveApplicationRepositories->getAllList();
     }
 
     /**
@@ -46,7 +40,7 @@ class LeaveApplicationService
      */
     public function statusUpdate($request, $id)
     {
-        return $this->systemRepositories->statusUpdate($request, $id);
+        return $this->LeaveApplicationRepositories->statusUpdate($request, $id);
     }
 
     public function statusValidation($request)
@@ -102,7 +96,7 @@ class LeaveApplicationService
      */
     public function store($request)
     {
-        return $this->systemRepositories->store($request);
+        return $this->LeaveApplicationRepositories->store($request);
     }
 
     /**
@@ -111,7 +105,7 @@ class LeaveApplicationService
      */
     public function update($request, $id)
     {
-        return $this->systemRepositories->update($request, $id);
+        return $this->LeaveApplicationRepositories->update($request, $id);
     }
 
     /**
@@ -121,7 +115,7 @@ class LeaveApplicationService
     public function details($id)
     {
 
-        return $this->systemRepositories->details($id);
+        return $this->LeaveApplicationRepositories->details($id);
     }
 
 
@@ -132,6 +126,6 @@ class LeaveApplicationService
      */
     public function destroy($id)
     {
-        return $this->systemRepositories->destroy($id);
+        return $this->LeaveApplicationRepositories->destroy($id);
     }
 }

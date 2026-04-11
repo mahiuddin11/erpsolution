@@ -17,23 +17,14 @@ use Illuminate\Validation\ValidationException;
 class LeaveApplicationController extends Controller
 {
 
-    /**
-     * @var adjustService
-     */
-    private $systemService;
-    /**
-     * @var adjustTransformer
-     */
+   
+    private $LeaveApplicationService;
+  
     private $systemTransformer;
 
-    /**
-     * CategoryController constructor.
-     * @param adjustService $systemService
-     * @param adjustTransformer $systemTransformer
-     */
     public function __construct(LeaveApplicationService $LeaveApplicationService, Transformers $transformers)
     {
-        $this->systemService = $LeaveApplicationService;
+        $this->LeaveApplicationService = $LeaveApplicationService;
 
         $this->systemTransformer = $transformers;
     }
@@ -50,7 +41,8 @@ class LeaveApplicationController extends Controller
 
     public function dataProcessingLeaveApplication(Request $request)
     {
-        $json_data = $this->systemService->getList($request);
+       
+        $json_data =  $this->LeaveApplicationService->getList($request);
         return json_encode($this->systemTransformer->dataTable($json_data));
     }
 
@@ -74,12 +66,12 @@ class LeaveApplicationController extends Controller
     {
 
         try {
-            $this->validate($request, $this->systemService->storeValidation($request));
+            $this->validate($request,  $this->LeaveApplicationService->storeValidation($request));
         } catch (ValidationException $e) {
             session()->flash('error', 'Validation error !!');
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
-        $this->systemService->store($request);
+         $this->LeaveApplicationService->store($request);
         session()->flash('success', 'Data successfully save!!');
         return redirect()->route('hrm.leave.index');
     }
@@ -93,7 +85,7 @@ class LeaveApplicationController extends Controller
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
         }
-        $editInfo =   $this->systemService->details($id);
+        $editInfo =    $this->LeaveApplicationService->details($id);
         if (!$editInfo) {
             session()->flash('error', 'Edit info is invalid!!');
             return redirect()->back();
@@ -115,18 +107,18 @@ class LeaveApplicationController extends Controller
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
         }
-        $editInfo = $this->systemService->details($id);
+        $editInfo =  $this->LeaveApplicationService->details($id);
         if (!$editInfo) {
             session()->flash('error', 'Edit info is invalid!!');
             return redirect()->back();
         }
         try {
-            $this->validate($request, $this->systemService->updateValidation($request, $id));
+            $this->validate($request,  $this->LeaveApplicationService->updateValidation($request, $id));
         } catch (ValidationException $e) {
             session()->flash('error', 'Validation error !!');
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
-        $this->systemService->update($request, $id);
+         $this->LeaveApplicationService->update($request, $id);
         session()->flash('success', 'Data successfully updated!!');
         return redirect()->route('hrm.leave.index');
     }
@@ -148,11 +140,11 @@ class LeaveApplicationController extends Controller
         if (!is_numeric($id)) {
             return response()->json($this->systemTransformer->invalidId($id), 200);
         }
-        $detailsInfo =   $this->systemService->details($id);
+        $detailsInfo =    $this->LeaveApplicationService->details($id);
         if (!$detailsInfo) {
             return response()->json($this->systemTransformer->notFound($detailsInfo), 200);
         }
-        $statusInfo =  $this->systemService->statusUpdate($id, $status);
+        $statusInfo =   $this->LeaveApplicationService->statusUpdate($id, $status);
         if ($statusInfo) {
             return response()->json($this->systemTransformer->statusUpdate($statusInfo), 200);
         }
@@ -168,11 +160,11 @@ class LeaveApplicationController extends Controller
         if (!is_numeric($id)) {
             return response()->json($this->systemTransformer->invalidId($id), 200);
         }
-        $detailsInfo =   $this->systemService->details($id);
+        $detailsInfo =    $this->LeaveApplicationService->details($id);
         if (!$detailsInfo) {
             return response()->json($this->systemTransformer->notFound($detailsInfo), 200);
         }
-        $deleteInfo =  $this->systemService->destroy($id);
+        $deleteInfo =   $this->LeaveApplicationService->destroy($id);
         if ($deleteInfo) {
             return response()->json($this->systemTransformer->delete($deleteInfo), 200);
         }

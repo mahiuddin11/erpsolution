@@ -6,6 +6,7 @@ use App\Http\Controllers\Backend\Hrm\EmployeeController;
 use App\Http\Controllers\Backend\Hrm\AttendanceLogController;
 use App\Http\Controllers\Backend\Hrm\CashApplicationController;
 use App\Http\Controllers\Backend\Hrm\HolidayController;
+use App\Http\Controllers\Backend\Hrm\LeaveApplicationController;
 use App\Http\Controllers\Backend\Hrm\LoneApplicationController;
 use App\Http\Controllers\Backend\Hrm\PaySheetController;
 use Illuminate\Support\Facades\Route;
@@ -49,14 +50,15 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //Salary Pay crud operation end
 
         //Leave Application crud operation start
-        Route::get('/hrm-leave-applicaitn-list', 'LeaveApplicationController@index')->name('hrm.leave.index');
-        Route::get('/dataProcessingLeaveApplication', 'LeaveApplicationController@dataProcessingLeaveApplication')->name('hrm.leave.dataProcessingLeaveApplication');
-        Route::get('/hrm-leave-applicaitn-create', 'LeaveApplicationController@create')->name('hrm.leave.create');
-        Route::post('/hrm-leave-applicaitn-store', 'LeaveApplicationController@store')->name('hrm.leave.store');
-        Route::get('/hrm-leave-applicaitn-edit/{id}', 'LeaveApplicationController@edit')->name('hrm.leave.edit');
-        Route::post('/hrm-leave-applicaitn-update/{id}', 'LeaveApplicationController@update')->name('hrm.leave.update');
-        Route::get('/hrm-leave-applicaitn-show/{leave:id}', 'LeaveApplicationController@show')->name('hrm.leave.show');
-        Route::get('/hrm-leave-applicaitn-delete/{id}', 'LeaveApplicationController@destroy')->name('hrm.leave.destroy');
+        
+        Route::get('/hrm-leave-applicaitn-list', [LeaveApplicationController::class, 'index'])->name('hrm.leave.index');
+        Route::get('/dataProcessingLeaveApplication', [LeaveApplicationController::class, 'dataProcessingLeaveApplication'])->name('hrm.leave.dataProcessingLeaveApplication');
+        Route::get('/hrm-leave-applicaitn-create', [LeaveApplicationController::class, 'create'])->name('hrm.leave.create');
+        Route::post('/hrm-leave-applicaitn-store', [LeaveApplicationController::class, 'store'])->name('hrm.leave.store');
+        Route::get('/hrm-leave-applicaitn-edit/{id}', [LeaveApplicationController::class, 'edit'])->name('hrm.leave.edit');
+        Route::post('/hrm-leave-applicaitn-update/{id}', [LeaveApplicationController::class, 'update'])->name('hrm.leave.update');
+        Route::get('/hrm-leave-applicaitn-show/{leave:id}', [LeaveApplicationController::class, 'show'])->name('hrm.leave.show');
+        Route::get('/hrm-leave-applicaitn-delete/{id}', [LeaveApplicationController::class, 'destroy'])->name('hrm.leave.destroy');
 
         //Leave Application crud operation end
 
