@@ -65,7 +65,7 @@ class PaySheetController extends Controller
 
             foreach ($takeEmployees as $emp) {
 
-            // dd(Carbon::parse($month)->endOfMonth()->format('Y-m-d'), $emp);
+            
                 $data[] = [
                     'employee_id'            => $emp->id,
                     'date'                   => Carbon::parse($month)->endOfMonth(),

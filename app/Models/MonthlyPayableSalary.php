@@ -9,22 +9,42 @@ class MonthlyPayableSalary extends Model
 {
     use HasFactory;
 
+    // protected $fillable = [
+    //     'employee_id',
+    //     'name',
+    //     'date',
+    //     'basic_salary',
+    //     'house_rent',
+    //     'medical_allowance',
+    //     'travel_allowance',
+    //     'food_allowance',
+    //     'total_salary',
+    //     'working_day',
+    //     'employee_presence_day',
+    //     'employee_absence_day',
+    //     'employee_late',
+    //     'employee_paid_leave',
+    //     'employee_unpaid_leave',
+    //     'overtime_houre',
+    //     'overtime_salary',
+    //     'employee_payable_salary',
+    //     'status',
+    // ];
+
     protected $fillable = [
         'employee_id',
         'name',
         'date',
-        'basic_salary',
-        'house_rent',
-        'medical_allowance',
-        'travel_allowance',
-        'food_allowance',
         'total_salary',
-        'working_day',
+        'daily_rate',           // ← নতুন
         'employee_presence_day',
         'employee_absence_day',
+        'absence_deduction',    // ← নতুন
         'employee_late',
+        'employee_deducton',    // ← নতুন
         'employee_paid_leave',
-        'employee_unpaid_leave',
+        'holiday',              // ← নতুন
+        'totalPayableDays',     // ← নতুন
         'overtime_houre',
         'overtime_salary',
         'employee_payable_salary',

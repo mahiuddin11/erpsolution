@@ -164,7 +164,10 @@
                         </thead>
                         <tbody>
                             @if (isset($MonthlyPaySheets))
+
+                           
                                 @foreach ($MonthlyPaySheets as $key => $MonthlyPaySheet)
+
                                     <tr>
                                         <td>{{ $key + 1 }}</td>
                                         <td>{{ $MonthlyPaySheet->name }}</td>
@@ -191,8 +194,10 @@
                                         </td>
                                         <td>{{ $MonthlyPaySheet->employee_paid_leave }} </td>
                                         {{-- <td>{{ $MonthlyPaySheet->employee_unpaid_leave }}</td> --}}
-                                        <td>{{ ' $MonthlyPaySheet->holiday' ?? '' }}</td>
-                                        <td>{{ ' $MonthlyPaySheet->totalPayableDays' ?? '' }}</td>
+
+
+                                        <td>{{ $MonthlyPaySheet->holiday ?? '' }}</td>
+                                        <td>{{  $MonthlyPaySheet->totalPayableDays ?? '' }}</td>
                                         <td>{{ $MonthlyPaySheet->overtime_houre }}h </td>
                                         <td>{{ $MonthlyPaySheet->overtime_salary }} </td>
                                         <td class="loanamount">
