@@ -39,7 +39,7 @@ class ApproveLeaveApplicationRepositories
 
 
     /**
-     * @param $request
+     * @param $requestw
      * @return mixed
      */
 
@@ -61,25 +61,35 @@ class ApproveLeaveApplicationRepositories
         $start = $request->input('start');
         $order = $columns[$request->input('order.0.column')];
         $dir = $request->input('order.0.dir');
+        $search = $request->input('search.value');
 
-        if (empty($request->input('search.value'))) {
+        if (empty($search)) {
+
             $LeaveApplication = $this->model::offset($start)
                 ->where('status', 'pending')
                 ->limit($limit)
                 ->orderBy($order, $dir)
-                //->orderBy('status', 'desc')
                 ->get();
-            $totalFiltered = $this->model::count();
+
+            $totalFiltered = $this->model::where('status', 'pending')->count();
         } else {
+
             $search = $request->input('search.value');
-            $LeaveApplication = $this->model::where('name', 'like', "%{$search}%")
-                ->where('status', 'pending')
+
+            $LeaveApplication = $this->model::where('status', 'pending')
+                ->whereHas('employee', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                })
                 ->offset($start)
                 ->limit($limit)
                 ->orderBy($order, $dir)
-                // ->orderBy('status', 'desc')
                 ->get();
-            $totalFiltered = $this->model::where('name', 'like', "%{$search}%")->count();
+
+            $totalFiltered = $this->model::where('status', 'pending')
+                ->whereHas('employee', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                })
+                ->count();
         }
 
 
@@ -169,7 +179,7 @@ class ApproveLeaveApplicationRepositories
         $LeaveApplication->payment_status = $request->payment_status;
 
         $LeaveApplication->save();
-        
+
         return $LeaveApplication;
     }
 

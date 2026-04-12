@@ -8,18 +8,13 @@ use App\Repositories\Hrm\ApproveLeaveApplicationRepositories;
 class ApproveLeaveApplicationService
 {
 
-    /**
-     * @var $CustomerPaymentRepositories
-     */
-    private $systemRepositories;
+    
+    private $ApproveLeaveApplicationRepositories;
 
-    /**
-     * AdminCourseService constructor.
-     * @param $CustomerPaymentRepositories $branchRepositories
-     */
-    public function __construct(ApproveLeaveApplicationRepositories $systemRepositories)
+    
+    public function __construct(ApproveLeaveApplicationRepositories $ApproveLeaveApplicationRepositories)
     {
-        $this->systemRepositories = $systemRepositories;
+        $this->ApproveLeaveApplicationRepositories = $ApproveLeaveApplicationRepositories;
     }
 
     /**
@@ -28,7 +23,8 @@ class ApproveLeaveApplicationService
      */
     public function getList($request)
     {
-        return $this->systemRepositories->getList($request);
+
+        return $this->ApproveLeaveApplicationRepositories->getList($request);
     }
 
     /**
@@ -37,7 +33,7 @@ class ApproveLeaveApplicationService
      */
     public function getAllList()
     {
-        return $this->systemRepositories->getAllList();
+        return $this->ApproveLeaveApplicationRepositories->getAllList();
     }
 
     /**
@@ -46,7 +42,7 @@ class ApproveLeaveApplicationService
      */
     public function statusUpdate($request, $id)
     {
-        return $this->systemRepositories->statusUpdate($request, $id);
+        return $this->ApproveLeaveApplicationRepositories->statusUpdate($request, $id);
     }
 
     public function statusValidation($request)
@@ -84,7 +80,7 @@ class ApproveLeaveApplicationService
      */
     public function store($request)
     {
-        return $this->systemRepositories->store($request);
+        return $this->ApproveLeaveApplicationRepositories->store($request);
     }
 
     /**
@@ -93,7 +89,7 @@ class ApproveLeaveApplicationService
      */
     public function update($request, $id)
     {
-        return $this->systemRepositories->update($request, $id);
+        return $this->ApproveLeaveApplicationRepositories->update($request, $id);
     }
 
     /**
@@ -103,7 +99,7 @@ class ApproveLeaveApplicationService
     public function details($id)
     {
 
-        return $this->systemRepositories->details($id);
+        return $this->ApproveLeaveApplicationRepositories->details($id);
     }
 
 
@@ -114,6 +110,6 @@ class ApproveLeaveApplicationService
      */
     public function destroy($id)
     {
-        return $this->systemRepositories->destroy($id);
+        return $this->ApproveLeaveApplicationRepositories->destroy($id);
     }
 }

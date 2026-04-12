@@ -3,13 +3,14 @@
 use App\Models\Accounts;
 use App\Models\AccountTransaction;
 use App\Models\ChartOfAccount;
+use App\Models\Employee;
 use App\Models\Transection;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-
+use PHPUnit\Framework\Constraint\Count;
 
 define('MEDICAL_ALLOWANCE', 600);
 define('TRAVEL_ALLOWANCE', 350);
@@ -31,6 +32,13 @@ function monthPercentageChange($previous, $current)
     return round($change, 2);
 }
 
+function Daily_Rate($grosSalary)
+{
+    $dailySalary = $grosSalary / 30;
+    return number_format($dailySalary, 2);
+}
+
+
 // GET THIS MONTH WORKING DAYS
 function MONTH_WORKING_DAY($month = null)
 {
@@ -43,7 +51,7 @@ function MONTH_WORKING_DAY($month = null)
     $endOfMonth = $carbonMonth->endOfMonth();
     // Get Fridays count in the given month
     $CURRENT_MONTH_HOLIDAY = CarbonPeriod::create($startOfMonth, $endOfMonth)
-        ->filter(fn ($date) => $date->isFriday()) // Corrected condition
+        ->filter(fn($date) => $date->isFriday()) // Corrected condition
         ->count();
 
     $TOTAL_DAT_OF_THIS_MONTH = $carbonMonth->daysInMonth;
@@ -51,20 +59,171 @@ function MONTH_WORKING_DAY($month = null)
     return $TOTAL_WORKING_DAY;
 }
 
-//GET EMPLOYEE WORKING DAYS
-function EMPLOYEE_PRESENCE_DAY($EMPLOYEE_ID,$month)
+function GET_HOLIDAYS($month = null)
 {
-    $ATTENDANCE = DB::table('attendances')->where('emplyee_id', $EMPLOYEE_ID)->whereMonth('date', $month ? date('m',strtotime($month)) : date('m'))->count();
-    return $ATTENDANCE;
+    $date = \Carbon\Carbon::parse($month);
+
+    $start = $date->copy()->startOfMonth();
+    $end   = $date->copy()->endOfMonth();
+
+    /* ── Custom holidays ── */
+    $dbHolidays = DB::table('holidays')
+        ->whereBetween('date', [$start, $end])
+        ->pluck('date')
+        ->toArray();
+
+    $holidaySet = [];
+
+    foreach ($dbHolidays as $date) {
+        $holidaySet[\Carbon\Carbon::parse($date)->toDateString()] = true;
+    }
+
+    /* ── Weekly holidays (Friday) ── */
+    $period = \Carbon\CarbonPeriod::create($start, $end);
+
+    foreach ($period as $d) {
+        if ($d->isFriday()) {
+            $holidaySet[$d->toDateString()] = true;
+        }
+    }
+
+    return $holidaySet;
 }
 
-//GET EMPLOYEE LEAVE DAYS COUNT
-function EMPLOYEE_ABSENCE_DAY($EMPLOYEE_ID,$month)
+function GET_PAID_LEAVES($employee_id, $month)
 {
-    $EMPLOYEE_WORKING_DAYS = EMPLOYEE_PRESENCE_DAY($EMPLOYEE_ID,$month);
-    $LEAVE_COUNT = MONTH_WORKING_DAY() - $EMPLOYEE_WORKING_DAYS;
-    return $LEAVE_COUNT;
+    $date = \Carbon\Carbon::parse($month);
+
+
+    $start = $date->copy()->startOfMonth();
+    $end   = $date->copy()->endOfMonth();
+
+
+
+    $leaves = DB::table('leave_applications')
+        ->where('employee_id', $employee_id)
+        ->where('status', 'approved')
+        ->where('payment_status', 'paid')
+        ->where(function ($q) use ($start, $end) {
+            $q->whereBetween('apply_date', [$start, $end])
+                ->orWhereBetween('end_date', [$start, $end]);
+        }) // paid leave only
+        ->get();
+
+    $paidLeaveSet = [];
+
+    foreach ($leaves as $leave) {
+
+        $period = \Carbon\CarbonPeriod::create($leave->apply_date, $leave->end_date);
+
+        foreach ($period as $date) {
+            $paidLeaveSet[$date->toDateString()] = true;
+        }
+    }
+
+    return $paidLeaveSet;
 }
+
+//GET EMPLOYEE WORKING DAYS
+// function EMPLOYEE_PRESENCE_DAY($EMPLOYEE_ID,$month)
+// {
+//     $ATTENDANCE = DB::table('attendances')->where('emplyee_id', $EMPLOYEE_ID)->whereMonth('date', $month ? date('m',strtotime($month)) : date('m'))->count();
+//     return $ATTENDANCE;
+// }
+
+function EMPLOYEE_PRESENCE_DAY($employee_id, $month = null)
+{
+    $month = $month ?? date('Y-m');
+
+    $date = \Carbon\Carbon::parse($month);
+
+    $start = $date->copy()->startOfMonth();
+    $end   = $date->copy()->endOfMonth();
+
+    /* ── Attendance ── */
+    $attendances = DB::table('attendances')
+        ->where('emplyee_id', $employee_id)
+        ->whereBetween('date', [$start, $end])
+        ->pluck('date')
+        ->map(fn($d) => \Carbon\Carbon::parse($d)->toDateString())
+        ->toArray();
+
+    $attendanceSet = array_flip($attendances);
+
+
+    $holidays = GET_HOLIDAYS($month);
+    $paidLeaves = GET_PAID_LEAVES($employee_id, $month);
+
+    $present = 0;
+
+    foreach ($attendances as $date) {
+
+        $isHoliday = isset($holidays[$date]);
+        $isPaidLeave = isset($paidLeaves[$date]);
+
+        if ($isHoliday || $isPaidLeave) {
+            continue;
+        }
+        $present++;
+    }
+
+    return $present;
+}
+
+
+
+//GET EMPLOYEE LEAVE DAYS COUNT
+// function EMPLOYEE_ABSENCE_DAY($EMPLOYEE_ID,$month)
+// {
+//     $EMPLOYEE_WORKING_DAYS = EMPLOYEE_PRESENCE_DAY($EMPLOYEE_ID,$month);
+//     $LEAVE_COUNT = MONTH_WORKING_DAY() - $EMPLOYEE_WORKING_DAYS;
+//     return $LEAVE_COUNT;
+// }
+
+// function EMPLOYEE_ABSENCE_DAY($EMPLOYEE_ID, $month)
+// {
+
+//     $year = date('Y'); 
+//     $totalDays = Carbon::create($year, $month, 1)->daysInMonth;
+
+//     $presentDays = EMPLOYEE_PRESENCE_DAY($EMPLOYEE_ID, $month);
+//     $leavesDay = count(GET_PAID_LEAVES($EMPLOYEE_ID, $month));
+//     $holidays = Count(GET_HOLIDAYS($month));
+
+//     $absent = $totalDays - ($presentDays + $leavesDay + $holidays);
+
+//     return $absent;
+// }
+
+function EMPLOYEE_ABSENCE_DAY($EMPLOYEE_ID, $month)
+{
+    $date = Carbon::parse($month ?? date('Y-m'));
+
+    $start = $date->copy()->startOfMonth();
+    $end   = $date->copy()->endOfMonth();
+
+    $totalDays = $date->daysInMonth;
+
+    $presentDays = EMPLOYEE_PRESENCE_DAY($EMPLOYEE_ID, $month);
+    $leavesDay   = count(GET_PAID_LEAVES($EMPLOYEE_ID, $month));
+    $holidays    = count(GET_HOLIDAYS($month));
+
+    $absent = $totalDays - ($presentDays + $leavesDay + $holidays);
+
+    return $absent;
+}
+
+function ABSENCE_DEDUCTION($employee_id, $month = null, $grosSalary)
+{
+
+    $absence_day = EMPLOYEE_ABSENCE_DAY($employee_id, $month);
+    $dailySalary = Daily_Rate($grosSalary);
+    $dailySalary = (float) str_replace(',', '', $dailySalary);
+    $abs_deduction_salary = $absence_day * $dailySalary;
+    return $abs_deduction_salary;
+}
+
+
 
 //GET EMPLOYEE MAIN SALARY
 function EMPLOYEE_BASIC_SALARY($EMPLOYEE_SALARY)
@@ -76,6 +235,23 @@ function EMPLOYEE_BASIC_SALARY($EMPLOYEE_SALARY)
         'main_salary' => round($MAIN_SALARY),
         'half_salary' => round($HALF_SALARY),
     ];
+}
+
+//payableday
+function TOTALPAYABLEDAYS($employee_id, $month = null)
+{
+    $presentday = EMPLOYEE_PRESENCE_DAY($employee_id, $month);
+    $paidLeaves = count(GET_PAID_LEAVES($employee_id, $month));
+    $holidays = count(GET_HOLIDAYS($month));
+    $employee = Employee::find($employee_id);
+    $lateCoutDay = floor(LATE_DAYS($employee) / 3);
+    $payable_day = ($presentday +  $paidLeaves +  $holidays) -  $lateCoutDay;
+
+    if($presentday == 0){
+        return 0;
+    }
+    // minimun 30 days fix
+    return min($payable_day, 30);
 }
 
 //GET EMPLOYEE HOUSE RENT MAIN SALARY
@@ -145,53 +321,55 @@ function OVERTIME_SALARY($EMPLOYEE)
 }
 
 //GET EMPLOYEE LATE DAYS
-function LATE_DAYS($EMPLOYEE)
+// function LATE_DAYS($EMPLOYEE)
+// {
+//     $EMPLOYEE_LAST_IN_TIME = Carbon::parse($EMPLOYEE->last_in_time)->addMinutes(15)->format("H:i:s");
+//     $LATE = DB::table('attendances')->where('emplyee_id', $EMPLOYEE->id)->whereMonth('date', date('m'))
+//         ->whereTime('sign_in', ">", $EMPLOYEE_LAST_IN_TIME)->count();
+//     return $LATE;
+// }
+
+function LATE_DAYS($EMPLOYEE, $month = null)
 {
-    $EMPLOYEE_LAST_IN_TIME = Carbon::parse($EMPLOYEE->last_in_time)->addMinutes(15)->format("H:i:s");
-    $LATE = DB::table('attendances')->where('emplyee_id', $EMPLOYEE->id)->whereMonth('date', date('m'))
-        ->whereTime('sign_in', ">", $EMPLOYEE_LAST_IN_TIME)->count();
+    $month = $month ?? date('Y-m');
+
+    $EMPLOYEE_LAST_IN_TIME = Carbon::parse($EMPLOYEE->last_in_time)
+        ->addMinutes(15)
+        ->format("H:i:s");
+
+    $LATE = DB::table('attendances')
+        ->where('emplyee_id', $EMPLOYEE->id)
+        ->whereBetween('date', [
+            Carbon::parse($month)->startOfMonth(),
+            Carbon::parse($month)->endOfMonth()
+        ])
+        ->whereTime('sign_in', ">", $EMPLOYEE_LAST_IN_TIME)
+        ->count();
+
     return $LATE;
 }
 
-function LATE_DAYS_SALARY_DEDUCT($EMPLOYEE)
+function LATE_DAYS_SALARY_DEDUCT($EMPLOYEE, $month = null)
 {
-    $EMPLOYEE_SALARY = $EMPLOYEE->salary;
-    $DAYS = 26;
-    $ONE_DAY_SALARY = $EMPLOYEE_SALARY / $DAYS;
-    $TOTAL = 0;
-    $LATE_COUNT = LATE_DAYS($EMPLOYEE);
-    if ($LATE_COUNT > 3) {
-        $TOTAL += $ONE_DAY_SALARY;
-    }
-    if ($LATE_COUNT > 6) {
-        $TOTAL += $ONE_DAY_SALARY;
-    }
-    if ($LATE_COUNT > 9) {
-        $TOTAL += $ONE_DAY_SALARY;
-    }
-    if ($LATE_COUNT > 12) {
-        $TOTAL += $ONE_DAY_SALARY;
-    }
-    if ($LATE_COUNT > 15) {
-        $TOTAL += $ONE_DAY_SALARY;
-    }
-    if ($LATE_COUNT > 18) {
-        $TOTAL += $ONE_DAY_SALARY;
-    }
-    if ($LATE_COUNT > 21) {
-        $TOTAL += $ONE_DAY_SALARY;
-    }
-    if ($LATE_COUNT > 24) {
-        $TOTAL += $ONE_DAY_SALARY;
-    }
-    if ($LATE_COUNT > 27) {
-        $TOTAL += $ONE_DAY_SALARY;
-    }
-    if ($LATE_COUNT > 30) {
-        $TOTAL += $ONE_DAY_SALARY;
-    }
-    return round($TOTAL);
+    $lateCount = LATE_DAYS($EMPLOYEE, $month);
+    $deductDays = floor($lateCount / 3);
+    $oneDaySalary = (float) str_replace(',', '', Daily_Rate($EMPLOYEE->salary));
+    $totalDeduction = $deductDays * $oneDaySalary;
+    return round($totalDeduction, 2);
 }
+
+
+// function LATE_DAYS_SALARY_DEDUCT($EMPLOYEE)
+// {
+
+//     $lateCount = LATE_DAYS($EMPLOYEE);
+//     $deductDays = floor($lateCount / 3);
+//     $oneDaySalary = Daily_Rate($EMPLOYEE->salary);
+//     $oneDaySalary = (float) str_replace(',', '', $oneDaySalary);
+//     $totalDeduction = $deductDays * $oneDaySalary;
+
+//     return round($totalDeduction, 2);
+// }
 
 
 function EMPLOYEE_UNPAID_LEAVE_SALARY($EMPLOYEE)
@@ -205,17 +383,25 @@ function EMPLOYEE_UNPAID_LEAVE_SALARY($EMPLOYEE)
 }
 
 //GET EMPLOYEE PAYABLE SALARY
-function EMPLOYEE_PAYABLE_SALARY($EMPLOYEE,$month)
+// function EMPLOYEE_PAYABLE_SALARY($EMPLOYEE, $month)
+// {
+//     $LATE_DAYS_SALARY_DEDUCT = LATE_DAYS_SALARY_DEDUCT($EMPLOYEE);
+//     $DAYS = 26;
+//     $OVERTIME_SALARY = OVERTIME_SALARY($EMPLOYEE);
+//     $EMPLOYEE_SALARY = $EMPLOYEE->salary;
+//     $ONE_DAY_SALARY = $EMPLOYEE_SALARY / $DAYS;
+//     $UNPAID_LEAVE_SALARY = EMPLOYEE_UNPAID_LEAVE_SALARY($EMPLOYEE);
+//     $DEDUCT_SALARY = $ONE_DAY_SALARY * EMPLOYEE_ABSENCE_DAY($EMPLOYEE->id, $month);
+//     $PAYABLE_SALARY = ($EMPLOYEE_SALARY + $OVERTIME_SALARY) - ($DEDUCT_SALARY + $LATE_DAYS_SALARY_DEDUCT + $UNPAID_LEAVE_SALARY);
+//     return round($PAYABLE_SALARY);
+// }
+
+function EMPLOYEE_PAYABLE_SALARY($EMPLOYEE, $month)
 {
-    $LATE_DAYS_SALARY_DEDUCT = LATE_DAYS_SALARY_DEDUCT($EMPLOYEE);
-    $DAYS = 26;
-    $OVERTIME_SALARY = OVERTIME_SALARY($EMPLOYEE);
-    $EMPLOYEE_SALARY = $EMPLOYEE->salary;
-    $ONE_DAY_SALARY = $EMPLOYEE_SALARY / $DAYS;
-    $UNPAID_LEAVE_SALARY = EMPLOYEE_UNPAID_LEAVE_SALARY($EMPLOYEE);
-    $DEDUCT_SALARY = $ONE_DAY_SALARY * EMPLOYEE_ABSENCE_DAY($EMPLOYEE->id,$month);
-    $PAYABLE_SALARY = ($EMPLOYEE_SALARY + $OVERTIME_SALARY) - ($DEDUCT_SALARY + $LATE_DAYS_SALARY_DEDUCT + $UNPAID_LEAVE_SALARY);
-    return round($PAYABLE_SALARY);
+   $payable_day =  TOTALPAYABLEDAYS($EMPLOYEE->id , $month);
+   $oneDaySalary = (float) str_replace(',', '', Daily_Rate($EMPLOYEE->salary));
+   $payable_salary = $payable_day *  $oneDaySalary;
+  return round($payable_salary);
 }
 
 function PAID_LEAVE_COUNT($EMPLOYEE)
@@ -375,7 +561,7 @@ function getFirstAccount($id)
 function getUnderAccount($id, $today = null, $acType = true)
 {
     $accounts = ChartOfAccount::getaccount($id)->get();
-    
+
 
     $runningBalance = 0;
 
@@ -485,12 +671,12 @@ function getTypeOfAccount($id = [], $oldIds = [])
     return $oldIds;
 }
 
-function getOldAccount($id = null , $uniqid = 0)
+function getOldAccount($id = null, $uniqid = 0)
 {
     $id = $uniqid ? $uniqid : getAccountByUniqueID($id)->id;
     $account_list =  ChartOfAccount::where('status', 'Active');
     if ($id) {
-        $account_list = $account_list->whereIn('id', getTypeOfAccount([$id]))->orWhereIn("id",[$id]);
+        $account_list = $account_list->whereIn('id', getTypeOfAccount([$id]))->orWhereIn("id", [$id]);
     }
     // $account_list = $account_list->where('company_id', auth()->user()->company_id);
     return $account_list;
@@ -681,7 +867,7 @@ function numberToWords($number)
     // Split Taka and Paisa
     $taka = floor($number);
     $paisa = round(($number - $taka) * 100);
-   
+
 
     $result = "";
     $i = 0;
@@ -736,20 +922,20 @@ function smartNumberFormat($num)
     return $num;
 }
 
-function checkLocation($latitude, $longitude , $type = 'check_in')
+function checkLocation($latitude, $longitude, $type = 'check_in')
 {
-   if(!$latitude && !$longitude){
-     return '<span class="badge badge-danger"><i class="fa fa-map-marker"></i> GPS OFF</span>';
-   }
+    if (!$latitude && !$longitude) {
+        return '<span class="badge badge-danger"><i class="fa fa-map-marker"></i> GPS OFF</span>';
+    }
 
-   $officeLat = config("officeLocation.latitude"); 
-   $officeLog = config("officeLocation.longitude");
-   if($latitude == $officeLat && $longitude == $officeLog){
+    $officeLat = config("officeLocation.latitude");
+    $officeLog = config("officeLocation.longitude");
+    if ($latitude == $officeLat && $longitude == $officeLog) {
         return '<span class="badge badge-success"><i class="fa fa-building"></i> Office</span>';
-   }
+    }
 
-   $text = $type == 'check_out' ? 'Check Out Location' : 'Check In Location';
-   return '<a href="https://www.google.com/maps?q=' . $latitude . ',' . $longitude . '" target="_blank" class="badge badge-info"> <i class="fa fa-map-marker"></i> ' . $text . '</a>';
+    $text = $type == 'check_out' ? 'Check Out Location' : 'Check In Location';
+    return '<a href="https://www.google.com/maps?q=' . $latitude . ',' . $longitude . '" target="_blank" class="badge badge-info"> <i class="fa fa-map-marker"></i> ' . $text . '</a>';
 }
 
 /**
@@ -763,7 +949,7 @@ function getEffectiveDate($datetime)
     $timeOnly = $datetime->format('H:i:s');
 
     // সকাল 5:০০ এর আগে হলে আগের দিন ধরবে
-    if ($timeOnly <  $DAY_CUTOFF_TIME ) {
+    if ($timeOnly <  $DAY_CUTOFF_TIME) {
         $datetime->modify('-1 day');
     }
 

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Backend\Hrm\ApproveCashReqApplicationController;
+use App\Http\Controllers\Backend\Hrm\ApproveLeaveApplicationController;
 use App\Http\Controllers\Backend\Hrm\ApproveLoneApplicationController;
 use App\Http\Controllers\Backend\Hrm\AttendanceController;
 use App\Http\Controllers\Backend\Hrm\EmployeeController;
@@ -64,12 +65,14 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //Leave Application crud operation end
 
         // Leave Approve  start
-        Route::get('/hrm-leave-approve-applicaitn-lists', 'ApproveLeaveApplicationController@index')->name('hrm.leaveapprove.index');
-        Route::get('/dataProcessingApproveLeaveApplication', 'ApproveLeaveApplicationController@dataProcessingApproveLeaveApplication')->name('hrm.leaveapprove.dataProcessingApproveLeaveApplication');
-        Route::get('/hrm-leave-approve-applicaitn-update/{leave:id}', 'ApproveLeaveApplicationController@edit')->name('hrm.leaveapprove.approve');
-        Route::get('/hrm-leave-approve-applicaitn-show/{leave:id}', 'ApproveLeaveApplicationController@show')->name('hrm.leaveapprove.show');
-        Route::get('/hrm-leave-approve-applicaitn-cancel/{leave:id}', 'ApproveLeaveApplicationController@cancel')->name('hrm.leaveapprove.cancel');
-        // Leave Approve End
+        Route::get('/hrm-leave-approve-applicaitn-lists', [ApproveLeaveApplicationController::class, 'index'])->name('hrm.leaveapprove.index');
+        Route::get('/dataProcessingApproveLeaveApplication',[ApproveLeaveApplicationController::class ,'dataProcessingApproveLeaveApplication'])->name('hrm.leaveapprove.dataProcessingApproveLeaveApplication');
+        Route::get('/hrm-leave-approve-applicaitn-update/{leave:id}', [ApproveLeaveApplicationController::class, 'edit'])->name('hrm.leaveapprove.approve');
+        Route::get('/hrm-leave-approve-applicaitn-show/{leave:id}', [ApproveLeaveApplicationController::class, 'show'])->name('hrm.leaveapprove.show');
+        Route::get('/hrm-leave-approve-applicaitn-cancel/{leave:id}', [ApproveLeaveApplicationController::class, 'cancel'])->name('hrm.leaveapprove.cancel');
+
+
+        // Leave Approve End]
 
         //Lone Application crud operation start
         Route::get('/hrm-lone-applicaitn-list', [LoneApplicationController::class, 'index'])->name('hrm.lone.index');
