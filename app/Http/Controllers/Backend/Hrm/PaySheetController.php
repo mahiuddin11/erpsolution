@@ -66,13 +66,12 @@ class PaySheetController extends Controller
 
             foreach ($takeEmployees as $emp) {
 
-            
                 $data[] = [
                     'employee_id'            => $emp->id,
                     'date'                   => Carbon::parse($month)->endOfMonth(),
                     'name'                    => $emp->name,
                     'total_salary'           => $emp->salary,
-                    'daily_rate'             => Daily_Rate($emp->salary),
+                    'daily_rate'             => round($emp->salary / 30, 2),
                     'employee_presence_day'  => EMPLOYEE_PRESENCE_DAY($emp->id, $month),
                     'employee_absence_day'   => EMPLOYEE_ABSENCE_DAY($emp->id, $month),
                     'absence_deduction'      => ABSENCE_DEDUCTION($emp->id, $month, $emp->salary),

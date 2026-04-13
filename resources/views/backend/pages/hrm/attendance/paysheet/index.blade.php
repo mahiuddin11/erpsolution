@@ -101,7 +101,7 @@
                                     <i class="fas fa-search mr-1"></i>Search
                                 </button>
                                 <button type="button" class="btn btn-primary" onclick="submitGenerate('{{ $monthName }}')">
-                                    <i class="fas fa-file-alt mr-1"></i>Generate Report
+                                    <i class="fas fa-file-alt mr-1"></i>Generate Payable Salary
                                 </button>
                             </div>
                         </div>
