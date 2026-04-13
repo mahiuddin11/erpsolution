@@ -25,7 +25,6 @@ class PaySheetController extends Controller
     public function index(Request $request)
     {
 
-       
         // global $conveyance;
 
         $title = 'Pay Sheet';
@@ -163,9 +162,6 @@ class PaySheetController extends Controller
                 }
             }
         }
-
-
-
 
         return view('backend.pages.hrm.attendance.paysheet.index', get_defined_vars());
     }
