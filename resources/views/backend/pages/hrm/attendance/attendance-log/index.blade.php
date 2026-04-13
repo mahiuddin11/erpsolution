@@ -63,7 +63,7 @@
         }
 
         .page-content {
-            padding: 24px 20px;
+            padding: 24px 0px;
             max-width: 1500px;
         }
 

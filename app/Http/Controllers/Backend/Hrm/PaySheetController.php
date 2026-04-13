@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Accounts;
 use App\Models\Attendance;
+use App\Models\Company;
 use App\Models\Employee;
 use App\Models\EmpPayDetails;
 use App\Models\Lone;
@@ -31,8 +32,8 @@ class PaySheetController extends Controller
         $employees = new Employee();
         $accounts = Accounts::whereIn('id', [4, 5, 6])->get();
         $employee_payable_salary = 0;
-
-        
+        // $companyDetails = Company::get();
+       
         if ($request->action === 'generate') {
 
             $month = $request->month ?? now()->format('Y-m');
