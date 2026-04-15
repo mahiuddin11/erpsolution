@@ -219,6 +219,7 @@ class PaySheetController extends Controller
 
     public function empPayDetailsStore(Request $request, MonthlyPayableSalary $monthlyPayableSalary)
     {
+
         $request->validate([
             'payment_type' => 'required',
             'amount' => 'required'
@@ -243,7 +244,9 @@ class PaySheetController extends Controller
             $loanAdjustment = Lone::where('employee_id', $monthlyPayableSalary->employee_id)->where('status', 'approved')->latest()->pluck('lone_adjustment')->first();
 
             if ($loanBalance > 0) {
+
                 if ($request->amount < $loanAdjustment) {
+
                     $transection1['date'] = now();
                     $transection1['account_id'] = 3; //salary
                     $transection1['branch_id'] = $monthlyPayableSalary->employee->branch_id;
@@ -261,7 +264,9 @@ class PaySheetController extends Controller
                     $transection2['amount'] = $request->amount;
                     $transection2['credit'] = $request->amount;
                     Transection::create($transection2);
+
                 } elseif ($loanBalance > $loanAdjustment) {
+
                     $transection1['date'] = now();
                     $transection1['account_id'] = 3; //salary
                     $transection1['branch_id'] = $monthlyPayableSalary->employee->branch_id;
@@ -287,7 +292,9 @@ class PaySheetController extends Controller
                     $transection3['amount'] = ($request->amount -  $loanAdjustment);
                     $transection3['credit'] = ($request->amount -  $loanAdjustment);
                     Transection::create($transection3);
+
                 } else {
+
                     $transection1['date'] = now();
                     $transection1['account_id'] = 3; //salary
                     $transection1['branch_id'] = $monthlyPayableSalary->employee->branch_id;
@@ -315,6 +322,7 @@ class PaySheetController extends Controller
                     Transection::create($transection3);
                     Lone::where('employee_id', $monthlyPayableSalary->employee_id)->where('status', 'approved')->latest()->update(['status' => 'completed']);
                 }
+                
             } else {
                 if ($request->amount < $monthlyPayableSalary->employee_payable_salary) {
                     $transection7['date'] = now();

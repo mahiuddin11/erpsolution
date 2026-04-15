@@ -57,7 +57,7 @@ Hrm - {{$title}}
             </div>
             <!-- /.card-header -->
             <div class="card-body">
-                <form action="{{route('hrm.loneapprove.approve',$lone->id)}}" method="get">
+                <form action="{{route('hrm.loneapprove.approve', $lone->id)}}" method="get">
                 <div class="table-responsive">
                     <table class="table table-striped">
                         <thead>
@@ -71,12 +71,13 @@ Hrm - {{$title}}
                             </tr>
                         </thead>
                         <tbody>
-                                <td>{{$lone->employee->name}}</td>
-                                <td>{{$lone->branch->name}}</td>
+                            <tr>
+                                <td>{{$lone->employee->name ?? ''}}</td>
+                                <td>{{$lone->branch->name ?? ''}}</td>
                                 <td><input type="number" name="amount" class="form-control" value="{{$lone->amount}}"></td>
                                 <td>
                                     <input type="number" name="lone_adjustment" class="form-control" value="{{$lone->lone_adjustment}}">
-                                    </td>
+                                </td>
                                 <td>{{$lone->reason}}</td>
                                 <td>{{$lone->status}}</td>
                             </tr>

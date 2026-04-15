@@ -246,13 +246,13 @@ class LoneApplicationRepositories
                 Storage::disk('public')->makeDirectory('lone');
             }
 
-
             $file->storeAs('lone', $fileName, 'public');
         } else {
             $fileName = null;
         }
         $lone->file = $fileName;
         $lone->save();
+        
         return $lone;
     }
 

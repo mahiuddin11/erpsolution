@@ -70,7 +70,7 @@ Hrm - {{$title}}
                             </tr>
                         </thead>
                         <tbody>
-                           
+                           <tr>
                                 <td>{{$lone->employee->name}}</td>
                                 <td>{{$lone->branch->name}}</td>
                                 <td>{{$lone->amount}}</td>

@@ -90,7 +90,7 @@
                             <div class="col-md-6 mb-1">
                                 <label for="">Amount *:</label>
                                 <input type="number" class="form-control input-rounded" name="amount"
-                                    placeholder="Application Date">
+                                    placeholder="Amount">
                                 @error('amount')
                                     <span class=" error text-red text-bold">{{ $message }}</span>
                                 @enderror
@@ -98,7 +98,7 @@
                             <div class="col-md-6 mb-1">
                                 <label for="">Loan Adjustment *:</label>
                                 <input type="number" class="form-control input-rounded" name="lone_adjustment"
-                                    placeholder="Application Date">
+                                    placeholder="Loan Adjustment Amount">
                                 @error('lone_adjustment')
                                     <span class=" error text-red text-bold">{{ $message }}</span>
                                 @enderror

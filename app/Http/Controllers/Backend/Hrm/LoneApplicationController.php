@@ -135,6 +135,7 @@ class LoneApplicationController extends Controller
     {
 
         $title = 'Lone application Details';
+ 
         return view('backend.pages.hrm.lone_application.details', get_defined_vars());
     }
 

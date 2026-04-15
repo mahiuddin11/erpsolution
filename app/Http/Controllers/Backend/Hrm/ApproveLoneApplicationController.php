@@ -148,10 +148,11 @@ class ApproveLoneApplicationController extends Controller
     public function show(Lone $lone)
     {
         $title = 'Approve Loan Application Details';
+   
         return view('backend.pages.hrm.lone_approve.details', get_defined_vars());
     }
 
-    // 
+
 
 
 
