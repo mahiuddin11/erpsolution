@@ -179,38 +179,38 @@ class PaySheetController extends Controller
     public function review($id)
     {
         $title = 'Salary Review';
-        $MonthlyPaySheet = MonthlyPayableSalary::where('employee_id', $id)->first();
-
+        $MonthlyPaySheet = MonthlyPayableSalary::find($id);
         return view('backend.pages.hrm.attendance.paysheet.salaryreview', get_defined_vars());
     }
 
-    public function update(Request $request, $employee_id)
+    public function update(Request $request, $id)
     {
-        $sheet = MonthlyPayableSalary::where('employee_id', $employee_id)->first();
 
-        if (!$sheet) {
+        $MonthlyPayableSalary = MonthlyPayableSalary::find($id);
+
+        if (!$MonthlyPayableSalary) {
             return back()->with('error', 'Data not found');
         }
 
-        $sheet->update([
-            'total_salary' => $request->total_salary,
-            'daily_rate' => $request->daily_rate,
-            'employee_presence_day' => $request->employee_presence_day,
-            'employee_absence_day' => $request->employee_absence_day,
-            'absence_deduction' => $request->absence_deduction,
-            'employee_late' => $request->employee_late,
-            'employee_deducton' => $request->employee_deducton,
-            'employee_paid_leave' => $request->employee_paid_leave,
-            'holiday' => $request->holiday,
-            'totalPayableDays' => $request->totalPayableDays,
-            'overtime_houre' => $request->overtime_houre,
-            'overtime_salary' => $request->overtime_salary,
-            'employee_payable_salary' => $request->employee_payable_salary,
-        ]);
+        $data = [
+            'total_salary'            => (float)  $request->total_salary,
+            'daily_rate'              => (float)  $request->daily_rate,
+            'employee_presence_day'   => (int)    $request->employee_presence_day,
+            'employee_absence_day'    => (int)    $request->employee_absence_day,
+            'absence_deduction'       => (float)  $request->absence_deduction,
+            'employee_late'           => (int)    $request->employee_late,
+            'employee_deducton'       => (float)  $request->employee_deducton,
+            'employee_paid_leave'     => (int)    $request->employee_paid_leave,
+            'holiday'                 => (int)    $request->holiday,
+            'totalPayableDays'        => (int)    $request->totalPayableDays,
+            'overtime_houre'          => (int)    $request->overtime_houre,
+            'overtime_salary'         => (float)  $request->overtime_salary,
+            'employee_payable_salary' => (float)  $request->employee_payable_salary,
+        ];
 
-        return redirect()
-            ->route('hrm.paysheet.review', $employee_id)
-            ->with('success', 'Updated successfully');
+        $MonthlyPayableSalary->update($data);
+
+        return redirect()->route('hrm.paysheet.review' , $id)->with('success', 'Updated successfully');
     }
 
 

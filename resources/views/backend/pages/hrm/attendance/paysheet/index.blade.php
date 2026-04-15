@@ -271,7 +271,7 @@
                                             <td>
                                                 <div class="d-flex  gap-2 justify-content-center">
                                                     @if (App\Helpers\Helper::roleAccess('hrm.paysheet.review'))
-                                                        <a href="{{ route('hrm.paysheet.review', $MonthlyPaySheet->employee_id) }}"
+                                                        <a href="{{ route('hrm.paysheet.review', $MonthlyPaySheet->id) }}"
                                                             class="btn btn-info btn-sm">
                                                             <i class="fas fa-eye"></i>
                                                         </a>
