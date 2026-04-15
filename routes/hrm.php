@@ -49,6 +49,8 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::any('/hrm-salary-pay-sheet-list', [PaySheetController::class, "index"])->name('hrm.paysheet.index');
         Route::get('/hrm-salary-pay-sheet-show/{pay:id}', [PaySheetController::class,'show'])->name('hrm.paysheet.show');
         Route::post('/hrm-salary-pay-details-store/{monthlyPayableSalary:id}', [PaySheetController::class,'empPayDetailsStore'])->name('hrm.paysheet.empPayDetailsStore');
+        Route::get('/hrm-salary-pay-review/{monthlyPayableSalary:id}', [PaySheetController::class, 'review'])->name('hrm.paysheet.review');
+        Route::post('/hrm-salary-pay-update/{monthlyPayableSalary:id}', [PaySheetController::class, 'update'])->name('hrm.paysheet.update');
         //Salary Pay crud operation end
 
         //Leave Application crud operation start

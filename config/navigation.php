@@ -392,6 +392,8 @@ $parent_menu = array(
                 'parent_id' => null,
                 'childMenu' => (object) array(
                     (object) array('label' => 'Salary Sheet ', 'route' => 'hrm.paysheet.index', 'icon' => 'fa fa-dashboard', 'navigate_status' => 1),
+                    (object) array('label' => 'Salary Review ', 'route' => 'hrm.paysheet.review', 'icon' => 'fa fa-eye', 'navigate_status' => null),
+                    (object) array('label' => 'Salary Update ', 'route' => 'hrm.paysheet.update', 'icon' => 'fa fa-edit', 'navigate_status' => null),
                 )
             ),
 

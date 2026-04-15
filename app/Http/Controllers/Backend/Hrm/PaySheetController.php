@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Backend\Hrm;
 
+use App\Helpers\Helper;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Accounts;
@@ -32,17 +33,18 @@ class PaySheetController extends Controller
         $accounts = Accounts::whereIn('id', [4, 5, 6])->get();
         $employee_payable_salary = 0;
         // $companyDetails = Company::get();
-       
+
         if ($request->action === 'generate') {
 
             $month = $request->month ?? now()->format('Y-m');
             $alreadyExists = MonthlyPayableSalary::whereYear('date', Carbon::parse($month)->year)->whereMonth('date', Carbon::parse($month)->month)->exists();
-            
+
             // dd($request->action, $alreadyExists, $month, $request->all());
             if ($alreadyExists) {
 
                 session()->flash(
-                    'warning', Carbon::parse($month)->format('F Y') . ' monthly report is already genareted.'
+                    'warning',
+                    Carbon::parse($month)->format('F Y') . ' monthly report is already genareted.'
                 );
 
                 return redirect()->route(
@@ -56,7 +58,7 @@ class PaySheetController extends Controller
 
             $takeEmployee = Employee::where('employee_status', 'present');
 
-            if ($request->employee_id && $request->employee_id !== 'all' ) {
+            if ($request->employee_id && $request->employee_id !== 'all') {
                 $takeEmployee->where('id', $request->employee_id);
             }
 
@@ -163,13 +165,55 @@ class PaySheetController extends Controller
             }
         }
 
+        // $review = Helper::roleAccess('hrm.salary.sheet.edit') ? 1 : 0;
+       
+
         return view('backend.pages.hrm.attendance.paysheet.index', get_defined_vars());
     }
 
     public function show(Employee $pay)
     {
+       
+        
         $title = 'Pay Sheet details';
         return view('backend.pages.hrm.attendance.paysheet.details', get_defined_vars());
+    }
+
+    public function review($id)
+    {
+        $title = 'Salary Review';
+        $MonthlyPaySheet = MonthlyPayableSalary::where('employee_id', $id)->first();
+
+        return view('backend.pages.hrm.attendance.paysheet.salaryreview', get_defined_vars());
+    }
+
+    public function update(Request $request, $employee_id)
+    {
+        $sheet = MonthlyPayableSalary::where('employee_id', $employee_id)->first();
+
+        if (!$sheet) {
+            return back()->with('error', 'Data not found');
+        }
+
+        $sheet->update([
+            'total_salary' => $request->total_salary,
+            'daily_rate' => $request->daily_rate,
+            'employee_presence_day' => $request->employee_presence_day,
+            'employee_absence_day' => $request->employee_absence_day,
+            'absence_deduction' => $request->absence_deduction,
+            'employee_late' => $request->employee_late,
+            'employee_deducton' => $request->employee_deducton,
+            'employee_paid_leave' => $request->employee_paid_leave,
+            'holiday' => $request->holiday,
+            'totalPayableDays' => $request->totalPayableDays,
+            'overtime_houre' => $request->overtime_houre,
+            'overtime_salary' => $request->overtime_salary,
+            'employee_payable_salary' => $request->employee_payable_salary,
+        ]);
+
+        return redirect()
+            ->route('hrm.paysheet.review', $employee_id)
+            ->with('success', 'Updated successfully');
     }
 
 

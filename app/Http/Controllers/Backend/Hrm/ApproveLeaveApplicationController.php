@@ -111,7 +111,7 @@ class ApproveLeaveApplicationController extends Controller
             return redirect()->back();
         }
         try {
-            $this->validate($request, $this->ApproveLeaveApplicationService->updateValidation($request, $id));
+            // $this->validate($request, $this->ApproveLeaveApplicationService->updateValidation($request, $id));
         } catch (ValidationException $e) {
             session()->flash('error', 'Validation error !!');
             return redirect()->back()->withErrors($e->errors())->withInput();
@@ -161,11 +161,11 @@ class ApproveLeaveApplicationController extends Controller
         if (!is_numeric($id)) {
             return response()->json($this->systemTransformer->invalidId($id), 200);
         }
-        $detailsInfo =   $this->systemService->details($id);
+        $detailsInfo =   $this->ApproveLeaveApplicationService->details($id);
         if (!$detailsInfo) {
             return response()->json($this->systemTransformer->notFound($detailsInfo), 200);
         }
-        $deleteInfo =  $this->systemService->destroy($id);
+        $deleteInfo =  $this->ApproveLeaveApplicationService->destroy($id);
         if ($deleteInfo) {
             return response()->json($this->systemTransformer->delete($deleteInfo), 200);
         }
