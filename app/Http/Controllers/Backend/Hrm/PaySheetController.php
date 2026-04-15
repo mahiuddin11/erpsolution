@@ -165,16 +165,13 @@ class PaySheetController extends Controller
             }
         }
 
-        // $review = Helper::roleAccess('hrm.salary.sheet.edit') ? 1 : 0;
-       
-
+      
         return view('backend.pages.hrm.attendance.paysheet.index', get_defined_vars());
     }
 
     public function show(Employee $pay)
     {
        
-        
         $title = 'Pay Sheet details';
         return view('backend.pages.hrm.attendance.paysheet.details', get_defined_vars());
     }
@@ -322,7 +319,7 @@ class PaySheetController extends Controller
                     Transection::create($transection3);
                     Lone::where('employee_id', $monthlyPayableSalary->employee_id)->where('status', 'approved')->latest()->update(['status' => 'completed']);
                 }
-                
+
             } else {
                 if ($request->amount < $monthlyPayableSalary->employee_payable_salary) {
                     $transection7['date'] = now();

@@ -71,8 +71,8 @@ Hrm - {{$title}}
                         </thead>
                         <tbody>
                            <tr>
-                                <td>{{$lone->employee->name}}</td>
-                                <td>{{$lone->branch->name}}</td>
+                                <td>{{$lone->employee->name ?? ''}}</td>
+                                <td>{{$lone->branch->name ?? ''}}</td>
                                 <td>{{$lone->amount}}</td>
                                 <td>{{$lone->lone_adjustment}}</td>
                                 <td>{{$lone->reason}}</td>

@@ -87,6 +87,7 @@
                                     <span class=" error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
+                            
                             <div class="col-md-6 mb-1">
                                 <label for="">Amount *:</label>
                                 <input type="number" class="form-control input-rounded" name="amount"

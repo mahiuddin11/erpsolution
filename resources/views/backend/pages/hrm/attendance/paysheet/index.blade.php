@@ -480,8 +480,6 @@
       $(document).on('click', '.paynow', function() {
           const url = $(this).data('url');
         
-          console.log(url);
-          
           $('#modalForm').attr('action', url);
           const tr = $(this).closest('tr');
           $('.showpayable').text(tr.find('.payable').text().trim());
