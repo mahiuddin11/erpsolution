@@ -80,11 +80,15 @@ class ApproveLoneApplicationController extends Controller
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
 
-    public function edit(Request $request, Lone $lone)
+    public function approve(Request $request, Lone $lone)
     {
-        $lone->amount = $request->amount;
-        $lone->lone_adjustment = $request->lone_adjustment;
+
+        $lone->amount =  $lone->amount ??  $request->amount;
+        $lone->lone_adjustment =  $lone->lone_adjustment ?? $request->lone_adjustment;
         $lone->status = 'approved';
+        $lone->approved_by  = auth()->id();
+        $lone->note = "user aprove this lone";
+        
         $lone->save();
 
         $transection['date'] = now();
@@ -111,7 +115,7 @@ class ApproveLoneApplicationController extends Controller
 
     public function cancel(Lone $lone)
     {
-
+        
         $lone->status = 'cancel';
         $lone->save();
         session()->flash('success', ' Lone Application successfully Cancelled!!');

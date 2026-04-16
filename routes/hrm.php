@@ -109,7 +109,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         // Lone Approve start
         Route::get('/hrm-lone-approve-applicaitn-lists', [ApproveLoneApplicationController::class, 'index'])->name('hrm.loneapprove.index');
         Route::get('/dataProcessingApproveLoneApplication', [ApproveLoneApplicationController::class, 'dataProcessingApproveLoneApplication'])->name('hrm.loneapprove.dataProcessingApproveLoneApplication');
-        Route::get('/hrm-lone-approve-applicaitn-update/{lone:id}', [ApproveLoneApplicationController::class, 'edit'])->name('hrm.loneapprove.approve');
+        Route::get('/hrm-lone-approve-applicaitn-update/{lone:id}', [ApproveLoneApplicationController::class, 'approve'])->name('hrm.loneapprove.approve');
         Route::get('/hrm-lone-approve-applicaitn-show/{lone:id}', [ApproveLoneApplicationController::class, 'show'])->name('hrm.loneapprove.show');
         Route::get('/hrm-lone-approve-applicaitn-cancel/{lone:id}', [ApproveLoneApplicationController::class, 'cancel'])->name('hrm.loneapprove.cancel');
         // Lone Approve End

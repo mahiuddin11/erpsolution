@@ -16,7 +16,9 @@ class Lone extends Model
         'amount',
         'file',
         'reason',
-        'status'
+        'status',
+        'approved_by',
+        'note'
     ];
 
     public function employee()
