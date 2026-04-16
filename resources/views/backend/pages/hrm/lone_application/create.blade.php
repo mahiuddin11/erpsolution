@@ -54,7 +54,7 @@
                         @csrf
                         <div class="row">
 
-                            <div class="col-md-6 mb-1">
+                            <div class="col-md-4 mb-1">
                                 <label for=""> EMPLOYEE NAME <span class="text-danger">*</span></label>
                                 @if (auth()->user()->type != 'Admin' && auth()->user()->employee)
                                     <h4> {{ auth()->user()->employee->name ?? '' }}</h4>
@@ -74,7 +74,7 @@
                                 @enderror
                             </div>
                             
-                            <div class="col-md-6 mb-1">
+                            <div class="col-md-4 mb-1">
                                 <label for=""> BRANCH NAME <span class="text-danger">*</span></label>
                                 <select class="select2 form-control select2-lg" aria-label=".select2-lg example"
                                     name="branch_id">
@@ -88,7 +88,7 @@
                                 @enderror
                             </div>
                             
-                            <div class="col-md-6 mb-1">
+                            <div class="col-md-4 mb-1">
                                 <label for="">Amount *:</label>
                                 <input type="number" class="form-control input-rounded" name="amount"
                                     placeholder="Amount">
@@ -96,7 +96,9 @@
                                     <span class=" error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
-                            <div class="col-md-6 mb-1">
+
+
+                            <div class="col-md-4 mb-1">
                                 <label for="">Loan Adjustment *:</label>
                                 <input type="number" class="form-control input-rounded" name="lone_adjustment"
                                     placeholder="Loan Adjustment Amount">
@@ -105,7 +107,18 @@
                                 @enderror
                             </div>
 
-                            <div class="col-md-6 mb-1">
+                            <div class="col-md-4 mb-1">
+    <label>Adjustment Starting Month:</label>
+    <input type="month" class="form-control input-rounded" name="adjustment_start">
+    
+    @error('adjustment_start')
+        <span class="error text-red text-bold">{{ $message }}</span>
+    @enderror
+</div>
+
+
+
+                            <div class="col-md-4 mb-1">
                                 <label for="">Loan Document [Image/File]:</label>
                                 <input type="file" class="form-control input-rounded" name="file"
                                     placeholder="Application End Date">
@@ -115,7 +128,7 @@
                             </div>
 
 
-                            <div class="col-md-6 mb-1">
+                            <div class="col-md-12 mb-1">
                                 <label for="">Loan Application Reason</label>
 
                                 <textarea name="reason" id="" cols="30" class="form-control" rows="3"></textarea>

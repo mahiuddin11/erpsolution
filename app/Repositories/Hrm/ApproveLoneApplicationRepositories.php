@@ -246,8 +246,8 @@ class ApproveLoneApplicationRepositories
 
     public function update($request, $id)
     {
+       
         $Lone = $this->model::find($id);
-
         $Lone->status = $request->status;
 
         $Lone->save();

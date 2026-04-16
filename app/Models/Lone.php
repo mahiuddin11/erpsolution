@@ -17,6 +17,7 @@ class Lone extends Model
         'file',
         'reason',
         'status',
+        'adjustment_start',
         'approved_by',
         'note'
     ];

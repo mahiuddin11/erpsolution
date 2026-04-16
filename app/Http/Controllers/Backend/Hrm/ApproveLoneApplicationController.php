@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Backend\Hrm;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\AccountTransaction;
 use App\Models\Employee;
 use App\Models\Lone;
 use App\Models\Transection;
@@ -11,6 +12,7 @@ use App\Transformers\AdjustTransformer;
 use App\Services\Hrm\ApproveLoneApplicationService;
 use App\Services\InventorySetup\AdjustService;
 use App\Transformers\Transformers;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 
@@ -80,37 +82,107 @@ class ApproveLoneApplicationController extends Controller
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
 
+    // public function approve(Request $request, Lone $lone)
+    // {
+
+    //     $lone->amount =  $lone->amount ??  $request->amount;
+    //     $lone->lone_adjustment =  $lone->lone_adjustment ?? $request->lone_adjustment;
+    //     $lone->status = 'approved';
+    //     $lone->approved_by  = auth()->id();
+    //     $lone->note = "user aprove this lone";
+
+    //     $lone->save();
+
+    //     $transection['date'] = now();
+    //     $transection['account_id'] = 4;
+    //     $transection['employee_id'] = $lone->employee_id;
+    //     $transection['branch_id'] = $lone->branch_id ?? '';
+    //     $transection['type'] =  'employee_loan';
+    //     $transection['amount'] = $lone->amount;
+    //     $transection['debit'] = $lone->amount;
+    //     AccountTransaction::create($transection);
+
+
+
+    //     $transection2['date'] = now();
+    //     $transection2['account_id'] = 4;
+    //     $transection2['payment_id'] = 4;
+    //     $transection2['branch_id'] = $lone->branch_id;
+    //     $transection2['type'] =  16;
+    //     $transection2['amount'] = $lone->amount;
+    //     $transection2['credit'] = $lone->amount;
+    //     Transection::create($transection2);
+
+    //     session()->flash('success', 'Lone Application successfully Approve!!');
+    //     return back();
+    // }
+
+
     public function approve(Request $request, Lone $lone)
     {
+       
+        if (in_array($lone->status, ['approved', 'completed'])) {
+            return back()->with('error', 'This loan is already approved!');
+        }
 
-        $lone->amount =  $lone->amount ??  $request->amount;
-        $lone->lone_adjustment =  $lone->lone_adjustment ?? $request->lone_adjustment;
-        $lone->status = 'approved';
-        $lone->approved_by  = auth()->id();
-        $lone->note = "user aprove this lone";
-        
-        $lone->save();
+        DB::beginTransaction();
 
-        $transection['date'] = now();
-        $transection['account_id'] = 1;
-        $transection['employee_id'] = $lone->employee_id;
-        $transection['branch_id'] = $lone->branch_id;
-        $transection['type'] =  16;
-        $transection['amount'] = $lone->amount;
-        $transection['debit'] = $lone->amount;
-        Transection::create($transection);
+        try {
 
-        $transection2['date'] = now();
-        $transection2['account_id'] = 4;
-        $transection2['payment_id'] = 4;
-        $transection2['branch_id'] = $lone->branch_id;
-        $transection2['type'] =  16;
-        $transection2['amount'] = $lone->amount;
-        $transection2['credit'] = $lone->amount;
-        Transection::create($transection2);
+            $lone->update([
+                'amount'          =>  $request->amount ?? $lone->amount ,
+                'lone_adjustment' => $request->lone_adjustment ?? $request->lone_adjustment,
+                'adjustment_start' => $request->adjustment_start ? $request->adjustment_start . '-01' : $lone->adjustment_start,
+                'status'          => 'approved',
+                'approved_by'     => auth()->id(),
+                'note'            => $request->note ?? 'Loan approved',
+            ]);
 
-        session()->flash('success', 'Lone Application successfully Approve!!');
-        return back();
+            $amount = $request->amount;
+            $invoice = 'LOAN-' . str_pad($lone->id, 6, '0', STR_PAD_LEFT);
+
+            $amount   = (float) $request->amount;
+            $invoice  = 'LOAN-' . str_pad($lone->id, 6, '0', STR_PAD_LEFT);
+
+            // 1. Employee Loan Account (Debit) - Asset বাড়ছে
+            AccountTransaction::create([
+                'invoice'       => $invoice,
+                'table_id'      => $lone->id,
+                'branch_id'     => $lone->branch_id,
+                'account_id'    => 1349,                    // ✅ নতুন Employee Loan Account
+                'type'          => 'employee_loan',
+                'debit'         => $amount,
+                'credit'        => 0,
+                'remark'        => 'Employee Loan Approved - ' . ($lone->employee->name ?? ''),
+                'employee_id'   => $lone->employee_id,
+                'created_by'    => auth()->id(),
+                'created_at'    => now(),
+            ]);
+            
+            AccountTransaction::create([
+                'invoice'       => $invoice,
+                'table_id'      => $lone->id,
+                'branch_id'     => $lone->branch_id,
+                'account_id'    => 7,                       // Cash / Bank Account
+                'type'          => 'employee_loan',
+                'debit'         => 0,
+                'credit'        => $amount,
+                'remark'        => 'Loan Disbursed to Employee - ' . ($lone->employee->name ?? ''),
+                'employee_id'   => $lone->employee_id,
+                'created_by'    => auth()->id(),
+                'created_at'    => now(),
+            ]);
+
+            DB::commit();
+
+            session()->flash('success', 'Loan Application successfully Approved!');
+            return back();
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            \Log::error('Loan Approve Error: ' . $th->getMessage());
+            session()->flash('error', 'Something went wrong!');
+            return back();
+        }
     }
 
     public function cancel(Lone $lone)
@@ -138,7 +210,7 @@ class ApproveLoneApplicationController extends Controller
             return redirect()->back();
         }
         try {
-            $this->validate($request, $this->systemService->updateValidation($request, $id));
+            $this->validate($request,  $this->systemService->storeValidation($request, $id));
         } catch (ValidationException $e) {
             session()->flash('error', 'Validation error !!');
             return redirect()->back()->withErrors($e->errors())->withInput();

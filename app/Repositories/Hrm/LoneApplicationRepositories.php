@@ -224,6 +224,7 @@ class LoneApplicationRepositories
      */
     public function details($id)
     {
+        
         $result = $this->model::find($id);
         return $result;
     }
@@ -235,6 +236,7 @@ class LoneApplicationRepositories
         $lone->branch_id = $request->branch_id;
         $lone->amount = $request->amount;
         $lone->lone_adjustment     = $request->lone_adjustment;
+        $lone->adjustment_start = $request->adjustment_start . '-01';
         $lone->reason = $request->reason;
 
         $file = $request->file('file');
@@ -258,12 +260,15 @@ class LoneApplicationRepositories
 
     public function update($request, $id)
     {
+
+   
         $lone = $this->model::find($id);
 
         $lone->employee_id = $request->employee_id;
         $lone->branch_id = $request->branch_id;
         $lone->amount = $request->amount;
-        $lone->lone_adjustment     = $request->lone_adjustment;
+        $lone->lone_adjustment  = $request->lone_adjustment;
+        $lone->adjustment_start = $request->adjustment_start . '-01';
         $lone->reason = $request->reason;
 
         $file = $request->file('file');

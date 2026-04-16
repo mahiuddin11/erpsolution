@@ -114,17 +114,7 @@ class LoneApplicationController extends Controller
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
         }
-        $editInfo = $this->systemService->details($id);
-        if (!$editInfo) {
-            session()->flash('error', 'Edit info is invalid!!');
-            return redirect()->back();
-        }
-        try {
-            $this->validate($request, $this->systemService->updateValidation($request, $id));
-        } catch (ValidationException $e) {
-            session()->flash('error', 'Validation error !!');
-            return redirect()->back()->withErrors($e->errors())->withInput();
-        }
+        
         $this->systemService->update($request, $id);
         session()->flash('success', 'Data successfully updated!!');
         return redirect()->route('hrm.lone.index');
