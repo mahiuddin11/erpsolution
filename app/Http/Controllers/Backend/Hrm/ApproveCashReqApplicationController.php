@@ -4,17 +4,20 @@ namespace App\Http\Controllers\Backend\Hrm;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\Accounts;
+use App\Models\AccountTransaction;
 use App\Models\CashReq;
 use App\Models\Employee;
 use App\Models\Lone;
 use App\Models\Transection;
 use App\Services\Hrm\ApproveCashApplicationService;
 use App\Transformers\Transformers;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class ApproveCashReqApplicationController extends Controller
 {
-    
+
     private $ApproveCashApplicationService;
 
     private $systemTransformer;
@@ -67,7 +70,7 @@ class ApproveCashReqApplicationController extends Controller
             session()->flash('error', 'Validation error !!');
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
-         $this->ApproveCashApplicationService->store($request);
+        $this->ApproveCashApplicationService->store($request);
         session()->flash('success', 'Data successfully save!!');
         return redirect()->route('hrm.cash-req.index');
     }
@@ -77,18 +80,84 @@ class ApproveCashReqApplicationController extends Controller
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
 
-    public function edit(Request $request, CashReq $lone)
-    {
-        // $lone->amount = $request->amount ?? $lone->amount ;
-        $lone->approval_amount = $request->amount ?? $lone->amount;
-        $lone->bank_name = $request->bank_name;
-        $lone->check_number = $request->check_number;
-        $lone->status = 'approved';
-        $lone->approve_by = auth()->id();
-        $lone->save();
+    // public function approve(Request $request, CashReq $cash_req)
+    // {
 
-        session()->flash('success', 'Cash Requisition successfully Approve!!');
-        return back();
+
+
+    //     // $cash_req->amount = $request->amount ?? $cash_req->amount ;
+
+    //     $cash_req->approval_amount = $request->amount ?? $cash_req->amount;
+    //     $cash_req->bank_name = $request->bank_name;
+    //     $cash_req->check_number = $request->check_number;
+    //     $cash_req->status = 'approved';
+    //     $cash_req->approve_by = auth()->id();
+    //     $cash_req->save();
+
+    //     session()->flash('success', 'Cash Requisition successfully Approve!!');
+    //     return back();
+    // }
+
+    public function approve(Request $request, $id)
+    {
+        DB::beginTransaction();
+
+        
+        $cash_req = CashReq::find($id);
+        
+        try {
+
+            $cash_req->update([
+                'approval_amount'   => $request->amount ?? $cash_req->amount,
+                'account_id'        => $request->account_id,
+                'recive_account_id' => $request->recive_account_id,
+                'check_number'      => $request->check_number,
+                'status'            => 'approved',
+                'approve_by'        => auth()->id(),
+            ]);
+
+            $cash_req->refresh(); //  important
+
+            $amount = (float) ($request->amount ?? $cash_req->amount);
+
+            $invoice = 'CASH-' . str_pad($cash_req->id, 6, '0', STR_PAD_LEFT);
+
+            // FROM ACCOUNT (CREDIT)
+            AccountTransaction::create([
+                'invoice'    => $invoice,
+                'table_id'   => $cash_req->id,
+                'account_id' => $request->account_id,
+                'type'       => 'journal_voucher',
+                'debit'      => 0,
+                'credit'     => $amount,
+                'remark'     => 'Advance to ' . ($cash_req->employee->name ?? ''),
+                'created_by' => auth()->id(),
+                'created_at' => now(),
+            ]);
+
+            // TO ACCOUNT (DEBIT)
+            AccountTransaction::create([
+                'invoice'    => $invoice,
+                'table_id'   => $cash_req->id,
+                'account_id' => $request->recive_account_id,
+                'type'       => 'journal_voucher',
+                'debit'      => $amount,
+                'credit'     => 0,
+                'remark'     => 'Advance Cash Received by ' . ($cash_req->employee->name ?? ''),
+                'created_by' => auth()->id(),
+                'created_at' => now(),
+            ]);
+
+            DB::commit();
+
+            return back()->with('success', 'Approved Successfully!');
+        } catch (\Throwable $e) {
+
+            DB::rollBack();
+            \Log::error($e->getMessage());
+
+            return back()->with('error', 'Something went wrong!');
+        }
     }
 
     public function cancel(CashReq $lone)
@@ -117,12 +186,12 @@ class ApproveCashReqApplicationController extends Controller
         }
 
         try {
-            $this->validate($request,  $this->ApproveCashApplicationService->updateValidation($request, $id));
+            // $this->validate($request,  $this->ApproveCashApplicationService->updateValidation($request, $id));
         } catch (ValidationException $e) {
             session()->flash('error', 'Validation error !!');
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
-         $this->ApproveCashApplicationService->update($request, $id);
+        $this->ApproveCashApplicationService->update($request, $id);
         session()->flash('success', 'Data successfully updated!!');
         return redirect()->route('hrm.cash-req.index');
     }
@@ -131,6 +200,36 @@ class ApproveCashReqApplicationController extends Controller
     public function show(CashReq $lone)
     {
         $title = 'Approve Cash Requisition Details';
+        $accounts = Accounts::where(function ($query) {
+            $query->where('parent_id', 6)
+                ->orWhereIn('parent_id', function ($subQuery) {
+                    $subQuery->select('id')
+                        ->from('chart_of_accounts')
+                        ->where('parent_id', 6);
+                });
+        })->get();
+
+        // $recived_accounts = Accounts::where(function ($query) {
+        //     $query->where('parent_id', 4)
+        //         ->orWhereIn('parent_id', function ($subQuery) {
+        //             $subQuery->select('id')
+        //                 ->from('chart_of_accounts')
+        //                 ->where('parent_id', 4);
+        //         });
+        // })->get();
+
+        $recived_accounts = Accounts::where(function ($query) {
+            $query->where('parent_id', 4)
+                ->orWhereIn('parent_id', function ($subQuery) {
+                    $subQuery->select('id')
+                        ->from('chart_of_accounts')
+                        ->where('parent_id', 4);
+                });
+        })
+            ->where('account_name', 'like', '%Advance to%')
+            ->get();
+
+
         return view('backend.pages.hrm.cash_req_approve.details', get_defined_vars());
     }
 
@@ -171,5 +270,33 @@ class ApproveCashReqApplicationController extends Controller
         if ($deleteInfo) {
             return response()->json($this->systemTransformer->delete($deleteInfo), 200);
         }
+    }
+
+    public function ac_lager_create(Request $request)
+    {
+
+        $account = new Accounts();
+
+        if ($account->where('account_name', $request->account_name)->exists()) {
+            return response()->json(['error' => 'Account already exists'], 422);
+        }
+
+        $data = [
+            'account_name' => $request->account_name,
+            'parent_id' => $request->parent_id ?? 4,
+            'branch_id' => $request->branch_id  ?? 0,
+            'status' => 'Active',
+            'opening_balance' => 0,
+            'accountable_id' => $request->employee_id,
+            'bill_by_bill' => 1,
+            'accountable_type' => 'App\Models\Employee',
+            'balance_type' => 'debit',
+            'unique_identifier ' =>  uniqid('ac-'),
+            'created_by' => auth()->id(),
+        ];
+
+        $account->create($data);
+
+        return response()->json($account);
     }
 }

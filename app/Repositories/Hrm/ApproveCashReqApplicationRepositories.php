@@ -50,7 +50,7 @@ class ApproveCashReqApplicationRepositories
             1 => 'id'
         ];
 
-        $edit = Helper::roleAccess('hrm.cash-req.edit') ? 1 : 0;
+        $edit = Helper::roleAccess('hrm.cash-req.edit') ? 0 : 0;
         $cancel = Helper::roleAccess('hrm.cash-req.cancel') ? 1 : 0;
         $view = Helper::roleAccess('hrm.cash-req.show') ? 1 : 0;
         $ced = $edit + $cancel + $view;

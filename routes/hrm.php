@@ -102,9 +102,11 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
       
         Route::get('/hrm-cash-req-approve-applicaitn-lists', [ApproveCashReqApplicationController::class, 'index'])->name('hrm.cash-req.index');
         Route::get('/cash-req-dataProcessing', [ApproveCashReqApplicationController::class, 'dataProcessing'])->name('hrm.cash-req.dataProcessingApprove');
-        Route::get('/hrm-cash-req-approve-applicaitn-update/{lone:id}', [ApproveCashReqApplicationController::class, 'edit'])->name('hrm.cash-req.approve');
+        Route::get('/hrm-cash-req-approve-applicaitn-update/{cash_reque:id}', [ApproveCashReqApplicationController::class, 'approve'])->name('hrm.cash-req.approve');
         Route::get('/hrm-cash-req-approve-applicaitn-show/{lone:id}', [ApproveCashReqApplicationController::class, 'show'])->name('hrm.cash-req.show');
         Route::get('/hrm-cash-req-approve-applicaitn-cancel/{lone:id}', [ApproveCashReqApplicationController::class, 'cancel'])->name('hrm.cash-req.cancel');
+        Route::post('/hrm-account-leager-create', [ApproveCashReqApplicationController::class, 'ac_lager_create'])->name('hrm.account.leger.create');
+       
         // Cash Approve End
         // Lone Approve start
         Route::get('/hrm-lone-approve-applicaitn-lists', [ApproveLoneApplicationController::class, 'index'])->name('hrm.loneapprove.index');
