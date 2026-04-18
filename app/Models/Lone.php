@@ -31,4 +31,9 @@ class Lone extends Model
     {
         return $this->belongsTo(Branch::class, 'branch_id');
     }
+
+    public function loanDetails()
+    {
+        return $this->hasMany(LoanDetail::class, 'lone_id');
+    }
 }

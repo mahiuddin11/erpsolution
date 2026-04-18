@@ -101,6 +101,8 @@ class LoneApplicationController extends Controller
         $employees = Employee::where('status', 'Active')->get();
         $branches = Branch::all();
         $model = Lone::findOrFail($id);
+
+ 
         return view('backend.pages.hrm.lone_application.edit', get_defined_vars());
     }
 
@@ -125,7 +127,8 @@ class LoneApplicationController extends Controller
     {
 
         $title = 'Lone application Details';
- 
+        
+        $loanDetails = $lone->loanDetails()->orderBy('month')->get();
         return view('backend.pages.hrm.lone_application.details', get_defined_vars());
     }
 

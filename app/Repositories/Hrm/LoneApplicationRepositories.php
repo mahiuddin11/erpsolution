@@ -261,9 +261,10 @@ class LoneApplicationRepositories
     public function update($request, $id)
     {
 
-   
+        
         $lone = $this->model::find($id);
-
+        
+ 
         $lone->employee_id = $request->employee_id;
         $lone->branch_id = $request->branch_id;
         $lone->amount = $request->amount;
