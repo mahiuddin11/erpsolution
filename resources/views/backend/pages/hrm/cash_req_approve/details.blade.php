@@ -81,7 +81,8 @@
                                     <div><strong>ID:</strong> {{ $lone->employee->id ?? '-' }}</div>
                                     <div><strong>Phone:</strong> {{ $lone->employee->personal_phone ?? '-' }}</div>
                                     <div><strong>Email:</strong> {{ $lone->employee->email ?? '-' }}</div>
-                                    <div><strong>Address:</strong> {{ $lone->employee->present_address ?? $lone->employee->permanent_address  }}</div>
+                                    <div><strong>Address:</strong>
+                                        {{ $lone->employee->present_address ?? $lone->employee->permanent_address }}</div>
 
                                 </div>
 
@@ -97,13 +98,14 @@
                             </h4>
                         </div>
 
-                      <div class="mb-2">
-    <span class="badge p-2 
+                        <div class="mb-2">
+                            <span
+                                class="badge p-2 
         {{ $lone->status == 'approved' ? 'badge-success' : 'badge-warning' }}">
-        
-        Status: {{ ucfirst($lone->status) }}
-    </span>
-</div>
+
+                                Status: {{ ucfirst($lone->status) }}
+                            </span>
+                        </div>
 
                         <hr>
 
@@ -225,7 +227,6 @@
 
 @section('scripts')
     <script>
-
         let empId = "{{ $lone->employee->id }}";
         let empName = "{{ $lone->employee->name }}";
         let branch_id = "{{ $lone->employee->branch_id }}"
@@ -244,7 +245,7 @@
                 data: {
                     _token: "{{ csrf_token() }}",
                     account_name: name,
-                    employee_id : empId,
+                    employee_id: empId,
                     branch_id: branch_id,
                     parent_id: 4 // advance group
                 },

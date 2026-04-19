@@ -7,12 +7,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Accounts;
 use App\Models\AccountTransaction;
 use App\Models\CashReq;
+use App\Models\DabitVoucher;
+use App\Models\DabitVoucherDetails;
 use App\Models\Employee;
 use App\Models\Lone;
 use App\Models\Transection;
 use App\Services\Hrm\ApproveCashApplicationService;
 use App\Transformers\Transformers;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class ApproveCashReqApplicationController extends Controller
@@ -80,35 +83,88 @@ class ApproveCashReqApplicationController extends Controller
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
 
-    // public function approve(Request $request, CashReq $cash_req)
+
+
+    // public function approve(Request $request, $id)
     // {
+    //     DB::beginTransaction();
 
+    //     $cash_req = CashReq::find($id);
 
+    //     try {
 
-    //     // $cash_req->amount = $request->amount ?? $cash_req->amount ;
+    //         $cash_req->update([
+    //             'approval_amount'   => $request->amount ?? $cash_req->amount,
+    //             'account_id'        => $request->account_id,
+    //             'recive_account_id' => $request->recive_account_id,
+    //             'check_number'      => $request->check_number,
+    //             'status'            => 'approved',
+    //             'approve_by'        => auth()->id(),
+    //         ]);
 
-    //     $cash_req->approval_amount = $request->amount ?? $cash_req->amount;
-    //     $cash_req->bank_name = $request->bank_name;
-    //     $cash_req->check_number = $request->check_number;
-    //     $cash_req->status = 'approved';
-    //     $cash_req->approve_by = auth()->id();
-    //     $cash_req->save();
+    //         $cash_req->refresh(); //  important
 
-    //     session()->flash('success', 'Cash Requisition successfully Approve!!');
-    //     return back();
+    //         $amount = (float) ($request->amount ?? $cash_req->amount);
+
+    //         $invoice = 'CASH-' . str_pad($cash_req->id, 6, '0', STR_PAD_LEFT);
+
+    //         // FROM ACCOUNT (CREDIT)
+    //         AccountTransaction::create([
+    //             'invoice'    => $invoice,
+    //             'table_id'   => $cash_req->id,
+    //             'account_id' => $request->account_id,
+    //             'type'       => 'journal_voucher',
+    //             'debit'      => 0,
+    //             'credit'     => $amount,
+    //             'remark'     => 'Advance to ' . ($cash_req->employee->name ?? ''),
+    //             'created_by' => auth()->id(),
+    //             'created_at' => now(),
+    //         ]);
+
+    //         // TO ACCOUNT (DEBIT)
+    //         AccountTransaction::create([
+    //             'invoice'    => $invoice,
+    //             'table_id'   => $cash_req->id,
+    //             'account_id' => $request->recive_account_id,
+    //             'type'       => 'journal_voucher',
+    //             'debit'      => $amount,
+    //             'credit'     => 0,
+    //             'remark'     => 'Advance Cash Received by ' . ($cash_req->employee->name ?? ''),
+    //             'created_by' => auth()->id(),
+    //             'created_at' => now(),
+    //         ]);
+
+    //         DB::commit();
+
+    //         return back()->with('success', 'Approved Successfully!');
+    //     } catch (\Throwable $e) {
+
+    //         DB::rollBack();
+    //         Log::error($e->getMessage());
+
+    //         return back()->with('error', 'Something went wrong!');
+    //     }
     // }
 
     public function approve(Request $request, $id)
     {
         DB::beginTransaction();
 
-        
-        $cash_req = CashReq::find($id);
-        
         try {
 
+            $cash_req = CashReq::findOrFail($id);
+
+            if ($cash_req->status == 'approved') {
+                return back()->with('error', 'Already Approved!');
+            }
+
+            $amount = (float) ($request->amount ?? $cash_req->amount);
+
+            // =========================
+            // UPDATE CASH REQ
+            // =========================
             $cash_req->update([
-                'approval_amount'   => $request->amount ?? $cash_req->amount,
+                'approval_amount'   => $amount,
                 'account_id'        => $request->account_id,
                 'recive_account_id' => $request->recive_account_id,
                 'check_number'      => $request->check_number,
@@ -116,45 +172,93 @@ class ApproveCashReqApplicationController extends Controller
                 'approve_by'        => auth()->id(),
             ]);
 
-            $cash_req->refresh(); //  important
+            // =========================
+            // VOUCHER NO GENERATE
+            // =========================
+            $last = DabitVoucher::latest('id')->first();
+            $voucherNo = 'DV' . str_pad(($last->id ?? 0) + 1, 5, '0', STR_PAD_LEFT);
 
-            $amount = (float) ($request->amount ?? $cash_req->amount);
+            // =========================
+            // CREATE VOUCHER (SAVE METHOD)
+            // =========================
+            $voucher = new DabitVoucher();
+            $voucher->voucher_no  = $voucherNo;
+            $voucher->employee_id = $cash_req->employee_id;
+            $voucher->date        = now();
+            $voucher->branch_id   = auth()->user()->branch_id ?? 0;
+            $voucher->note        = 'Cash Req #' . $cash_req->id;
+            $voucher->approve     = 1;
+            $voucher->approved_by = auth()->id();
+            $voucher->created_by  = auth()->id();
+            $voucher->save();
 
+           
+            // =========================
+            // VOUCHER DETAILS (FROM)
+            // =========================
+            $detail1 = new DabitVoucherDetails();
+            $detail1->dabit_voucher_id = $voucher->id;
+            $detail1->account_id       = $request->account_id;
+            $detail1->credit           = $amount;
+            $detail1->debit            = 0;
+            $detail1->amount           = $amount;
+            $detail1->check_number     = $request->check_number ?? '';
+            $detail1->save();
+
+            // =========================
+            // VOUCHER DETAILS (TO)
+            // =========================
+            $detail2 = new DabitVoucherDetails();
+            $detail2->dabit_voucher_id = $voucher->id;
+            $detail2->account_id       = $request->recive_account_id;
+            $detail2->debit            = $amount;
+            $detail2->credit           = 0;
+            $detail2->amount           = $amount;
+            $detail2->check_number     = $request->check_number ?? '';
+            $detail2->save();
+
+            // =========================
+            // TRANSACTION CREATE
+            // =========================
             $invoice = 'CASH-' . str_pad($cash_req->id, 6, '0', STR_PAD_LEFT);
 
-            // FROM ACCOUNT (CREDIT)
-            AccountTransaction::create([
-                'invoice'    => $invoice,
-                'table_id'   => $cash_req->id,
-                'account_id' => $request->account_id,
-                'type'       => 'journal_voucher',
-                'debit'      => 0,
-                'credit'     => $amount,
-                'remark'     => 'Advance to ' . ($cash_req->employee->name ?? ''),
-                'created_by' => auth()->id(),
-                'created_at' => now(),
-            ]);
+            // CREDIT
+            $t1 = new AccountTransaction();
+            $t1->invoice     = $invoice;
+            $t1->table_id    = $voucher->id;
+            $t1->account_id  = $request->account_id;
+            $t1->type        = 'debit_voucher';
+            $t1->debit       = 0;
+            $t1->credit      = $amount;
+            $t1->remark      = 'Advance to ' . ($cash_req->employee->name ?? '');
+            $t1->employee_id = $cash_req->employee_id;
+            $t1->created_by  = auth()->id();
+            $t1->created_at  = now();
+            $t1->save();
 
-            // TO ACCOUNT (DEBIT)
-            AccountTransaction::create([
-                'invoice'    => $invoice,
-                'table_id'   => $cash_req->id,
-                'account_id' => $request->recive_account_id,
-                'type'       => 'journal_voucher',
-                'debit'      => $amount,
-                'credit'     => 0,
-                'remark'     => 'Advance Cash Received by ' . ($cash_req->employee->name ?? ''),
-                'created_by' => auth()->id(),
-                'created_at' => now(),
-            ]);
+            // DEBIT
+            $t2 = new AccountTransaction();
+            $t2->invoice     = $invoice;
+            $t2->table_id    = $voucher->id;
+            $t2->account_id  = $request->recive_account_id;
+            $t2->type        = 'debit_voucher';
+            $t2->debit       = $amount;
+            $t2->credit      = 0;
+            $t2->remark      = 'Advance received by ' . ($cash_req->employee->name ?? '');
+            $t2->employee_id = $cash_req->employee_id;
+            $t2->created_by  = auth()->id();
+            $t2->created_at  = now();
+            $t2->save();
 
             DB::commit();
 
-            return back()->with('success', 'Approved Successfully!');
+            return back()->with('success', 'Approved, Voucher & Transaction Completed!');
         } catch (\Throwable $e) {
 
             DB::rollBack();
-            \Log::error($e->getMessage());
+
+            // debugging purpose only (optional)
+            dd($e->getMessage(), $e->getFile(), $e->getLine());
 
             return back()->with('error', 'Something went wrong!');
         }
@@ -208,15 +312,6 @@ class ApproveCashReqApplicationController extends Controller
                         ->where('parent_id', 6);
                 });
         })->get();
-
-        // $recived_accounts = Accounts::where(function ($query) {
-        //     $query->where('parent_id', 4)
-        //         ->orWhereIn('parent_id', function ($subQuery) {
-        //             $subQuery->select('id')
-        //                 ->from('chart_of_accounts')
-        //                 ->where('parent_id', 4);
-        //         });
-        // })->get();
 
         $recived_accounts = Accounts::where(function ($query) {
             $query->where('parent_id', 4)

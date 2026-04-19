@@ -146,6 +146,9 @@ class DabitVoucherRepositories
 
     public function store($request)
     {
+
+    
+
         try {
             DB::beginTransaction();
 
@@ -182,7 +185,6 @@ class DabitVoucherRepositories
 
                 $dabitvoucherdetails->check_number = isset($request->voucher_number[$i]) ? $request->voucher_number[$i] : null;
                 $dabitvoucherdetails->check_date = isset($request->voucher_date[$i]) ? $request->voucher_date[$i] : null;
-
                 $dabitvoucherdetails->debit = $request->debit[$i];
                 $dabitvoucherdetails->credit = $request->credit[$i];
                 $dabitvoucherdetails->account_id = $request->account_id[$i];
@@ -263,11 +265,13 @@ class DabitVoucherRepositories
     public function approve($id)
     {
         try {
+
             DB::beginTransaction();
             $debitVoucher = DabitVoucher::findOrFail($id);
             $debitVoucherDetails = DabitVoucherDetails::where('dabit_voucher_id', $id)->get();
 
             foreach ($debitVoucherDetails as  $debitVoucherDetail) {
+
                 $transaction['branch_id'] = $debitVoucherDetail->branch_id;
                 $transaction['payment_invoice'] = $debitVoucherDetail->payment_invoice;
                 $transaction['invoice'] = $debitVoucher->voucher_no;

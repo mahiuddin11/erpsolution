@@ -27,14 +27,9 @@ use Illuminate\Support\Facades\Validator;
 class DabitVoucherController extends Controller
 {
 
-    /**
-     * @var DabitVoucherService
-     */
+
     private $systemService;
 
-    /**
-     * @var ExpenseTransformer
-     */
 
     private $systemTransformer;
 
@@ -96,7 +91,7 @@ class DabitVoucherController extends Controller
      */
     public function store(Request $request)
     {
-        dd($request->all());
+        
         try {
             $this->validate($request, $this->systemService->storeValidation($request));
         } catch (ValidationException $e) {
@@ -347,7 +342,11 @@ class DabitVoucherController extends Controller
      */
     public function approve($id)
     {
+
         $approved =  $this->systemService->approve($id);
+
+       
+
         if ($approved) {
             session()->flash('success', 'This vourcher approve successfully.');
             return redirect()->back();
