@@ -50,6 +50,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/hrm-salary-pay-sheet-show/{pay:id}', [PaySheetController::class,'show'])->name('hrm.paysheet.show');
         Route::post('/hrm-salary-pay-details-store/{monthlyPayableSalary:id}', [PaySheetController::class,'empPayDetailsStore'])->name('hrm.paysheet.empPayDetailsStore');
         Route::get('/hrm-salary-pay-review/{monthlyPayableSalary:id}', [PaySheetController::class, 'review'])->name('hrm.paysheet.review');
+        Route::get('/hrm-salary-pay-slip/{monthlyPayableSalary:id}', [PaySheetController::class, 'payslip'])->name('hrm.paysheet.payslip');
         Route::post('/hrm-salary-pay-update/{monthlyPayableSalary:id}', [PaySheetController::class, 'update'])->name('hrm.paysheet.update');
         //Salary Pay crud operation end
 
@@ -99,6 +100,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //Cash Application crud operation end
 
         // Cash Approve start
+       
       
         Route::get('/hrm-cash-req-approve-applicaitn-lists', [ApproveCashReqApplicationController::class, 'index'])->name('hrm.cash-req.index');
         Route::get('/cash-req-dataProcessing', [ApproveCashReqApplicationController::class, 'dataProcessing'])->name('hrm.cash-req.dataProcessingApprove');

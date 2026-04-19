@@ -327,20 +327,7 @@ $parent_menu = array(
                 )
             ),
 
-            // (object) array(
-            //     'label' => 'Salary Pay',
-            //     'route' => null,
-            //     'uniqueName' => "Salaryhr",
-            //     'icon' => 'fa fa-th-large',
-            //     'parent_id' => null,
-            //     'childMenu' => (object) array(
-            //         (object) array('label' => 'All Salary Pay', 'route' => 'hrm.salary.sheet.index', 'icon' => 'fa fa-dashboard', 'navigate_status' => 1),
-            //         (object) array('label' => 'Add New Salary Pay', 'route' => 'hrm.salary.sheet.create', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
-            //         (object) array('label' => 'Edit Salary Pay', 'route' => 'hrm.salary.sheet.edit', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
-            //         (object) array('label' => 'Show Salary Pay', 'route' => 'hrm.salary.sheet.show', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
-            //         (object) array('label' => 'Destroy Salary Pay', 'route' => 'hrm.salary.sheet.destroy', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
-            //     )
-            // ),
+           
 
             (object) array(
                 'label' => 'Attendance',
@@ -396,6 +383,21 @@ $parent_menu = array(
                     (object) array('label' => 'Salary Update ', 'route' => 'hrm.paysheet.update', 'icon' => 'fa fa-edit', 'navigate_status' => null),
                 )
             ),
+
+            // (object) array(
+            //     'label' => 'Payslip Genaret',
+            //     'route' => null,
+            //     'uniqueName' => "Salaryhr",
+            //     'icon' => 'fa fa-th-large',
+            //     'parent_id' => null,
+            //     'childMenu' => (object) array(
+            //         (object) array('label' => 'All Salary Pay', 'route' => 'hrm.salary.sheet.index', 'icon' => 'fa fa-dashboard', 'navigate_status' => 1),
+            //         (object) array('label' => 'Add New Salary Pay', 'route' => 'hrm.salary.sheet.create', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
+            //         (object) array('label' => 'Edit Salary Pay', 'route' => 'hrm.salary.sheet.edit', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
+            //         (object) array('label' => 'Show Salary Pay', 'route' => 'hrm.salary.sheet.show', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
+            //         (object) array('label' => 'Destroy Salary Pay', 'route' => 'hrm.salary.sheet.destroy', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
+            //     )
+            // ),
 
 
 

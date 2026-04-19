@@ -10,6 +10,7 @@ use App\Models\Attendance;
 use App\Models\Company;
 use App\Models\Employee;
 use App\Models\EmpPayDetails;
+use App\Models\LoanDetail;
 use App\Models\Lone;
 use App\Models\MonthlyPayableSalary;
 use App\Models\Transection;
@@ -39,21 +40,9 @@ class PaySheetController extends Controller
             $month = $request->month ?? now()->format('Y-m');
             $alreadyExists = MonthlyPayableSalary::whereYear('date', Carbon::parse($month)->year)->whereMonth('date', Carbon::parse($month)->month)->exists();
 
-            // dd($request->action, $alreadyExists, $month, $request->all());
             if ($alreadyExists) {
-
-                session()->flash(
-                    'warning',
-                    Carbon::parse($month)->format('F Y') . ' monthly report is already genareted.'
-                );
-
-                return redirect()->route(
-                    'hrm.paysheet.index',
-                    [
-                        'month' => $month,
-                        'employee_id' => $request->employee_id
-                    ]
-                );
+                session()->flash( 'warning', Carbon::parse($month)->format('F Y') . ' monthly report is already genareted.' );
+                return redirect()->route( 'hrm.paysheet.index', [ 'month' => $month, 'employee_id' => $request->employee_id ]);
             }
 
             $takeEmployee = Employee::where('employee_status', 'present');
@@ -83,6 +72,7 @@ class PaySheetController extends Controller
                     'totalPayableDays'       => TOTALPAYABLEDAYS($emp->id, $month),
                     'overtime_houre'         => OVERTIME_HOURE($emp),
                     'overtime_salary'        => OVERTIME_SALARY($emp),
+                    'loan_adjustment'        => loadAdjustment($emp->id, $month),
                     'employee_payable_salary' => EMPLOYEE_PAYABLE_SALARY($emp, $month),
                     'status'                 => 'unpaid',
                     'created_at'             => now(),
@@ -92,24 +82,10 @@ class PaySheetController extends Controller
 
             MonthlyPayableSalary::insert($data);
 
-            session()->flash(
-                'success',
-                Carbon::parse($month)->format('F Y') .
-                    'মাসের স্যালারি রিপোর্ট তৈরি হয়েছে!'
-            );
-
-            return redirect()->route(
-                'hrm.paysheet.index',
-                [
-                    'month' => $month,
-                    'employee_id' => $request->employee_id ?? 'all'
-                ]
-            );
-        } else {
+            session()->flash('success',  Carbon::parse($month)->format('F Y') .'Month Salary Payable Genareted');
+            return redirect()->route('hrm.paysheet.index',['month' => $month, 'employee_id' => $request->employee_id ?? 'all']);        } else {
 
             if ($request->method() == "GET") {
-
-                // dd('sadf', $request->action, $request->all());
 
                 $MonthlyPaySheetscheck = MonthlyPayableSalary::whereMonth('date', date('m', strtotime($request->month)))->exists();
 
@@ -121,7 +97,6 @@ class PaySheetController extends Controller
                         $takeEmployee = $takeEmployee->where("id", $request->employee_id);
                     }
                     $takeEmployee = $takeEmployee->where("employee_status", "present")->get();
-
 
                     foreach ($takeEmployee as $employee) {
 
@@ -164,8 +139,6 @@ class PaySheetController extends Controller
                 }
             }
         }
-
-      
         return view('backend.pages.hrm.attendance.paysheet.index', get_defined_vars());
     }
 
@@ -181,6 +154,18 @@ class PaySheetController extends Controller
         $title = 'Salary Review';
         $MonthlyPaySheet = MonthlyPayableSalary::find($id);
         return view('backend.pages.hrm.attendance.paysheet.salaryreview', get_defined_vars());
+    }
+
+    public function payslip(Request $request, $id){
+
+        $title = 'Salary Pay Slip';
+        $payslip = MonthlyPayableSalary::find($id);
+        $loan_adjesment = LoanDetail::where('employee_id', $payslip->employee_id)
+            ->whereMonth('month', now()->month)
+            ->whereYear('month', now()->year)
+            ->first();
+  
+        return view('backend.pages.hrm.attendance.paysheet.payslip',get_defined_vars());
     }
 
     public function update(Request $request, $id)

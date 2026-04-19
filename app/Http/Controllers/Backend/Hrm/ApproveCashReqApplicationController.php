@@ -42,6 +42,10 @@ class ApproveCashReqApplicationController extends Controller
         return view('backend.pages.hrm.cash_req_approve.index', get_defined_vars());
     }
 
+    public function makepayment(Request $request, $id){
+
+    return 'hello';
+    }
 
     public function dataProcessing(Request $request)
     {

@@ -47,8 +47,14 @@ class MonthlyPayableSalary extends Model
         'totalPayableDays',     // ← নতুন
         'overtime_houre',
         'overtime_salary',
+        'lone_adjustment_blance',
         'employee_payable_salary',
         'status',
+        'loan_adjustment',
+        'festival_bonus',
+        'others_bonus',
+        'advance_adjustment',
+        'others_adjustment',
     ];
 
     public function employee()

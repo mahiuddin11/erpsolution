@@ -99,9 +99,9 @@
                             </div>
 
                             <div class="col-md-3 col-6">
-                                <label>Adjustment</label>
+                                <label>Lone Adjustment</label>
                                 <input type="number" step="any" name="adjustment" class="form-control"
-                                    value="{{ $loanAdjustment ?? 0 }}">
+                                    value="{{ $MonthlyPaySheet->loan_adjustment ?? 0 }}" readonly>
                             </div>
 
                             <div class="col-md-3 col-6">

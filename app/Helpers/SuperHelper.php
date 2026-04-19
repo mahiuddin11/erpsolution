@@ -396,12 +396,23 @@ function EMPLOYEE_UNPAID_LEAVE_SALARY($EMPLOYEE)
 //     return round($PAYABLE_SALARY);
 // }
 
+function loadAdjustment($employee_id , $month){
+
+    $loanAdjustment = App\Models\LoanDetail::where( 'employee_id', $employee_id )
+        ->whereMonth('month', \Carbon\Carbon::parse($month)->month)
+        ->whereYear('month', \Carbon\Carbon::parse($month)->year)
+        ->first();
+
+    return $loanAdjustment->amount ?? 0;
+}
+
 function EMPLOYEE_PAYABLE_SALARY($EMPLOYEE, $month)
 {
    $payable_day =  TOTALPAYABLEDAYS($EMPLOYEE->id , $month);
    $oneDaySalary = (float) str_replace(',', '', Daily_Rate($EMPLOYEE->salary));
-   $payable_salary = $payable_day *  $oneDaySalary;
-  return round($payable_salary);
+   $adblance = loadAdjustment($EMPLOYEE->id, $month);
+   $payable_salary = ($payable_day *  $oneDaySalary ) - $adblance;
+   return round($payable_salary);
 }
 
 function PAID_LEAVE_COUNT($EMPLOYEE)
