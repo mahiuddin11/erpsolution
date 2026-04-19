@@ -20,6 +20,7 @@ use App\Models\Transection;
 use helper;
 use App\Services\Settings\DabitVoucherService;
 use App\Transformers\ExpenseTransformer;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Validator;
 
@@ -95,7 +96,7 @@ class DabitVoucherController extends Controller
      */
     public function store(Request $request)
     {
-        // dd($request->all());
+        dd($request->all());
         try {
             $this->validate($request, $this->systemService->storeValidation($request));
         } catch (ValidationException $e) {
@@ -358,7 +359,7 @@ class DabitVoucherController extends Controller
         $account_transactions = AccountTransaction::where('table_id', $id)->where('type', 5)->get();
         $title = "Debit Voucher";
         $debitVoucher = DabitVoucher::findOrFail($id);
-        if ($debitVoucher && count($account_transactions) != 0 && \Auth::user()->type == 'Admin') {
+        if ($debitVoucher && count($account_transactions) != 0 && Auth::user()->type == 'Admin') {
             if ($debitVoucher->viewed == 0) {
                 $debitVoucher->viewed = 1;
                 $debitVoucher->save();

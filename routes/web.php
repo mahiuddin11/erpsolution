@@ -3,6 +3,8 @@
 // use Illuminate\Support\Facades\Artisan;
 
 use App\Http\Controllers\Backend\Hrm\AttendanceController;
+use App\Http\Controllers\Backend\Settings\CreditVoucherController;
+use App\Http\Controllers\Backend\Settings\DabitVoucherController;
 use App\Models\Accounts;
 use App\Models\Customer;
 use Illuminate\Support\Facades\Auth;
@@ -220,44 +222,42 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //account crud operation end
 
         //Debit Voicher crud operation start
-        Route::get('/settings-dabit-voucher-list', 'DabitVoucherController@index')->name('settings.dabit.voucher.index');
-        Route::get('/dataProcessingDabitvoucher', 'DabitVoucherController@dataProcessing')->name('settings.dabit.voucher.dataProcessingDabitVoucher');
-        Route::get('/settings-dabit-voucher-create', 'DabitVoucherController@create')->name('settings.dabit.voucher.create');
-        Route::get('/settings-dabit-voucher-accountsearch', 'DabitVoucherController@accountsearch')->name('settings.dabit.voucher.accountsearch');
-        Route::post('/settings-dabit-voucher-store', 'DabitVoucherController@store')->name('settings.dabit.voucher.store');
-        Route::get('/settings-dabit-voucher-edit/{id}', 'DabitVoucherController@edit')->name('settings.dabit.voucher.edit');
-        Route::get('/settings-dabit-voucher-show/{id}', 'DabitVoucherController@show')->name('settings.dabit.voucher.show');
-        Route::get('/settings-dabit-voucher-approve/{id}', 'DabitVoucherController@approve')->name('settings.dabit.voucher.approve');
-        Route::post('/settings-dabit-voucher-update/{id}', 'DabitVoucherController@update')->name('settings.dabit.voucher.update');
-        Route::get('/settings-dabit-voucher-delete/{id}', 'DabitVoucherController@destroy')->name('settings.dabit.voucher.destroy');
-        Route::get('/settings-dabit-voucher-singledestroy/{id}', 'DabitVoucherController@singledestroy')->name('settings.dabit.voucher.singledestroy');
-        Route::get('/settings-dabit-voucher-status/{id}/{status}', 'DabitVoucherController@statusUpdate')->name('settings.dabit.voucher.status');
-        Route::get('/getSubCategory', 'DabitVoucherController@getSubCategory')->name('settings.dabit.voucher.getSubCategory');
-        Route::get('/settings-dabit-voucher-purchasevoucher', 'DabitVoucherController@purchasevoucher')->name('settings.dabit.voucher.purchasevoucher');
-        Route::get('/settings-dabit-voucher-employeevoucher', 'DabitVoucherController@employeevoucher')->name('settings.dabit.voucher.employeevoucher');
-        Route::get('/settings-dabit-voucher-customervoucher', 'DabitVoucherController@customervoucher')->name('settings.dabit.voucher.customervoucher');
-        Route::get('/settings-check-bill-by-bill', 'DabitVoucherController@checkBillByBill')->name('settings.dabit.voucher.checkBillByBill');
-
+        Route::get('/settings-dabit-voucher-list', [DabitVoucherController::class, 'index'])->name('settings.dabit.voucher.index');
+        Route::get('/dataProcessingDabitvoucher', [DabitVoucherController::class, 'dataProcessing'])->name('settings.dabit.voucher.dataProcessingDabitVoucher');
+        Route::get('/settings-dabit-voucher-create', [DabitVoucherController::class, 'create'])->name('settings.dabit.voucher.create');
+        Route::get('/settings-dabit-voucher-accountsearch', [DabitVoucherController::class, 'accountsearch'])->name('settings.dabit.voucher.accountsearch');
+        Route::post('/settings-dabit-voucher-store', [DabitVoucherController::class, 'store'])->name('settings.dabit.voucher.store');
+        Route::get('/settings-dabit-voucher-edit/{id}', [DabitVoucherController::class, 'edit'])->name('settings.dabit.voucher.edit');
+        Route::get('/settings-dabit-voucher-show/{id}', [DabitVoucherController::class, 'show'])->name('settings.dabit.voucher.show');
+        Route::get('/settings-dabit-voucher-approve/{id}', [DabitVoucherController::class, 'approve'])->name('settings.dabit.voucher.approve');
+        Route::post('/settings-dabit-voucher-update/{id}', [DabitVoucherController::class, 'update'])->name('settings.dabit.voucher.update');
+        Route::get('/settings-dabit-voucher-delete/{id}', [DabitVoucherController::class, 'destroy'])->name('settings.dabit.voucher.destroy');
+        Route::get('/settings-dabit-voucher-singledestroy/{id}', [DabitVoucherController::class, 'singledestroy'])->name('settings.dabit.voucher.singledestroy');
+        Route::get('/settings-dabit-voucher-status/{id}/{status}', [DabitVoucherController::class, 'statusUpdate'])->name('settings.dabit.voucher.status');
+        Route::get('/getSubCategory', [DabitVoucherController::class, 'getSubCategory'])->name('settings.dabit.voucher.getSubCategory');
+        Route::get('/settings-dabit-voucher-purchasevoucher', [DabitVoucherController::class, 'purchasevoucher'])->name('settings.dabit.voucher.purchasevoucher');
+        Route::get('/settings-dabit-voucher-employeevoucher', [DabitVoucherController::class, 'employeevoucher'])->name('settings.dabit.voucher.employeevoucher');
+        Route::get('/settings-dabit-voucher-customervoucher', [DabitVoucherController::class, 'customervoucher'])->name('settings.dabit.voucher.customervoucher');
+        Route::get('/settings-check-bill-by-bill', [DabitVoucherController::class, 'checkBillByBill'])->name('settings.dabit.voucher.checkBillByBill');
         //Debit Voicher operation end
 
         //Credit Voicher crud operation start
-        Route::get('/settings-credit-voucher-list', 'CreditVoucherController@index')->name('settings.credit.voucher.index');
-        Route::get('/dataProcessingcreditvoucher', 'CreditVoucherController@dataProcessing')->name('settings.credit.voucher.dataProcessingDabitVoucher');
-        Route::get('/settings-credit-voucher-create', 'CreditVoucherController@create')->name('settings.credit.voucher.create');
-        Route::get('/settings-credit-voucher-accountsearch', 'CreditVoucherController@accountsearch')->name('settings.credit.voucher.accountsearch');
-        Route::post('/settings-credit-voucher-store', 'CreditVoucherController@store')->name('settings.credit.voucher.store');
-        Route::get('/settings-credit-voucher-edit/{id}', 'CreditVoucherController@edit')->name('settings.credit.voucher.edit');
-        Route::get('/settings-credit-voucher-show/{id}', 'CreditVoucherController@show')->name('settings.credit.voucher.show');
-        Route::get('/settings-credit-voucher-approve/{id}', 'CreditVoucherController@approve')->name('settings.credit.voucher.approve');
-        Route::post('/settings-credit-voucher-update/{id}', 'CreditVoucherController@update')->name('settings.credit.voucher.update');
-        Route::get('/settings-credit-voucher-delete/{id}', 'CreditVoucherController@destroy')->name('settings.credit.voucher.destroy');
-        Route::get('/settings-credit-voucher-singledestroy/{id}', 'CreditVoucherController@singledestroy')->name('settings.credit.voucher.singledestroy');
-        Route::get('/settings-credit-voucher-status/{id}/{status}', 'CreditVoucherController@statusUpdate')->name('settings.credit.voucher.status');
-        Route::get('/getSubCategory', 'CreditVoucherController@getSubCategory')->name('settings.credit.voucher.getSubCategory');
-
-        Route::get('/settings-credit-voucher-purchasevoucher', 'CreditVoucherController@purchasevoucher')->name('settings.credit.voucher.purchasevoucher');
-        Route::get('/settings-credit-voucher-employeevoucher', 'CreditVoucherController@employeevoucher')->name('settings.credit.voucher.employeevoucher');
-        Route::get('/settings-credit-voucher-customervoucher', 'CreditVoucherController@customervoucher')->name('settings.credit.voucher.customervoucher');
+        Route::get('/settings-credit-voucher-list', [CreditVoucherController::class, 'index'])->name('settings.credit.voucher.index');
+        Route::get('/dataProcessingcreditvoucher', [CreditVoucherController::class, 'dataProcessing'])->name('settings.credit.voucher.dataProcessingDabitVoucher');
+        Route::get('/settings-credit-voucher-create', [CreditVoucherController::class, 'create'])->name('settings.credit.voucher.create');
+        Route::get('/settings-credit-voucher-accountsearch', [CreditVoucherController::class, 'accountsearch'])->name('settings.credit.voucher.accountsearch');
+        Route::post('/settings-credit-voucher-store', [CreditVoucherController::class, 'store'])->name('settings.credit.voucher.store');
+        Route::get('/settings-credit-voucher-edit/{id}', [CreditVoucherController::class, 'edit'])->name('settings.credit.voucher.edit');
+        Route::get('/settings-credit-voucher-show/{id}', [CreditVoucherController::class, 'show'])->name('settings.credit.voucher.show');
+        Route::get('/settings-credit-voucher-approve/{id}', [CreditVoucherController::class, 'approve'])->name('settings.credit.voucher.approve');
+        Route::post('/settings-credit-voucher-update/{id}', [CreditVoucherController::class, 'update'])->name('settings.credit.voucher.update');
+        Route::get('/settings-credit-voucher-delete/{id}', [CreditVoucherController::class, 'destroy'])->name('settings.credit.voucher.destroy');
+        Route::get('/settings-credit-voucher-singledestroy/{id}', [CreditVoucherController::class, 'singledestroy'])->name('settings.credit.voucher.singledestroy');
+        Route::get('/settings-credit-voucher-status/{id}/{status}', [CreditVoucherController::class, 'statusUpdate'])->name('settings.credit.voucher.status');
+        Route::get('/getSubCategory', [CreditVoucherController::class, 'getSubCategory'])->name('settings.credit.voucher.getSubCategory');
+        Route::get('/settings-credit-voucher-purchasevoucher', [CreditVoucherController::class, 'purchasevoucher'])->name('settings.credit.voucher.purchasevoucher');
+        Route::get('/settings-credit-voucher-employeevoucher', [CreditVoucherController::class, 'employeevoucher'])->name('settings.credit.voucher.employeevoucher');
+        Route::get('/settings-credit-voucher-customervoucher', [CreditVoucherController::class, 'customervoucher'])->name('settings.credit.voucher.customervoucher');
         //Credit Voicher operation end
 
         //Contra Voicher crud operation start

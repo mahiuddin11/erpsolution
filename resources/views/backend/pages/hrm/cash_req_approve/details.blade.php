@@ -79,9 +79,9 @@
 
                                 <div class="small text-muted">
                                     <div><strong>ID:</strong> {{ $lone->employee->id ?? '-' }}</div>
-                                    <div><strong>Phone:</strong> {{ $lone->employee->phone ?? '-' }}</div>
+                                    <div><strong>Phone:</strong> {{ $lone->employee->personal_phone ?? '-' }}</div>
                                     <div><strong>Email:</strong> {{ $lone->employee->email ?? '-' }}</div>
-                                    <div><strong>Address:</strong> {{ $lone->employee->address ?? '-' }}</div>
+                                    <div><strong>Address:</strong> {{ $lone->employee->present_address ?? $lone->employee->permanent_address  }}</div>
 
                                 </div>
 

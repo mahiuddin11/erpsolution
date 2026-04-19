@@ -23,6 +23,7 @@ use App\Services\Settings\CreditVoucherService;
 use helper;
 use App\Services\Settings\DabitVoucherService;
 use App\Transformers\ExpenseTransformer;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Validator;
 
@@ -374,7 +375,7 @@ class CreditVoucherController extends Controller
         $title = "Receive Voucher";
         $creditVoucher = CreditVoucher::findOrFail($id);
 
-        if ($creditVoucher && count($account_transactions) != 0 && \Auth::user()->type == 'Admin') {
+        if ($creditVoucher && count($account_transactions) != 0 && Auth::user()->type == 'Admin') {
             if ($creditVoucher->viewed == 0) {
                 $creditVoucher->viewed = 1;
                 $creditVoucher->save();
