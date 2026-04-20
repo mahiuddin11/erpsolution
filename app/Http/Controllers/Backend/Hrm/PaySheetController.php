@@ -6,6 +6,7 @@ use App\Helpers\Helper;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Accounts;
+use App\Models\AccountTransaction;
 use App\Models\Attendance;
 use App\Models\Company;
 use App\Models\Employee;
@@ -16,6 +17,7 @@ use App\Models\MonthlyPayableSalary;
 use App\Models\Transection;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use PhpParser\Node\Scalar\Float_;
 
 class PaySheetController extends Controller
 {
@@ -153,6 +155,9 @@ class PaySheetController extends Controller
     {
         $title = 'Salary Review';
         $MonthlyPaySheet = MonthlyPayableSalary::find($id);
+
+        // dd($MonthlyPaySheet);
+
         return view('backend.pages.hrm.attendance.paysheet.salaryreview', get_defined_vars());
     }
 
@@ -160,12 +165,138 @@ class PaySheetController extends Controller
 
         $title = 'Salary Pay Slip';
         $payslip = MonthlyPayableSalary::find($id);
+
+
         $loan_adjesment = LoanDetail::where('employee_id', $payslip->employee_id)
             ->whereMonth('month', now()->month)
             ->whereYear('month', now()->year)
             ->first();
+
+        $paymentAccounts  = Accounts::where(function ($query) {
+            $query->where('parent_id', 6)
+                ->orWhereIn('parent_id', function ($subQuery) {
+                    $subQuery->select('id')
+                        ->from('chart_of_accounts')
+                        ->where('parent_id', 6);
+                });
+        })->get();
+
   
         return view('backend.pages.hrm.attendance.paysheet.payslip',get_defined_vars());
+    }
+
+
+    public function salaryPayment(Request $request, $id)
+    {
+
+
+        DB::beginTransaction();
+
+        try {
+            
+
+            $totalPaid = 0;
+            $payslip = MonthlyPayableSalary::findOrFail($id);
+            $invoice = 'PAY-' . str_pad($payslip->id, 4, '0', STR_PAD_LEFT);
+            $date = \Carbon\Carbon::parse($payslip->date);
+            $payablesalary   = $payslip->employee_payable_salary;
+            $loan = LoanDetail::where('employee_id', $payslip->employee_id)
+                ->whereMonth('month', $date->month)
+                ->whereYear('month', $date->year)
+                ->first();
+
+           
+            foreach ($request->payments as $payment) {
+
+                $account = Accounts::findOrFail($payment['account_id']);
+                $amount = $payment['amount'];
+
+                $transaction = new AccountTransaction();
+                $transaction->invoice      = $invoice;
+                $transaction->table_id     = $payslip->id;
+                $transaction->table_name   = 'monthly_payable_salaries';
+                $transaction->branch_id    = auth()->user()->branch_id ?? 0;
+                $transaction->account_id   = $account->id;
+                $transaction->type         = 'credit';
+                $transaction->debit        = 0;
+                $transaction->credit       = $amount;
+                $transaction->remark       = 'Methord : ' . $payment['account_info'] . '#_' . ' ($payslip->employee->name) '. ' Salary Paid ';
+                $transaction->employee_id  = $payslip->employee_id;
+               
+                $transaction->created_by   = auth()->id();
+                $transaction->payment_invoice = $invoice;
+                $transaction->save();
+
+                $totalPaid += $amount;
+            }
+
+            // =====================================
+            // 2. SALARY & ALLOWANCE ENTRY (DEBIT)
+            // =====================================
+            $salaryTransaction = new AccountTransaction();
+            $salaryTransaction->invoice      = $invoice;
+            $salaryTransaction->table_id     = $payslip->id;
+            $salaryTransaction->table_name   = 'monthly_payable_salaries';
+            $salaryTransaction->branch_id    = auth()->user()->branch_id ?? null;
+            $salaryTransaction->account_id   = 46; // salary and allownce id 
+            $salaryTransaction->type         = 'debit';
+            $salaryTransaction->debit        =  $payablesalary;
+            $salaryTransaction->credit       = 0;
+            $salaryTransaction->remark       = ($payslip->employee->name) . ' Salary Paid ';
+            $salaryTransaction->employee_id  = $payslip->employee_id;
+            $salaryTransaction->created_by   = auth()->id();
+            $salaryTransaction->payment_invoice = $invoice;
+
+            $salaryTransaction->save();
+
+           
+            // =====================================
+            // 3. LOAN ADJUSTMENT ENTRY (CREDIT)
+            // =====================================
+            if ($loan->amount > 0) {
+                $loanTransaction = new AccountTransaction();
+                $loanTransaction->invoice      = 'LA-' . str_pad($payslip->id, 4, '0', STR_PAD_LEFT);
+                $loanTransaction->table_id     = $loan->id;
+                $loanTransaction->table_name   = '';
+                $loanTransaction->branch_id    = auth()->user()->branch_id ?? 0;
+                $loanTransaction->account_id   = 1349 ;  // employee loan account
+                $loanTransaction->type         = 'credit';
+                $loanTransaction->debit        = 0;
+                $loanTransaction->credit       = $loan->amount;
+                $loanTransaction->employee_id  = $payslip->employee_id;
+                $loanTransaction->remark       = 'Loan adjustment from salary : ' . ($payslip->employee->name ?? '');
+                $loanTransaction->created_by   = auth()->id();
+                $loanTransaction->payment_invoice = 'LA-' . str_pad($payslip->id, 4, '0', STR_PAD_LEFT);
+                $loanTransaction->save();
+
+                if (!empty($loan)) {
+                    $loan->update([
+                        'status' => 'paid'
+                    ]);
+                }
+            }
+
+            
+            $empPay = new EmpPayDetails();
+            $empPay->pay_sheet_id   = $payslip->id;
+            $empPay->branch_id      = auth()->user()->branch_id ?? 0;
+            $empPay->employee_id    = $payslip->employee_id;
+            $empPay->payble_salary  = $payablesalary;
+            $empPay->amount         = $totalPaid;
+            $empPay->lone           = $loan ?? 0;
+            // $empPay->duo            = $payablesalary - $totalPaid ;
+            $empPay->save();
+
+            $payslip->status = ($payslip->due_amount <= 0) ? 'paid' : 'partial';
+            $payslip->save();
+            DB::commit();
+
+            return back()->with('success', 'Salary paid successfully');
+        } catch (\Exception $e) {
+
+            DB::rollback();
+            dd($e->getMessage(), $e->getLine(), $e->getFile());
+        }
     }
 
     public function update(Request $request, $id)

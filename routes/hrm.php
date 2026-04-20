@@ -52,6 +52,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/hrm-salary-pay-review/{monthlyPayableSalary:id}', [PaySheetController::class, 'review'])->name('hrm.paysheet.review');
         Route::get('/hrm-salary-pay-slip/{monthlyPayableSalary:id}', [PaySheetController::class, 'payslip'])->name('hrm.paysheet.payslip');
         Route::post('/hrm-salary-pay-update/{monthlyPayableSalary:id}', [PaySheetController::class, 'update'])->name('hrm.paysheet.update');
+        Route::post('/hrm-salary-make-payment/{monthlyPayableSalary:id}', [PaySheetController::class, 'salaryPayment'])->name('hrm.salary.make.payment');
         //Salary Pay crud operation end
 
         //Leave Application crud operation start

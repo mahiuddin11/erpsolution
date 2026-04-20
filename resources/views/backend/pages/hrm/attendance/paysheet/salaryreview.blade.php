@@ -100,7 +100,7 @@
 
                             <div class="col-md-3 col-6">
                                 <label>Lone Adjustment</label>
-                                <input type="number" step="any" name="adjustment" class="form-control"
+                                <input type="number" step="any" id="lone" name="adjustment" class="form-control"
                                     value="{{ $MonthlyPaySheet->loan_adjustment ?? 0 }}" readonly>
                             </div>
 
@@ -131,9 +131,110 @@
 
         </div>
     </div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
 
+    function calculateSalary() {
+
+        let gross = parseFloat(document.getElementById('gross_salary').value) || 0;
+
+        let absence = parseFloat(document.getElementById('absence').value) || 0;
+        let late = parseFloat(document.getElementById('late').value) || 0;
+        let paidLeave = parseFloat(document.getElementById('paid_leave').value) || 0;
+        let holidays = parseFloat(document.getElementById('holidays').value) || 0;
+        let loan = parseFloat(document.getElementById('lone').value) || 0;
+
+        // ==============================
+        // DAILY RATE
+        // ==============================
+        let dailyRate = gross / 30;
+        document.getElementById('daily_rate').value = Number(dailyRate.toFixed(2));
+
+        // ==============================
+        // PRESENCE CALC
+        // ==============================
+        let presence = 30 - (absence + paidLeave + holidays);
+        if (presence < 0) presence = 0;
+        document.getElementById('presence').value = presence;
+
+        // ==============================
+        // ABSENCE DEDUCTION
+        // ==============================
+        let absenceDeduction = absence * dailyRate;
+        document.getElementById('absence_deduction').value = Number(absenceDeduction.toFixed(2));
+
+        // ==============================
+        // LATE DEDUCTION (1 day = every 3 late)
+        // ==============================
+        let lateDays = Math.floor(late / 3);
+        let lateDeduction = lateDays * dailyRate;
+        document.getElementById('late_deduction').value = Number(lateDeduction.toFixed(2));
+
+        // ==============================
+        // TOTAL PAYABLE DAYS (optional display)
+        // ==============================
+        let totalPayableDays = presence + paidLeave + holidays;
+        if (totalPayableDays > 30) totalPayableDays = 30;
+        if (totalPayableDays < 0) totalPayableDays = 0;
+
+        document.getElementById('total_days').value = totalPayableDays;
+
+        // ==============================
+        // FINAL PAYABLE SALARY (FIXED LOGIC)
+        // ==============================
+        let payableSalary =
+            gross
+            - absenceDeduction
+            - lateDeduction
+            - loan;
+
+        if (payableSalary < 0) payableSalary = 0;
+
+        document.getElementById('payable_salary').value = Number(payableSalary.toFixed(2));
+    }
+
+    // ==============================
+    // LIVE UPDATE ALL INPUTS
+    // ==============================
+    document.querySelectorAll("input").forEach(el => {
+        el.addEventListener("input", calculateSalary);
+    });
+
+    // initial calculation
+    calculateSalary();
+
+    // ==============================
+    // CLEAN DATA BEFORE SUBMIT
+    // ==============================
+    document.querySelector("form").addEventListener("submit", function () {
+
+        function clean(id) {
+            let el = document.getElementById(id);
+            if (!el) return;
+
+            let val = parseFloat(el.value);
+            if (isNaN(val)) val = 0;
+
+            el.value = val;
+        }
+
+        clean("gross_salary");
+        clean("daily_rate");
+        clean("presence");
+        clean("absence");
+        clean("absence_deduction");
+        clean("late");
+        clean("late_deduction");
+        clean("paid_leave");
+        clean("holidays");
+        clean("total_days");
+        clean("payable_salary");
+    });
+
+});
+</script>
     <!-- ================= JS ================= -->
-    <script>
+    {{-- <script>
         document.addEventListener("DOMContentLoaded", function() {
 
             function calculateSalary() {
@@ -143,6 +244,9 @@
                 let late = parseFloat(document.getElementById('late').value) || 0;
                 let paidLeave = parseFloat(document.getElementById('paid_leave').value) || 0;
                 let holidays = parseFloat(document.getElementById('holidays').value) || 0;
+                let lone = parseFloat(document.getElementById('lone').value) || 0;
+
+            
 
                 // Daily Rate
                 let dailyRate = gross / 30;
@@ -163,7 +267,7 @@
                 document.getElementById('late_deduction').value = Number(lateDeduction.toFixed(2));
 
                 // Total Payable Days
-                let totalPayableDays = presence + paidLeave + holidays - lateDays;
+                let totalPayableDays = presence + paidLeave + holidays - lateDays ;
 
                 if (totalPayableDays > 30) totalPayableDays = 30;
                 if (totalPayableDays < 0) totalPayableDays = 0;
@@ -171,7 +275,7 @@
                 document.getElementById('total_days').value = totalPayableDays;
 
                 // Final Salary
-                let payableSalary = (totalPayableDays * dailyRate) - lateDeduction;
+                let payableSalary = (totalPayableDays * dailyRate) - lateDeduction - lone ;
                 if (payableSalary < 0) payableSalary = 0;
 
                 document.getElementById('payable_salary').value = Number(payableSalary.toFixed(2));
@@ -211,5 +315,5 @@
             });
 
         });
-    </script>
+    </script> --}}
 @endsection

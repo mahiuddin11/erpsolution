@@ -53,7 +53,9 @@
                 height: auto !important;
                 min-height: unset !important;
             }
-            .col-lg-5, .col-lg-7 {
+
+            .col-lg-5,
+            .col-lg-7 {
                 margin-bottom: 1.5rem;
             }
         }
@@ -62,7 +64,8 @@
             .net-pay-box h2 {
                 font-size: 1.4rem;
             }
-            .payment-row .row > div {
+
+            .payment-row .row>div {
                 margin-bottom: 0.5rem;
             }
         }
@@ -72,9 +75,12 @@
             body * {
                 visibility: hidden;
             }
-            #print-area, #print-area * {
+
+            #print-area,
+            #print-area * {
                 visibility: visible;
             }
+
             #print-area {
                 position: absolute;
                 top: 0;
@@ -82,18 +88,24 @@
                 width: 100%;
                 padding: 20px;
             }
-            #payment-section, .btn-print, .no-print {
+
+            #payment-section,
+            .btn-print,
+            .no-print {
                 display: none !important;
             }
+
             .payslip-card {
                 box-shadow: none !important;
                 border: 1px solid #dee2e6 !important;
                 border-radius: 8px !important;
             }
+
             .card-header {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
+
             table {
                 page-break-inside: avoid;
             }
@@ -127,7 +139,7 @@
         <div class="row justify-content-center">
 
             <!-- LEFT COLUMN -->
-            <div class="col-lg-5 col-md-12 col-12 no-print">
+            <div class="col-lg-6 col-md-12 col-12 no-print">
 
                 <!-- Employee Information -->
                 <div class="card payslip-card employee-info mb-4">
@@ -141,7 +153,9 @@
                                 @php $photo = $payslip->employee->photo ?? null; @endphp
                                 <img src="{{ $photo
                                     ? asset('storage/employee/' . $photo)
-                                    : 'https://ui-avatars.com/api/?name=' . urlencode($payslip->employee->name ?? 'Employee') . '&background=172a3e&color=fff' }}"
+                                    : 'https://ui-avatars.com/api/?name=' .
+                                        urlencode($payslip->employee->name ?? 'Employee') .
+                                        '&background=172a3e&color=fff' }}"
                                     class="rounded-circle shadow-lg"
                                     style="width: 100px; height: 100px; object-fit: cover; border: 4px solid #fff;"
                                     alt="Employee Photo">
@@ -150,26 +164,29 @@
                             <!-- Details -->
                             <div class="flex-grow-1 w-100">
                                 <h4 class="font-weight-bold mb-1">{{ $payslip->employee->name ?? 'N/A' }}</h4>
-                                <p class="text-muted mb-2">ID: 
+                                <p class="text-muted mb-2">ID:
                                     <strong>{{ $payslip->employee->employee_id ?? ($payslip->employee->id ?? 'N/A') }}</strong>
                                 </p>
 
                                 <div class="row small">
                                     <div class="col-6 mb-1"><strong>Designation</strong></div>
-                                    <div class="col-6 mb-1 text-right">{{ optional($payslip->employee->designation)->name ?? 'N/A' }}</div>
+                                    <div class="col-6 mb-1 text-right">
+                                        {{ optional($payslip->employee->designation)->name ?? 'N/A' }}</div>
 
                                     <div class="col-6 mb-1"><strong>Department</strong></div>
-                                    <div class="col-6 mb-1 text-right">{{ optional($payslip->employee->department)->name ?? 'N/A' }}</div>
+                                    <div class="col-6 mb-1 text-right">
+                                        {{ optional($payslip->employee->department)->name ?? 'N/A' }}</div>
 
                                     <div class="col-6 mb-1"><strong>Month</strong></div>
                                     <div class="col-6 mb-1 text-right font-weight-bold">
-                                        {{ \Carbon\Carbon::parse($payslip->month ?? now())->format('F Y') }}
+                                        {{ \Carbon\Carbon::parse($payslip->date ?? now())->format('F Y') }}
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
 
                 <!-- Payment Section -->
                 <div class="card payslip-card" id="payment-section">
@@ -185,16 +202,13 @@
                             </h2>
                         </div>
 
-                        <form id="paymentForm" action="" method="POST">
+                        <form id="paymentForm" action="{{ route('hrm.salary.make.payment', $payslip->id) }}"
+                            method="POST">
                             @csrf
+
                             <div id="payment-container"></div>
 
-                            <div class="text-center mt-2 mb-3">
-                                <button type="button" id="add-payment-row" class="btn btn-outline-success btn-sm px-4">
-                                    <i class="fas fa-plus"></i> Add Another Payment
-                                </button>
-                            </div>
-
+                            <!-- Live Total -->
                             <div class="border rounded p-3 bg-light mb-3">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <strong>Total Paying Now:</strong>
@@ -209,15 +223,16 @@
 
                     </div>
                 </div>
+
             </div>
 
             <!-- RIGHT COLUMN - Salary Breakdown -->
-            <div class="col-lg-7 col-md-12 col-12" id="print-area">
+            <div class="col-lg-6 col-md-12 col-12" id="print-area">
 
                 <div class="card payslip-card">
                     <div class="card-header bg-success text-white d-flex justify-content-between align-items-center py-3">
                         <h5 class="mb-0">
-                            Salary Breakdown &bull; {{ \Carbon\Carbon::parse($payslip->month ?? now())->format('F Y') }}
+                            Salary Breakdown &bull; {{ \Carbon\Carbon::parse($payslip->date ?? now())->format('F Y') }}
                         </h5>
                         <button type="button" onclick="printPayslip()" class="btn btn-light btn-sm btn-print no-print">
                             <i class="fas fa-print"></i> Print Payslip
@@ -236,7 +251,7 @@
                                 @endif
                             </p>
                             <p class="mb-0 text-muted">
-                                Pay Period: {{ \Carbon\Carbon::parse($payslip->month ?? now())->format('F Y') }}
+                                Pay Period: {{ \Carbon\Carbon::parse($payslip->date ?? now())->format('F Y') }}
                             </p>
                         </div>
 
@@ -259,17 +274,16 @@
                                             </small>
                                         </td>
                                         <td class="text-right">
-                                            <input type="number" step="0.01" id="festival_bonus_input" 
-                                                   name="festival_bonus" value="{{ $payslip->festival_bonus ?? 0 }}"
-                                                   class="form-control text-right">
+                                            <input type="number" step="0.01" id="festival_bonus_input"
+                                                name="festival_bonus" value="{{ $payslip->festival_bonus ?? 0 }}"
+                                                class="form-control text-right">
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>Others Bonus</td>
                                         <td class="text-right">
-                                            <input type="number" step="0.01" id="others_bonus_input" 
-                                                   name="others_bonus" value="{{ $payslip->others_bonus ?? 0 }}"
-                                                   class="form-control text-right">
+                                            <input type="number" step="0.01" id="others_bonus_input" name="others_bonus"
+                                                value="{{ $payslip->others_bonus ?? 0 }}" class="form-control text-right">
                                         </td>
                                     </tr>
                                     <tr class="table-success">
@@ -290,20 +304,22 @@
                             <table class="table table-bordered">
                                 <tbody>
                                     <tr>
-                                        <td>Absence Deduction 
+                                        <td>Absence Deduction
                                             @if (!empty($payslip->employee_absence_day))
                                                 — {{ $payslip->employee_absence_day ?? '' }} day
                                             @endif
                                         </td>
-                                        <td class="text-right">{{ number_format($payslip->absence_deduction ?? 0, 2) }}</td>
+                                        <td class="text-right">{{ number_format($payslip->absence_deduction ?? 0, 2) }}
+                                        </td>
                                     </tr>
                                     <tr>
-                                        <td>Late Deduction 
+                                        <td>Late Deduction
                                             @if (!empty($payslip->employee_late))
                                                 — {{ $payslip->employee_late }} days Late
                                             @endif
                                         </td>
-                                        <td class="text-right">{{ number_format($payslip->employee_deducton ?? 0, 2) }}</td>
+                                        <td class="text-right">{{ number_format($payslip->employee_deducton ?? 0, 2) }}
+                                        </td>
                                     </tr>
                                     <tr>
                                         <td>Loan Adjustment</td>
@@ -338,118 +354,137 @@
 @endsection
 
 @section('scripts')
-<script>
-$(document).ready(function() {
+    <script>
+        $(document).ready(function() {
 
-    let grossSalary = parseFloat({{ $payslip->total_salary ?? 0 }});
-    let totalDeduction = parseFloat({{ 
-        ($payslip->absence_deduction ?? 0) + 
-        ($payslip->employee_deducton ?? 0) + 
-        ($payslip->loan_adjustment ?? 0) 
-    }});
+            // ==================== Bonus Calculation ====================
+            let grossSalary = parseFloat({{ $payslip->total_salary ?? 0 }});
+            let totalDeduction = parseFloat(
+                {{ ($payslip->absence_deduction ?? 0) + ($payslip->employee_deducton ?? 0) + ($payslip->loan_adjustment ?? 0) }}
+            );
 
-    // Real-time Calculation
-    function calculateLiveTotal() {
-        let festival = parseFloat($('#festival_bonus_input').val()) || 0;
-        let others   = parseFloat($('#others_bonus_input').val()) || 0;
+            function calculateLiveTotal() {
+                let festival = parseFloat($('#festival_bonus_input').val()) || 0;
+                let others = parseFloat($('#others_bonus_input').val()) || 0;
 
-        let totalEarning = grossSalary + festival + others;
-        let netPayable   = totalEarning - totalDeduction;
+                let totalEarning = grossSalary + festival + others;
+                let netPayable = totalEarning - totalDeduction;
 
-        // Update Total Earning
-        $('#total-earning').text(totalEarning.toFixed(2));
+                $('#total-earning').text(totalEarning.toFixed(2));
+                $('#net-payable-left').text(netPayable.toFixed(2) + ' Taka');
+                $('#net-payable-print').text(netPayable.toFixed(2) + ' Taka');
+            }
 
-        // Update Net Payable (Left side box + Print area)
-        $('#net-payable-left').text(netPayable.toFixed(2) + ' Taka');
-        $('#net-payable-print').text(netPayable.toFixed(2) + ' Taka');
-    }
+            // Festival Bonus Type Click
+            document.querySelectorAll('.bonus-type').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.querySelectorAll('.bonus-type').forEach(el => el.classList.remove(
+                        'active'));
+                    this.classList.add('active');
 
-    // Festival Bonus Type Click
-    document.querySelectorAll('.bonus-type').forEach(item => {
-        item.addEventListener('click', function(e) {
-            e.preventDefault();
-            document.querySelectorAll('.bonus-type').forEach(el => el.classList.remove('active'));
-            this.classList.add('active');
+                    let type = this.dataset.type;
+                    let amount = (type === 'fitr' || type === 'adha') ? grossSalary * 0.5 : 0;
 
-            let type = this.dataset.type;
-            let amount = (type === 'fitr' || type === 'adha') ? grossSalary * 0.5 : 0;
+                    $('#festival_bonus_input').val(amount.toFixed(2));
+                    calculateLiveTotal();
+                });
+            });
 
-            $('#festival_bonus_input').val(amount.toFixed(2));
-            calculateLiveTotal();
-        });
-    });
+            $('#festival_bonus_input, #others_bonus_input').on('input', function() {
+                calculateLiveTotal();
+            });
 
-    // Live update when user types in bonus fields
-    $('#festival_bonus_input, #others_bonus_input').on('input', function() {
-        calculateLiveTotal();
-    });
+            // ==================== Payment Section JS ====================
+            let rowCount = 0;
 
-    // ==================== Payment Section JS ====================
-    let rowCount = 0;
+            function addPaymentRow() {
+                rowCount++;
 
-    $('#add-payment-row').click(function() {
-        rowCount++;
-
-        let newRow = `
+                let newRow = `
             <div class="payment-row border rounded p-3 mb-3" id="row-${rowCount}">
-                <div class="row">
-                    <div class="col-12 col-sm-6 col-md-4 mb-2">
-                        <label class="small mb-1">Payment Method</label>
-                        <select name="payments[${rowCount}][method]" class="form-control form-control-sm" required>
-                            <option value="cash">Cash</option>
-                            <option value="bank">Bank Transfer</option>
-                            <option value="mobile">Mobile Banking (bKash, Nagad)</option>
-                            <option value="cheque">Cheque</option>
+                <div class="row align-items-end">
+                    <div class="col-12 col-sm-5 col-md-4 mb-2">
+                        <label class="small mb-1">Payment Account</label>
+                        <select name="payments[${rowCount}][account_id]" class="form-control form-control-sm select2" required>
+                            <option value="">Select Account</option>
+                            @foreach ($paymentAccounts as $acc)
+                                <option value="{{ $acc->id }}">
+                                    {{ $acc->account_name }} {{ $acc->account_code ? '(' . $acc->account_code . ')' : '' }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
-                    <div class="col-12 col-sm-6 col-md-4 mb-2">
+                    <div class="col-12 col-sm-5 col-md-4 mb-2">
                         <label class="small mb-1">Reference</label>
                         <input type="text" name="payments[${rowCount}][account_info]" 
                                class="form-control form-control-sm" placeholder="Account/Reference No.">
                     </div>
-                    <div class="col-9 col-sm-10 col-md-3 mb-2">
+                    <div class="col-12 col-sm-10 col-md-3 mb-2">
                         <label class="small mb-1">Amount</label>
                         <input type="number" name="payments[${rowCount}][amount]" 
                                class="form-control form-control-sm amount-input" 
                                step="0.01" min="0" placeholder="0.00" required>
                     </div>
-                    <div class="col-3 col-sm-2 col-md-1 d-flex align-items-end mb-2">
-                        <button type="button" class="btn btn-danger btn-sm remove-row w-100">
+                    <div class="col-12 col-sm-2 col-md-1 d-flex align-items-center mb-2">
+                        <button type="button" class="btn btn-danger btn-sm remove-row mr-1">
                             <i class="fas fa-trash"></i>
+                        </button>
+                        <button type="button" class="btn btn-success btn-sm add-row-btn">
+                            <i class="fas fa-plus"></i>
                         </button>
                     </div>
                 </div>
             </div>`;
 
-        $('#payment-container').append(newRow);
-        updateLiveTotal();
-    });
+                $('#payment-container').append(newRow);
+                updateLiveTotal();
+            }
 
-    $(document).on('click', '.remove-row', function() {
-        $(this).closest('.payment-row').remove();
-        updateLiveTotal();
-    });
+            // Click on Plus button to add new row
+            $(document).on('click', '.add-row-btn', function() {
+                addPaymentRow();
+            });
 
-    $(document).on('input', '.amount-input', function() {
-        updateLiveTotal();
-    });
+            // Remove row
+            $(document).on('click', '.remove-row', function() {
+                if ($('.payment-row').length > 1) {
+                    $(this).closest('.payment-row').remove();
+                    updateLiveTotal();
+                }
+            });
 
-    function updateLiveTotal() {
-        let total = 0;
-        $('.amount-input').each(function() {
-            total += parseFloat($(this).val()) || 0;
+            // Live Total Update
+            $(document).on('input', '.amount-input', function() {
+                updateLiveTotal();
+            });
+
+            function updateLiveTotal() {
+                let total = 0;
+                $('.amount-input').each(function() {
+                    total += parseFloat($(this).val()) || 0;
+                });
+                $('#live-total').text(total.toFixed(2) + ' Taka');
+            }
+
+            // **Default 1 Row Show করার জন্য**
+            addPaymentRow(); // ← এটি সবচেয়ে গুরুত্বপূর্ণ
+
+            initSelect2();
         });
-        $('#live-total').text(total.toFixed(2) + ' Taka');
-    }
 
-    // Auto add first payment row
-    $('#add-payment-row').trigger('click');
-});
-</script>
+        function initSelect2() {
+            $('.select2').select2({
+                placeholder: "Select Account",
+                allowClear: true,
+                width: '100%'
+            });
+        }
+    </script>
 
-<script>
-    function printPayslip() {
-        window.print();
-    }
-</script>
+    <script>
+        function printPayslip() {
+            window.print();
+        }
+    </script>
 @endsection
