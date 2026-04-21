@@ -206,6 +206,9 @@
                                     <th>Overtime Hours</th>
                                     <th>Overtime Salary (OS)</th>
                                     <th>Lone Adjustment </th>
+                                    @if (isset($MonthlyPaySheets))
+                                     <th>bonus</th>   
+                                    @endif
                                     <th>Payable Salary</th>
                                     <th>Status</th>
                                     <th>Action</th>
@@ -263,7 +266,12 @@
                                             </td>
                                             <td class="loanAdjustment d-none">{{ $loanAdjustment }}</td> --}}
                                             <td>{{ $MonthlyPaySheet->loan_adjustment ?? 0 }}</td>
-                                            <td class="payable">{{ $MonthlyPaySheet->employee_payable_salary }}</td>
+                                            @if (isset($MonthlyPaySheets))
+                                                <td>
+                                                    {{$MonthlyPaySheet->festival_bonus ?? 0 }}
+                                                </td>
+                                            @endif
+                                            <td >{{ $MonthlyPaySheet->employee_payable_salary }}</td>
                                             <td>
                                                 @if ($MonthlyPaySheet->status == 'paid')
                                                     <b class="text-success">Paid</b>
@@ -275,12 +283,7 @@
                                             <td>
                                                 <div class="d-flex  gap-2 justify-content-center">
 
-                                                    @if (App\Helpers\Helper::roleAccess('hrm.paysheet.review'))
-                                                        <a href="{{ route('hrm.paysheet.review', $MonthlyPaySheet->id) }}"
-                                                            class="btn btn-info btn-sm">
-                                                            <i class="fas fa-eye"></i>
-                                                        </a>
-                                                    @endif
+                                                    
 
 
                                                     <!-- Status ভিত্তিক Button -->
@@ -289,19 +292,24 @@
                                                             <i class="fas fa-check"></i>
                                                         </button>
                                                     @elseif($MonthlyPaySheet->status == 'unpaid')
+
                                                         {{-- <button class="paynow btn btn-warning btn-sm"
                                                             data-url="{{ route('hrm.paysheet.empPayDetailsStore', $MonthlyPaySheet->id) }}"
                                                             data-toggle="modal" data-target="#exampleModal">
                                                             <i class="fas fa-money-bill"></i>
                                                         </button> --}}
+                                                        @if (App\Helpers\Helper::roleAccess('hrm.paysheet.review'))
+                                                        <a href="{{ route('hrm.paysheet.review', $MonthlyPaySheet->id) }}"
+                                                            class="btn btn-info btn-sm">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                      @endif
 
                                                         <a href="{{ route('hrm.paysheet.payslip', $MonthlyPaySheet->id) }}"
                                                             class="paynow btn btn-warning btn-sm">
                                                             <i class="fas fa-money-bill"></i>
                                                         </a>
                                                     @endif
-
-
 
                                                 </div>
                                             </td>
