@@ -189,7 +189,6 @@ class PaySheetController extends Controller
     public function salaryPayment(Request $request, $id)
     {
 
-
         DB::beginTransaction();
 
         try {
@@ -200,6 +199,8 @@ class PaySheetController extends Controller
             $invoice = 'PAY-' . str_pad($payslip->id, 4, '0', STR_PAD_LEFT);
             $date = \Carbon\Carbon::parse($payslip->date);
             $payablesalary   = $payslip->employee_payable_salary;
+
+            $lone_amount = (float) $payslip->loan_adjustment;
             $loan = LoanDetail::where('employee_id', $payslip->employee_id)
                 ->whereMonth('month', $date->month)
                 ->whereYear('month', $date->year)
@@ -210,7 +211,6 @@ class PaySheetController extends Controller
 
                 $account = Accounts::findOrFail($payment['account_id']);
                 $amount = $payment['amount'];
-
                 $transaction = new AccountTransaction();
                 $transaction->invoice      = $invoice;
                 $transaction->table_id     = $payslip->id;
@@ -246,14 +246,16 @@ class PaySheetController extends Controller
             $salaryTransaction->employee_id  = $payslip->employee_id;
             $salaryTransaction->created_by   = auth()->id();
             $salaryTransaction->payment_invoice = $invoice;
-
+            
             $salaryTransaction->save();
-
-           
+            
+            
             // =====================================
             // 3. LOAN ADJUSTMENT ENTRY (CREDIT)
             // =====================================
-            if ($loan->amount > 0) {
+            // dd('send amount :'.$amount , 'lone amount :' . $lone_amount);
+
+            if ($lone_amount > 0) {
                 $loanTransaction = new AccountTransaction();
                 $loanTransaction->invoice      = 'LA-' . str_pad($payslip->id, 4, '0', STR_PAD_LEFT);
                 $loanTransaction->table_id     = $loan->id;
@@ -262,7 +264,7 @@ class PaySheetController extends Controller
                 $loanTransaction->account_id   = 1349 ;  // employee loan account
                 $loanTransaction->type         = 'credit';
                 $loanTransaction->debit        = 0;
-                $loanTransaction->credit       = $loan->amount;
+                $loanTransaction->credit       =  $lone_amount;
                 $loanTransaction->employee_id  = $payslip->employee_id;
                 $loanTransaction->remark       = 'Loan adjustment from salary : ' . ($payslip->employee->name ?? '');
                 $loanTransaction->created_by   = auth()->id();

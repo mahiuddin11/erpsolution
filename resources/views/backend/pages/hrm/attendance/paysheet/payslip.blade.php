@@ -114,6 +114,7 @@
 @endsection
 
 @section('navbar-content')
+
     <div class="content-header">
         <div class="container-fluid">
             <div class="row mb-2">
@@ -132,9 +133,11 @@
             </div>
         </div>
     </div>
+
 @endsection
 
 @section('admin-content')
+
     <div class="container-fluid py-4">
         <div class="row justify-content-center">
 
