@@ -229,6 +229,8 @@ class PaySheetController extends Controller
                 $totalPaid += $amount;
             }
 
+            // dd($totalPaid , $payablesalary);
+
             // =====================================
             // 2. SALARY & ALLOWANCE ENTRY (DEBIT)
             // =====================================
@@ -239,7 +241,7 @@ class PaySheetController extends Controller
             $salaryTransaction->branch_id    = auth()->user()->branch_id ?? null;
             $salaryTransaction->account_id   = 46; // salary and allownce id 
             $salaryTransaction->type         = 'debit';
-            $salaryTransaction->debit        =  $payablesalary;
+            $salaryTransaction->debit        =  $totalPaid;
             $salaryTransaction->credit       = 0;
             $salaryTransaction->remark       = ($payslip->employee->name) . ' Salary Paid ';
             $salaryTransaction->employee_id  = $payslip->employee_id;
@@ -247,6 +249,7 @@ class PaySheetController extends Controller
             $salaryTransaction->payment_invoice = $invoice;
             $salaryTransaction->save();
             
+            // dd($salaryTransaction->debit ,  $totalPaid);
             
             // =====================================
             // 3. LOAN ADJUSTMENT ENTRY (CREDIT)
@@ -280,22 +283,26 @@ class PaySheetController extends Controller
             $totalBonus = 0;
             if ($request->filled('bonus')) {
 
+           
                 foreach ($request->bonus as $bonus) {
+
                     if (empty($bonus['type']) || !isset($bonus['amount'])) {
                         continue;
                     }
+
                     $empBonus = new EmpPayBonus();
                     $empBonus->employee_id = $payslip->employee_id;
                     $empBonus->monthly_payable_salaries_id = $payslip->id;
                     $empBonus->bonus_type = $bonus['type'];
                     $empBonus->bonus_amount = (float) $bonus['amount'];
                     $empBonus->remarks = $bonus['type'] . '  payment';
-                    $empBonus->save();
+                    // $empBonus->save();
 
-                    $totalBonus += $empBonus->bonus_amoun;
+                    $totalBonus += (float) $bonus['amount'];
                 }
             }
-            
+
+
             $empPay = new EmpPayDetails();
             $empPay->pay_sheet_id   = $payslip->id;
             $empPay->branch_id      = auth()->user()->branch_id ?? 0;
@@ -310,7 +317,7 @@ class PaySheetController extends Controller
 
 
             $payslip->status = ($payslip->due_amount <= 0) ? 'paid' : 'partial';
-            $payslip->employee_payable_salary = $payablesalary;
+            $payslip->employee_payable_salary = $totalPaid ?? $payablesalary + $totalBonus ;
             $payslip->festival_bonus =  $totalBonus ?? 0;
             $payslip->save();
 
