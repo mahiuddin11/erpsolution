@@ -229,8 +229,6 @@ class PaySheetController extends Controller
                 $totalPaid += $amount;
             }
 
-            // dd($totalPaid , $payablesalary);
-
             // =====================================
             // 2. SALARY & ALLOWANCE ENTRY (DEBIT)
             // =====================================
@@ -329,6 +327,15 @@ class PaySheetController extends Controller
             DB::rollback();
             dd($e->getMessage(), $e->getLine(), $e->getFile());
         }
+    }
+
+    public function paidslipcheked($id){
+
+        $title = 'Salary Pay Slip';
+        $payslip = MonthlyPayableSalary::find($id);
+        
+
+        return view('backend.pages.hrm.attendance.paysheet.paidslip', get_defined_vars());
     }
 
     public function update(Request $request, $id)

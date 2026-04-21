@@ -288,9 +288,12 @@
 
                                                     <!-- Status ভিত্তিক Button -->
                                                     @if ($MonthlyPaySheet->status == 'paid')
-                                                        <button class="btn btn-success btn-sm">
-                                                            <i class="fas fa-check"></i>
-                                                        </button>
+
+                                                         <a href="{{ route('hrm.paysheet.paidslip.check', $MonthlyPaySheet->id) }}"
+                                                            class="btn btn-success btn-sm">
+                                                             <i class="fas fa-check"></i>
+                                                        </a>
+
                                                     @elseif($MonthlyPaySheet->status == 'unpaid')
 
                                                         {{-- <button class="paynow btn btn-warning btn-sm"
