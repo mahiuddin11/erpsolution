@@ -114,7 +114,6 @@
 @endsection
 
 @section('navbar-content')
-
     <div class="content-header">
         <div class="container-fluid">
             <div class="row mb-2">
@@ -133,11 +132,9 @@
             </div>
         </div>
     </div>
-
 @endsection
 
 @section('admin-content')
-
     <div class="container-fluid py-4">
         <div class="row justify-content-center">
 
@@ -209,6 +206,8 @@
                             method="POST">
                             @csrf
 
+                            <div id="bonus-form-container" style="display:none;"></div>
+
                             <div id="payment-container"></div>
 
                             <!-- Live Total -->
@@ -269,26 +268,32 @@
                                     </tr>
                                     <tr>
                                         <td>
-                                            Festival Bonus<br>
+                                            @php
+                                                $bonusTypes = \App\Models\EmpPayBonus::BONUS_TYPES;
+                                            @endphp
+
+                                            Bonus Type<br>
+
                                             <small>
-                                                <a href="#" class="bonus-type" data-type="fitr">Eid ul Fitr</a> |
-                                                <a href="#" class="bonus-type" data-type="adha">Eid ul Adha</a> |
-                                                <a href="#" class="bonus-type" data-type="others">Others</a>
+                                                @foreach ($bonusTypes as $key => $label)
+
+                                
+                                                    <a href="#" class="bonus-type" data-type="{{ $key }}">
+                                                        {{ $label }}
+                                                    </a>
+                                                    @if (!$loop->last)
+                                                        |
+                                                    @endif
+                                                @endforeach
                                             </small>
                                         </td>
+
                                         <td class="text-right">
-                                            <input type="number" step="0.01" id="festival_bonus_input"
-                                                name="festival_bonus" value="{{ $payslip->festival_bonus ?? 0 }}"
-                                                class="form-control text-right">
+                                            <div id="bonus-ui-container"></div>
                                         </td>
                                     </tr>
-                                    <tr>
-                                        <td>Others Bonus</td>
-                                        <td class="text-right">
-                                            <input type="number" step="0.01" id="others_bonus_input" name="others_bonus"
-                                                value="{{ $payslip->others_bonus ?? 0 }}" class="form-control text-right">
-                                        </td>
-                                    </tr>
+
+
                                     <tr class="table-success">
                                         <td><strong>Total Earning</strong></td>
                                         <td class="text-right">
@@ -361,16 +366,126 @@
         $(document).ready(function() {
 
             // ==================== Bonus Calculation ====================
+
             let grossSalary = parseFloat({{ $payslip->total_salary ?? 0 }});
             let totalDeduction = parseFloat(
                 {{ ($payslip->absence_deduction ?? 0) + ($payslip->employee_deducton ?? 0) + ($payslip->loan_adjustment ?? 0) }}
             );
 
-            function calculateLiveTotal() {
-                let festival = parseFloat($('#festival_bonus_input').val()) || 0;
-                let others = parseFloat($('#others_bonus_input').val()) || 0;
+            let selectedBonus = {};
 
-                let totalEarning = grossSalary + festival + others;
+            // ADD BONUS ROW
+            function addBonusRow(type, label) {
+
+                if (selectedBonus[type]) return;
+
+                let amount = 0;
+
+                if (type === 'eid_ul_fitr' || type === 'eid_ul_adha') {
+                    amount = grossSalary * 0.5;
+                }
+
+                selectedBonus[type] = amount;
+              
+                let uiRow = `
+        <div class="mb-2 bonus-row" data-type="${type}">
+            <div class="d-flex justify-content-between align-items-center">
+
+                <span>${label}</span>
+
+                <div class="d-flex align-items-center gap-2">
+
+                    <input type="number" 
+                        value="${amount.toFixed(2)}"
+                        class="form-control form-control-sm bonus-amount"
+                        style="width:100px;">
+
+                    <button type="button" style="padding-right:10px;"  class="btn btn-danger btn-sm remove-bonus ">
+                        ×
+                    </button>
+
+                </div>
+            </div>
+        </div>
+    `;
+
+                // ✅ FORM ROW (hidden submit data)
+                let formRow = `
+        <div class="bonus-row-form" data-type="${type}">
+            <input type="hidden" name="bonus[${type}][type]" value="${type}">
+            <input type="hidden" name="bonus[${type}][amount]" value="${amount.toFixed(2)}" class="bonus-hidden-amount">
+        </div>
+    `;
+
+                $('#bonus-ui-container').append(uiRow);
+                $('#bonus-form-container').append(formRow);
+
+                calculateLiveTotal();
+            }
+
+
+            // REMOVE BONUS FIX
+            $(document).on('click', '.remove-bonus', function() {
+
+                let type = $(this).closest('.bonus-row').data('type');
+                delete selectedBonus[type];
+                // UI remove
+                $(this).closest('.bonus-row').remove();
+
+
+                $(`.bonus-row-form[data-type="${type}"]`).remove();
+                $(`.bonus-type[data-type="${type}"]`).removeClass('active');
+                calculateLiveTotal();
+            });
+
+            // ONUS INPUT SYNC
+            $(document).on('input', '.bonus-amount', function() {
+
+                let type = $(this).closest('.bonus-row').data('type');
+                let value = parseFloat($(this).val()) || 0;
+
+                // update hidden input
+                $(`.bonus-row-form[data-type="${type}"] .bonus-hidden-amount`)
+                    .val(value.toFixed(2));
+
+                calculateLiveTotal();
+            });
+
+
+            // CLICK BONUS TYPE FIX
+            $(document).on('click', '.bonus-type', function(e) {
+                e.preventDefault();
+
+                let type = $(this).data('type');
+                let label = $(this).text();
+
+                $(this).toggleClass('active');
+
+                if ($(this).hasClass('active')) {
+                    addBonusRow(type, label);
+                } else {
+                    $(`.bonus-row[data-type="${type}"]`).remove();
+                    $(`.bonus-row-form[data-type="${type}"]`).remove();
+                    delete selectedBonus[type];
+                    calculateLiveTotal();
+                }
+            });
+
+            $(document).ready(function() {
+                // addBonusRow('performance', 'Performance Bonus');
+                $('.bonus-type[data-type="performance"]').addClass('active');
+            });
+
+            // TOTAL CALCULATION
+            function calculateLiveTotal() {
+
+                let totalBonus = 0;
+
+                $('.bonus-amount').each(function() {
+                    totalBonus += parseFloat($(this).val()) || 0;
+                });
+
+                let totalEarning = grossSalary + totalBonus;
                 let netPayable = totalEarning - totalDeduction;
 
                 $('#total-earning').text(totalEarning.toFixed(2));
@@ -378,25 +493,10 @@
                 $('#net-payable-print').text(netPayable.toFixed(2) + ' Taka');
             }
 
-            // Festival Bonus Type Click
-            document.querySelectorAll('.bonus-type').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    document.querySelectorAll('.bonus-type').forEach(el => el.classList.remove(
-                        'active'));
-                    this.classList.add('active');
-
-                    let type = this.dataset.type;
-                    let amount = (type === 'fitr' || type === 'adha') ? grossSalary * 0.5 : 0;
-
-                    $('#festival_bonus_input').val(amount.toFixed(2));
-                    calculateLiveTotal();
-                });
+            $(document).ready(function() {
+                addBonusRow('performance', 'Performance Bonus');
             });
 
-            $('#festival_bonus_input, #others_bonus_input').on('input', function() {
-                calculateLiveTotal();
-            });
 
             // ==================== Payment Section JS ====================
             let rowCount = 0;

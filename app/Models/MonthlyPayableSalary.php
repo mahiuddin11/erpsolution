@@ -61,4 +61,9 @@ class MonthlyPayableSalary extends Model
     {
         return $this->belongsTo(Employee::class, 'employee_id');
     }
+
+    public function bonuses()
+    {
+        return $this->hasMany(EmpPayBonus::class, 'emp_pay_details_id');
+    }
 }

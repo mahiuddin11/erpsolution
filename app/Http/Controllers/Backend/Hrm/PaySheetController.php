@@ -10,6 +10,7 @@ use App\Models\AccountTransaction;
 use App\Models\Attendance;
 use App\Models\Company;
 use App\Models\Employee;
+use App\Models\EmpPayBonus;
 use App\Models\EmpPayDetails;
 use App\Models\LoanDetail;
 use App\Models\Lone;
@@ -192,7 +193,6 @@ class PaySheetController extends Controller
         DB::beginTransaction();
 
         try {
-            
 
             $totalPaid = 0;
             $payslip = MonthlyPayableSalary::findOrFail($id);
@@ -206,7 +206,7 @@ class PaySheetController extends Controller
                 ->whereYear('month', $date->year)
                 ->first();
 
-           
+            
             foreach ($request->payments as $payment) {
 
                 $account = Accounts::findOrFail($payment['account_id']);
@@ -222,7 +222,6 @@ class PaySheetController extends Controller
                 $transaction->credit       = $amount;
                 $transaction->remark       = 'Methord : ' . $payment['account_info'] . '#_' . ' ($payslip->employee->name) '. ' Salary Paid ';
                 $transaction->employee_id  = $payslip->employee_id;
-               
                 $transaction->created_by   = auth()->id();
                 $transaction->payment_invoice = $invoice;
                 $transaction->save();
@@ -246,7 +245,6 @@ class PaySheetController extends Controller
             $salaryTransaction->employee_id  = $payslip->employee_id;
             $salaryTransaction->created_by   = auth()->id();
             $salaryTransaction->payment_invoice = $invoice;
-            
             $salaryTransaction->save();
             
             
@@ -278,6 +276,25 @@ class PaySheetController extends Controller
                 }
             }
 
+            // bonus pay
+            $totalBonus = 0;
+            if ($request->filled('bonus')) {
+
+                foreach ($request->bonus as $bonus) {
+                    if (empty($bonus['type']) || !isset($bonus['amount'])) {
+                        continue;
+                    }
+                    $empBonus = new EmpPayBonus();
+                    $empBonus->employee_id = $payslip->employee_id;
+                    $empBonus->monthly_payable_salaries_id = $payslip->id;
+                    $empBonus->bonus_type = $bonus['type'];
+                    $empBonus->bonus_amount = (float) $bonus['amount'];
+                    $empBonus->remarks = $bonus['type'] . '  payment';
+                    $empBonus->save();
+
+                    $totalBonus += $empBonus->bonus_amoun;
+                }
+            }
             
             $empPay = new EmpPayDetails();
             $empPay->pay_sheet_id   = $payslip->id;
@@ -285,12 +302,18 @@ class PaySheetController extends Controller
             $empPay->employee_id    = $payslip->employee_id;
             $empPay->payble_salary  = $payablesalary;
             $empPay->amount         = $totalPaid;
-            $empPay->lone           = $loan ?? 0;
+            $empPay->lone           = $lone_amount ?? 0;
+            $empPay->bonus_id       = $empBonus->id ?? null;
+            $empPay->total_bonus    = $totalBonus ?? 0;
             // $empPay->duo            = $payablesalary - $totalPaid ;
             $empPay->save();
 
+
             $payslip->status = ($payslip->due_amount <= 0) ? 'paid' : 'partial';
+            $payslip->employee_payable_salary = $payablesalary;
+            $payslip->festival_bonus =  $totalBonus ?? 0;
             $payslip->save();
+
             DB::commit();
 
             return back()->with('success', 'Salary paid successfully');
