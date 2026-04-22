@@ -6,6 +6,7 @@ use App\Http\Controllers\Backend\Hrm\AttendanceController;
 use App\Http\Controllers\Backend\Settings\ContraVoucherController;
 use App\Http\Controllers\Backend\Settings\CreditVoucherController;
 use App\Http\Controllers\Backend\Settings\DabitVoucherController;
+use App\Http\Controllers\Backend\Settings\JournalVoucherController;
 use App\Models\Accounts;
 use App\Models\Customer;
 use Illuminate\Support\Facades\Auth;
@@ -279,20 +280,19 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
 
 
 
-
         //Contra Voicher crud operation start
-        Route::get('/settings-journal-voucher-list', 'JournalVoucherController@index')->name('settings.journal.voucher.index');
-        Route::get('/dataProcessingjournalvoucher', 'JournalVoucherController@dataProcessing')->name('settings.journal.voucher.dataProcessingJournalVoucher');
-        Route::get('/settings-journal-voucher-create', 'JournalVoucherController@create')->name('settings.journal.voucher.create');
-        Route::get('/settings-journal-voucher-accountsearch', 'JournalVoucherController@accountsearch')->name('settings.journal.voucher.accountsearch');
-        Route::post('/settings-journal-voucher-store', 'JournalVoucherController@store')->name('settings.journal.voucher.store');
-        Route::get('/settings-journal-voucher-edit/{id}', 'JournalVoucherController@edit')->name('settings.journal.voucher.edit');
-        Route::get('/settings-journal-voucher-show/{id}', 'JournalVoucherController@show')->name('settings.journal.voucher.show');
-        Route::post('/settings-journal-voucher-update/{id}', 'JournalVoucherController@update')->name('settings.journal.voucher.update');
-        Route::get('/settings-journal-voucher-delete/{id}', 'JournalVoucherController@destroy')->name('settings.journal.voucher.destroy');
-        Route::get('/settings-journal-voucher-singledestroy/{id}', 'JournalVoucherController@singledestroy')->name('settings.journal.voucher.singledestroy');
-        Route::get('/settings-journal-voucher-status/{id}/{status}', 'JournalVoucherController@statusUpdate')->name('settings.contra.voucher.status');
-        Route::get('/getSubCategory', 'JournalVoucherController@getSubCategory')->name('settings.contra.voucher.getSubCategory');
+        Route::get('/settings-journal-voucher-list', [JournalVoucherController::class, 'index'])->name('settings.journal.voucher.index');
+        Route::get('/dataProcessingjournalvoucher', [JournalVoucherController::class, 'dataProcessing'])->name('settings.journal.voucher.dataProcessingJournalVoucher');
+        Route::get('/settings-journal-voucher-create', [JournalVoucherController::class, 'create'])->name('settings.journal.voucher.create');
+        Route::get('/settings-journal-voucher-accountsearch', [JournalVoucherController::class, 'accountsearch'])->name('settings.journal.voucher.accountsearch');
+        Route::post('/settings-journal-voucher-store', [JournalVoucherController::class, 'store'])->name('settings.journal.voucher.store');
+        Route::get('/settings-journal-voucher-edit/{id}', [JournalVoucherController::class, 'edit'])->name('settings.journal.voucher.edit');
+        Route::get('/settings-journal-voucher-show/{id}', [JournalVoucherController::class, 'show'])->name('settings.journal.voucher.show');
+        Route::post('/settings-journal-voucher-update/{id}', [JournalVoucherController::class, 'update'])->name('settings.journal.voucher.update');
+        Route::get('/settings-journal-voucher-delete/{id}', [JournalVoucherController::class, 'destroy'])->name('settings.journal.voucher.destroy');
+        Route::get('/settings-journal-voucher-singledestroy/{id}', [JournalVoucherController::class, 'singledestroy'])->name('settings.journal.voucher.singledestroy');
+        Route::get('/settings-journal-voucher-status/{id}/{status}', [JournalVoucherController::class, 'statusUpdate'])->name('settings.contra.voucher.status');
+        Route::get('/getSubCategory', [JournalVoucherController::class, 'getSubCategory'])->name('settings.contra.voucher.getSubCategory');
         //Contra Voicher operation end
 
         //Expance category crud operation start

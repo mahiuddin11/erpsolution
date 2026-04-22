@@ -8,6 +8,8 @@
         .bootstrap-switch-large {
             width: 200px;
         }
+
+           
     </style>
 @endsection
 @section('navbar-content')

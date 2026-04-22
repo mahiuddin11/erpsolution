@@ -67,33 +67,47 @@ class JournalVoucherRepositories
         $order = $columns[$request->input('order.0.column')];
         $dir = "desc";
 
-        $auth = Auth::user();
-        if (empty($request->input('search.value'))) {
-            $journalvoucher = $this->journalVoucher::offset($start);
-            // if ($auth->branch_id !== null) {
-            //     $journalvoucher = $journalvoucher->where('branch_id', $auth->branch_id);
-            // }
-            $journalvoucher = $journalvoucher->limit($limit)
-                ->orderBy($order, $dir)
-                ->get();
-            $totalFiltered = $this->journalVoucher::count();
-        } else {
-            $search = $request->input('search.value');
-            $journalvoucher = $this->journalVoucher->where('voucher_no', 'like', "%{$search}%");;
+        $search = $request->input('search.value');
+        $query = $this->journalVoucher
+            ->select('id', 'voucher_no', 'date',  'project_id', 'updated_by', 'note')
+            ->with([
+                'updatedBy:id,name',
+                'project:id,name'
+            ])
+            ->withSum('details as total_amount', 'debit');
 
-            $journalvoucher = $journalvoucher->offset($start)
-                ->limit($limit)
-                ->orderBy($order, $dir)
-                ->get();
-            $totalFiltered = $this->journalVoucher::count();
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+
+                $q->where('voucher_no', 'like', "%{$search}%")
+                    ->orWhere('date', 'like', "{$search}%")
+                    ->orWhere('note', 'like', "%{$search}%")
+
+                    ->orWhereHas('updatedBy', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    })
+
+                    ->orWhereHas('project', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    });
+            });
         }
 
+        $totalData = $this->journalVoucher->count();
+        $totalFiltered  = (clone $query)->count();
+
+        $journalVoucher = $query
+            ->offset($start)
+            ->limit($limit)
+            ->orderBy($order, $dir)
+            ->get();
+
         $data = array();
-        if ($journalvoucher) {
-            foreach ($journalvoucher as $key => $item) {
+        if ($journalVoucher) {
+            foreach ($journalVoucher as $key => $item) {
                 $nestedData['id'] = $key + 1;
                 $nestedData['voucher_no'] = $item->voucher_no;
-                $nestedData['amount'] = $item->details->sum("debit") ?? "N/A";
+                $nestedData['amount'] = $item->total_amount ?? "0";;
                 $nestedData['project_id'] = $item->project->name ?? "N/A";
                 $nestedData['updated_by'] = $item->updatedBy->name ?? "N/A";
                 $nestedData['date'] = $item->date ?? "N/A";
