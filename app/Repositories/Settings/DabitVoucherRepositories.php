@@ -65,32 +65,52 @@ class DabitVoucherRepositories
         $order = $columns[$request->input('order.0.column')];
         $dir = 'desc';
         $auth = Auth::user();
-        if (empty($request->input('search.value'))) {
-            $dabitvoucher = $this->dabitVoucher::offset($start);
-            // if ($auth->branch_id !== null) {
-            //     $dabitvoucher = $dabitvoucher->where('branch_id', $auth->branch_id);
-            // }
-            $dabitvoucher = $dabitvoucher->limit($limit)
-                ->orderBy($order, $dir)
-                ->get();
-            $totalFiltered = $this->dabitVoucher::count();
-        } else {
-            $search = $request->input('search.value');
-            $dabitvoucher = $this->dabitVoucher->where('voucher_no', 'like', "%{$search}%");;
 
-            $dabitvoucher = $dabitvoucher->offset($start)
-                ->limit($limit)
-                ->orderBy($order, $dir)
-                ->get();
-            $totalFiltered = $this->dabitVoucher::count();
+        $search = $request->input('search.value');
+        $query = $this->dabitVoucher
+            ->select('id', 'voucher_no',  'date', 'approved_by', 'project_id', 'updated_by', 'note')
+            ->with([
+                'user:id,name',
+                'project:id,name',
+                'updatedBy:id,name',
+                // 'details:id,dabit_voucher_id,debit'
+            ])
+            ->withSum('details as total_amount', 'debit');
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+
+                $q->where('voucher_no', 'like', "%{$search}%")
+                    ->orWhere('date', 'like', "%{$search}%")
+                    ->orWhere('note', 'like', "%{$search}%")
+
+                    ->orWhereHas('user', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    })
+
+                    ->orWhereHas('project', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    });
+            });
         }
+
+        $totalData = $this->dabitVoucher->count();
+        $totalFiltered = $query->toBase()->getCountForPagination();
+
+        $dabitvoucher = $query
+            ->offset($start)
+            ->limit($limit)
+            ->orderBy($order, $dir)
+            ->get();
+
+     
 
         $data = array();
         if ($dabitvoucher) {
             foreach ($dabitvoucher as $key => $item) {
                 $nestedData['id'] = $key + 1;
                 $nestedData['voucher_no'] = $item->voucher_no;
-                $nestedData['amount'] = $item->details->sum("debit") ?? "N/A";
+                $nestedData['amount'] = $item->total_amount ?? "0";
                 $nestedData['project_id'] = $item->project->name ?? "N/A";
                 $nestedData['approved_by'] = $item->user->name ?? "Admin still not view";
                 $nestedData['viewed'] = $item->viewed == 1 ? "Viewed" : "N/A";
@@ -134,6 +154,7 @@ class DabitVoucherRepositories
 
         return $json_data;
     }
+
     /**
      * @param $request
      * @return mixed

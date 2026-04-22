@@ -37,6 +37,7 @@ class DabitVoucherService
      */
     public function getList($request)
     {
+        // dd($request->all());
         return $this->systemRepositories->getList($request);
     }
 

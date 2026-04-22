@@ -3,6 +3,7 @@
 // use Illuminate\Support\Facades\Artisan;
 
 use App\Http\Controllers\Backend\Hrm\AttendanceController;
+use App\Http\Controllers\Backend\Settings\ContraVoucherController;
 use App\Http\Controllers\Backend\Settings\CreditVoucherController;
 use App\Http\Controllers\Backend\Settings\DabitVoucherController;
 use App\Models\Accounts;
@@ -260,22 +261,24 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/settings-credit-voucher-customervoucher', [CreditVoucherController::class, 'customervoucher'])->name('settings.credit.voucher.customervoucher');
         //Credit Voicher operation end
 
-        //Contra Voicher crud operation start
-        Route::get('/settings-contra-voucher-list', 'ContraVoucherController@index')->name('settings.contra.voucher.index');
-        Route::get('/dataProcessingcontravoucher', 'ContraVoucherController@dataProcessing')->name('settings.contra.voucher.dataProcessingContraVoucher');
-        Route::get('/settings-contra-voucher-create', 'ContraVoucherController@create')->name('settings.contra.voucher.create');
-        Route::get('/settings-contra-voucher-accountsearch', 'ContraVoucherController@accountsearch')->name('settings.contra.voucher.accountsearch');
-        Route::post('/settings-contra-voucher-store', 'ContraVoucherController@store')->name('settings.contra.voucher.store');
-        Route::get('/settings-contra-voucher-edit/{id}', 'ContraVoucherController@edit')->name('settings.contra.voucher.edit');
-        Route::get('/settings-contra-voucher-show/{id}', 'ContraVoucherController@show')->name('settings.contra.voucher.show');
-        Route::post('/settings-contra-voucher-update/{id}', 'ContraVoucherController@update')->name('settings.contra.voucher.update');
-        Route::get('/settings-contra-voucher-delete/{id}', 'ContraVoucherController@destroy')->name('settings.contra.voucher.destroy');
-        Route::get('/settings-contra-voucher-singledestroy/{id}', 'ContraVoucherController@singledestroy')->name('settings.contra.voucher.singledestroy');
-        Route::get('/settings-contra-voucher-status/{id}/{status}', 'ContraVoucherController@statusUpdate')->name('settings.contra.voucher.status');
-        Route::get('/getSubCategory', 'ContraVoucherController@getSubCategory')->name('settings.contra.voucher.getSubCategory');
-        Route::get('/contra-getAccountBalance', 'ContraVoucherController@getAccountBalance')->name('settings.contra.checkBalance');
 
-        //Contra Voicher operation end
+        //Contra Voicher crud operation start
+        Route::get('/settings-contra-voucher-list', [ContraVoucherController::class,'index'])->name('settings.contra.voucher.index');
+        Route::get('/dataProcessingcontravoucher', [ContraVoucherController::class,'dataProcessing'])->name('settings.contra.voucher.dataProcessingContraVoucher');
+        Route::get('/settings-contra-voucher-create', [ContraVoucherController::class,'create'])->name('settings.contra.voucher.create');
+        Route::get('/settings-contra-voucher-accountsearch', [ContraVoucherController::class,'accountsearch'])->name('settings.contra.voucher.accountsearch');
+        Route::post('/settings-contra-voucher-store', [ContraVoucherController::class,'store'])->name('settings.contra.voucher.store');
+        Route::get('/settings-contra-voucher-edit/{id}', [ContraVoucherController::class,'edit'])->name('settings.contra.voucher.edit');
+        Route::get('/settings-contra-voucher-show/{id}', [ContraVoucherController::class,'show'])->name('settings.contra.voucher.show');
+        Route::post('/settings-contra-voucher-update/{id}', [ContraVoucherController::class,'update'])->name('settings.contra.voucher.update');
+        Route::get('/settings-contra-voucher-delete/{id}', [ContraVoucherController::class,'destroy'])->name('settings.contra.voucher.destroy');
+        Route::get('/settings-contra-voucher-singledestroy/{id}', [ContraVoucherController::class,'singledestroy'])->name('settings.contra.voucher.singledestroy');
+        Route::get('/settings-contra-voucher-status/{id}/{status}', [ContraVoucherController::class,'statusUpdate'])->name('settings.contra.voucher.status');
+        Route::get('/getSubCategory', [ContraVoucherController::class,'getSubCategory'])->name('settings.contra.voucher.getSubCategory');
+        Route::get('/contra-getAccountBalance', [ContraVoucherController::class,'getAccountBalance'])->name('settings.contra.checkBalance');
+
+
+
 
         //Contra Voicher crud operation start
         Route::get('/settings-journal-voucher-list', 'JournalVoucherController@index')->name('settings.journal.voucher.index');

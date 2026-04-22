@@ -8,6 +8,16 @@
         .bootstrap-switch-large {
             width: 200px;
         }
+
+        table {
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table th:nth-child(9),
+        table td:nth-child(9) {
+            width: 300px;
+        }
     </style>
 @endsection
 @section('navbar-content')

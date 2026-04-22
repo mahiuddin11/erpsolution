@@ -55,7 +55,7 @@ class CreditVoucherController extends Controller
      */
     public function index(Request $request)
     {
-        //$this->expenseFix();
+        
         $title = 'Receive Voucher List';
         return view('backend.pages.settings.credit_voucher.index', get_defined_vars());
     }

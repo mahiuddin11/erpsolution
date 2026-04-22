@@ -2,6 +2,7 @@
     let table = $('#systemDatatable').DataTable({
         "processing": true,
         "serverSide": true,
+      
         "ajax": {
             "url": "{{ route('settings.credit.voucher.dataProcessingDabitVoucher') }}",
             "dataType": "json",

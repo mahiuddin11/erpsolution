@@ -50,6 +50,7 @@ class CreditVoucherRepositories
      */
     public function getList($request)
     {
+
         $columns = array(
             0 => 'id',
             1 => 'amount',
@@ -67,29 +68,52 @@ class CreditVoucherRepositories
         $order = $columns[$request->input('order.0.column')];
         $dir = 'desc';
         $auth = Auth::user();
-        if (empty($request->input('search.value'))) {
-            $dabitvoucher = $this->creditVoucher::offset($start);
-            $dabitvoucher = $dabitvoucher->limit($limit)
-                ->orderBy($order, $dir)
-                ->get();
-            $totalFiltered = $this->creditVoucher::count();
-        } else {
-            $search = $request->input('search.value');
-            $dabitvoucher = $this->creditVoucher->where('voucher_no', 'like', "%{$search}%");
 
-            $dabitvoucher = $dabitvoucher->offset($start)
-                ->limit($limit)
-                ->orderBy($order, $dir)
-                ->get();
-            $totalFiltered = $this->creditVoucher::count();
+
+
+        $search = $request->input('search.value');
+        $query = $this->creditVoucher
+            ->select('id', 'voucher_no', 'date', 'approved_by', 'project_id', 'updated_by', 'note')
+            ->with([
+                'user:id,name',
+                'project:id,name',
+                'updatedBy:id,name'
+            ])
+            ->withSum('details as total_amount', 'debit');
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+
+                $q->where('voucher_no', 'like', "%{$search}%")
+                    ->orWhere('date', 'like', "{$search}%")
+                    ->orWhere('note', 'like', "%{$search}%")
+
+                    ->orWhereHas('user', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    })
+
+                    ->orWhereHas('project', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    });
+            });
         }
 
+        $totalData = $this->creditVoucher->count();
+        $totalFiltered  = (clone $query)->count();
+
+        $creditVoucher = $query
+            ->offset($start)
+            ->limit($limit)
+            ->orderBy($order, $dir)
+            ->get();
+
+
         $data = array();
-        if ($dabitvoucher) {
-            foreach ($dabitvoucher as $key => $item) {
+        if ($creditVoucher) {
+            foreach ($creditVoucher as $key => $item) {
                 $nestedData['id'] = $key + 1;
                 $nestedData['voucher_no'] = $item->voucher_no;
-                $nestedData['amount'] = $item->details->sum("debit") ?? "N/A";
+                $nestedData['amount'] = $item->total_amount ?? 0;;
                 $nestedData['project_id'] = $item->project->name ?? "N/A";
                 $nestedData['approved_by'] = $item->user->name ?? "Admin still not view";
                 $nestedData['viewed'] = $item->viewed == 1 ? "Viewed" : "N/A";
@@ -131,6 +155,7 @@ class CreditVoucherRepositories
 
         return $json_data;
     }
+
     /**
      * @param $request
      * @return mixed

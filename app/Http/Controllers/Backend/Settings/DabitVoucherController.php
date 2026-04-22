@@ -49,7 +49,7 @@ class DabitVoucherController extends Controller
      */
     public function index(Request $request)
     {
-        //$this->expenseFix();
+        // dd($request->all());
         $title = 'Debit Voucher List';
         return view('backend.pages.settings.dabit_voucher.index', get_defined_vars());
     }
