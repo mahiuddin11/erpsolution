@@ -25,6 +25,10 @@
             border-radius: 16px;
         }
 
+        button.btn.btn-outline-secondary.btn-sm {
+            margin-right: 10px;
+        }
+
         .bg-success {
             background-color: #08422f !important;
         }
@@ -180,7 +184,8 @@
                             </h6>
 
                             @foreach ($transactions as $trx)
-                                <div class="payment-detail-row d-flex justify-content-between align-items-center py-2 border-bottom">
+                                <div
+                                    class="payment-detail-row d-flex justify-content-between align-items-center py-2 border-bottom">
                                     <div>
                                         <span class="font-weight-bold small">
                                             {{ $trx->account->account_name ?? 'N/A' }}
@@ -203,7 +208,7 @@
                             <button onclick="printPayslip()" class="btn btn-outline-secondary btn-sm">
                                 <i class="fas fa-print mr-1"></i> Print
                             </button>
-                            <a href="{{ url()->previous() }}" class="btn btn-outline-primary btn-sm">
+                            <a href="{{ url()->previous() }}" class="btn btn-outline-primary btn-sm ">
                                 <i class="fas fa-arrow-left mr-1"></i> Back
                             </a>
                         </div>
@@ -257,7 +262,8 @@
                                                                         default => 'badge-secondary',
                                                                     };
                                                                 @endphp
-                                                                <span class="badge {{ $color }} mr-1 mb-1 px-2 py-1">
+                                                                <span
+                                                                    class="badge {{ $color }} mr-1 mb-1 px-2 py-1">
                                                                     {{ \App\Models\EmpPayBonus::BONUS_TYPES[$bonus->bonus_type] ?? ucfirst($bonus->bonus_type) }}
                                                                 </span>
                                                             @endforeach
@@ -294,7 +300,8 @@
                                                 — {{ $payslip->employee_absence_day }} day
                                             @endif
                                         </td>
-                                        <td class="text-right">{{ number_format($payslip->absence_deduction ?? 0, 2) }}</td>
+                                        <td class="text-right">{{ number_format($payslip->absence_deduction ?? 0, 2) }}
+                                        </td>
                                     </tr>
                                     <tr>
                                         <td>Late Deduction
@@ -302,7 +309,8 @@
                                                 — {{ $payslip->employee_late }} days Late
                                             @endif
                                         </td>
-                                        <td class="text-right">{{ number_format($payslip->employee_deducton ?? 0, 2) }}</td>
+                                        <td class="text-right">{{ number_format($payslip->employee_deducton ?? 0, 2) }}
+                                        </td>
                                     </tr>
                                     <tr>
                                         <td>Loan Adjustment</td>
@@ -347,42 +355,42 @@
 @endsection
 
 @section('scripts')
-<script>
-function printPayslip() {
+    <script>
+        function printPayslip() {
 
-    @php
-        $bonusAmountJs   = ($payslip->festival_bonus ?? 0) + ($payslip->others_bonus ?? 0);
-        $totalEarning    = ($payslip->total_salary ?? 0) + $bonusAmountJs;
-        $totalDeduction  = ($payslip->absence_deduction ?? 0) + ($payslip->employee_deducton ?? 0) + ($payslip->loan_adjustment ?? 0);
-        $netPaid         = $payslip->empPayDetails->amount ?? ($payslip->employee_payable_salary ?? 0);
+            @php
+                $bonusAmountJs = ($payslip->festival_bonus ?? 0) + ($payslip->others_bonus ?? 0);
+                $totalEarning = ($payslip->total_salary ?? 0) + $bonusAmountJs;
+                $totalDeduction = ($payslip->absence_deduction ?? 0) + ($payslip->employee_deducton ?? 0) + ($payslip->loan_adjustment ?? 0);
+                $netPaid = $payslip->empPayDetails->amount ?? ($payslip->employee_payable_salary ?? 0);
 
-        // Bonus badges HTML
-        $bonusBadgesHtml = '';
-        if ($bonusAmountJs > 0 && isset($empBonus) && $empBonus->count()) {
-            foreach ($empBonus as $bonus) {
-                $label = \App\Models\EmpPayBonus::BONUS_TYPES[$bonus->bonus_type] ?? ucfirst($bonus->bonus_type);
-                $bonusBadgesHtml .= '<span style="background:#d4edda;color:#0c6a07;font-size:9px;padding:1px 6px;border-radius:50px;margin-left:4px;">' . e($label) . '</span>';
-            }
-        }
+                // Bonus badges HTML
+                $bonusBadgesHtml = '';
+                if ($bonusAmountJs > 0 && isset($empBonus) && $empBonus->count()) {
+                    foreach ($empBonus as $bonus) {
+                        $label = \App\Models\EmpPayBonus::BONUS_TYPES[$bonus->bonus_type] ?? ucfirst($bonus->bonus_type);
+                        $bonusBadgesHtml .= '<span style="background:#d4edda;color:#0c6a07;font-size:9px;padding:1px 6px;border-radius:50px;margin-left:4px;">' . e($label) . '</span>';
+                    }
+                }
 
-        // Transaction rows
-        $trxRowsHtml = '';
-        foreach ($transactions as $trx) {
-            $accName = e($trx->account->account_name ?? 'N/A');
-            $remark  = e(\Illuminate\Support\Str::before($trx->remark ?? '', '#_'));
-            $credit  = number_format($trx->credit, 2);
-            $trxRowsHtml .= "
+                // Transaction rows
+                $trxRowsHtml = '';
+                foreach ($transactions as $trx) {
+                    $accName = e($trx->account->account_name ?? 'N/A');
+                    $remark = e(\Illuminate\Support\Str::before($trx->remark ?? '', '#_'));
+                    $credit = number_format($trx->credit, 2);
+                    $trxRowsHtml .= "
                 <div style='display:flex;justify-content:space-between;padding:7px 14px;border-bottom:1px dashed #eee;font-size:12px;'>
                     <span style='color:#172a3e;font-weight:600;'>{$accName}</span>
                     <span style='color:#888;'>{$remark}</span>
                     <span style='font-weight:700;color:#0c6a07;'>{$credit} Tk</span>
                 </div>";
-        }
-    @endphp
+                }
+            @endphp
 
-    var bonusRow = '';
-    @if($bonusAmountJs > 0)
-    bonusRow = `
+            var bonusRow = '';
+            @if ($bonusAmountJs > 0)
+                bonusRow = `
         <tr>
             <td style="padding:7px 12px;border-bottom:1px dashed #ddd;">
                 Bonus {!! addslashes($bonusBadgesHtml) !!}
@@ -391,11 +399,11 @@ function printPayslip() {
                 {{ number_format($bonusAmountJs, 2) }}
             </td>
         </tr>`;
-    @endif
+            @endif
 
-    var paymentSection = '';
-    @if($transactions->count())
-    paymentSection = `
+            var paymentSection = '';
+            @if ($transactions->count())
+                paymentSection = `
         <div style="font-size:13px;font-weight:700;color:#172a3e;margin:16px 0 6px;display:flex;align-items:center;gap:6px;">
             <span style="width:9px;height:9px;border-radius:50%;background:#172a3e;display:inline-block;"></span>
             Payment Information
@@ -409,9 +417,9 @@ function printPayslip() {
         <div style="text-align:right;font-size:12px;font-weight:700;color:#172a3e;padding:5px 2px 0;">
             Total Paid: {{ number_format($netPaid, 2) }} Tk
         </div>`;
-    @endif
+            @endif
 
-    var printContent = `<!DOCTYPE html>
+            var printContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -649,15 +657,15 @@ function printPayslip() {
 </body>
 </html>`;
 
-    var printWin = window.open('', '_blank', 'width=900,height=700,scrollbars=yes,resizable=yes');
-    printWin.document.open();
-    printWin.document.write(printContent);
-    printWin.document.close();
+            var printWin = window.open('', '_blank', 'width=900,height=700,scrollbars=yes,resizable=yes');
+            printWin.document.open();
+            printWin.document.write(printContent);
+            printWin.document.close();
 
-    printWin.onload = function () {
-        printWin.focus();
-        printWin.print();
-    };
-}
-</script>
+            printWin.onload = function() {
+                printWin.focus();
+                printWin.print();
+            };
+        }
+    </script>
 @endsection
