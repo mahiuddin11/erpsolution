@@ -217,10 +217,10 @@ class PaySheetController extends Controller
                 $transaction->table_name   = 'monthly_payable_salaries';
                 $transaction->branch_id    = auth()->user()->branch_id ?? 0;
                 $transaction->account_id   = $account->id;
-                $transaction->type         = 'credit';
+                $transaction->type         = 'credit_voucher';
                 $transaction->debit        = 0;
                 $transaction->credit       = $amount;
-                $transaction->remark       = 'Methord : ' . $payment['account_info'] . '#_' . ' ($payslip->employee->name) '. ' Salary Paid ';
+                $transaction->remark       = 'Reference : ' . $payment['account_info'] . '#_' . ' ($payslip->employee->name) '. ' Salary Paid ';
                 $transaction->employee_id  = $payslip->employee_id;
                 $transaction->created_by   = auth()->id();
                 $transaction->payment_invoice = $invoice;
@@ -238,7 +238,7 @@ class PaySheetController extends Controller
             $salaryTransaction->table_name   = 'monthly_payable_salaries';
             $salaryTransaction->branch_id    = auth()->user()->branch_id ?? null;
             $salaryTransaction->account_id   = 46; // salary and allownce id 
-            $salaryTransaction->type         = 'debit';
+            $salaryTransaction->type         = 'debit_voucher';
             $salaryTransaction->debit        =  $totalPaid;
             $salaryTransaction->credit       = 0;
             $salaryTransaction->remark       = ($payslip->employee->name) . ' Salary Paid ';
@@ -247,6 +247,7 @@ class PaySheetController extends Controller
             $salaryTransaction->payment_invoice = $invoice;
             $salaryTransaction->save();
             
+           
             // dd($salaryTransaction->debit ,  $totalPaid);
             
             // =====================================
@@ -294,12 +295,11 @@ class PaySheetController extends Controller
                     $empBonus->bonus_type = $bonus['type'];
                     $empBonus->bonus_amount = (float) $bonus['amount'];
                     $empBonus->remarks = $bonus['type'] . '  payment';
-                    // $empBonus->save();
+                    $empBonus->save();
 
                     $totalBonus += (float) $bonus['amount'];
                 }
             }
-
 
             $empPay = new EmpPayDetails();
             $empPay->pay_sheet_id   = $payslip->id;
@@ -313,6 +313,8 @@ class PaySheetController extends Controller
             // $empPay->duo            = $payablesalary - $totalPaid ;
             $empPay->save();
 
+            $empBonus->emp_pay_details_id =  $empPay->id;
+            $empBonus->save();
 
             $payslip->status = ($payslip->due_amount <= 0) ? 'paid' : 'partial';
             $payslip->employee_payable_salary = $totalPaid ?? $payablesalary + $totalBonus ;
@@ -321,7 +323,8 @@ class PaySheetController extends Controller
 
             DB::commit();
 
-            return back()->with('success', 'Salary paid successfully');
+            return redirect()->route('hrm.paysheet.paidslip.check' , $payslip->id);
+            
         } catch (\Exception $e) {
 
             DB::rollback();
@@ -333,6 +336,10 @@ class PaySheetController extends Controller
 
         $title = 'Salary Pay Slip';
         $payslip = MonthlyPayableSalary::find($id);
+        $empBonus = EmpPayBonus::where('monthly_payable_salaries_id' , $payslip->id)->get();
+       
+       
+        $transactions = AccountTransaction::where('table_id', $payslip->id)->where('employee_id', $payslip->employee_id)->where('table_name', 'monthly_payable_salaries')->where('type', 'credit_voucher')->get();
         
 
         return view('backend.pages.hrm.attendance.paysheet.paidslip', get_defined_vars());

@@ -91,10 +91,9 @@ class DabitVoucherRepositories
             foreach ($dabitvoucher as $key => $item) {
                 $nestedData['id'] = $key + 1;
                 $nestedData['voucher_no'] = $item->voucher_no;
-                $nestedData['amount'] = $item->total_amount ?? "0";
+                $nestedData['amount'] = $item->details->sum("debit") ?? "N/A";
                 $nestedData['project_id'] = $item->project->name ?? "N/A";
-                $nestedData['approved_by'] = $item->approvedBy->name ?? "Admin still not view";
-                // $nestedData['approved_by'] = optional($item->approvedBy)->name ?? "N/A";
+                $nestedData['approved_by'] = $item->user->name  ?? "Admin still not view";
                 $nestedData['viewed'] = $item->viewed == 1 ? "Viewed" : "N/A";
                 $nestedData['updated_by'] = $item->updatedBy->name ?? "N/A";
 

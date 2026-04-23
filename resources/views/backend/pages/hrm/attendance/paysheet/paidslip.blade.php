@@ -72,46 +72,6 @@
                 font-size: 1.4rem;
             }
         }
-
-        /* ========== PRINT STYLES ========== */
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-
-            #print-area,
-            #print-area * {
-                visibility: visible;
-            }
-
-            #print-area {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                padding: 20px;
-            }
-
-            .btn-print,
-            .no-print {
-                display: none !important;
-            }
-
-            .payslip-card {
-                box-shadow: none !important;
-                border: 1px solid #dee2e6 !important;
-                border-radius: 8px !important;
-            }
-
-            .card-header {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-
-            table {
-                page-break-inside: avoid;
-            }
-        }
     </style>
 @endsection
 
@@ -141,7 +101,7 @@
         <div class="row justify-content-center">
 
             <!-- LEFT COLUMN: Employee Info + Payment Summary -->
-            <div class="col-lg-6 col-md-12 col-12 no-print">
+            <div class="col-lg-6 col-md-12 col-12">
 
                 <!-- Employee Information -->
                 <div class="card payslip-card employee-info mb-4">
@@ -206,29 +166,29 @@
                         <div class="net-pay-box table-success p-3 text-center mb-3">
                             <p class="mb-1 small opacity-90">Total Paid Amount</p>
                             <h2 class="mb-0 font-weight-bold total-amount">
-                                {{ number_format($payslip->empPayDetails->amount ?? $payslip->employee_payable_salary ?? 0, 2) }} Taka
+                                {{ number_format($payslip->empPayDetails->amount ?? ($payslip->employee_payable_salary ?? 0), 2) }}
+                                Taka
                             </h2>
                         </div>
 
-                        @php
-                            $payDetails = $payslip->empPayDetails ?? null;
-                            $transactions = $payslip->accountTransactions()
-                                ->where('type', 'credit')
-                                ->where('table_name', 'monthly_payable_salaries')
-                                ->get();
-                        @endphp
+                        @php $payDetails = $payslip->empPayDetails ?? null; @endphp
 
                         {{-- Payment Method Breakdown --}}
-                        @if($transactions && $transactions->count() > 0)
-                            <h6 class="font-weight-bold mb-2 text-muted"><i class="fas fa-university mr-1"></i> Payment Methods</h6>
-                            @foreach($transactions as $trx)
-                                <div class="payment-detail-row d-flex justify-content-between align-items-center">
+                        @if ($transactions->count())
+                            <h6 class="font-weight-bold mb-2 text-muted">
+                                <i class="fas fa-university mr-1"></i> Payment Methods
+                            </h6>
+
+                            @foreach ($transactions as $trx)
+                                <div class="payment-detail-row d-flex justify-content-between align-items-center py-2 border-bottom">
                                     <div>
-                                        <span class="font-weight-bold small">{{ optional($trx->account)->account_name ?? 'Account' }}</span>
-                                        @if($trx->remark)
+                                        <span class="font-weight-bold small">
+                                            {{ $trx->account->account_name ?? 'N/A' }}
+                                        </span>
+                                        @if ($trx->remark)
                                             <br>
                                             <small class="text-muted">
-                                                {{ Str::before($trx->remark, '#_') }}
+                                                {{ \Illuminate\Support\Str::before($trx->remark, '#_') }}
                                             </small>
                                         @endif
                                     </div>
@@ -237,26 +197,6 @@
                                     </span>
                                 </div>
                             @endforeach
-                        @endif
-
-                        {{-- Bonus Info --}}
-                        @if($payDetails && $payDetails->total_bonus > 0)
-                            <div class="payment-detail-row d-flex justify-content-between align-items-center mt-2">
-                                <span class="font-weight-bold small text-warning"><i class="fas fa-gift mr-1"></i> Bonus Paid</span>
-                                <span class="font-weight-bold text-warning">
-                                    {{ number_format($payDetails->total_bonus, 2) }} Tk
-                                </span>
-                            </div>
-                        @endif
-
-                        {{-- Loan Adjustment Info --}}
-                        @if($payDetails && $payDetails->lone > 0)
-                            <div class="payment-detail-row d-flex justify-content-between align-items-center">
-                                <span class="font-weight-bold small text-danger"><i class="fas fa-hand-holding-usd mr-1"></i> Loan Adjusted</span>
-                                <span class="font-weight-bold text-danger">
-                                    {{ number_format($payDetails->lone, 2) }} Tk
-                                </span>
-                            </div>
                         @endif
 
                         <div class="mt-3 d-flex justify-content-end gap-2">
@@ -273,34 +213,20 @@
 
             </div>
 
-            <!-- RIGHT COLUMN: Salary Breakdown (Printable) -->
-            <div class="col-lg-6 col-md-12 col-12" id="print-area">
+            <!-- RIGHT COLUMN: Salary Breakdown -->
+            <div class="col-lg-6 col-md-12 col-12">
 
                 <div class="card payslip-card">
                     <div class="card-header bg-success text-white d-flex justify-content-between align-items-center py-3">
                         <h5 class="mb-0">
                             Salary Breakdown &bull; {{ \Carbon\Carbon::parse($payslip->date ?? now())->format('F Y') }}
                         </h5>
-                        <button type="button" onclick="printPayslip()" class="btn btn-light btn-sm btn-print no-print">
+                        <button type="button" onclick="printPayslip()" class="btn btn-light btn-sm">
                             <i class="fas fa-print"></i> Print Payslip
                         </button>
                     </div>
 
                     <div class="card-body">
-
-                        <!-- Print Header (visible only on print) -->
-                        <div class="d-none d-print-block mb-4 text-center border-bottom pb-3">
-                            <h4 class="font-weight-bold mb-1">{{ $payslip->employee->name ?? 'N/A' }}</h4>
-                            <p class="mb-1">
-                                {{ optional($payslip->employee->designation)->name ?? '' }}
-                                @if (optional($payslip->employee->department)->name)
-                                    — {{ $payslip->employee->department->name }}
-                                @endif
-                            </p>
-                            <p class="mb-0 text-muted">
-                                Pay Period: {{ \Carbon\Carbon::parse($payslip->date ?? now())->format('F Y') }}
-                            </p>
-                        </div>
 
                         <!-- Earnings -->
                         <h6 class="text-success mb-3"><i class="fas fa-arrow-up"></i> Earnings</h6>
@@ -316,18 +242,32 @@
                                         $bonusAmount = ($payslip->festival_bonus ?? 0) + ($payslip->others_bonus ?? 0);
                                     @endphp
 
-                                    @if($bonusAmount > 0)
+                                    @if ($bonusAmount > 0)
                                         <tr>
                                             <td>
-                                                Bonus
-                                                @if($payslip->empPayDetails && $payslip->empPayDetails->empBonus)
-                                                    <br>
-                                                    <small class="text-muted">
-                                                        {{ \App\Models\EmpPayBonus::BONUS_TYPES[$payslip->empPayDetails->empBonus->bonus_type] ?? $payslip->empPayDetails->empBonus->bonus_type }}
-                                                    </small>
-                                                @endif
+                                                <div class="d-flex flex-column">
+                                                    <strong>Bonus</strong>
+                                                    @if (isset($empBonus) && $empBonus->count())
+                                                        <div class="mt-1 d-flex flex-wrap">
+                                                            @foreach ($empBonus as $bonus)
+                                                                @php
+                                                                    $color = match ($bonus->bonus_type) {
+                                                                        'performance' => 'badge-success',
+                                                                        'eid_ul_fitr', 'eid_ul_adha' => 'badge-info',
+                                                                        default => 'badge-secondary',
+                                                                    };
+                                                                @endphp
+                                                                <span class="badge {{ $color }} mr-1 mb-1 px-2 py-1">
+                                                                    {{ \App\Models\EmpPayBonus::BONUS_TYPES[$bonus->bonus_type] ?? ucfirst($bonus->bonus_type) }}
+                                                                </span>
+                                                            @endforeach
+                                                        </div>
+                                                    @endif
+                                                </div>
                                             </td>
-                                            <td class="text-right">{{ number_format($bonusAmount, 2) }}</td>
+                                            <td class="text-right align-middle">
+                                                <strong>{{ number_format($bonusAmount, 2) }}</strong>
+                                            </td>
                                         </tr>
                                     @endif
 
@@ -380,19 +320,21 @@
                             </table>
                         </div>
 
-                        <!-- Net Salary (Visible always + print) -->
+                        <!-- Net Salary -->
                         <div class="mt-3 p-3 text-center border rounded table-success">
                             <h5 class="mb-1">Paid Amount</h5>
                             <h3 class="font-weight-bold text-success mb-0">
-                                {{ number_format($payslip->empPayDetails->amount ?? $payslip->employee_payable_salary ?? 0, 2) }} Taka
+                                {{ number_format($payslip->empPayDetails->amount ?? ($payslip->employee_payable_salary ?? 0), 2) }}
+                                Taka
                             </h3>
                         </div>
 
-                        <!-- Payment Invoice Reference -->
+                        <!-- Invoice Reference -->
                         <div class="mt-3 text-center">
                             <small class="text-muted">
                                 Invoice: <strong>PAY-{{ str_pad($payslip->id, 4, '0', STR_PAD_LEFT) }}</strong>
-                                &bull; Paid on: <strong>{{ \Carbon\Carbon::parse($payslip->updated_at)->format('d M Y, h:i A') }}</strong>
+                                &bull; Paid on:
+                                <strong>{{ \Carbon\Carbon::parse($payslip->updated_at)->format('d M Y, h:i A') }}</strong>
                             </small>
                         </div>
 
@@ -405,9 +347,317 @@
 @endsection
 
 @section('scripts')
-    <script>
-        function printPayslip() {
-            window.print();
+<script>
+function printPayslip() {
+
+    @php
+        $bonusAmountJs   = ($payslip->festival_bonus ?? 0) + ($payslip->others_bonus ?? 0);
+        $totalEarning    = ($payslip->total_salary ?? 0) + $bonusAmountJs;
+        $totalDeduction  = ($payslip->absence_deduction ?? 0) + ($payslip->employee_deducton ?? 0) + ($payslip->loan_adjustment ?? 0);
+        $netPaid         = $payslip->empPayDetails->amount ?? ($payslip->employee_payable_salary ?? 0);
+
+        // Bonus badges HTML
+        $bonusBadgesHtml = '';
+        if ($bonusAmountJs > 0 && isset($empBonus) && $empBonus->count()) {
+            foreach ($empBonus as $bonus) {
+                $label = \App\Models\EmpPayBonus::BONUS_TYPES[$bonus->bonus_type] ?? ucfirst($bonus->bonus_type);
+                $bonusBadgesHtml .= '<span style="background:#d4edda;color:#0c6a07;font-size:9px;padding:1px 6px;border-radius:50px;margin-left:4px;">' . e($label) . '</span>';
+            }
         }
-    </script>
+
+        // Transaction rows
+        $trxRowsHtml = '';
+        foreach ($transactions as $trx) {
+            $accName = e($trx->account->account_name ?? 'N/A');
+            $remark  = e(\Illuminate\Support\Str::before($trx->remark ?? '', '#_'));
+            $credit  = number_format($trx->credit, 2);
+            $trxRowsHtml .= "
+                <div style='display:flex;justify-content:space-between;padding:7px 14px;border-bottom:1px dashed #eee;font-size:12px;'>
+                    <span style='color:#172a3e;font-weight:600;'>{$accName}</span>
+                    <span style='color:#888;'>{$remark}</span>
+                    <span style='font-weight:700;color:#0c6a07;'>{$credit} Tk</span>
+                </div>";
+        }
+    @endphp
+
+    var bonusRow = '';
+    @if($bonusAmountJs > 0)
+    bonusRow = `
+        <tr>
+            <td style="padding:7px 12px;border-bottom:1px dashed #ddd;">
+                Bonus {!! addslashes($bonusBadgesHtml) !!}
+            </td>
+            <td style="padding:7px 12px;border-bottom:1px dashed #ddd;text-align:right;font-weight:600;">
+                {{ number_format($bonusAmountJs, 2) }}
+            </td>
+        </tr>`;
+    @endif
+
+    var paymentSection = '';
+    @if($transactions->count())
+    paymentSection = `
+        <div style="font-size:13px;font-weight:700;color:#172a3e;margin:16px 0 6px;display:flex;align-items:center;gap:6px;">
+            <span style="width:9px;height:9px;border-radius:50%;background:#172a3e;display:inline-block;"></span>
+            Payment Information
+        </div>
+        <div style="border:1px solid #ddd;border-radius:5px;overflow:hidden;">
+            <div style="background:#172a3e;color:#fff;padding:6px 14px;font-size:11px;font-weight:700;display:flex;justify-content:space-between;">
+                <span>Account / Method</span><span>Remark</span><span>Paid Amount</span>
+            </div>
+            {!! addslashes($trxRowsHtml) !!}
+        </div>
+        <div style="text-align:right;font-size:12px;font-weight:700;color:#172a3e;padding:5px 2px 0;">
+            Total Paid: {{ number_format($netPaid, 2) }} Tk
+        </div>`;
+    @endif
+
+    var printContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payslip - {{ $payslip->employee->name ?? 'Employee' }} - {{ \Carbon\Carbon::parse($payslip->date ?? now())->format('F Y') }}</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; font-size: 12px; color: #222; background: #fff; }
+
+    /* ---- LETTERHEAD ---- */
+    .lh { display: flex; align-items: center; justify-content: space-between; padding: 18px 28px 14px; border-bottom: 3px solid #172a3e; }
+    .lh-logo-box { width: 52px; height: 52px; background: #172a3e; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; }
+    .lh-logo-box img { width: 44px; height: 44px; object-fit: contain; }
+    .lh-logo-box span { color: #fff; font-size: 20px; font-weight: 900; }
+    .lh-logo-info { margin-left: 10px; }
+    .lh-logo-info .co-name { font-weight: 700; color: #172a3e; font-size: 13px; }
+    .lh-logo-info .co-sub { font-size: 10px; color: #666; line-height: 1.6; }
+    .lh-center { text-align: center; flex: 1; padding: 0 16px; }
+    .lh-center h2 { font-size: 18px; font-weight: 800; color: #172a3e; margin-bottom: 2px; }
+    .lh-center p { font-size: 11px; color: #0c6a07; font-style: italic; font-weight: 600; }
+    .lh-right { text-align: right; font-size: 11px; color: #555; min-width: 145px; }
+    .lh-right .cert-title { font-size: 12px; font-weight: 700; color: #172a3e; margin-bottom: 4px; }
+    .lh-right div { line-height: 1.8; }
+
+    /* ---- TITLE BAR ---- */
+    .title-bar { background: #172a3e; color: #fff; text-align: center; padding: 8px 0; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+    /* ---- EMP STRIP ---- */
+    .emp-strip { display: flex; justify-content: space-between; align-items: flex-start; background: #f6f9f6; border-bottom: 1px solid #ddd; padding: 11px 28px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .ei { display: flex; flex-direction: column; gap: 2px; }
+    .ei .lbl { color: #888; font-size: 10px; }
+    .ei .val { font-size: 12px; font-weight: 700; color: #172a3e; }
+    .paid-badge { display: inline-block; background: #0c6a07; color: #fff; font-size: 10px; padding: 2px 10px; border-radius: 50px; font-weight: 700; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+    /* ---- BODY ---- */
+    .body { padding: 16px 28px; }
+    .sec-head { font-size: 13px; font-weight: 700; margin: 14px 0 7px; display: flex; align-items: center; gap: 7px; }
+    .sec-head .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+    /* ---- TABLES ---- */
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    thead tr { background: #172a3e; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    thead th { padding: 8px 12px; font-weight: 600; font-size: 11px; }
+    thead th:last-child { text-align: right; }
+    tbody td { padding: 7px 12px; border-bottom: 1px dashed #e0e0e0; }
+    tbody td:last-child { text-align: right; font-weight: 600; }
+    .row-earn td { background: #edf7ed; font-weight: 700; color: #0c6a07; border-bottom: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .row-ded td { background: #fdf0f0; font-weight: 700; color: #b92020; border-bottom: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+    /* ---- NET BOX ---- */
+    .net-box { border: 2px solid #172a3e; border-radius: 7px; overflow: hidden; margin-top: 14px; }
+    .net-head { background: #172a3e; color: #fff; padding: 7px 16px; font-size: 12px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .net-body { background: #f6fff6; display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .net-amount { font-size: 20px; font-weight: 900; color: #0c6a07; }
+
+    /* ---- FOOTER ---- */
+    .print-footer { border-top: 2px solid #172a3e; margin: 18px 28px 20px; padding-top: 14px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .footer-grid { display: flex; justify-content: space-between; }
+    .footer-col { text-align: center; width: 31%; }
+    .footer-col .sig-line { width: 90%; height: 1px; background: #333; margin: 0 auto 5px; display: block; }
+    .footer-col .ftitle { font-size: 12px; font-weight: 700; color: #172a3e; }
+    .footer-col .fsub { font-size: 10px; color: #666; line-height: 1.7; }
+    .invoice-ref { text-align: center; font-size: 10px; color: #aaa; margin-top: 10px; }
+
+    @media print {
+        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        table { page-break-inside: avoid; }
+        .print-footer { page-break-inside: avoid; }
+    }
+</style>
+</head>
+<body>
+
+    <!-- LETTERHEAD -->
+    <div class="lh">
+        <div style="display:flex;align-items:center;">
+            <div class="lh-logo-box">
+                {{-- Replace <span>AB</span> with <img src="..."> for actual logo --}}
+                <span>AB</span>
+            </div>
+            <div class="lh-logo-info">
+                <div class="co-name">Water Technology DB Ltd.</div>
+                <div class="co-sub">Adress : Mirpur DOHS, </div>
+                <div class="co-sub"> Email :info@wtbl.com.bd</div>
+                <div class="co-sub">Contact : +8801713565696</div>
+                
+            </div>
+        </div>
+
+        <div class="lh-center">
+            <h2>Water Technology BD Ltd</h2>
+            <p>"Value adding is our business"</p>
+        </div>
+
+        <div class="lh-right">
+            <div class="cert-title">ISO Certification</div>
+          
+            <div>Month: <strong>{{ \Carbon\Carbon::parse($payslip->date ?? now())->format('F Y') }}</strong></div>
+    
+            <div>Status: <strong style="color:#0c6a07;">&#10003; Paid</strong></div>
+        </div>
+    </div>
+
+    <!-- TITLE BAR -->
+    <div class="title-bar">EMPLOYEE PAYSLIP</div>
+
+    <!-- EMPLOYEE STRIP -->
+    <div class="emp-strip">
+        <div class="ei">
+            <span class="lbl">Employee Name</span>
+            <span class="val">{{ $payslip->employee->name ?? 'N/A' }}</span>
+        </div>
+        <div class="ei">
+            <span class="lbl">Employee ID</span>
+            <span class="val">{{ $payslip->employee->employee_id ?? ($payslip->employee->id ?? 'N/A') }}</span>
+        </div>
+        <div class="ei">
+            <span class="lbl">Designation</span>
+            <span class="val">{{ optional($payslip->employee->designation)->name ?? 'N/A' }}</span>
+        </div>
+        <div class="ei">
+            <span class="lbl">Department</span>
+            <span class="val">{{ optional($payslip->employee->department)->name ?? 'N/A' }}</span>
+        </div>
+        <div class="ei" style="align-items:flex-end;">
+            <span class="lbl">Status</span>
+            <span class="paid-badge">{{ ucfirst($payslip->status ?? 'Paid') }}</span>
+        </div>
+    </div>
+
+    <!-- BODY -->
+    <div class="body">
+
+        <!-- EARNINGS -->
+        <div class="sec-head" style="color:#0c6a07;">
+            <span class="dot" style="background:#0c6a07;"></span> Earnings
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="text-align:left;">Description</th>
+                    <th>Amount (Tk)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Gross Salary</td>
+                    <td>{{ number_format($payslip->total_salary ?? 0, 2) }}</td>
+                </tr>
+                \${bonusRow}
+                <tr class="row-earn">
+                    <td><strong>Total Earnings</strong></td>
+                    <td><strong>{{ number_format($totalEarning, 2) }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- DEDUCTIONS -->
+        <div class="sec-head" style="color:#b92020;margin-top:16px;">
+            <span class="dot" style="background:#b92020;"></span> Deductions
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="text-align:left;">Description</th>
+                    <th>Amount (Tk)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Absence Deduction{{ !empty($payslip->employee_absence_day) ? ' — ' . $payslip->employee_absence_day . ' day' : '' }}</td>
+                    <td>{{ number_format($payslip->absence_deduction ?? 0, 2) }}</td>
+                </tr>
+                <tr>
+                    <td>Late Deduction{{ !empty($payslip->employee_late) ? ' — ' . $payslip->employee_late . ' days late' : '' }}</td>
+                    <td>{{ number_format($payslip->employee_deducton ?? 0, 2) }}</td>
+                </tr>
+                <tr>
+                    <td>Loan Adjustment</td>
+                    <td>{{ number_format($payslip->loan_adjustment ?? 0, 2) }}</td>
+                </tr>
+                <tr class="row-ded">
+                    <td><strong>Total Deductions</strong></td>
+                    <td><strong>{{ number_format($totalDeduction, 2) }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- NET PAYABLE BOX -->
+        <div class="net-box">
+            <div class="net-head">
+                <span>Net Payable Amount</span>
+                <span style="font-weight:400;font-size:10px;opacity:0.85;">Total Earnings &minus; Total Deductions</span>
+            </div>
+            <div class="net-body">
+                <div style="font-size:11px;color:#555;">Amount Paid</div>
+                <div class="net-amount">{{ number_format($netPaid, 2) }} Tk</div>
+            </div>
+        </div>
+
+        <!-- PAYMENT INFORMATION -->
+        \${paymentSection}
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="print-footer">
+        <div class="footer-grid">
+            <div class="footer-col">
+                <span class="sig-line"></span>
+                <div class="ftitle">Employee Signature</div>
+                <div class="fsub">{{ $payslip->employee->name ?? '' }}</div>
+                <div class="fsub">Date: ___________</div>
+            </div>
+            <div class="footer-col">
+                <span class="sig-line"></span>
+                <div class="ftitle">HR Department</div>
+                <div class="fsub">Authorized Signature</div>
+                <div class="fsub">Date: ___________</div>
+            </div>
+            <div class="footer-col">
+                <span class="sig-line"></span>
+                <div class="ftitle">Managing Director</div>
+                <div class="fsub">Water Technology DB Ltd.</div>
+                <div class="fsub">Date: ___________</div>
+            </div>
+        </div>
+        <div class="invoice-ref">
+            Invoice: PAY-{{ str_pad($payslip->id, 4, '0', STR_PAD_LEFT) }}
+            &bull; Paid on: {{ \Carbon\Carbon::parse($payslip->updated_at)->format('d M Y, h:i A') }}
+            &bull; This is a system generated payslip
+        </div>
+    </div>
+
+</body>
+</html>`;
+
+    var printWin = window.open('', '_blank', 'width=900,height=700,scrollbars=yes,resizable=yes');
+    printWin.document.open();
+    printWin.document.write(printContent);
+    printWin.document.close();
+
+    printWin.onload = function () {
+        printWin.focus();
+        printWin.print();
+    };
+}
+</script>
 @endsection
