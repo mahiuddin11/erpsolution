@@ -68,34 +68,29 @@ class ContraVoucherRepositories
         $dir = "desc";
         $auth = Auth::user();
 
-        $search = $request->input('search.value');
-        $query = $this->contraVoucher
-            ->select('id', 'voucher_no', 'date',   'note');
-           
+        if (empty($request->input('search.value'))) {
+            $contravoucher = $this->contraVoucher::offset($start);
+            // if ($auth->branch_id !== null) {
+            //     $contravoucher = $contravoucher->where('branch_id', $auth->branch_id);
+            // }
+            $contravoucher = $contravoucher->limit($limit)
+                ->orderBy($order, $dir)
+                ->get();
+            $totalFiltered = $this->contraVoucher::count();
+        } else {
+            $search = $request->input('search.value');
+            $contravoucher = $this->contraVoucher;
 
-        if (!empty($search)) {
-            $query->where(function ($q) use ($search) {
-
-                $q->where('voucher_no', 'like', "%{$search}%")
-                    ->orWhere('date', 'like', "{$search}%")
-                    ->orWhere('note', 'like', "%{$search}%");
-                   
-            });
+            $contravoucher = $contravoucher->where('voucher_no', 'like', "%{$search}%")->orWhere('date', 'like', "%{$search}%")->offset($start)
+                ->limit($limit)
+                ->orderBy($order, $dir)
+                ->get();
+            $totalFiltered = $this->contraVoucher::count();
         }
 
-        $totalData = $this->contraVoucher->count();
-        $totalFiltered  = (clone $query)->count();
-
-        $contraVoucher = $query
-            ->offset($start)
-            ->limit($limit)
-            ->orderBy($order, $dir)
-            ->get();
-
-
         $data = array();
-        if ($contraVoucher) {
-            foreach ($contraVoucher as $key => $item) {
+        if ($contravoucher) {
+            foreach ($contravoucher as $key => $item) {
                 $nestedData['id'] = $key + 1;
                 $nestedData['voucher_no'] = $item->voucher_no;
                 // $nestedData['account_id'] = $item->account->account_name ?? "N/A";

@@ -48,9 +48,9 @@ class CreditVoucherRepositories
      * @param $request
      * @return mixed
      */
+
     public function getList($request)
     {
-
         $columns = array(
             0 => 'id',
             1 => 'amount',
@@ -69,51 +69,29 @@ class CreditVoucherRepositories
         $dir = 'desc';
         $auth = Auth::user();
 
+        if (empty($request->input('search.value'))) {
+            $creditVoucher = $this->creditVoucher::offset($start);
+            $creditVoucher = $creditVoucher->limit($limit)
+                ->orderBy($order, $dir)
+                ->get();
+            $totalFiltered = $this->creditVoucher::count();
+        } else {
+            $search = $request->input('search.value');
+            $creditVoucher = $this->creditVoucher->where('voucher_no', 'like', "%{$search}%");
 
-
-        $search = $request->input('search.value');
-        $query = $this->creditVoucher
-            ->select('id', 'voucher_no', 'date', 'approved_by', 'project_id', 'updated_by', 'note')
-            ->with([
-                'user:id,name',
-                'project:id,name',
-                'updatedBy:id,name'
-            ])
-            ->withSum('details as total_amount', 'debit');
-
-        if (!empty($search)) {
-            $query->where(function ($q) use ($search) {
-
-                $q->where('voucher_no', 'like', "%{$search}%")
-                    ->orWhere('date', 'like', "{$search}%")
-                    ->orWhere('note', 'like', "%{$search}%")
-
-                    ->orWhereHas('user', function ($q2) use ($search) {
-                        $q2->where('name', 'like', "%{$search}%");
-                    })
-
-                    ->orWhereHas('project', function ($q2) use ($search) {
-                        $q2->where('name', 'like', "%{$search}%");
-                    });
-            });
+            $creditVoucher = $creditVoucher->orWhere('date', 'like', "%{$search}%")->offset($start)
+                ->limit($limit)
+                ->orderBy($order, $dir)
+                ->get();
+            $totalFiltered = $this->creditVoucher::count();
         }
-
-        $totalData = $this->creditVoucher->count();
-        $totalFiltered  = (clone $query)->count();
-
-        $creditVoucher = $query
-            ->offset($start)
-            ->limit($limit)
-            ->orderBy($order, $dir)
-            ->get();
-
 
         $data = array();
         if ($creditVoucher) {
             foreach ($creditVoucher as $key => $item) {
                 $nestedData['id'] = $key + 1;
                 $nestedData['voucher_no'] = $item->voucher_no;
-                $nestedData['amount'] = $item->total_amount ?? 0;;
+                $nestedData['amount'] = $item->details->sum("debit") ?? "N/A";
                 $nestedData['project_id'] = $item->project->name ?? "N/A";
                 $nestedData['approved_by'] = $item->user->name ?? "Admin still not view";
                 $nestedData['viewed'] = $item->viewed == 1 ? "Viewed" : "N/A";
@@ -179,38 +157,38 @@ class CreditVoucherRepositories
             endif;
 
             $invoice_no = 'CV' . str_pad($creditvoucherData, 5, "0", STR_PAD_LEFT);
-            $dabitvoucher = new CreditVoucher();
-            $dabitvoucher->voucher_no = $invoice_no;
-            // $dabitvoucher->branch_id = $request->branch_id ?? 0;
-            // $dabitvoucher->project_id = $request->project_id;
-            $dabitvoucher->supplier_id = $request->supplier_id;
-            $dabitvoucher->customer_id = $request->customer_id;
-            $dabitvoucher->employee_id = $request->employee_id;
-            $dabitvoucher->date = $request->date;
-            $dabitvoucher->note = $request->note;
-            $dabitvoucher->created_by = Auth::user()->id;
-            $dabitvoucher->save();
+            $creditVoucher = new CreditVoucher();
+            $creditVoucher->voucher_no = $invoice_no;
+            // $creditVoucher->branch_id = $request->branch_id ?? 0;
+            // $creditVoucher->project_id = $request->project_id;
+            $creditVoucher->supplier_id = $request->supplier_id;
+            $creditVoucher->customer_id = $request->customer_id;
+            $creditVoucher->employee_id = $request->employee_id;
+            $creditVoucher->date = $request->date;
+            $creditVoucher->note = $request->note;
+            $creditVoucher->created_by = Auth::user()->id;
+            $creditVoucher->save();
 
             for ($i = 0; $i < count($request->account_id); $i++) {
-                $dabitvoucherdetails = new CreditVoucherDetails();
-                $dabitvoucherdetails->payment_invoice = $request->payment_invoice[$i] ?? "";
-                $dabitvoucherdetails->credit_voucher_id = $dabitvoucher->id;
+                $creditVoucherdetails = new CreditVoucherDetails();
+                $creditVoucherdetails->payment_invoice = $request->payment_invoice[$i] ?? "";
+                $creditVoucherdetails->credit_voucher_id = $creditVoucher->id;
 
                 if($request->cost_center_type[$i] == "project"){
-                    $dabitvoucherdetails->project_id = $request->project_id[$i];
+                    $creditVoucherdetails->project_id = $request->project_id[$i];
                 }elseif($request->cost_center_type[$i] == "branch"){
-                    $dabitvoucherdetails->branch_id = $request->branch_id[$i];
+                    $creditVoucherdetails->branch_id = $request->branch_id[$i];
                 }
 
-                $dabitvoucherdetails->debit = $request->debit[$i];
-                $dabitvoucherdetails->credit = $request->credit[$i];
-                $dabitvoucherdetails->account_id = $request->account_id[$i];
-                $dabitvoucherdetails->amount =  $request->debit[$i] ?? $request->credit[$i];
-                $dabitvoucherdetails->save();
+                $creditVoucherdetails->debit = $request->debit[$i];
+                $creditVoucherdetails->credit = $request->credit[$i];
+                $creditVoucherdetails->account_id = $request->account_id[$i];
+                $creditVoucherdetails->amount =  $request->debit[$i] ?? $request->credit[$i];
+                $creditVoucherdetails->save();
             }
 
             DB::commit();
-            return $dabitvoucher;
+            return $creditVoucher;
         } catch (\Throwable $th) {
             DB::rollBack();
             dd($th->getMessage(), $th->getLine());

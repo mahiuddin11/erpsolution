@@ -40,6 +40,7 @@ class DabitVoucher extends Model
     {
         return $this->belongsTo(User::class, 'approved_by', 'id');
     }
+
     function createBy()
     {
         return $this->belongsTo(User::class, 'created_by', 'id');
@@ -48,4 +49,11 @@ class DabitVoucher extends Model
     {
         return $this->belongsTo(User::class, 'updated_by', 'id');
     }
+    
+    function approvedBy()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+   
 }
