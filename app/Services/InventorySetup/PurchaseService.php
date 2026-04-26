@@ -83,6 +83,8 @@ class PurchaseService
 
     public function prstoreValidation($request)
     {
+
+    
         return [
             'date' => 'required',
             'purchase_order_id' => 'required',

@@ -241,7 +241,7 @@
                         form-row form-group">
                             <div class="col-md-12">
                                 <label for="">Note</label>
-                                <textarea name="note" class="form-control" name="note" id="" cols="10" rows="4"></textarea>
+                                <textarea name="note" class="form-control" name="note" id="" cols="10" rows="4">{{$editInfo->note ?? ''}}</textarea>
                             </div>
                         </div>
 
@@ -329,8 +329,10 @@
                             @endforeach
                         </div> --}}
 
+                        
                         <div class="modelappend">
                             @foreach ($purchaseOrderDtls as $proDetail)
+                            
                                 @php
                                     // new add: get first selected supplier/account/customer for this product
                                     $selected = $selectedSupplier->where('purchase_order_id', $proDetail->id)->first();
@@ -359,7 +361,6 @@
                                                 @foreach ($selectedList as $selected)
                                                     <div class="row supplier-amount-row">
 
-                                                        {{-- Supplier or Account --}}
                                                         <div class="col-md-5">
 
                                                             @if (!empty($selected->supplier_id))
@@ -394,7 +395,7 @@
 
                                                         </div>
 
-                                                        {{-- Amount --}}
+                                                     
                                                         <div class="col-md-5">
                                                             <label>Amount</label>
                                                             <input type="number"
@@ -403,7 +404,7 @@
                                                                 value="{{ $selected->purchases_price }}">
                                                         </div>
 
-                                                        {{-- Buttons --}}
+                                                      
                                                         <div class="col-md-2 d-flex align-items-end">
                                                             <button type="button"
                                                                 class="btn btn-success btn-sm addsupplier">

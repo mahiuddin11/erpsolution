@@ -157,7 +157,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/inventory-purchase-pvlist', [PurchaseController::class,'pvindex'])->name('inventorySetup.purchase.pvindex');
         Route::post('/inventory-purchase-pvcloseopen', [PurchaseController::class, 'pvcloseopen'])->name('inventorySetup.purchase.pvcloseopen');
         Route::get('/dataProcessinpv', [PurchaseController::class, 'dataProcessinpv'])->name('inventorySetup.purchase.dataProcessinpv');
-        Route::get('/inventory-purchase-searchpr', 'PurchaseController@searchpo')->name('inventorySetup.purchase.searchpo');
+        Route::get('/inventory-purchase-searchpr', [PurchaseController::class,'searchpo'])->name('inventorySetup.purchase.searchpo');
         Route::get('/inventory-purchase-pvcreate', [PurchaseController::class, 'pvcreate'])->name('inventorySetup.purchase.pvcreate');
         Route::post('/inventory-purchase-pvstore', [PurchaseController::class, 'pvstore'])->name('inventorySetup.purchase.pvstore');
 
@@ -169,19 +169,17 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //purchase  crud operation end
 
         //Good received note  crud operation start
-        Route::get('/inventory-goodrcvnote-list', 'GrnController@index')->name('inventorySetup.goodrcvnote.index');
-        Route::get('/dataProcessinggoodrcvnote', 'GrnController@datagoodrcvnote')->name('inventorySetup.goodrcvnote.datagoodrcvnote');
+        Route::get('/inventory-goodrcvnote-list', [GrnController::class, 'index'])->name('inventorySetup.goodrcvnote.index');
+        Route::get('/dataProcessinggoodrcvnote', [GrnController::class, 'datagoodrcvnote'])->name('inventorySetup.goodrcvnote.datagoodrcvnote');
         Route::post('/inventory-goodrcvnote-store', [GrnController::class,'store'])->name('inventorySetup.goodrcvnote.store');
-
-        Route::get('/inventory-goodrcvnote-searchgrn', 'GrnController@searchgrn')->name('inventorySetup.goodrcvnote.searchgrn');
-
+        Route::get('/inventory-goodrcvnote-searchgrn', [GrnController::class, 'searchgrn'])->name('inventorySetup.goodrcvnote.searchgrn');
         Route::get('/inventory-goodrcvnote-create', [GrnController::class, 'create'])->name('inventorySetup.goodrcvnote.create');
 
-        Route::get('/inventory-goodrcvnote-edit/{id}', 'GrnController@edit')->name('inventorySetup.goodrcvnote.edit');
-        Route::get('/inventory-goodrcvnote-show/{id}', 'GrnController@show')->name('inventorySetup.goodrcvnote.show');
-        Route::post('/inventory-goodrcvnote-update/{id}', 'GrnController@update')->name('inventorySetup.goodrcvnote.update');
-        Route::get('/inventory-goodrcvnote-delete/{id}', 'GrnController@destroy')->name('inventorySetup.goodrcvnote.destroy');
-        Route::get('/inventory-goodrcvnote-filterproduct', 'GrnController@filterproduct')->name('inventorySetup.goodrcvnote.filterproduct');
+        Route::get('/inventory-goodrcvnote-edit/{id}', [GrnController::class, 'edit'])->name('inventorySetup.goodrcvnote.edit');
+        Route::get('/inventory-goodrcvnote-show/{id}', [GrnController::class, 'show'])->name('inventorySetup.goodrcvnote.show');
+        Route::post('/inventory-goodrcvnote-update/{id}', [GrnController::class, 'update'])->name('inventorySetup.goodrcvnote.update');
+        Route::get('/inventory-goodrcvnote-delete/{id}', [GrnController::class, 'destroy'])->name('inventorySetup.goodrcvnote.destroy');
+        Route::get('/inventory-goodrcvnote-filterproduct', [GrnController::class, 'filterproduct'])->name('inventorySetup.goodrcvnote.filterproduct');
       
 
         Route::get('/inventorySetup.goodrcvnote.invoice/{id}', [GrnController::class, 'invoice'])->name('inventorySetup.goodrcvnote.invoice');

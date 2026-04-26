@@ -42,109 +42,210 @@ class EmployeeRepositories
      * @return mixed
      */
 
+    // public function getList($request)
+    // {
+
+
+
+    //     $columns = array(
+    //         0 => 'id',
+    //         1 => 'name',
+    //     );
+
+    //     $edit = Helper::roleAccess('hrm.employee.edit') ? 1 : 0;
+    //     $delete = Helper::roleAccess('hrm.employee.destroy') ? 1 : 0;
+    //     $view = Helper::roleAccess('hrm.employee.show') ? 0 : 0;
+    //     $ced = $edit + $delete + $view;
+
+
+
+    //     $totalData = $this->model::count();
+
+    //     $limit = $request->input('length');
+    //     $start = $request->input('start');
+    //     $order = $columns[$request->input('order.0.column')];
+    //     $dir = $request->input('order.0.dir');
+
+    //     if (empty($request->input('search.value'))) {
+    //         $emplyee = $this->model::offset($start)
+    //             ->limit($limit)
+    //             // ->orderBy($order, $dir)
+    //             ->orderBy('id_card', 'asc');
+    //             if((isset($request->status)) && $request->status != "all"){
+    //                 $emplyee = $emplyee->where("employee_status",$request->status);
+    //             }else{
+    //                 $emplyee = $emplyee->where("employee_status","present");
+    //             }
+
+    //             $emplyee = $emplyee->get();
+
+    //         $totalFiltered = $this->model;
+    //         if((isset($request->status)) && $request->status != "all"){
+    //             $totalFiltered = $totalFiltered->where("employee_status",$request->status);
+    //         }else{
+    //             $emplyee = $emplyee->where("employee_status","present");
+    //         }
+    //         $totalFiltered = $totalFiltered->count();
+
+    //     } else {
+    //         $search = $request->input('search.value');
+    //         $emplyee = $this->model::where('name', 'like', "%{$search}%")
+    //         ->orwhere('id_card',  $search)
+    //             ->offset($start)
+    //             ->limit($limit);
+    //             if((isset($request->status)) && $request->status != "all"){
+    //                 $emplyee = $emplyee->where("employee_status",$request->status);
+    //             }else{
+    //                 $emplyee = $emplyee->where("employee_status","present");
+    //             }
+    //             $emplyee =  $emplyee->orderBy('id_card', 'asc')->get();
+
+    //         $totalFiltered = $this->model::where('name', 'like', "%{$search}%")->count();
+    //     }
+
+    //     $data = array();
+    //     if ($emplyee) {
+    //         foreach ($emplyee as $key => $value) {
+    //             $nestedData = [];
+    //             $nestedData['id'] = $value->id;
+    //             $nestedData['sl'] = $key + 1;
+    //             $nestedData['name'] = $value->name;
+    //             $nestedData['dob'] = $value->dob;
+    //             $nestedData['gender'] = $value->gender;
+    //             $nestedData['personal_phone'] = $value->personal_phone;
+    //             $nestedData['office_phone'] = $value->office_phone;
+    //             $nestedData['nid'] = $value->nid;
+    //             $nestedData['email'] = $value->email;
+    //             $nestedData['department'] = $value->department;
+    //             $nestedData['present_address'] = $value->present_address;
+    //             $nestedData['salary'] = $value->salary;
+    //             $nestedData['over_time_is'] = $value->over_time_is;
+    //             $nestedData['join_date'] = $value->join_date;
+
+    //             if ($ced != 0) :
+    //                 if ($edit != 0)
+    //                     $edit_data = '<a href="' . route('hrm.employee.edit', $value->id) . '" class="btn btn-xs btn-default"><i class="fa fa-edit" aria-hidden="true"></i></a>';
+    //                 else
+    //                     $edit_data = '';
+    //                 if ($view != 0)
+    //                     $view_data = '<a href="' . route('hrm.employee.show', $value->id) . '" class="btn btn-xs btn-default"><i class="fa fa-eye" aria-hidden="true"></i></a>';
+    //                 else
+    //                     $view_data = '';
+    //                 if ($delete != 0)
+    //                     $delete_data = '<a delete_route="' . route('hrm.employee.destroy', $value->id) . '" delete_id="' . $value->id . '" title="Delete" class="btn btn-xs btn-default delete_row uniqueid' . $value->id . '"><i class="fa fa-times"></i></a>';
+    //                 else
+    //                     $delete_data = '';
+    //                 $nestedData['action'] = $edit_data . ' ' . $view_data . ' ' . $delete_data;
+    //             else :
+    //                 $nestedData['action'] = '';
+    //             endif;
+    //             $data[] = $nestedData;
+    //         }
+    //     }
+    //     $json_data = array(
+    //         "draw" => intval($request->input('draw')),
+    //         "recordsTotal" => intval($totalData),
+    //         "recordsFiltered" => intval($totalFiltered),
+    //         "data" => $data
+    //     );
+
+    //     return $json_data;
+    // }
+
     public function getList($request)
     {
-        $columns = array(
+        $columns = [
             0 => 'id',
             1 => 'name',
-        );
+        ];
 
         $edit = Helper::roleAccess('hrm.employee.edit') ? 1 : 0;
         $delete = Helper::roleAccess('hrm.employee.destroy') ? 1 : 0;
-        $view = Helper::roleAccess('hrm.employee.show') ? 0 : 0;
+        $view = Helper::roleAccess('hrm.employee.show') ? 1 : 0;
         $ced = $edit + $delete + $view;
+        $status = $request->status ?? 'present'; 
 
-        $totalData = $this->model::count();
+        $query = $this->model::query();
 
+        if ($status != 'all') {
+            $query->where('employee_status', $status);
+        }
+        $totalData = $query->count();
         $limit = $request->input('length');
         $start = $request->input('start');
-        $order = $columns[$request->input('order.0.column')];
-        $dir = $request->input('order.0.dir');
+        
+        $search = $request->input('search.value');
 
-        if (empty($request->input('search.value'))) {
-            $emplyee = $this->model::offset($start)
-                ->limit($limit)
-                // ->orderBy($order, $dir)
-                ->orderBy('id_card', 'asc');
-                if((isset($request->status)) && $request->status != "all"){
-                    $emplyee = $emplyee->where("employee_status",$request->status);
-                }else{
-                    $emplyee = $emplyee->where("employee_status","present");
-                }
+        // =============================
+        // 2. SEARCH + FILTER
+        // =============================
+        if (!empty($search)) {
 
-                $emplyee = $emplyee->get();
-                
-            $totalFiltered = $this->model;
-            if((isset($request->status)) && $request->status != "all"){
-                $totalFiltered = $totalFiltered->where("employee_status",$request->status);
-            }else{
-                $emplyee = $emplyee->where("employee_status","present");
-            }
-            $totalFiltered = $totalFiltered->count();
-
-        } else {
-            $search = $request->input('search.value');
-            $emplyee = $this->model::where('name', 'like', "%{$search}%")
-            ->orwhere('id_card',  $search)
-                ->offset($start)
-                ->limit($limit);
-                if((isset($request->status)) && $request->status != "all"){
-                    $emplyee = $emplyee->where("employee_status",$request->status);
-                }else{
-                    $emplyee = $emplyee->where("employee_status","present");
-                }
-                $emplyee =  $emplyee->orderBy('id_card', 'asc')->get();
-
-            $totalFiltered = $this->model::where('name', 'like', "%{$search}%")->count();
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('id_card', $search);
+            });
         }
 
-        $data = array();
-        if ($emplyee) {
-            foreach ($emplyee as $key => $value) {
-                $nestedData = [];
-                $nestedData['id'] = $value->id;
-                $nestedData['sl'] = $key + 1;
-                $nestedData['name'] = $value->name;
-                $nestedData['dob'] = $value->dob;
-                $nestedData['gender'] = $value->gender;
-                $nestedData['personal_phone'] = $value->personal_phone;
-                $nestedData['office_phone'] = $value->office_phone;
-                $nestedData['nid'] = $value->nid;
-                $nestedData['email'] = $value->email;
-                $nestedData['department'] = $value->department;
-                $nestedData['present_address'] = $value->present_address;
-                $nestedData['salary'] = $value->salary;
-                $nestedData['over_time_is'] = $value->over_time_is;
-                $nestedData['join_date'] = $value->join_date;
+        $totalFiltered = $query->count();
 
-                if ($ced != 0) :
-                    if ($edit != 0)
-                        $edit_data = '<a href="' . route('hrm.employee.edit', $value->id) . '" class="btn btn-xs btn-default"><i class="fa fa-edit" aria-hidden="true"></i></a>';
-                    else
-                        $edit_data = '';
-                    if ($view != 0)
-                        $view_data = '<a href="' . route('hrm.employee.show', $value->id) . '" class="btn btn-xs btn-default"><i class="fa fa-eye" aria-hidden="true"></i></a>';
-                    else
-                        $view_data = '';
-                    if ($delete != 0)
-                        $delete_data = '<a delete_route="' . route('hrm.employee.destroy', $value->id) . '" delete_id="' . $value->id . '" title="Delete" class="btn btn-xs btn-default delete_row uniqueid' . $value->id . '"><i class="fa fa-times"></i></a>';
-                    else
-                        $delete_data = '';
-                    $nestedData['action'] = $edit_data . ' ' . $view_data . ' ' . $delete_data;
-                else :
-                    $nestedData['action'] = '';
-                endif;
-                $data[] = $nestedData;
+        $employees = $query->orderBy('id_card', 'asc')
+            ->offset($start)
+            ->limit($limit)
+            ->get();
+
+        $data = [];
+
+        foreach ($employees as $key => $value) {
+
+            $nestedData = [];
+
+            $nestedData['id'] = $value->id;
+            $nestedData['sl'] = $start + $key + 1;
+            $nestedData['name'] = $value->name;
+            $nestedData['dob'] = $value->dob;
+            $nestedData['gender'] = $value->gender;
+            $nestedData['personal_phone'] = $value->personal_phone;
+            $nestedData['office_phone'] = $value->office_phone;
+            $nestedData['nid'] = $value->nid;
+            $nestedData['email'] = $value->email;
+            $nestedData['department'] = $value->department;
+            $nestedData['present_address'] = $value->present_address;
+            $nestedData['salary'] = $value->salary;
+            $nestedData['over_time_is'] = $value->over_time_is;
+            $nestedData['join_date'] = $value->join_date;
+
+            // =============================
+            // ACTION BUTTONS
+            // =============================
+            if ($ced != 0) {
+
+                $edit_data = $edit
+                    ? '<a href="' . route('hrm.employee.edit', $value->id) . '" class="btn btn-xs btn-default"><i class="fa fa-edit"></i></a>'
+                    : '';
+
+                $view_data = $view
+                    ? '<a href="' . route('hrm.employee.show', $value->id) . '" class="btn btn-xs btn-default"><i class="fa fa-eye"></i></a>'
+                    : '';
+
+                $delete_data = $delete
+                    ? '<a delete_route="' . route('hrm.employee.destroy', $value->id) . '" delete_id="' . $value->id . '" class="btn btn-xs btn-default delete_row"><i class="fa fa-times"></i></a>'
+                    : '';
+
+                $nestedData['action'] = $edit_data . ' ' . $view_data . ' ' . $delete_data;
+            } else {
+                $nestedData['action'] = '';
             }
+
+            $data[] = $nestedData;
         }
-        $json_data = array(
+
+        return [
             "draw" => intval($request->input('draw')),
             "recordsTotal" => intval($totalData),
             "recordsFiltered" => intval($totalFiltered),
             "data" => $data
-        );
-
-        return $json_data;
+        ];
     }
     
     /**

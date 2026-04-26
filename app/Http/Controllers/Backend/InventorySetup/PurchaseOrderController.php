@@ -89,6 +89,7 @@ class PurchaseOrderController extends Controller
     public function approve(Request $request, $id)
     {
         $title = 'Purchase Order Invoice';
+        // dd($title);
         $purchaseorder = PurchaseOrder::findOrFail($id);
         $companyInfo = Company::latest('id')->first();
 
@@ -170,8 +171,6 @@ class PurchaseOrderController extends Controller
         $purchaseOrderDtls = $purchaseOrder->get();
         $selectedSupplier = SupplierSelectPrice::whereIn('purchase_order_id', $purchaseOrderDtlId)->get();
 
-
-
         return view('backend.pages.inventories.po.edit', get_defined_vars());
     }
 
@@ -194,7 +193,7 @@ class PurchaseOrderController extends Controller
      */
     public function update(Request $request, $id)
     {
-        // dd($request->all(), $id);
+        
         if (!is_numeric($id)) {
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
@@ -204,13 +203,17 @@ class PurchaseOrderController extends Controller
             session()->flash('error', 'Edit info is invalid!!');
             return redirect()->back();
         }
+    
         try {
+            
             $this->validate($request, $this->purchaseService->updateValidation($request, $id));
         } catch (ValidationException $e) {
             session()->flash('error', 'Validation error !!');
-            // dd($e->getMessage(), $e->getFile(), $e->getLine());
+            dd($e->getMessage(), $e->getFile(), $e->getLine());
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
+
+        
         $this->purchaseService->update($request, $id);
         session()->flash('success', 'Data successfully updated!!');
         return redirect()->route('inventorySetup.purchaseorder.index');

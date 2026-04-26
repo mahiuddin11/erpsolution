@@ -82,17 +82,17 @@ class PurchaseController extends Controller
      */
     public function create()
     {
-        
+
         $title = 'Add New purchase';
         $category_info = Category::with('parent')->get()->where('status', 'Active');
         $supplier = Supplier::get()->where('status', 'Active');
-        $ledgers = ChartOfAccount::where('parent_id',0)->get();
+        $ledgers = ChartOfAccount::where('parent_id', 0)->get();
 
         $user = auth()->user();
-        $branch = Branch::where('status', 'Active')->where("parent_id",0);
+        $branch = Branch::where('status', 'Active')->where("parent_id", 0);
         $branch = $branch->get();
 
-        $wearhouses = Branch::where("parent_id","!=",0)->get();
+        $wearhouses = Branch::where("parent_id", "!=", 0)->get();
 
         $purchaseLastData = Purchases::latest('id')->first();
 
@@ -151,13 +151,12 @@ class PurchaseController extends Controller
         $title = 'Add New purchase (PV)';
         $category_info = Category::get()->where('status', 'Active');
         $supplier = Supplier::get()->where('status', 'Active');
-       
+
         $user = auth()->user();
         $branch = Branch::where('status', 'Active')->get();
-    
+
         $purchaseorder = PurchaseOrder::get()->where('status', 'Accepted');
         $purchaseLastData = Purchases::latest('id')->first();
-
 
         if ($purchaseLastData) :
             $purchaseData = $purchaseLastData->id + 1;
@@ -207,14 +206,16 @@ class PurchaseController extends Controller
 
     public function pvstore(Request $request)
     {
-        
+
+       
+
         try {
             $this->validate($request, $this->systemService->prstoreValidation($request));
         } catch (ValidationException $e) {
             session()->flash('error', 'Validation error !!');
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
-    
+
         $this->systemService->prstore($request);
         session()->flash('success', 'Data successfully save!!');
         return redirect()->route('inventorySetup.purchase.pvindex');
@@ -237,7 +238,7 @@ class PurchaseController extends Controller
             session()->flash('error', 'Edit info is invalid!!');
             return redirect()->back();
         }
-        $ledgers = ChartOfAccount::where('parent_id',0)->get();
+        $ledgers = ChartOfAccount::where('parent_id', 0)->get();
 
         $purchase = $this->systemService->getAllList();
         $category_info = Category::get()->where('status', 'Active');
@@ -247,7 +248,7 @@ class PurchaseController extends Controller
         $accounts = ChartOfAccount::getaccount(4)->get();
 
         $sub_branch = Branch::find($editInfo->branch_id);
-        $subWarehouses = Branch::where("parent_id",$sub_branch->parent_id)->where('status', 'Active')->get();
+        $subWarehouses = Branch::where("parent_id", $sub_branch->parent_id)->where('status', 'Active')->get();
         $account_id = $editInfo->chart_of_account_id;
         $debit = Transection::where('account_id', '=', $account_id)->sum('debit');
         $credit = Transection::where('account_id', '=', $account_id)->sum('credit');
@@ -272,7 +273,7 @@ class PurchaseController extends Controller
         }
 
         $purchase = $this->systemService->getAllList();
-       
+
         $category_info = Category::get()->where('status', 'Active');
         $supplier = Supplier::get()->where('status', 'Active');
         $branch = Branch::get()->where('status', 'Active');
@@ -283,7 +284,7 @@ class PurchaseController extends Controller
         $debit = Transection::where('account_id', '=', $account_id)->sum('debit');
         $credit = Transection::where('account_id', '=', $account_id)->sum('credit');
 
-    
+
         $proejct = Project::find($editInfo->project_id);
         $purchaseOrder = PurchaseOrder::find($editInfo->purchase_order_id);
 
@@ -429,41 +430,148 @@ class PurchaseController extends Controller
         return $html;
     }
 
+    // public function searchpo(Request $request)
+    // {
+    //     $data = '';
+    //     $projectRequisitionDetails = PurchaseOrderDetail::where('purchase_order_id', $request->id);
+
+    //     // dd('search purchase order : ', $request->all() ,  $projectRequisitionDetails->get());
+
+    //     $purchaseorder = PurchaseOrder::find($request->id);
+    //     $project = '<option selected value="'  .  $purchaseorder->project_id . '"> ' . $purchaseorder->project->name ?? "" . '</option>';
+    //     $supplier = '<option selected value="' . $purchaseorder->supplier_id ?? 'sdf' . '"> ' . $purchaseorder->supplier->name ?? "Nul" . '</option>';
+    //     $advancePay = $purchaseorder->advance_payment;
+
+    //     foreach ($projectRequisitionDetails->get() as $value) {
+    //         $supplierSelectedPrice = SupplierSelectPrice::where('purchase_order_id', $value->id)->where('status', 1)->first();
+    //         $total_price = $value->qty * ($supplierSelectedPrice->purchases_price ?? 0) ;
+    //         $data .= '<tr class="delrow new_item' . $value->product_id . '">
+    //     <td>
+    //        ' . ($supplierSelectedPrice->supplier->name ?? 0)  . '
+    //         <input type="hidden" name="supplier_nm[]" value="' . ($supplierSelectedPrice->supplier->id ?? 0) . '">
+    //     </td>
+    //     <td>
+    //        ' . $value->category->name . '
+    //         <input type="hidden" name="category_nm[]" value="' . $value->category_id . '">
+    //     </td>
+    //     <td class="text-right">' . $value->product->name . '<input type="hidden" class="add_quantity" name="product_nm[]" value="' . $value->product_id . '"></td>
+    //     <td class="text-right">' . $value->purchasetype . '<input type="hidden" class="add_quantity" name="purchasetype[]" value="' . $value->purchasetype . '"></td>
+    //     <td class="text-right">' .  ' <input  type="number"  class="ttlqty qty qnty form-control" name="qty[]" value="' . $value->qty . '"></td>
+    //     <td class="text-right"> <input class="ttlunitprice unitprice form-control" type="number" id="unitprice" name="unitprice[]" value="' . ($supplierSelectedPrice->purchases_price ?? 0) . '"></td>
+    //     <td class="text-right">' .  ' <input class="total form-control" type="text" readonly name="total[]" value="' . $total_price . '"></td>
+    //     <td>
+    //             <a del_id="' . $value->product_id . '" class="delete_item btn form-control btn-danger" href="javascript:;" title="">
+    //                 <i class="fa fa-times"></i>
+    //             </a>
+    //     </td>
+    // </tr>';
+    //     }
+
+    //     return ['prdetails' => $data, "project" => $project, "supplier" => "$supplier"];
+    // }
+
     public function searchpo(Request $request)
     {
         $data = '';
-        $projectRequisitionDetails = PurchaseOrderDetail::where('purchase_order_id', $request->id);
 
+        $projectRequisitionDetails = PurchaseOrderDetail::where('purchase_order_id', $request->id)->get();
         $purchaseorder = PurchaseOrder::find($request->id);
-        $project = '<option selected value="'  .  $purchaseorder->project_id . '"> ' . $purchaseorder->project->name ?? "" . '</option>';
-        $supplier = '<option selected value="' . $purchaseorder->supplier_id ?? 'sdf' . '"> ' . $purchaseorder->supplier->name ?? "Nul" . '</option>';
-        $advancePay = $purchaseorder->advance_payment;
-        foreach ($projectRequisitionDetails->get() as $value) {
-            $supplierSelectedPrice = SupplierSelectPrice::where('purchase_order_id', $value->id)->where('status', 1)->first();
-            $total_price = $value->qty * ($supplierSelectedPrice->purchases_price ?? 0) ;
-            $data .= '<tr class="delrow new_item' . $value->product_id . '">
+
+        $project = '<option selected value="' . $purchaseorder->project_id . '">'
+            . ($purchaseorder->project->name ?? '') . '</option>';
+
+        $supplier = '<option selected value="' . ($purchaseorder->supplier_id ?? 0) . '">'
+            . ($purchaseorder->supplier->name ?? "N/A") . '</option>';
+
+        foreach ($projectRequisitionDetails as $value) {
+
+            $supplierSelectedPrice = SupplierSelectPrice::where('purchase_order_id', $value->id)
+                ->where('status', 1)
+                ->first();
+
+            $price = $supplierSelectedPrice->purchases_price ?? 0;
+            $total_price = $value->qty * $price;
+
+            // ✅ DEFAULT VALUE (VERY IMPORTANT)
+            $name = '';
+            $supplierValue = 0;
+            $ledgerValue = 0;
+
+            if ($supplierSelectedPrice) {
+
+                // Supplier
+                if (!empty($supplierSelectedPrice->supplier_id)) {
+                    $supplierName = $supplierSelectedPrice->supplier->name ?? '';
+                    $name .= $supplierName;
+
+                    $supplierValue = $supplierSelectedPrice->supplier_id;
+                }
+
+                // Ledger
+                if (!empty($supplierSelectedPrice->account_id)) {
+                    $account = \App\Models\ChartOfAccount::find($supplierSelectedPrice->account_id);
+                    $ledgerName = $account->account_name ?? 'Ledger';
+
+                    if (!empty($name)) {
+                        $name .= ' / ';
+                    }
+
+                    $name .= $ledgerName;
+
+                    $ledgerValue = $supplierSelectedPrice->account_id;
+                }
+            }
+
+            $data .= '
+    <tr class="delrow new_item' . $value->product_id . '">
+        
         <td>
-           ' . ($supplierSelectedPrice->supplier->name ?? 0)  . '
-            <input type="hidden" name="supplier_nm[]" value="' . ($supplierSelectedPrice->supplier->id ?? 0) . '">
+            ' . $name . '
+
+            <input type="hidden" name="supplier_nm[]" value="' . $supplierValue . '">
+            <input type="hidden" name="ledger_nm[]" value="' . $ledgerValue . '">
         </td>
+
         <td>
-           ' . $value->category->name . '
+            ' . $value->category->name . '
             <input type="hidden" name="category_nm[]" value="' . $value->category_id . '">
         </td>
-        <td class="text-right">' . $value->product->name . '<input type="hidden" class="add_quantity" name="product_nm[]" value="' . $value->product_id . '"></td>
-        <td class="text-right">' . $value->purchasetype . '<input type="hidden" class="add_quantity" name="purchasetype[]" value="' . $value->purchasetype . '"></td>
-        <td class="text-right">' .  ' <input  type="number"  class="ttlqty qty qnty form-control" name="qty[]" value="' . $value->qty . '"></td>
-        <td class="text-right"> <input class="ttlunitprice unitprice form-control" type="number" id="unitprice" name="unitprice[]" value="' . ($supplierSelectedPrice->purchases_price ?? 0) . '"></td>
-        <td class="text-right">' .  ' <input class="total form-control" type="text" readonly name="total[]" value="' . $total_price . '"></td>
+
+        <td class="text-right">
+            ' . $value->product->name . '
+            <input type="hidden" name="product_nm[]" value="' . $value->product_id . '">
+        </td>
+
+        <td class="text-right">
+            ' . $value->purchasetype . '
+            <input type="hidden" name="purchasetype[]" value="' . $value->purchasetype . '">
+        </td>
+
+        <td class="text-right">
+            <input type="number" class="ttlqty qty qnty form-control" name="qty[]" value="' . $value->qty . '">
+        </td>
+
+        <td class="text-right">
+            <input class="ttlunitprice unitprice form-control" type="number" name="unitprice[]" value="' . $price . '">
+        </td>
+
+        <td class="text-right">
+            <input class="total form-control" type="text" readonly name="total[]" value="' . $total_price . '">
+        </td>
+
         <td>
-                <a del_id="' . $value->product_id . '" class="delete_item btn form-control btn-danger" href="javascript:;" title="">
-                    <i class="fa fa-times"></i>
-                </a>
+            <a del_id="' . $value->product_id . '" class="delete_item btn form-control btn-danger">
+                <i class="fa fa-times"></i>
+            </a>
         </td>
     </tr>';
         }
 
-        return ['prdetails' => $data, "project" => $project, "supplier" => "$supplier"];
+        return [
+            'prdetails' => $data,
+            "project" => $project,
+            "supplier" => $supplier
+        ];
     }
 
     public function pvcloseopen(Request $request)

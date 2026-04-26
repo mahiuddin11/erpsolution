@@ -60,7 +60,7 @@ class PurchaseRequisitionService
      */
     public function storeValidation($request)
     {
-        // dd($request->all());
+        
         return [
             'requisitionCode' => 'required',
             'date' => 'required',

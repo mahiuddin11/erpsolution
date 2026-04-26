@@ -213,7 +213,7 @@ class PurchaseOrderRepositories
     //         }
 
     //         DB::table('supplier_select_prices')->insert($suppliersaleprice);
-            
+
     //         $purchasereq['approve_by'] = Auth::user()->id;
     //         $purchasereq['approve_at'] = date('Y-m-d');
     //         $purchasereq['status'] = 'Complete';
@@ -233,74 +233,192 @@ class PurchaseOrderRepositories
     // }
 
 
+    // public function store($request)
+    // {
+
+
+    //     DB::beginTransaction();
+    //     try {
+    //         // 1️⃣ Create Purchase Order
+    //         $purchaseorder = new $this->purchaseorder();
+    //         $purchaseorder->order_date = $request->date;
+    //         $purchaseorder->invoice_no = $request->orderCode;
+    //         $purchaseorder->supplier_id = $request->subblier_id ?? 0; // optional supplier
+    //         $purchaseorder->purchase_requisition_id = $request->purchase_requisition;
+    //         $purchaseorder->project_id = $request->project_id;
+    //         $purchaseorder->note = $request->note;
+    //         $purchaseorder->save();
+    //         $purchaseOrderId = $purchaseorder->id;
+
+
+    //         $category = $request->category_nm;
+    //         $product = $request->product_nm;
+    //         $qty = $request->qty;
+    //         $purchasetype = $request->purchasetype;
+    //         $account = [];
+
+
+    //         // 2️⃣ Loop through each product
+    //         for ($i = 0; $i < count($category); $i++) {
+
+
+    //             $purchaseOrderDetails = new PurchaseOrderDetail();
+    //             $purchaseOrderDetails->purchase_order_id = $purchaseOrderId;
+    //             $purchaseOrderDetails->supplier_ledger_id = $account[$i];
+
+
+    //             $purchaseOrderDetails->category_id = $category[$i];
+    //             $purchaseOrderDetails->product_id = $product[$i];
+    //             $purchaseOrderDetails->qty = $qty[$i];
+    //             $purchaseOrderDetails->purchasetype = $purchasetype[$i];
+    //             $purchaseOrderDetails->project_id = $request->project_id;
+    //             $purchaseOrderDetails->save();
+
+    //             $detailId = $purchaseOrderDetails->id;
+
+    //             // 3️⃣ Handle Supplier / Customer / Account quotations
+    //             $accountKey = 'account_' . $product[$i];
+    //             $amountKey = 'amount_' . $product[$i];
+
+
+    //             if ($request->has($accountKey) && $request->has($amountKey)) {
+    //                 $accounts = $request->$accountKey;
+    //                 $amounts = $request->$amountKey;
+    //                 $supplierPrices = [];
+
+
+
+    //                 for ($j = 0; $j < count($accounts); $j++) {
+    //                     $supplierPrices[] = [
+    //                         'purchase_order_id' => $detailId,
+    //                         'supplier_id' => $request->subblier_id ?? null, // optional
+    //                         'customer_id' => $request->customer_id ?? null, // optional customer
+    //                         'account_id' => $accounts[$j] ?? null,
+    //                         'purchases_price' => $amounts[$j] ?? 0,
+    //                         'created_at' => now(),
+    //                         'updated_at' => now(),
+    //                         ];
+    //                         }
+
+    //                 DB::table('supplier_select_prices')->insert($supplierPrices);
+    //             }
+    //         }
+
+    //         dd('asdf');
+    //         // 4️⃣ Update PR status
+    //         PurchaseRequisition::where('id', $request->purchase_requisition)->update([
+    //             'approve_by' => Auth::user()->id,
+    //             'approve_at' => now(),
+    //             // 'total_price' => '',
+    //             'status' => 'Complete',
+    //         ]);
+
+    //         PrDetails::where('pr_id', $request->purchase_requisition)->update([
+    //             'status' => 'Accepted'
+    //         ]);
+
+    //         DB::commit();
+    //         return $purchaseorder;
+    //     } catch (\Exception $e) {
+    //         DB::rollback();
+    //         dd($e->getMessage(), $e->getLine());
+    //     }
+    // }
+
+
     public function store($request)
     {
-        
         DB::beginTransaction();
+
         try {
+
             // 1️⃣ Create Purchase Order
             $purchaseorder = new $this->purchaseorder();
             $purchaseorder->order_date = $request->date;
             $purchaseorder->invoice_no = $request->orderCode;
-            $purchaseorder->supplier_id = $request->subblier_id ?? 0; // optional supplier
+            $purchaseorder->supplier_id = $request->subblier_id ?? 0;
             $purchaseorder->purchase_requisition_id = $request->purchase_requisition;
             $purchaseorder->project_id = $request->project_id;
             $purchaseorder->note = $request->note;
             $purchaseorder->save();
+
             $purchaseOrderId = $purchaseorder->id;
 
-            
+            // 2️⃣ Request arrays
             $category = $request->category_nm;
             $product = $request->product_nm;
             $qty = $request->qty;
             $purchasetype = $request->purchasetype;
-            
-            // 2️⃣ Loop through each product
+
+            // 3️⃣ Loop products
             for ($i = 0; $i < count($category); $i++) {
+
+                $productId = $product[$i];
+
+                $accountKey = 'account_' . $productId;
+                $supplierKey = 'supplier_' . $productId;
+                $amountKey = 'amount_' . $productId;
+
+                $accounts = $request->input($accountKey);
+                $suppliers = $request->input($supplierKey);
+                $amounts = $request->input($amountKey);
+
+                // 4️⃣ Purchase Order Detail
                 $purchaseOrderDetails = new PurchaseOrderDetail();
                 $purchaseOrderDetails->purchase_order_id = $purchaseOrderId;
+                $purchaseOrderDetails->supplier_ledger_id = null;
                 $purchaseOrderDetails->category_id = $category[$i];
-                $purchaseOrderDetails->product_id = $product[$i];
+                $purchaseOrderDetails->product_id = $productId;
                 $purchaseOrderDetails->qty = $qty[$i];
                 $purchaseOrderDetails->purchasetype = $purchasetype[$i];
                 $purchaseOrderDetails->project_id = $request->project_id;
                 $purchaseOrderDetails->save();
-                
                 $detailId = $purchaseOrderDetails->id;
-                
-                // 3️⃣ Handle Supplier / Customer / Account quotations
-                $accountKey = 'account_' . $product[$i];
-                $amountKey = 'amount_' . $product[$i];
-                
-                
-                if ($request->has($accountKey) && $request->has($amountKey)) {
-                    $accounts = $request->$accountKey;
-                    $amounts = $request->$amountKey;
-                    $supplierPrices = [];
-                    
-                    
-                    
-                    for ($j = 0; $j < count($accounts); $j++) {
+
+                $supplierPrices = [];
+
+                // 5️⃣ ACCOUNT BASED (NEW)
+                if (!empty($accounts)) {
+
+                    foreach ($accounts as $k => $accId) {
+
                         $supplierPrices[] = [
-                            'purchase_order_id' => $detailId,
-                            'supplier_id' => $request->subblier_id ?? null, // optional
-                            'customer_id' => $request->customer_id ?? null, // optional customer
-                            'account_id' => $accounts[$j] ?? null,
-                            'purchases_price' => $amounts[$j] ?? 0,
+                            'purchase_order_id' =>  $detailId,
+                            'supplier_id' => $request->subblier_id ?? null,
+                            'account_id' => $accId,
+                            'customer_id' => $request->customer_id ?? null,
+                            'purchases_price' => $amounts[$k] ?? 0,
                             'created_at' => now(),
                             'updated_at' => now(),
-                            ];
-                            }
+                        ];
+                    }
+                }
 
+                // 6️⃣ SUPPLIER BASED (OLD)
+                elseif (!empty($suppliers)) {
+
+                    foreach ($suppliers as $k => $supId) {
+
+                        $supplierPrices[] = [
+                            'purchase_order_id' =>  $detailId,
+                            'supplier_id' => $supId,
+                            'account_id' => null,
+                            'customer_id' => null,
+                            'purchases_price' => $amounts[$k] ?? 0,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ];
+                    }
+                }
+
+                if (!empty($supplierPrices)) {
                     DB::table('supplier_select_prices')->insert($supplierPrices);
                 }
             }
 
-            // 4️⃣ Update PR status
             PurchaseRequisition::where('id', $request->purchase_requisition)->update([
                 'approve_by' => Auth::user()->id,
                 'approve_at' => now(),
-                // 'total_price' => '',
                 'status' => 'Complete',
             ]);
 
@@ -309,16 +427,18 @@ class PurchaseOrderRepositories
             ]);
 
             DB::commit();
+
             return $purchaseorder;
         } catch (\Exception $e) {
             DB::rollback();
+
             dd($e->getMessage(), $e->getLine());
         }
     }
 
     public function update($request, $id)
     {
-        // dd('purchase order repo',$request->all(), $id);
+        // dd('purchase order repo-hello',$request->all(), $id); 
         DB::beginTransaction();
         try {
             $purchaseorder = $this->purchaseorder::find($id);
@@ -421,7 +541,9 @@ class PurchaseOrderRepositories
     }
     public function details($id)
     {
+
         return  $this->purchaseorder::find($id);
+
     }
 
     public function getprList($request)

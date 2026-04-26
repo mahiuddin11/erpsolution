@@ -52,6 +52,7 @@ class GrnRepositories
      */
     public function getList($request)
     {
+
         $columns = array(
             0 => 'id',
             1 => 'invoice_no',
@@ -89,7 +90,7 @@ class GrnRepositories
                 ->offset($start)
                 ->limit($limit)
                 ->orderBy($order, $dir)
-                // ->orderBy('status', 'desc')
+                ->orderBy('id', 'desc')
                 ->get();
             $totalFiltered = $this->goodrcvnote::where('invoice_no', 'like', "%{$search}%")->count();
         }
@@ -104,7 +105,7 @@ class GrnRepositories
                 $nestedData['date'] = $grn->date;
                 $nestedData['invoice_no'] = $grn->invoice_no;
                 $nestedData['supplier_id'] = "";
-                $nestedData['project_id'] = $grn->project->projectCode . ' - ' . $grn->project->name;
+                $nestedData['project_id'] =  $grn->project->name ?? '';
                 $nestedData['total_price'] = $grn->total_price;
                 // $nestedData['payment'] = $grn->payment;
                 // $nestedData['due'] = $grn->due;
@@ -114,7 +115,7 @@ class GrnRepositories
                         $edit_data = '<a href="' . route('inventorySetup.goodrcvnote.edit', $grn->id) . '" class="btn btn-xs btn-default"><i class="fa fa-edit" aria-hidden="true"></i></a>';
                     else
                         $edit_data = '';
-                    if ($view = !0)
+                    if ($view != 0)
                         $view_data = '<a href="' . route('inventorySetup.goodrcvnote.invoice', $grn->id) . '" class="btn btn-xs btn-default"><i class="fa fa-eye" aria-hidden="true"></i></a>';
                     else
                         $view_data = '';

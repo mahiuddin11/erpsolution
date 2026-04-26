@@ -192,42 +192,47 @@
             });
 
             // Context Menu Item Click
-          // Context Menu Item Click
-$('.context-item').on('click', function() {
-    let action = $(this).data('action');
-    
-    // নিরাপদভাবে ID নেওয়া
-    let employeeId = currentRowData.id || currentRowData[0];
+            // Context Menu Item Click
+            $('.context-item').on('click', function() {
+                let action = $(this).data('action');
 
-    if (!employeeId) {
-        toastr.error('Employee ID not found! Please refresh the page.');
-        $('#contextMenu').hide();
-        return;
-    }
+                // নিরাপদভাবে ID নেওয়া
+                let employeeId = currentRowData.id || currentRowData[0];
 
-    if (action === 'view') {
-        window.location.href = "{{ route('hrm.employee.show', '') }}/" + employeeId;
-    } else if (action === 'edit') {
-        window.location.href = "{{ route('hrm.employee.edit', '') }}/" + employeeId;
-    } else if (action === 'delete') {
-        if (confirm('Are you sure you want to delete this employee? This action cannot be undone.')) {
-            $.ajax({
-                url: "{{ route('hrm.employee.destroy', '') }}/" + employeeId,
-                type: 'DELETE',
-                data: { "_token": "{{ csrf_token() }}" },
-                success: function() {
-                    $('#systemDatatable').DataTable().ajax.reload();
-                    toastr.success('Employee deleted successfully');
-                },
-                error: function(xhr) {
-                    toastr.error(xhr.responseJSON?.message || 'Failed to delete employee');
+                if (!employeeId) {
+                    toastr.error('Employee ID not found! Please refresh the page.');
+                    $('#contextMenu').hide();
+                    return;
                 }
-            });
-        }
-    }
 
-    $('#contextMenu').hide();
-});
+                if (action === 'view') {
+                    window.location.href = "{{ route('hrm.employee.show', '') }}/" + employeeId;
+                } else if (action === 'edit') {
+                    window.location.href = "{{ route('hrm.employee.edit', '') }}/" + employeeId;
+                } else if (action === 'delete') {
+                    if (confirm(
+                            'Are you sure you want to delete this employee? This action cannot be undone.'
+                            )) {
+                        $.ajax({
+                            url: "{{ route('hrm.employee.destroy', '') }}/" + employeeId,
+                            type: 'DELETE',
+                            data: {
+                                "_token": "{{ csrf_token() }}"
+                            },
+                            success: function() {
+                                $('#systemDatatable').DataTable().ajax.reload();
+                                toastr.success('Employee deleted successfully');
+                            },
+                            error: function(xhr) {
+                                toastr.error(xhr.responseJSON?.message ||
+                                    'Failed to delete employee');
+                            }
+                        });
+                    }
+                }
+
+                $('#contextMenu').hide();
+            });
             // Close menu when clicking anywhere
             $(document).on('click', function() {
                 $('#contextMenu').hide();

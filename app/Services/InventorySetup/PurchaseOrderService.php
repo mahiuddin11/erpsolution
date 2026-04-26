@@ -79,21 +79,66 @@ class PurchaseOrderService
      * @param $id
      * @return array
      */
+    // public function updateValidation($request, $id)
+    // {
+    //     // dd('purchase order service',$request->all());
+
+    //     return [
+    //         'date' => 'required',
+    //         'purchase_requisition' => 'required',
+    //         // 'subblier_id' => 'required',
+    //         'account_1' => 'required',
+    //         'category_nm' => 'required',
+    //         'product_nm' => 'required',
+    //         'qty' => 'required',
+    //         // 'unitprice' => 'required',
+    //         // 'total' => 'required',
+    //     ];
+    // }
+
     public function updateValidation($request, $id)
     {
-        // dd('purchase order service',$request->all());
-
-        return [
+        $rules = [
             'date' => 'required',
             'purchase_requisition' => 'required',
-            // 'subblier_id' => 'required',
-            'account_1' => 'required',
-            'category_nm' => 'required',
-            'product_nm' => 'required',
-            'qty' => 'required',
-            // 'unitprice' => 'required',
-            // 'total' => 'required',
+
+            'category_nm' => 'required|array',
+            'category_nm.*' => 'required',
+
+            'product_nm' => 'required|array',
+            'product_nm.*' => 'required',
+
+            'qty' => 'required|array',
+            'qty.*' => 'required|numeric|min:1',
         ];
+
+        foreach ($request->product_nm as $productId) {
+
+           
+            if ($request->has("supplier_$productId")) {
+                $rules["supplier_$productId"] = 'array';
+                $rules["supplier_$productId.*"] = 'nullable';
+            }
+
+         
+            if ($request->has("account_$productId")) {
+                $rules["account_$productId"] = 'array';
+                $rules["account_$productId.*"] = 'nullable';
+            }
+
+           
+            if ($request->has("customer_$productId")) {
+                $rules["customer_$productId"] = 'array';
+                $rules["customer_$productId.*"] = 'nullable';
+            }
+
+            if ($request->has("amount_$productId")) {
+                $rules["amount_$productId"] = 'array';
+                $rules["amount_$productId.*"] = 'nullable|numeric|min:0';
+            }
+        }
+
+        return $rules;
     }
 
     public function approveValidation($request, $id)

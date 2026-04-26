@@ -103,6 +103,7 @@ class PurchaseRequisitionController extends Controller
             session()->flash('error', 'Validation error !!');
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
+
         $this->purchaseRequisitionService->store($request);
         session()->flash('success', 'Data successfully save!!');
         return redirect()->route('inventorySetup.purchaserequisition.index');
@@ -115,6 +116,7 @@ class PurchaseRequisitionController extends Controller
 
     public function approve($id)
     {
+        
         if (!is_numeric($id)) {
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
