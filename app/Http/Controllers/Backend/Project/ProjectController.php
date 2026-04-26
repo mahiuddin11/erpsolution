@@ -102,8 +102,7 @@ class ProjectController extends Controller
             'App\Models\Supplier'
         ])->get();
 
-      
-
+    
         return view('backend.pages.project.create', get_defined_vars());
     }
 
@@ -196,7 +195,7 @@ class ProjectController extends Controller
      */
     public function store(Request $request)
     {
-        // dd($request->all());
+        
         try {
             $this->validate($request, $this->systemService->storeValidation($request));
         } catch (ValidationException $e) {

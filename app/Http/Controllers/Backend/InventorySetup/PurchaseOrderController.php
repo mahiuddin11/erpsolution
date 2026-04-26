@@ -23,19 +23,15 @@ use Illuminate\Validation\ValidationException;
 
 class PurchaseOrderController extends Controller
 {
-    /**
-     * @var PurchaseService
-     */
-    private $systemService;
 
-    /**
-     * @var PurchaseOrderTransformer
-     */
+    private $purchaseService;
+
+
     private $systemTransformer;
 
     public function __construct(PurchaseOrderService $purchaseService, PurchaseOrderTransformer $PurchaseOrderTransformer)
     {
-        $this->systemService = $purchaseService;
+        $this->purchaseService = $purchaseService;
         $this->systemTransformer = $PurchaseOrderTransformer;
     }
 
@@ -50,7 +46,7 @@ class PurchaseOrderController extends Controller
 
     public function datapurchaseorder(Request $request)
     {
-        $json_data = $this->systemService->getList($request);
+        $json_data = $this->purchaseService->getList($request);
         return json_encode($this->systemTransformer->dataTable($json_data));
     }
 
@@ -71,9 +67,10 @@ class PurchaseOrderController extends Controller
         $purchaserequisitions = PurchaseRequisition::where('status', 'Accepted')->get();
         $suppliers = Supplier::where('status', 'Active')->get();
         $projects = Project::where('condition', 'One Going')->get();
+
         $accounts = ChartOfAccount::whereIn('accountable_type', ['App\Models\Supplier', 'App\Models\Customer'])
-        ->where('status', 'Active')
-        ->get();
+            ->where('status', 'Active')
+            ->get();
 
         // dd($leadgers);
 
@@ -91,27 +88,28 @@ class PurchaseOrderController extends Controller
 
     public function approve(Request $request, $id)
     {
-        // dd('purches order aprove ',$request->all(), $id);
         $title = 'Purchase Order Invoice';
         $purchaseorder = PurchaseOrder::findOrFail($id);
         $companyInfo = Company::latest('id')->first();
-        
+
         return view('backend.pages.inventories.po.approve', get_defined_vars());
     }
 
     public function supplierPurchaseApprove(Request $request)
     {
+
         $request->validate(([
             'suplirePrice' => 'required'
         ]));
         try {
+
+
             $purchaseorder['approved_by'] = Auth::user()->id;
             $purchaseorder['approved_at'] = date('Y-m-d');
             $purchaseorder['status'] = 'Accepted';
             PurchaseOrder::where('id', $request->purchase_order)->update($purchaseorder);
-
-            SupplierSelectPrice::whereIn('id', $request->suplirePrice)->update(['status' => 1]);
-        } catch(Exception $e) {
+            $suppliersPrices =   SupplierSelectPrice::whereIn('id', $request->suplirePrice)->update(['status' => 1]);
+        } catch (Exception $e) {
             session()->flash('error', 'Something was wrong!!');
             return redirect()->back();
         }
@@ -126,15 +124,15 @@ class PurchaseOrderController extends Controller
      */
     public function store(Request $request)
     {
-        // dd('purchase order controller',$request->all());
+
 
         try {
-            $this->validate($request, $this->systemService->storeValidation($request));
+            $this->validate($request, $this->purchaseService->storeValidation($request));
         } catch (ValidationException $e) {
             session()->flash('error', 'Validation error !!');
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
-        $this->systemService->store($request);
+        $this->purchaseService->store($request);
         session()->flash('success', 'Data successfully save!!');
         return redirect()->route('inventorySetup.purchaseorder.index');
     }
@@ -145,13 +143,13 @@ class PurchaseOrderController extends Controller
      */
     public function edit($id)
     {
-        
+
         if (!is_numeric($id)) {
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
         }
 
-        $editInfo = $this->systemService->details($id)->load('details');
+        $editInfo = $this->purchaseService->details($id)->load('details');
 
         if (!$editInfo) {
             session()->flash('error', 'Edit info is invalid!!');
@@ -168,10 +166,10 @@ class PurchaseOrderController extends Controller
 
         $purchaseOrder = PurchaseOrderDetail::where('purchase_order_id', $id);
         $purchaseOrderDtlId = $purchaseOrder->pluck('id')->toArray();
-       
+
         $purchaseOrderDtls = $purchaseOrder->get();
         $selectedSupplier = SupplierSelectPrice::whereIn('purchase_order_id', $purchaseOrderDtlId)->get();
-        
+
 
 
         return view('backend.pages.inventories.po.edit', get_defined_vars());
@@ -180,13 +178,13 @@ class PurchaseOrderController extends Controller
     public function selectSupplier(Request $request)
     {
         $selectSupplier = SupplierSelectPrice::where('purchase_order_id', $request->order_id)->where('status', 1)->first();
-        
+
         return response()->json($selectSupplier);
     }
 
     public function searchpr(Request $request)
     {
-        $purchase = $this->systemService->getprList($request);
+        $purchase = $this->purchaseService->getprList($request);
         echo json_encode($purchase);
     }
 
@@ -201,19 +199,19 @@ class PurchaseOrderController extends Controller
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
         }
-        $editInfo = $this->systemService->details($id);
+        $editInfo = $this->purchaseService->details($id);
         if (!$editInfo) {
             session()->flash('error', 'Edit info is invalid!!');
             return redirect()->back();
         }
         try {
-            $this->validate($request, $this->systemService->updateValidation($request, $id));
+            $this->validate($request, $this->purchaseService->updateValidation($request, $id));
         } catch (ValidationException $e) {
             session()->flash('error', 'Validation error !!');
             // dd($e->getMessage(), $e->getFile(), $e->getLine());
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
-        $this->systemService->update($request, $id);
+        $this->purchaseService->update($request, $id);
         session()->flash('success', 'Data successfully updated!!');
         return redirect()->route('inventorySetup.purchaseorder.index');
     }
@@ -227,11 +225,11 @@ class PurchaseOrderController extends Controller
         if (!is_numeric($id)) {
             return response()->json($this->systemTransformer->invalidId($id), 200);
         }
-        $detailsInfo = $this->systemService->details($id);
+        $detailsInfo = $this->purchaseService->details($id);
         if (!$detailsInfo) {
             return response()->json($this->systemTransformer->notFound($detailsInfo), 200);
         }
-        $statusInfo = $this->systemService->statusUpdate($id, $status);
+        $statusInfo = $this->purchaseService->statusUpdate($id, $status);
         if ($statusInfo) {
             return response()->json($this->systemTransformer->statusUpdate($statusInfo), 200);
         }
@@ -246,11 +244,11 @@ class PurchaseOrderController extends Controller
         if (!is_numeric($id)) {
             return response()->json($this->systemTransformer->invalidId($id), 200);
         }
-        $detailsInfo = $this->systemService->details($id);
+        $detailsInfo = $this->purchaseService->details($id);
         if (!$detailsInfo) {
             return response()->json($this->systemTransformer->notFound($detailsInfo), 200);
         }
-        $deleteInfo = $this->systemService->destroy($id);
+        $deleteInfo = $this->purchaseService->destroy($id);
         if ($deleteInfo) {
             return response()->json($this->systemTransformer->delete($deleteInfo), 200);
         }

@@ -21,7 +21,7 @@ class LoneApplicationController extends Controller
      * @var LoneApplicationService
      */
 
-    private $systemService;
+    private $LoneApplicationService;
 
     /**
      * @var adjustTransformer
@@ -31,7 +31,7 @@ class LoneApplicationController extends Controller
     
     public function __construct(LoneApplicationService $LoneApplicationService, Transformers $transformers)
     {
-        $this->systemService = $LoneApplicationService;
+        $this->LoneApplicationService = $LoneApplicationService;
 
         $this->systemTransformer = $transformers;
     }
@@ -49,7 +49,7 @@ class LoneApplicationController extends Controller
     public function dataProcessingLoneApplication(Request $request)
     {
         // dd('Loan Controller',$request->all());
-        $json_data = $this->systemService->getList($request);
+        $json_data = $this->LoneApplicationService->getList($request);
         return json_encode($this->systemTransformer->dataTable($json_data));
     }
 
@@ -72,12 +72,12 @@ class LoneApplicationController extends Controller
     public function store(Request $request)
     {
         try {
-            $this->validate($request, $this->systemService->storeValidation($request));
+            $this->validate($request, $this->LoneApplicationService->storeValidation($request));
         } catch (ValidationException $e) {
             session()->flash('error', 'Validation error !!');
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
-        $this->systemService->store($request);
+        $this->LoneApplicationService->store($request);
         session()->flash('success', 'Data successfully save!!');
         return redirect()->route('hrm.lone.index');
     }
@@ -92,7 +92,7 @@ class LoneApplicationController extends Controller
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
         }
-        $editInfo =   $this->systemService->details($id);
+        $editInfo =   $this->LoneApplicationService->details($id);
         if (!$editInfo) {
             session()->flash('error', 'Edit info is invalid!!');
             return redirect()->back();
@@ -117,12 +117,12 @@ class LoneApplicationController extends Controller
             return redirect()->back();
         }
         
-        $this->systemService->update($request, $id);
+        $this->LoneApplicationService->update($request, $id);
         session()->flash('success', 'Data successfully updated!!');
         return redirect()->route('hrm.lone.index');
     }
 
-    // Leave Application Deatails
+
     public function show(Lone $lone)
     {
 
@@ -141,11 +141,11 @@ class LoneApplicationController extends Controller
         if (!is_numeric($id)) {
             return response()->json($this->systemTransformer->invalidId($id), 200);
         }
-        $detailsInfo =   $this->systemService->details($id);
+        $detailsInfo =   $this->LoneApplicationService->details($id);
         if (!$detailsInfo) {
             return response()->json($this->systemTransformer->notFound($detailsInfo), 200);
         }
-        $statusInfo =  $this->systemService->statusUpdate($id, $status);
+        $statusInfo =  $this->LoneApplicationService->statusUpdate($id, $status);
         if ($statusInfo) {
             return response()->json($this->systemTransformer->statusUpdate($statusInfo), 200);
         }
@@ -162,11 +162,11 @@ class LoneApplicationController extends Controller
         if (!is_numeric($id)) {
             return response()->json($this->systemTransformer->invalidId($id), 200);
         }
-        $detailsInfo =   $this->systemService->details($id);
+        $detailsInfo =   $this->LoneApplicationService->details($id);
         if (!$detailsInfo) {
             return response()->json($this->systemTransformer->notFound($detailsInfo), 200);
         }
-        $deleteInfo =  $this->systemService->destroy($id);
+        $deleteInfo =  $this->LoneApplicationService->destroy($id);
         if ($deleteInfo) {
             return response()->json($this->systemTransformer->delete($deleteInfo), 200);
         }

@@ -59,6 +59,7 @@ class PurchaseController extends Controller
 
     public function pvindex(Request $request)
     {
+
         $title = 'Purchase List';
         return view('backend.pages.inventories.purchase_pv.index', get_defined_vars());
     }
@@ -150,14 +151,13 @@ class PurchaseController extends Controller
         $title = 'Add New purchase (PV)';
         $category_info = Category::get()->where('status', 'Active');
         $supplier = Supplier::get()->where('status', 'Active');
-        // $branch = Branch::get()->where('status', 'Active');
-
+       
         $user = auth()->user();
-        $branch = Branch::where('status', 'Active');
-
-        $branch = $branch->get();
+        $branch = Branch::where('status', 'Active')->get();
+    
         $purchaseorder = PurchaseOrder::get()->where('status', 'Accepted');
         $purchaseLastData = Purchases::latest('id')->first();
+
 
         if ($purchaseLastData) :
             $purchaseData = $purchaseLastData->id + 1;
@@ -207,13 +207,14 @@ class PurchaseController extends Controller
 
     public function pvstore(Request $request)
     {
-        // dd($request->all());
+        
         try {
             $this->validate($request, $this->systemService->prstoreValidation($request));
         } catch (ValidationException $e) {
             session()->flash('error', 'Validation error !!');
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
+    
         $this->systemService->prstore($request);
         session()->flash('success', 'Data successfully save!!');
         return redirect()->route('inventorySetup.purchase.pvindex');

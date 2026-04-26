@@ -157,7 +157,6 @@ class ApproveLoneApplicationController extends Controller
             return back()->with('error', 'This loan is already approved!');
         }
 
-
         DB::beginTransaction();
 
         try {

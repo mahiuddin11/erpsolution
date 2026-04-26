@@ -139,129 +139,157 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-    @php
-        $totalQty = 0;
-        $totalUp = 0;
-        $totalPrice = 0;
-        $totals = []; // new add: supplier/account totals
-        $overallTotal = 0; // new add: overall total
-    @endphp
+                                            @php
+                                                $totalQty = 0;
+                                                $totalUp = 0;
+                                                $totalPrice = 0;
+                                                $totals = []; // new add: supplier/account totals
+                                                $overallTotal = 0; // new add: overall total
+                                            @endphp
 
-    @foreach ($purchaseorder->details as $detail)
-        @php
-            $totalQty += $detail->qty;
-            $totalUp += $detail->unit_price;
-            $totalPrice += $detail->total_price;
-            $rowTotal = 0; // total for this row
-        @endphp
+                                            @foreach ($purchaseorder->details as $detail)
+                                                @php
+                                                    $totalQty += $detail->qty;
+                                                    $totalUp += $detail->unit_price;
+                                                    $totalPrice += $detail->total_price;
+                                                    $rowTotal = 0; // total for this row
+                                                @endphp
 
-        <tr>
-            <td>{{ $loop->iteration }}</td>
-            <td>{{ $detail->product->productCode ?? 'N/A' }} - {{ $detail->product->name ?? 'N/A' }}</td>
-            <td class="text-right">{{ $detail->purchasetype ?? 'N/A' }}</td>
-            <td class="text-right">{{ $detail->qty ?? 'N/A' }}</td>
+                                                <tr>
+                                                    <td>{{ $loop->iteration }}</td>
+                                                    <td>{{ $detail->product->productCode ?? 'N/A' }} -
+                                                        {{ $detail->product->name ?? 'N/A' }}</td>
+                                                    <td class="text-right">{{ $detail->purchasetype ?? 'N/A' }}</td>
+                                                    <td class="text-right">{{ $detail->qty ?? 'N/A' }}</td>
 
-            {{-- Loop through suppliers first --}}
-            @foreach ($suppliers as $supplier)
-                <td class="text-right">
-                    @php
-                        $found = false; // new add: to track if price found
-                    @endphp
-                    @foreach ($supplierSelectedPrices as $price)
-                        @if ($price->purchase_order_id == $detail->id && $price->supplier_id == $supplier->id)
-                            @php
-                                $found = true; // mark found
-                                if(!isset($totals[$supplier->id])) $totals[$supplier->id] = 0; // init total
-                                if($price->purchases_price > 0) $totals[$supplier->id] += $price->purchases_price; // add to total
-                                if($price->status == 1) $rowTotal += $detail->qty * $price->purchases_price; // add row total
-                            @endphp
-                            <span class="mr-2">
-                                <input type="checkbox" onclick="unCheck({{ $detail->id }})"
-                                    class="checked-input{{ $detail->id }}" 
-                                    {{ $price->status == 1 ? 'checked' : '' }}
-                                    value="{{ $price->id }}" name="suplirePrice[]">
-                            </span>
-                            {{ $price->purchases_price }}
-                        @endif
-                    @endforeach
+                                                    {{-- Loop through suppliers first --}}
+                                                    @foreach ($suppliers as $supplier)
+                                                        <td class="text-right">
+                                                            @php
+                                                                $found = false; // new add: to track if price found
+                                                            @endphp
+                                                            @foreach ($supplierSelectedPrices as $price)
+                                                                @if ($price->purchase_order_id == $detail->id && $price->supplier_id == $supplier->id)
+                                                                    @php
+                                                                        $found = true; // mark found
+                                                                        if (!isset($totals[$supplier->id])) {
+                                                                            $totals[$supplier->id] = 0;
+                                                                        } // init total
+                                                                        if ($price->purchases_price > 0) {
+                                                                            $totals[$supplier->id] +=
+                                                                                $price->purchases_price;
+                                                                        } // add to total
+                                                                        if ($price->status == 1) {
+                                                                            $rowTotal +=
+                                                                                $detail->qty * $price->purchases_price;
+                                                                        } // add row total
+                                                                    @endphp
+                                                                    <span class="mr-2">
+                                                                        <input type="checkbox"
+                                                                            onclick="unCheck({{ $detail->id }})"
+                                                                            class="checked-input{{ $detail->id }}"
+                                                                            {{ $price->status == 1 ? 'checked' : '' }}
+                                                                            value="{{ $price->id }}"
+                                                                            name="suplirePrice[]">
+                                                                    </span>
+                                                                    {{ $price->purchases_price }}
+                                                                @endif
+                                                            @endforeach
 
-                    @if(!$found)
-                        <span>N/A</span>
-                    @endif
-                </td>
-            @endforeach
+                                                            @if (!$found)
+                                                                <span>N/A</span>
+                                                            @endif
+                                                        </td>
+                                                    @endforeach
 
-            {{-- Loop through accounts (new add) --}}
-            @foreach ($accounts as $account) {{-- new add --}}
-                <td class="text-right"> {{-- new add --}}
-                    @php
-                        $found = false; // new add
-                    @endphp
-                    @foreach ($supplierSelectedPrices as $price)
-                        @if ($price->purchase_order_id == $detail->id && $price->account_id == $account->id) {{-- new add --}}
-                            @php
-                                $found = true; // new add
-                                if(!isset($totals['acc_'.$account->id])) $totals['acc_'.$account->id] = 0; // new add
-                                if($price->purchases_price > 0) $totals['acc_'.$account->id] += $price->purchases_price; // new add
-                                if($price->status == 1) $rowTotal += $detail->qty * $price->purchases_price; // new add
-                            @endphp
-                            <span class="mr-2">
-                                <input type="checkbox" onclick="unCheck({{ $detail->id }})"
-                                    class="checked-input{{ $detail->id }}" 
-                                    {{ $price->status == 1 ? 'checked' : '' }}
-                                    value="{{ $price->id }}" name="suplirePrice[]">
-                            </span>
-                            {{ $price->purchases_price }}
-                        @endif
-                    @endforeach
+                                                    {{-- Loop through accounts (new add) --}}
+                                                    @foreach ($accounts as $account)
+                                                        {{-- new add --}}
+                                                        <td class="text-right"> {{-- new add --}}
+                                                            @php
+                                                                $found = false; // new add
+                                                            @endphp
+                                                            @foreach ($supplierSelectedPrices as $price)
+                                                                @if ($price->purchase_order_id == $detail->id && $price->account_id == $account->id)
+                                                                    {{-- new add --}}
+                                                                    @php
+                                                                        $found = true; // new add
+                                                                        if (!isset($totals['acc_' . $account->id])) {
+                                                                            $totals['acc_' . $account->id] = 0;
+                                                                        } // new add
+                                                                        if ($price->purchases_price > 0) {
+                                                                            $totals['acc_' . $account->id] +=
+                                                                                $price->purchases_price;
+                                                                        } // new add
+                                                                        if ($price->status == 1) {
+                                                                            $rowTotal +=
+                                                                                $detail->qty * $price->purchases_price;
+                                                                        } // new add
+                                                                    @endphp
+                                                                    <span class="mr-2">
+                                                                        <input type="checkbox"
+                                                                            onclick="unCheck({{ $detail->id }})"
+                                                                            class="checked-input{{ $detail->id }}"
+                                                                            {{ $price->status == 1 ? 'checked' : '' }}
+                                                                            value="{{ $price->id }}"
+                                                                            name="suplirePrice[]">
+                                                                    </span>
+                                                                    {{ $price->purchases_price }}
+                                                                @endif
+                                                            @endforeach
 
-                    @if(!$found) {{-- new add --}}
-                        <span>N/A</span> {{-- new add --}}
-                    @endif
-                </td> {{-- new add --}}
-            @endforeach
+                                                            @if (!$found)
+                                                                {{-- new add --}}
+                                                                <span>N/A</span> {{-- new add --}}
+                                                            @endif
+                                                        </td> {{-- new add --}}
+                                                    @endforeach
 
-            <td class="text-right">
-                <strong>{{ number_format($rowTotal,2) }}</strong>
-            </td>
-            @php
-                $overallTotal += $rowTotal; // new add
-            @endphp
-        </tr>
-    @endforeach
-</tbody>
-<tfoot>
-    <tr>
-        <td colspan="3" class="text-right"><strong>Total:</strong></td>
-        <td class="text-right"><strong>{{ $totalQty }}</strong></td>
+                                                    <td class="text-right">
+                                                        <strong>{{ number_format($rowTotal, 2) }}</strong>
+                                                    </td>
+                                                    @php
+                                                        $overallTotal += $rowTotal; // new add
+                                                    @endphp
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colspan="3" class="text-right"><strong>Total:</strong></td>
+                                                <td class="text-right"><strong>{{ $totalQty }}</strong></td>
 
-        {{-- Supplier totals --}}
-        @foreach ($suppliers as $supplier)
-            <td class="text-right">
-                <strong>{{ number_format($totals[$supplier->id] ?? 0, 2) }}</strong> {{-- new add --}}
-            </td>
-        @endforeach
+                                                {{-- Supplier totals --}}
+                                                @foreach ($suppliers as $supplier)
+                                                    <td class="text-right">
+                                                        <strong>{{ number_format($totals[$supplier->id] ?? 0, 2) }}</strong>
+                                                        {{-- new add --}}
+                                                    </td>
+                                                @endforeach
 
-        {{-- Account totals --}}
-        @foreach ($accounts as $account) {{-- new add --}}
-            <td class="text-right">
-                <strong>{{ number_format($totals['acc_'.$account->id] ?? 0, 2) }}</strong> {{-- new add --}}
-            </td>
-        @endforeach
+                                                {{-- Account totals --}}
+                                                @foreach ($accounts as $account)
+                                                    {{-- new add --}}
+                                                    <td class="text-right">
+                                                        <strong>{{ number_format($totals['acc_' . $account->id] ?? 0, 2) }}</strong>
+                                                        {{-- new add --}}
+                                                    </td>
+                                                @endforeach
 
-        {{-- Overall total --}}
-        <td class="text-right">
-            <strong>{{ number_format($overallTotal, 2) }}</strong> {{-- new add --}}
-        </td>
-    </tr>
+                                                {{-- Overall total --}}
+                                                <td class="text-right">
+                                                    <strong>{{ number_format($overallTotal, 2) }}</strong>
+                                                    {{-- new add --}}
+                                                </td>
+                                            </tr>
 
-    {{-- Narration row --}}
-    <tr>
-        <td colspan="{{ 5 + count($suppliers) + count($accounts) }}">
-            Narration: {{ $purchaseorder->note ?? 'N/A' }}
-        </td>
-    </tr>
-</tfoot>
+                                            {{-- Narration row --}}
+                                            <tr>
+                                                <td colspan="{{ 5 + count($suppliers) + count($accounts) }}">
+                                                    Narration: {{ $purchaseorder->note ?? 'N/A' }}
+                                                </td>
+                                            </tr>
+                                        </tfoot>
                                         {{-- <tbody>
                                             @php
                                                 $totalQty = 0;

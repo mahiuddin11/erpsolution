@@ -151,3 +151,6 @@ $creditVoucher = $query
     ->get();
 
 
+// SELECT employee_status, COUNT(*) as total
+// FROM employees
+// GROUP BY employee_status;

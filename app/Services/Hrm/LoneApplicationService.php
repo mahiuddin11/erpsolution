@@ -9,11 +9,11 @@ class LoneApplicationService
 {
 
     
-    private $loaneRepositorys;
+    private $LoneApplicationRepositories;
 
-    public function __construct(LoneApplicationRepositories $loaneRepositorys)
+    public function __construct(LoneApplicationRepositories $LoneApplicationRepositories)
     {
-        $this->loaneRepositorys = $loaneRepositorys;
+        $this->LoneApplicationRepositories = $LoneApplicationRepositories;
     }
 
     /**
@@ -23,7 +23,7 @@ class LoneApplicationService
     public function getList($request)
     {
         // dd('lonaneApicaitonservice',$request->all());
-        return $this->loaneRepositorys->getList($request);
+        return $this->LoneApplicationRepositories->getList($request);
     }
 
     /**
@@ -32,7 +32,7 @@ class LoneApplicationService
      */
     public function getAllList()
     {
-        return $this->loaneRepositorys->getAllList();
+        return $this->LoneApplicationRepositories->getAllList();
     }
 
     /**
@@ -41,7 +41,7 @@ class LoneApplicationService
      */
     public function statusUpdate($request, $id)
     {
-        return $this->loaneRepositorys->statusUpdate($request, $id);
+        return $this->LoneApplicationRepositories->statusUpdate($request, $id);
     }
 
     public function statusValidation($request)
@@ -95,7 +95,7 @@ class LoneApplicationService
      */
     public function store($request)
     {
-        return $this->loaneRepositorys->store($request);
+        return $this->LoneApplicationRepositories->store($request);
     }
 
     /**
@@ -104,7 +104,7 @@ class LoneApplicationService
      */
     public function update($request, $id)
     {
-        return $this->loaneRepositorys->update($request, $id);
+        return $this->LoneApplicationRepositories->update($request, $id);
     }
 
     /**
@@ -114,7 +114,7 @@ class LoneApplicationService
     public function details($id)
     {
 
-        return $this->loaneRepositorys->details($id);
+        return $this->LoneApplicationRepositories->details($id);
     }
 
 
@@ -125,6 +125,6 @@ class LoneApplicationService
      */
     public function destroy($id)
     {
-        return $this->loaneRepositorys->destroy($id);
+        return $this->LoneApplicationRepositories->destroy($id);
     }
 }

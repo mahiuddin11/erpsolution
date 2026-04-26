@@ -157,11 +157,14 @@ class PurchaseRequisitionRepositories
 
     public function store($request)
     {
+        
         DB::beginTransaction();
         try {
+            
             $purchaserequisition = new PurchaseRequisition();
             $purchaserequisition->invoice_no = $request->requisitionCode;
             $purchaserequisition->project_id = $request->project_id;
+            $purchaserequisition->branch_id = Auth::user()->branch_id ?? '';
             $purchaserequisition->date = $request->date;
             $purchaserequisition->total_qty = array_sum($request->qty);
             // $purchaserequisition->total_price = array_sum($request->total);
@@ -169,13 +172,13 @@ class PurchaseRequisitionRepositories
             $purchaserequisition->note = $request->note;
             $purchaserequisition->save();
             $pr_id = $purchaserequisition->id;
-
+            
             $category = $request->category_nm;
             $product = $request->product_nm;
             $qty = $request->qty;
             $unitprice = $request->unitprice;
             $total = $request->total;
-
+            
             for ($i = 0; $i < count($category); $i++) {
                 $purchasedetails = new PrDetails();
                 $purchasedetails->pr_id = $pr_id;
@@ -185,6 +188,8 @@ class PurchaseRequisitionRepositories
                 $purchasedetails->qty = $qty[$i];
                 $purchasedetails->project_id = $request->project_id;
                 $purchasedetails->save();
+
+  
             }
 
             DB::commit();
@@ -237,7 +242,7 @@ class PurchaseRequisitionRepositories
 
     public function approvepr($request, $id)
     {
-        // dd($request->all());
+        
         DB::beginTransaction();
         try {
             $purchaserequisition = PurchaseRequisition::find($id);

@@ -250,9 +250,11 @@ function TOTALPAYABLEDAYS($employee_id, $month = null)
     if($presentday == 0){
         return 0;
     }
-    // minimun 30 days fix
+   
     return min($payable_day, 30);
 }
+
+
 
 //GET EMPLOYEE HOUSE RENT MAIN SALARY
 function EMPLOYEE_HOUSE_RENT_SALARY($EMPLOYEE_SALARY)
@@ -415,17 +417,33 @@ function EMPLOYEE_PAYABLE_SALARY($EMPLOYEE, $month)
    return round($payable_salary);
 }
 
-function PAID_LEAVE_COUNT($EMPLOYEE)
+function PAID_LEAVE_COUNT($EMPLOYEE, $month)
 {
-    $LEAVES = DB::table('leave_applications')->where('employee_id', $EMPLOYEE->id)->where('payment_status', 'paid')->where('status', 'approved')->whereMonth('apply_date', date('m'))->get();
+    $date = Carbon::parse($month . "-01");
+    $startMonth = $date->copy()->startOfMonth()->toDateString();
+    $endMonth = $date->copy()->endOfMonth()->toDateString();
+
+    $LEAVES = DB::table('leave_applications')
+        ->where('employee_id', $EMPLOYEE->id)
+        ->where('payment_status', 'paid')
+        ->where('status', 'approved')
+        ->where(function ($q) use ($startMonth, $endMonth) {
+            $q->whereBetween('apply_date', [$startMonth, $endMonth])
+                ->orWhereBetween('end_date', [$startMonth, $endMonth])
+                ->orWhere(function ($q2) use ($startMonth, $endMonth) {
+                    $q2->where('apply_date', '<=', $startMonth)
+                        ->where('end_date', '>=', $endMonth);
+                });
+        })
+        ->get();
+
     $DAYS = 0;
+
     foreach ($LEAVES as $LEAVE) {
-        $START = Carbon::parse($LEAVE->apply_date);
-        $END = Carbon::parse($LEAVE->end_date);
-        $DAYS += $START->diffInDays($END);
-        if ($DAYS != 0)
-            $DAYS += 1;
+        $DAYS += Carbon::parse($LEAVE->apply_date)
+            ->diffInDays(Carbon::parse($LEAVE->end_date)) + 1;
     }
+
     return $DAYS;
 }
 

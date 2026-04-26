@@ -20,23 +20,15 @@ use Illuminate\Validation\ValidationException;
 class PurchaseRequisitionController extends Controller
 {
 
-    /**
-     * @var prService
-     */
-    private $systemService;
-    /**
-     * @var prTransformer
-     */
+
+    private $purchaseRequisitionService;
+   
     private $systemTransformer;
 
-    /**
-     * CategoryController constructor.
-     * @param prService $systemService
-     * @param prTransformer $systemTransformer
-     */
-    public function __construct(PurchaseRequisitionService $prService, PurchaseRequisitionTransformer $prTransformer)
+  
+    public function __construct(PurchaseRequisitionService $purchaseRequisitionService, PurchaseRequisitionTransformer $prTransformer)
     {
-        $this->systemService = $prService;
+        $this->purchaseRequisitionService = $purchaseRequisitionService;
 
         $this->systemTransformer = $prTransformer;
     }
@@ -44,6 +36,7 @@ class PurchaseRequisitionController extends Controller
     /**
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
+    
     public function index(Request $request)
     {
         $title = 'Purchase Requisition List';
@@ -53,7 +46,7 @@ class PurchaseRequisitionController extends Controller
     public function dataProcessingAdjust(Request $request)
     {
         // dd('ff');
-        $json_data = $this->systemService->getList($request);
+        $json_data = $this->purchaseRequisitionService->getList($request);
         return json_encode($this->systemTransformer->dataTable($json_data));
     }
 
@@ -88,7 +81,7 @@ class PurchaseRequisitionController extends Controller
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
         }
-        $editInfo = $this->systemService->details($id);
+        $editInfo = $this->purchaseRequisitionService->details($id);
         if (!$editInfo) {
             session()->flash('error', 'Edit info is invalid!!');
             return redirect()->back();
@@ -105,12 +98,12 @@ class PurchaseRequisitionController extends Controller
     public function store(Request $request)
     {
         try {
-            $this->validate($request, $this->systemService->storeValidation($request));
+            $this->validate($request, $this->purchaseRequisitionService->storeValidation($request));
         } catch (ValidationException $e) {
             session()->flash('error', 'Validation error !!');
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
-        $this->systemService->store($request);
+        $this->purchaseRequisitionService->store($request);
         session()->flash('success', 'Data successfully save!!');
         return redirect()->route('inventorySetup.purchaserequisition.index');
     }
@@ -126,7 +119,7 @@ class PurchaseRequisitionController extends Controller
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
         }
-        $editInfo = $this->systemService->details($id);
+        $editInfo = $this->purchaseRequisitionService->details($id);
         if (!$editInfo) {
             session()->flash('error', 'Edit info is invalid!!');
             return redirect()->back();
@@ -137,6 +130,7 @@ class PurchaseRequisitionController extends Controller
         $category_info  = Category::where('status', 'Active')->get();
         $requisition = PurchaseRequisition::find($id);
         $requisitionDetails = PrDetails::where('pr_id', $id)->get();
+        
         return view('backend.pages.inventories.pr.approve', get_defined_vars());
     }
 
@@ -146,7 +140,7 @@ class PurchaseRequisitionController extends Controller
             session()->flash('error', 'Invoice id must be numeric!!');
             return redirect()->back();
         }
-        $editInfo = $this->systemService->details($id);
+        $editInfo = $this->purchaseRequisitionService->details($id);
         if (!$editInfo) {
             session()->flash('error', 'Invoice info is invalid!!');
             return redirect()->back();
@@ -168,12 +162,12 @@ class PurchaseRequisitionController extends Controller
             session()->flash('error', 'Approve id must be numeric!!');
             return redirect()->back();
         }
-        $editInfo = $this->systemService->details($id);
+        $editInfo = $this->purchaseRequisitionService->details($id);
         if (!$editInfo) {
             session()->flash('error', 'Approve info is invalid!!');
             return redirect()->back();
         }
-        // $this->systemService->approvepr($request, $id);
+        // $this->purchaseRequisitionService->approvepr($request, $id);
         $purchasereq['approve_by'] = Auth::user()->id;
         $purchasereq['approve_at'] = date('Y-m-d');
         $purchasereq['status'] = 'Accepted';
@@ -181,24 +175,25 @@ class PurchaseRequisitionController extends Controller
         session()->flash('success', 'Data successfully updated!!');
         return redirect()->route('inventorySetup.purchaserequisition.index');
     }
+
     public function update(Request $request, $id)
     {
         if (!is_numeric($id)) {
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
         }
-        $editInfo = $this->systemService->details($id);
+        $editInfo = $this->purchaseRequisitionService->details($id);
         if (!$editInfo) {
             session()->flash('error', 'Edit info is invalid!!');
             return redirect()->back();
         }
         try {
-            $this->validate($request, $this->systemService->updateValidation($request, $id));
+            $this->validate($request, $this->purchaseRequisitionService->updateValidation($request, $id));
         } catch (ValidationException $e) {
             session()->flash('error', 'Validation error !!');
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
-        $this->systemService->update($request, $id);
+        $this->purchaseRequisitionService->update($request, $id);
         session()->flash('success', 'Data successfully updated!!');
         return redirect()->route('inventorySetup.purchaserequisition.index');
     }
@@ -217,11 +212,11 @@ class PurchaseRequisitionController extends Controller
         if (!is_numeric($id)) {
             return response()->json($this->systemTransformer->invalidId($id), 200);
         }
-        $detailsInfo = $this->systemService->details($id);
+        $detailsInfo = $this->purchaseRequisitionService->details($id);
         if (!$detailsInfo) {
             return response()->json($this->systemTransformer->notFound($detailsInfo), 200);
         }
-        $deleteInfo = $this->systemService->destroy($id);
+        $deleteInfo = $this->purchaseRequisitionService->destroy($id);
         if ($deleteInfo) {
             return response()->json($this->systemTransformer->delete($deleteInfo), 200);
         }

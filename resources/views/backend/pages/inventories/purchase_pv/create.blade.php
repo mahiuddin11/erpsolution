@@ -99,7 +99,7 @@
                                     <span class=" error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
-                            {{-- <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label>Supplier * :</label>
                                 <select class="form-control select2 supid" id="supplier_id" name="supplier_id">
                                     <option selected disabled value="">--Select Supplier--</option>
@@ -112,7 +112,7 @@
                                 @error('supplier_id')
                                     <span class=" error text-red text-bold">{{ $message }}</span>
                                 @enderror
-                            </div> --}}
+                            </div>
                             <div class="col-md-4 mb-3">
                                 <div class="form-group">
                                     <label>Payment Type * :</label>

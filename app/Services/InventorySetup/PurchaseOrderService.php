@@ -7,19 +7,12 @@ use App\Repositories\InventorySetup\PurchaseOrderRepositories;
 class PurchaseOrderService
 {
 
-    /**
-     * @var AdjustRepositories
-     */
-    private $systemRepositories;
 
-    /**
-     * AdminCourseService constructor.
-     * @param AdjustRepositories $branchRepositories
-     */
+    private $purchaseOrderRepositories;
 
-    public function __construct(PurchaseOrderRepositories $systemRepositories)
+    public function __construct(PurchaseOrderRepositories $purchaseOrderRepositories)
     {
-        $this->systemRepositories = $systemRepositories;
+        $this->purchaseOrderRepositories = $purchaseOrderRepositories;
     }
 
     /**
@@ -28,12 +21,12 @@ class PurchaseOrderService
      */
     public function getList($request)
     {
-        return $this->systemRepositories->getList($request);
+        return $this->purchaseOrderRepositories->getList($request);
     }
 
     public function getprList($request)
     {
-        return $this->systemRepositories->getprList($request);
+        return $this->purchaseOrderRepositories->getprList($request);
     }
 
     /**
@@ -42,7 +35,7 @@ class PurchaseOrderService
      */
     public function getAllList()
     {
-        return $this->systemRepositories->getAllList();
+        return $this->purchaseOrderRepositories->getAllList();
     }
 
     /**
@@ -51,7 +44,7 @@ class PurchaseOrderService
      */
     public function statusUpdate($request, $id)
     {
-        return $this->systemRepositories->statusUpdate($request, $id);
+        return $this->purchaseOrderRepositories->statusUpdate($request, $id);
     }
 
     public function statusValidation($request)
@@ -120,7 +113,7 @@ class PurchaseOrderService
      */
     public function store($request)
     {
-        return $this->systemRepositories->store($request);
+        return $this->purchaseOrderRepositories->store($request);
     }
 
     /**
@@ -130,7 +123,7 @@ class PurchaseOrderService
     public function details($id)
     {
 
-        return $this->systemRepositories->details($id);
+        return $this->purchaseOrderRepositories->details($id);
     }
 
     /**
@@ -139,12 +132,12 @@ class PurchaseOrderService
      */
     public function update($request, $id)
     {
-        return $this->systemRepositories->update($request, $id);
+        return $this->purchaseOrderRepositories->update($request, $id);
     }
 
     public function approvepr($request, $id)
     {
-        return $this->systemRepositories->approvepr($request, $id);
+        return $this->purchaseOrderRepositories->approvepr($request, $id);
     }
 
     /**
@@ -153,6 +146,6 @@ class PurchaseOrderService
      */
     public function destroy($id)
     {
-        return $this->systemRepositories->destroy($id);
+        return $this->purchaseOrderRepositories->destroy($id);
     }
 }

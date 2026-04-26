@@ -152,6 +152,9 @@ class ApproveCashReqApplicationController extends Controller
 
     public function approve(Request $request, $id)
     {
+
+   
+        
         DB::beginTransaction();
 
         try {
@@ -304,7 +307,7 @@ class ApproveCashReqApplicationController extends Controller
         return redirect()->route('hrm.cash-req.index');
     }
 
-    // Leave Application Deatails
+    // Cash requition show
     public function show(CashReq $lone)
     {
         $title = 'Approve Cash Requisition Details';

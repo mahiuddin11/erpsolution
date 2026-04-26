@@ -256,15 +256,26 @@
                                                         <div class="mt-1 d-flex flex-wrap">
                                                             @foreach ($empBonus as $bonus)
                                                                 @php
-                                                                    $color = match ($bonus->bonus_type) {
+                                                                    $colorMap = [
                                                                         'performance' => 'badge-success',
-                                                                        'eid_ul_fitr', 'eid_ul_adha' => 'badge-info',
-                                                                        default => 'badge-secondary',
-                                                                    };
+                                                                        'eid_ul_fitr' => 'badge-info',
+                                                                        'eid_ul_adha' => 'badge-info',
+                                                                    ];
+
+                                                                    $color =
+                                                                        $colorMap[$bonus->bonus_type] ??
+                                                                        'badge-secondary';
+
+                                                                    $label =
+                                                                        $bonusTypes[$bonus->bonus_type] ??
+                                                                        ucfirst(
+                                                                            str_replace('_', ' ', $bonus->bonus_type),
+                                                                        );
                                                                 @endphp
+
                                                                 <span
                                                                     class="badge {{ $color }} mr-1 mb-1 px-2 py-1">
-                                                                    {{ \App\Models\EmpPayBonus::BONUS_TYPES[$bonus->bonus_type] ?? ucfirst($bonus->bonus_type) }}
+                                                                    {{ $label }}
                                                                 </span>
                                                             @endforeach
                                                         </div>

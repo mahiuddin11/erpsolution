@@ -70,7 +70,7 @@ class PaySheetController extends Controller
                     'absence_deduction'      => ABSENCE_DEDUCTION($emp->id, $month, $emp->salary),
                     'employee_late'          => LATE_DAYS($emp, $month),
                     'employee_deducton'      => LATE_DAYS_SALARY_DEDUCT($emp, $month),
-                    'employee_paid_leave'    => PAID_LEAVE_COUNT($emp),
+                    'employee_paid_leave'    => PAID_LEAVE_COUNT($emp , $month),
                     'holiday'                => count(GET_HOLIDAYS($month)),
                     'totalPayableDays'       => TOTALPAYABLEDAYS($emp->id, $month),
                     'overtime_houre'         => OVERTIME_HOURE($emp),
@@ -119,7 +119,7 @@ class PaySheetController extends Controller
                             "absence_deduction" =>  ABSENCE_DEDUCTION($employee->id, $request->month  ?? now()->format('Y-m'), $employee->salary),
                             "employee_late" => LATE_DAYS($employee, $request->month  ?? now()->format('Y-m')),
                             "employee_deducton" => LATE_DAYS_SALARY_DEDUCT($employee, $request->month  ?? now()->format('Y-m')),
-                            "employee_paid_leave" => PAID_LEAVE_COUNT($employee),
+                            "employee_paid_leave" => PAID_LEAVE_COUNT($employee , $request->month  ?? now()->format('Y-m')),
                             "holiday" => count(GET_HOLIDAYS($request->month  ?? now()->format('Y-m'))),
                             // "employee_unpaid_leave" => UNPAID_LEAVE_COUNT($employee),
                             'totalPayableDays' => TOTALPAYABLEDAYS($employee->id, $request->month  ?? now()->format('Y-m')),
@@ -336,12 +336,8 @@ class PaySheetController extends Controller
 
         $title = 'Salary Pay Slip';
         $payslip = MonthlyPayableSalary::find($id);
-        $empBonus = EmpPayBonus::where('monthly_payable_salaries_id' , $payslip->id)->get();
-       
-       
+        $empBonus = EmpPayBonus::where('monthly_payable_salaries_id' , $payslip->id)->get(); 
         $transactions = AccountTransaction::where('table_id', $payslip->id)->where('employee_id', $payslip->employee_id)->where('table_name', 'monthly_payable_salaries')->where('type', 'credit_voucher')->get();
-        
-
         return view('backend.pages.hrm.attendance.paysheet.paidslip', get_defined_vars());
     }
 

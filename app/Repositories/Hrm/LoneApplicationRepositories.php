@@ -13,14 +13,9 @@ use Illuminate\Support\Facades\Storage;
 
 class LoneApplicationRepositories
 {
-    /**
-     * @var Brand
-     */
+    
     private $model;
-    /**
-     * PositionRepository Position.
-     * @param LeaveApplication $Attendance
-     */
+    
     public function __construct(Lone $Lone)
     {
         $this->model = $Lone;
@@ -261,10 +256,7 @@ class LoneApplicationRepositories
     public function update($request, $id)
     {
 
-        
         $lone = $this->model::find($id);
-        
- 
         $lone->employee_id = $request->employee_id;
         $lone->branch_id = $request->branch_id;
         $lone->amount = $request->amount;

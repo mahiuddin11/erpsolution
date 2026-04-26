@@ -121,40 +121,35 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         // Inventory setup crud start
 
         //purchaserequisition  crud operation start
-        Route::get('/inventory-purchaserequisition-list', 'PurchaseRequisitionController@index')->name('inventorySetup.purchaserequisition.index');
-        Route::get('/dataProcessingPurchaseRequisition', 'PurchaseRequisitionController@dataProcessingAdjust')->name('inventorySetup.purchaserequisition.dataProcessingPurchaseRequisition');
-        Route::get('/inventory-purchaserequisition-create', 'PurchaseRequisitionController@create')->name('inventorySetup.purchaserequisition.create');
-        Route::post('/inventory-purchaserequisition-store', 'PurchaseRequisitionController@store')->name('inventorySetup.purchaserequisition.store');
-        Route::get('/inventory-purchaserequisition-edit/{id}', 'PurchaseRequisitionController@edit')->name('inventorySetup.purchaserequisition.edit');
-        // Route::get('/inventory-purchaserequisition-show/{id}', 'PurchaseRequisitionController@show')->name('inventorySetup.purchaserequisition.show');
-        Route::post('/inventory-purchaserequisition-update/{id}', 'PurchaseRequisitionController@update')->name('inventorySetup.purchaserequisition.update');
-        Route::get('/inventory-purchaserequisition-delete/{id}', 'PurchaseRequisitionController@destroy')->name('inventorySetup.purchaserequisition.destroy');
-        Route::get('/inventory-purchaserequisition-filterproduct', 'PurchaseRequisitionController@filterproduct')->name('inventorySetup.purchaserequisition.filterproduct');
-        Route::get('/inventorySetup.purchaserequisition.approve/{id}', 'PurchaseRequisitionController@approve')->name('inventorySetup.purchaserequisition.approve');
-        Route::get('/inventorySetup.purchaserequisition.approveUpdate/{id}', 'PurchaseRequisitionController@approveUpdate')->name('inventorySetup.purchaserequisition.approveUpdate');
+        Route::get('/inventory-purchaserequisition-list', [PurchaseRequisitionController::class, 'index'])->name('inventorySetup.purchaserequisition.index');
+        Route::get('/dataProcessingPurchaseRequisition', [PurchaseRequisitionController::class, 'dataProcessingAdjust'])->name('inventorySetup.purchaserequisition.dataProcessingPurchaseRequisition');
+        Route::get('/inventory-purchaserequisition-create', [PurchaseRequisitionController::class, 'create'])->name('inventorySetup.purchaserequisition.create');
+        Route::post('/inventory-purchaserequisition-store', [PurchaseRequisitionController::class, 'store'])->name('inventorySetup.purchaserequisition.store');
+        Route::get('/inventory-purchaserequisition-edit/{id}', [PurchaseRequisitionController::class, 'edit'])->name('inventorySetup.purchaserequisition.edit');
+        // Route::get('/inventory-purchaserequisition-show/{id}', [PurchaseRequisitionController::class, 'show'])->name('inventorySetup.purchaserequisition.show');
+        Route::post('/inventory-purchaserequisition-update/{id}', [PurchaseRequisitionController::class, 'update'])->name('inventorySetup.purchaserequisition.update');
+        Route::get('/inventory-purchaserequisition-delete/{id}', [PurchaseRequisitionController::class, 'destroy'])->name('inventorySetup.purchaserequisition.destroy');
+        Route::get('/inventory-purchaserequisition-filterproduct', [PurchaseRequisitionController::class, 'filterproduct'])->name('inventorySetup.purchaserequisition.filterproduct');
+        Route::get('/inventorySetup.purchaserequisition.approve/{id}', [PurchaseRequisitionController::class, 'approve'])->name('inventorySetup.purchaserequisition.approve');
+        Route::get('/inventorySetup.purchaserequisition.approveUpdate/{id}', [PurchaseRequisitionController::class, 'approveUpdate'])->name('inventorySetup.purchaserequisition.approveUpdate');
         
 
         Route::get('/inventorySetup.purchaserequisition.invoice/{id}', [PurchaseRequisitionController::class, 'invoice'])->name('inventorySetup.purchaserequisition.invoice');
         //purchaserequisition  crud operation end
 
         //purchaseorder  crud operation start
-        Route::get('/inventory-purchaseorder-list', 'PurchaseOrderController@index')->name('inventorySetup.purchaseorder.index');
-        Route::get('/dataProcessingpurchaseorder', 'PurchaseOrderController@datapurchaseorder')->name('inventorySetup.purchaseorder.datapurchaseorder');
+        Route::get('/inventory-purchaseorder-list', [PurchaseOrderController::class, 'index'])->name('inventorySetup.purchaseorder.index');
+        Route::get('/dataProcessingpurchaseorder', [PurchaseOrderController::class, 'datapurchaseorder'])->name('inventorySetup.purchaseorder.datapurchaseorder');
         Route::post('/inventory-purchaseorder-store', [PurchaseOrderController::class,'store'])->name('inventorySetup.purchaseorder.store');
         Route::get('/inventory-purchaseorder-searchpr', [PurchaseOrderController::class,"searchpr"])->name('inventorySetup.purchaseorder.searchpr');
-
         Route::get('/inventory-purchaseorder-create', [PurchaseOrderController::class,'create'])->name('inventorySetup.purchaseorder.create');
         Route::get('/inventory-purchaseorder-edit/{id}', [PurchaseOrderController::class, 'edit'])->name('inventorySetup.purchaseorder.edit');
-
         Route::get('/inventory-select-supplier-edit', [PurchaseOrderController::class, 'selectSupplier'])->name('inventorySetup.select.supplier');
         Route::post('/inventory-purchaseorder-update/{id}', [PurchaseOrderController::class, 'update'])->name('inventorySetup.purchaseorder.update');
-
-        Route::get('/inventory-purchaseorder-delete/{id}', 'PurchaseOrderController@destroy')->name('inventorySetup.purchaseorder.destroy');
-        Route::get('/inventory-purchaseorder-filterproduct', 'PurchaseOrderController@filterproduct')->name('inventorySetup.purchaseorder.filterproduct');
-    
+        Route::get('/inventory-purchaseorder-delete/{id}', [PurchaseOrderController::class,'destroy'])->name('inventorySetup.purchaseorder.destroy');
+        Route::get('/inventory-purchaseorder-filterproduct', [PurchaseOrderController::class,'filterproduct'])->name('inventorySetup.purchaseorder.filterproduct');
         Route::get('/inventorySetup/purchaseorder/invoice/{id}', [PurchaseOrderController::class, 'invoice'])->name('inventorySetup.purchaseorder.invoice');
         Route::get('/inventorySetup/purchaseorder/approve/{id}', [PurchaseOrderController::class, 'approve'])->name('inventorySetup.purchaseorder.approve');
-
         Route::post('/inventorySetup/supplier/purchaseorder/approve/', [PurchaseOrderController::class, 'supplierPurchaseApprove'])->name('inventorySetup.supplierpurchaseorder.approve');
         //purchaseorder  crud operation end
 
@@ -163,9 +158,8 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::post('/inventory-purchase-pvcloseopen', [PurchaseController::class, 'pvcloseopen'])->name('inventorySetup.purchase.pvcloseopen');
         Route::get('/dataProcessinpv', [PurchaseController::class, 'dataProcessinpv'])->name('inventorySetup.purchase.dataProcessinpv');
         Route::get('/inventory-purchase-searchpr', 'PurchaseController@searchpo')->name('inventorySetup.purchase.searchpo');
-        
-        Route::post('/inventory-purchase-pvstore', [PurchaseController::class, 'pvstore'])->name('inventorySetup.purchase.pvstore');
         Route::get('/inventory-purchase-pvcreate', [PurchaseController::class, 'pvcreate'])->name('inventorySetup.purchase.pvcreate');
+        Route::post('/inventory-purchase-pvstore', [PurchaseController::class, 'pvstore'])->name('inventorySetup.purchase.pvstore');
 
         Route::get('/inventory-purchase-pvedit/{id}', [PurchaseController::class,'pvedit'])->name('inventorySetup.purchase.pvedit');
         Route::post('/inventory-purchase-pvupdate/{id}', 'PurchaseController@pvupdate')->name('inventorySetup.purchase.pvupdate');

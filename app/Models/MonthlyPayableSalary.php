@@ -68,17 +68,13 @@ class MonthlyPayableSalary extends Model
     }
 
     public function empPayDetails()
-{
-    return $this->hasOne(EmpPayDetails::class, 'pay_sheet_id');
-}
+    {
+        return $this->hasOne(EmpPayDetails::class, 'pay_sheet_id');
+    }
 
-public function accountTransactions()
-{
-    return $this->hasMany(AccountTransaction::class, 'table_id')
-                ->where('table_name', 'monthly_payable_salaries');
-}
-
-    
-
-
+    public function accountTransactions()
+    {
+        return $this->hasMany(AccountTransaction::class, 'table_id')
+            ->where('table_name', 'monthly_payable_salaries');
+    }
 }

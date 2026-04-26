@@ -160,6 +160,8 @@
                                     </td>
                                 </tr>
 
+                               
+
                                 @foreach ($requisitionDetails as $value)
                                     <tr>
                                         <td class="new_item{{ $value->product_id }}">

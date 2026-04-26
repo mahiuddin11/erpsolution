@@ -183,12 +183,11 @@ class ProjectRepositories
 
     public function store($request)
     {
-        // dd('repository',$request->all());
-
+        
         $eproject = new $this->project();
         $eproject->projectCode = $request->projectCode;
         $eproject->name = $request->name;
-        // $eproject->ledger_id = $request->ledger_id ?? '';
+        $eproject->ledger_id = $request->ledger_id ?? '';
         $eproject->customer_id = $request->customer_id ?? '';
         $eproject->manager_id = $request->manager_id ? $request->manager_id : '';
         $eproject->budget = $request->budget;

@@ -27,7 +27,7 @@ class ApproveCashApplicationService
      */
     public function getList($request)
     {
-        // dd('service');
+    
         return $this->ApproveCashReqApplicationRepositories->getList($request);
     }
 

@@ -7,18 +7,16 @@ use App\Repositories\InventorySetup\PurchaseRequisitionRepositories;
 class PurchaseRequisitionService
 {
 
-    /**
-     * @var AdjustRepositories
-     */
-    private $systemRepositories;
+    
+    private $purchaseRequisitionRepositories;
 
     /**
      * AdminCourseService constructor.
      * @param AdjustRepositories $branchRepositories
      */
-    public function __construct(PurchaseRequisitionRepositories $systemRepositories)
+    public function __construct(PurchaseRequisitionRepositories $purchaseRequisitionRepositories)
     {
-        $this->systemRepositories = $systemRepositories;
+        $this->purchaseRequisitionRepositories = $purchaseRequisitionRepositories;
     }
 
     /**
@@ -27,7 +25,7 @@ class PurchaseRequisitionService
      */
     public function getList($request)
     {
-        return $this->systemRepositories->getList($request);
+        return $this->purchaseRequisitionRepositories->getList($request);
     }
 
     /**
@@ -36,7 +34,7 @@ class PurchaseRequisitionService
      */
     public function getAllList()
     {
-        return $this->systemRepositories->getAllList();
+        return $this->purchaseRequisitionRepositories->getAllList();
     }
 
     /**
@@ -45,7 +43,7 @@ class PurchaseRequisitionService
      */
     public function statusUpdate($request, $id)
     {
-        return $this->systemRepositories->statusUpdate($request, $id);
+        return $this->purchaseRequisitionRepositories->statusUpdate($request, $id);
     }
 
     public function statusValidation($request)
@@ -109,7 +107,7 @@ class PurchaseRequisitionService
      */
     public function store($request)
     {
-        return $this->systemRepositories->store($request);
+        return $this->purchaseRequisitionRepositories->store($request);
     }
 
     /**
@@ -119,7 +117,7 @@ class PurchaseRequisitionService
     public function details($id)
     {
 
-        return $this->systemRepositories->details($id);
+        return $this->purchaseRequisitionRepositories->details($id);
     }
 
     /**
@@ -128,12 +126,12 @@ class PurchaseRequisitionService
      */
     public function update($request, $id)
     {
-        return $this->systemRepositories->update($request, $id);
+        return $this->purchaseRequisitionRepositories->update($request, $id);
     }
 
     public function approvepr($request, $id)
     {
-        return $this->systemRepositories->approvepr($request, $id);
+        return $this->purchaseRequisitionRepositories->approvepr($request, $id);
     }
 
     /**
@@ -142,6 +140,6 @@ class PurchaseRequisitionService
      */
     public function destroy($id)
     {
-        return $this->systemRepositories->destroy($id);
+        return $this->purchaseRequisitionRepositories->destroy($id);
     }
 }

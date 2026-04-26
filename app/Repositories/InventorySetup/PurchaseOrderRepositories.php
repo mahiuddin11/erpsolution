@@ -51,6 +51,9 @@ class PurchaseOrderRepositories
 
     public function getList($request)
     {
+
+    // dd($request->all());
+
         $columns = array(
             0 => 'id',
             1 => 'order_date',
@@ -232,6 +235,7 @@ class PurchaseOrderRepositories
 
     public function store($request)
     {
+        
         DB::beginTransaction();
         try {
             // 1️⃣ Create Purchase Order
@@ -243,14 +247,14 @@ class PurchaseOrderRepositories
             $purchaseorder->project_id = $request->project_id;
             $purchaseorder->note = $request->note;
             $purchaseorder->save();
-
             $purchaseOrderId = $purchaseorder->id;
 
+            
             $category = $request->category_nm;
             $product = $request->product_nm;
             $qty = $request->qty;
             $purchasetype = $request->purchasetype;
-
+            
             // 2️⃣ Loop through each product
             for ($i = 0; $i < count($category); $i++) {
                 $purchaseOrderDetails = new PurchaseOrderDetail();
@@ -261,18 +265,21 @@ class PurchaseOrderRepositories
                 $purchaseOrderDetails->purchasetype = $purchasetype[$i];
                 $purchaseOrderDetails->project_id = $request->project_id;
                 $purchaseOrderDetails->save();
-
+                
                 $detailId = $purchaseOrderDetails->id;
-
+                
                 // 3️⃣ Handle Supplier / Customer / Account quotations
                 $accountKey = 'account_' . $product[$i];
                 $amountKey = 'amount_' . $product[$i];
-
+                
+                
                 if ($request->has($accountKey) && $request->has($amountKey)) {
                     $accounts = $request->$accountKey;
                     $amounts = $request->$amountKey;
                     $supplierPrices = [];
-
+                    
+                    
+                    
                     for ($j = 0; $j < count($accounts); $j++) {
                         $supplierPrices[] = [
                             'purchase_order_id' => $detailId,
@@ -282,8 +289,8 @@ class PurchaseOrderRepositories
                             'purchases_price' => $amounts[$j] ?? 0,
                             'created_at' => now(),
                             'updated_at' => now(),
-                        ];
-                    }
+                            ];
+                            }
 
                     DB::table('supplier_select_prices')->insert($supplierPrices);
                 }
@@ -293,6 +300,7 @@ class PurchaseOrderRepositories
             PurchaseRequisition::where('id', $request->purchase_requisition)->update([
                 'approve_by' => Auth::user()->id,
                 'approve_at' => now(),
+                // 'total_price' => '',
                 'status' => 'Complete',
             ]);
 

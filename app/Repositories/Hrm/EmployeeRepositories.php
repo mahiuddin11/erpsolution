@@ -85,17 +85,7 @@ class EmployeeRepositories
         } else {
             $search = $request->input('search.value');
             $emplyee = $this->model::where('name', 'like', "%{$search}%")
-            ->orwhere('dob','like',"%{$search}%")
-            ->orwhere('gender','like',"%{$search}%")
-            ->orwhere('personal_phone','like',"%{$search}%")
-            ->orwhere('office_phone','like',"%{$search}%")
-            ->orwhere('nid','like',"%{$search}%")
-            ->orwhere('email','like',"%{$search}%")
-            ->orwhere('present_address','like',"%{$search}%")
-            ->orwhere('department','like',"%{$search}%")
-            ->orwhere('salary','like',"%{$search}%")
-            ->orwhere('over_time_is','like',"%{$search}%")
-            ->orwhere('join_date','like',"%{$search}%")
+            ->orwhere('id_card',  $search)
                 ->offset($start)
                 ->limit($limit);
                 if((isset($request->status)) && $request->status != "all"){
@@ -103,8 +93,8 @@ class EmployeeRepositories
                 }else{
                     $emplyee = $emplyee->where("employee_status","present");
                 }
-                $emplyee =  $emplyee->orderBy('id_card', 'asc')
-                ->get();
+                $emplyee =  $emplyee->orderBy('id_card', 'asc')->get();
+
             $totalFiltered = $this->model::where('name', 'like', "%{$search}%")->count();
         }
 

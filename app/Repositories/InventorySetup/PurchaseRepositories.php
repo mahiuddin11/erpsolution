@@ -3,9 +3,11 @@
 namespace App\Repositories\InventorySetup;
 
 use App\Helpers\Helper;
+use App\Http\Controllers\Backend\Chart\ChartController;
 use App\Models\AccountTransaction;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Brand;
+use App\Models\ChartOfAccount;
 use App\Models\PurchaseOrder;
 use App\Models\Purchases;
 use App\Models\PurchasesDetails;
@@ -13,6 +15,7 @@ use App\Models\Stock;
 use App\Models\StockSummary;
 use App\Models\Supplier;
 use App\Models\supplierLedger;
+use App\Models\SupplierSelectPrice;
 use App\Models\Transection;
 use Illuminate\Support\Facades\DB;
 
@@ -408,9 +411,12 @@ class PurchaseRepositories
 
     public function prstore($request)
     {
-        // dd($request->all(), $request->supplier_id);
-       
+        
+   
         DB::beginTransaction();
+
+     
+
         try {
             $request->branch_id = $request->sub_warehouse_id ?? $request->branch_id;
             $purchase = new $this->purchases();
@@ -432,6 +438,7 @@ class PurchaseRepositories
             $purchase->due_amount = $request->cart_due;
             $purchase->created_by = Auth::user()->id;
             $purchase->narration = $request->narration;
+
 
             if ($request->has('chart_of_account_id')) {
                 $purchase->chart_of_account_id = $request->chart_of_account_id;
@@ -460,6 +467,10 @@ class PurchaseRepositories
             $subtotal = $request->unitprice;
             $grand_total = $request->total;
             $qty = $request->qty;
+
+            dd(count($supplier_id));
+           
+
             for ($i = 0; $i < count($supplier_id); $i++) {
                 $purchaseDetail = new PurchasesDetails();
                 $purchaseDetail->product_id = $proName[$i];
@@ -485,6 +496,7 @@ class PurchaseRepositories
 
             $invoice = (new AccountTransaction())->accountInvoice();
 
+            // old function
             foreach ($supplier_id as $key => $id) {
 
                 $supplier = Supplier::find($id);
@@ -496,7 +508,7 @@ class PurchaseRepositories
                     'project_id'    => $request->project_id,
                     'supplier_id'   => $id
                 ])->first();
-                
+
                 $debitAmnt = isset($debit->debit) ? $debit->debit : 0;
                 $totalDebit = $debitAmnt + $request->total[$key];
 
@@ -548,7 +560,9 @@ class PurchaseRepositories
                     ]
                 );
             }
-            // }
+
+
+            
 
 
             if ($request->payment_type == 'cash') {
@@ -567,6 +581,7 @@ class PurchaseRepositories
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
+            dd($e->getMessage());
             redirect('inventory-purchase-create')->with('error', 'Something Wrong Please try again');
         }
         return $purchase;

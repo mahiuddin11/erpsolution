@@ -14,12 +14,10 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/dataProcessingProject', [ProjectController::class, 'dataProcessingProject'])->name('project.project.dataProcessingProject');
         Route::get('/project-project-create', [ProjectController::class, 'create'])->name('project.project.create');
         Route::post('/project-project-store', [ProjectController::class, 'store'])->name('project.project.store');
-
         Route::get('/project-project-edit/{id}', 'ProjectController@edit')->name('project.project.edit');
-
-       
         Route::get('/project-project-show/{id}', [ProjectController::class,'show'])->name('project.project.show');
 
+        
         Route::get('/project-project-loadmanager', 'ProjectController@loadmanager')->name('project.project.loadmanager');
         Route::post('/project-project-complete', 'ProjectController@complete')->name('project.project.complete');
         Route::post('/project-project-update/{id}', 'ProjectController@update')->name('project.project.update');
