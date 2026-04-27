@@ -65,6 +65,7 @@ inventory - {{$title}}
                                 <th>Invoice No</th>
                                 <th>Date</th>
                                 <th>Branch</th>
+                                <th>Project</th>
                                 <th>Supplier</th>
                                 <th>Payment Type</th>
                                 <th>Subtotal</th>
@@ -72,7 +73,6 @@ inventory - {{$title}}
                                 <th>Grand Total</th>
                                 <th>Status</th>
                                 <th>Action</th>
-
                             </tr>
                         </thead>
                         <tbody>
@@ -84,6 +84,7 @@ inventory - {{$title}}
                                 <th>Invoice No</th>
                                 <th>Date</th>
                                 <th>Branch</th>
+                                <Th>Project</Th>
                                 <th>Supplier</th>
                                 <th>Payment Type</th>
                                 <th>Subtotal</th>

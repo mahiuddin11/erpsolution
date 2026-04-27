@@ -259,11 +259,9 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/inventory-purchase-list', [PurchaseController::class,'index'])->name('inventorySetup.purchase.index');
         Route::get('/dataProcessingPurchase', [PurchaseController::class, 'dataProcessingPurchase'])->name('inventorySetup.purchase.dataProcessingPurchase');
         
-        Route::get('/inventory-purchase-create', 'PurchaseController@create')->name('inventorySetup.purchase.create');
-        Route::post('/inventory-purchase-store', 'PurchaseController@store')->name('inventorySetup.purchase.store');
-        Route::get('/inventory-purchase-edit/{id}', 'PurchaseController@edit')->name('inventorySetup.purchase.edit');
-
-        
+        Route::get('/inventory-purchase-create', [PurchaseController::class, 'create'])->name('inventorySetup.purchase.create');
+        Route::post('/inventory-purchase-store', [PurchaseController::class, 'store'])->name('inventorySetup.purchase.store');
+        Route::get('/inventory-purchase-edit/{id}', [PurchaseController::class, 'edit'])->name('inventorySetup.purchase.edit');
         Route::get('/inventory-purchase-show/{id}', [PurchaseController::class,'show'])->name('inventorySetup.purchase.show');
 
 

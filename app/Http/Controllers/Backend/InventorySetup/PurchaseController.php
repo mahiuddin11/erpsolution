@@ -59,7 +59,6 @@ class PurchaseController extends Controller
 
     public function pvindex(Request $request)
     {
-
         $title = 'Purchase List';
         return view('backend.pages.inventories.purchase_pv.index', get_defined_vars());
     }
@@ -73,7 +72,6 @@ class PurchaseController extends Controller
     public function dataProcessinpv(Request $request)
     {
         $json_data = $this->systemService->getpvList($request);
-        // dd($json_data);
         return json_encode($this->systemTransformer->dataTable($json_data));
     }
 
@@ -206,9 +204,6 @@ class PurchaseController extends Controller
 
     public function pvstore(Request $request)
     {
-
-       
-
         try {
             $this->validate($request, $this->systemService->prstoreValidation($request));
         } catch (ValidationException $e) {

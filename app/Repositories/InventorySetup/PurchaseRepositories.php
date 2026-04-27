@@ -187,7 +187,7 @@ class PurchaseRepositories
         $order = $columns[$request->input('order.0.column')];
         $dir = $request->input('order.0.dir');
 
-       
+
         $query = $this->purchases::with(['branch', 'supplier', 'ledger'])
             ->where('purchase_type', 'Direct');
 
@@ -196,7 +196,7 @@ class PurchaseRepositories
             $query->whereDate('date', $request->date);
         }
 
-    
+
         if (!empty($request->input('search.value'))) {
 
             $search = $request->input('search.value');
@@ -223,7 +223,7 @@ class PurchaseRepositories
             });
         }
 
-    
+
         $totalFiltered = $query->count();
 
         $purchases = $query->offset($start)
@@ -267,7 +267,7 @@ class PurchaseRepositories
             endif;
             $nestedData['status'] = $status;
 
-        
+
 
             /* =========================
            ACTION BUTTON (FIXED BUG)
@@ -278,7 +278,7 @@ class PurchaseRepositories
                     ? '<a href="' . route('inventorySetup.purchase.edit', $purchase->id) . '" class="btn btn-xs btn-default"><i class="fa fa-edit"></i></a>'
                     : '';
 
-                $view_data = ($view != 0) 
+                $view_data = ($view != 0)
                     ? '<a href="' . route('inventorySetup.purchase.show', $purchase->id) . '" class="btn btn-xs btn-default"><i class="fa fa-eye"></i></a>'
                     : '';
 
@@ -303,105 +303,229 @@ class PurchaseRepositories
         ];
     }
 
+    // public function getpvList($request)
+    // {
+    //     $columns = array(
+    //         0 => 'id',
+    //         1 => 'invoice_no',
+    //     );
+
+
+    //     $edit = Helper::roleAccess('inventorySetup.purchase.edit') ? 1 : 0;
+    //     $delete = Helper::roleAccess('inventorySetup.purchase.destroy') ? 1 : 0;
+    //     $view = Helper::roleAccess('inventorySetup.purchase.show') ? 1 : 0;
+    //     $ced = $edit + $delete + $view;
+
+    //     $totalData = $this->purchases::count();
+
+
+    //     $limit = $request->input('length');
+    //     $start = $request->input('start');
+    //     $order = $columns[$request->input('order.0.column')];
+    //     $dir = $request->input('order.0.dir');
+    //     $auth = Auth::user();
+
+
+    //     if (empty($request->input('search.value'))) {
+    //         $purchases = $this->purchases::where('purchase_type', 'Manual')
+    //         ->with(['branch', 'supplier'])
+    //         ->offset($start);
+    //         $purchases = $purchases->limit($limit)
+    //             ->orderBy($order, $dir)
+    //             //->orderBy('status', 'desc')
+    //             ->get();
+    //         $totalFiltered = $this->purchases::count();
+
+
+    //     } else {
+    //         $search = $request->input('search.value');
+    //         $purchases = $this->purchases::where('invoice_no', 'like', "%{$search}%");
+
+    //         $purchases = $purchases->where('purchase_type', 'Manual')
+    //         ->with(['branch', 'supplier'])
+    //             ->offset($start)
+    //             ->limit($limit)
+    //             ->orderBy($order, $dir)
+    //             ->get();
+
+
+    //         $totalFiltered = $this->purchases::where('invoice_no', 'like', "%{$search}%")->count();
+    //     }
+
+    //     $data = array();
+    //     if ($purchases) {
+
+    //         foreach ($purchases as $key => $purchase) {
+
+    //             $nestedData['id'] = $key + 1;
+    //             $nestedData['invoice_no'] = $purchase->invoice_no;
+    //             $nestedData['date'] = $purchase->date;
+    //             $nestedData['branch'] = $purchase->branch->name ?? 'N/A';
+    //             $nestedData['supplier'] = $purchase->supplier->name ?? 'N/A';
+    //             // $nestedData['supplier'] = $purchase->supplier->account_name ?? 'N/A';
+    //             $nestedData['payment_type'] = $purchase->payment_type;
+    //             $nestedData['subtotal'] = $purchase->subtotal;
+    //             $nestedData['discount'] = $purchase->discount;
+    //             $nestedData['grand_total'] = $purchase->grand_total;
+
+    //             if ($purchase->status == 'Active') :
+    //                 $nestedData['status'] = 'Accepted';
+    //             else :
+    //                 $nestedData['status'] = 'Pending';
+    //             endif;
+
+    //             if ($ced != 0) :
+    //                 if ($edit != 0)
+    //                     $edit_data = '<a href="' . route('inventorySetup.purchase.pvedit', $purchase->id) . '" class="btn btn-xs btn-default"><i class="fa fa-edit" aria-hidden="true"></i></a>';
+    //                 else
+    //                     $edit_data = '';
+    //                 if ($view = !0)
+    //                     $view_data = '<a href="' . route('inventorySetup.purchase.pvinvoice', $purchase->id) . '" class="btn btn-xs btn-default"><i class="fa fa-eye" aria-hidden="true"></i></a>';
+    //                 else
+    //                     $view_data = '';
+    //                 if ($delete != 0)
+    //                     $delete_data = '<a delete_route="' . route('inventorySetup.purchase.pvdestroy', $purchase->id) . '" delete_id="' . $purchase->id . '" title="Delete" class="btn btn-xs btn-default delete_row uniqueid' . $purchase->id . '"><i class="fa fa-times"></i></a>';
+    //                 else
+    //                     $delete_data = '';
+    //                 $nestedData['action'] = $edit_data . ' ' . $view_data . ' ' . $delete_data;
+    //             else :
+    //                 $nestedData['action'] = '';
+    //             endif;
+    //             $data[] = $nestedData;
+    //         }
+    //     }
+    //     $json_data = array(
+    //         "draw" => intval($request->input('draw')),
+    //         "recordsTotal" => intval($totalData),
+    //         "recordsFiltered" => intval($totalFiltered),
+    //         "data" => $data
+    //     );
+
+    //     return $json_data;
+    // }
+
+
     public function getpvList($request)
     {
-        $columns = array(
+        $columns = [
             0 => 'id',
             1 => 'invoice_no',
-        );
-
+        ];
 
         $edit = Helper::roleAccess('inventorySetup.purchase.edit') ? 1 : 0;
         $delete = Helper::roleAccess('inventorySetup.purchase.destroy') ? 1 : 0;
         $view = Helper::roleAccess('inventorySetup.purchase.show') ? 1 : 0;
         $ced = $edit + $delete + $view;
 
-        $totalData = $this->purchases::count();
+        $totalData = $this->purchases::where('purchase_type', 'Manual')->count();
 
-        
         $limit = $request->input('length');
         $start = $request->input('start');
         $order = $columns[$request->input('order.0.column')];
         $dir = $request->input('order.0.dir');
-        $auth = Auth::user();
-        if (empty($request->input('search.value'))) {
-            $purchases = $this->purchases::where('purchase_type', 'Manual')
-            ->with(['branch', 'supplier'])
-            ->offset($start);
-            $purchases = $purchases->limit($limit)
-                ->orderBy($order, $dir)
-                //->orderBy('status', 'desc')
-                ->get();
-            $totalFiltered = $this->purchases::count();
 
-            
-        } else {
+
+        $query = $this->purchases::where('purchase_type', 'Manual')
+            ->with([
+                'branch',
+                'project',
+                'details.supplier',
+                'details.ledger'
+            ]);
+
+
+        if (!empty($request->input('search.value'))) {
             $search = $request->input('search.value');
-            $purchases = $this->purchases::where('invoice_no', 'like', "%{$search}%");
 
-            $purchases = $purchases->where('purchase_type', 'Manual')
-            ->with(['branch', 'supplier'])
-                ->offset($start)
-                ->limit($limit)
-                ->orderBy($order, $dir)
-                // ->orderBy('status', 'desc')
-                ->get();
+            $query->where(function ($q) use ($search) {
+                $q->where('invoice_no', 'like', "%{$search}%")
+                    ->orWhere('date', 'like', "%{$search}%")
 
-                
-            $totalFiltered = $this->purchases::where('invoice_no', 'like', "%{$search}%")->count();
+                    ->orWhereHas('project', function ($sq) use ($search) {
+                        $sq->where('name', 'like', "%{$search}%");
+                    });
+            });
         }
 
-        $data = array();
-        if ($purchases) {
-           
-            foreach ($purchases as $key => $purchase) {
-                
-                $nestedData['id'] = $key + 1;
-                $nestedData['invoice_no'] = $purchase->invoice_no;
-                $nestedData['date'] = $purchase->date;
-                $nestedData['branch'] = $purchase->branch->name ?? 'N/A';
-                $nestedData['supplier'] = $purchase->supplier->name ?? 'N/A';
-                // $nestedData['supplier'] = $purchase->supplier->account_name ?? 'N/A';
-                $nestedData['payment_type'] = $purchase->payment_type;
-                $nestedData['subtotal'] = $purchase->subtotal;
-                $nestedData['discount'] = $purchase->discount;
-                $nestedData['grand_total'] = $purchase->grand_total;
+        $totalFiltered = $query->count();
 
-                if ($purchase->status == 'Active') :
-                    $nestedData['status'] = 'Accepted';
-                else :
-                    $nestedData['status'] = 'Pending';
-                endif;
+        $purchases = $query->offset($start)
+            ->limit($limit)
+            ->orderBy($order, $dir)
+            ->get();
 
-                if ($ced != 0) :
-                    if ($edit != 0)
-                        $edit_data = '<a href="' . route('inventorySetup.purchase.pvedit', $purchase->id) . '" class="btn btn-xs btn-default"><i class="fa fa-edit" aria-hidden="true"></i></a>';
-                    else
-                        $edit_data = '';
-                    if ($view = !0)
-                        $view_data = '<a href="' . route('inventorySetup.purchase.pvinvoice', $purchase->id) . '" class="btn btn-xs btn-default"><i class="fa fa-eye" aria-hidden="true"></i></a>';
-                    else
-                        $view_data = '';
-                    if ($delete != 0)
-                        $delete_data = '<a delete_route="' . route('inventorySetup.purchase.pvdestroy', $purchase->id) . '" delete_id="' . $purchase->id . '" title="Delete" class="btn btn-xs btn-default delete_row uniqueid' . $purchase->id . '"><i class="fa fa-times"></i></a>';
-                    else
-                        $delete_data = '';
-                    $nestedData['action'] = $edit_data . ' ' . $view_data . ' ' . $delete_data;
-                else :
-                    $nestedData['action'] = '';
-                endif;
-                $data[] = $nestedData;
+
+        $data = [];
+        foreach ($purchases as $key => $purchase) {
+
+            $nestedData['id'] = $key + 1;
+            $nestedData['invoice_no'] = $purchase->invoice_no;
+            $nestedData['date'] = $purchase->date;
+            $nestedData['branch'] = $purchase->branch->name ?? 'N/A';
+            $nestedData['project'] = $purchase->project->name ?? 'N/A';
+
+
+            $supplyerNames = [];
+            foreach ($purchase->details as $detail) {
+                if (!empty($detail->supplier)) {
+                    $supplyerNames[] = $detail->supplier->name;
+                } elseif (!empty($detail->ledger)) {
+                    $supplyerNames[] = $detail->ledger->account_name;
+                }
             }
+
+            $supplyerNames = array_unique($supplyerNames);
+            $supplierHtml = '';
+
+
+            if (count($supplyerNames) > 1) {
+                foreach ($supplyerNames as $name) {
+                    $supplierHtml .= '<span class="badge badge-success mr-1">' . $name . '</span>';
+                }
+            } else {
+                $supplierHtml = implode(', ', $supplyerNames);
+            }
+
+            $nestedData['supplier'] = $supplierHtml ?: 'N/A';
+            $nestedData['payment_type'] = $purchase->payment_type;
+            $nestedData['subtotal'] = $purchase->subtotal;
+            $nestedData['discount'] = $purchase->discount;
+            $nestedData['grand_total'] = $purchase->grand_total;
+            $nestedData['status'] = $purchase->status == 'Active' ? 'Accepted' : 'Pending';
+
+
+            if ($ced != 0) {
+
+                $edit_data = $edit
+                    ? '<a href="' . route('inventorySetup.purchase.pvedit', $purchase->id) . '" class="btn btn-xs btn-default"><i class="fa fa-edit"></i></a>'
+                    : '';
+
+                $view_data = $view
+                    ? '<a href="' . route('inventorySetup.purchase.pvinvoice', $purchase->id) . '" class="btn btn-xs btn-default"><i class="fa fa-eye"></i></a>'
+                    : '';
+
+                $delete_data = $delete
+                    ? '<a delete_route="' . route('inventorySetup.purchase.pvdestroy', $purchase->id) . '" delete_id="' . $purchase->id . '" class="btn btn-xs btn-default delete_row"><i class="fa fa-times"></i></a>'
+                    : '';
+
+                $nestedData['action'] = $edit_data . ' ' . $view_data . ' ' . $delete_data;
+            } else {
+                $nestedData['action'] = '';
+            }
+
+            $data[] = $nestedData;
         }
-        $json_data = array(
+
+        return [
             "draw" => intval($request->input('draw')),
             "recordsTotal" => intval($totalData),
             "recordsFiltered" => intval($totalFiltered),
             "data" => $data
-        );
-
-        return $json_data;
+        ];
     }
+
+
+
 
     /**
      * @param $request
@@ -410,14 +534,12 @@ class PurchaseRepositories
     public function details($id)
     {
         $result = $this->purchases::find($id);
-        
+
         return $result;
     }
 
     public function store($request)
     {
-        
-   
         DB::beginTransaction();
         try {
 
@@ -432,7 +554,7 @@ class PurchaseRepositories
             $purchase->supplier_id = $request->supplier_id ?? 0;
             $purchase->quantity = array_sum($request->qty);
             $purchase->purchase_type = 'Direct';
-            $purchase->subtotal = array_sum($request->unitprice);   
+            $purchase->subtotal = array_sum($request->unitprice);
             $purchase->grand_total = array_sum($request->total);
             $purchase->status = 'Active';
             $purchase->payment_type = $request->payment_type;
@@ -442,8 +564,7 @@ class PurchaseRepositories
             $purchase->created_by = Auth::user()->id;
             $purchase->narration = $request->narration;
 
-            
-            
+
             if ($request->has('chart_of_account_id')) {
                 $purchase->chart_of_account_id = $request->chart_of_account_id;
             }
@@ -516,6 +637,7 @@ class PurchaseRepositories
             }
 
             // $invoice = AccountTransaction::accountInvoice();
+
             $invoice = (new AccountTransaction())->accountInvoice();
             $transactionPay['payment_invoice'] = $request->invoice_no;
             $transactionPay['invoice'] = $request->invoice_no;
@@ -857,17 +979,8 @@ class PurchaseRepositories
         DB::beginTransaction();
 
         try {
-
-            /* =========================
-         BRANCH SETUP
-        ========================= */
+ 
             $request->branch_id = $request->sub_warehouse_id ?? $request->branch_id;
-
-            /* =========================
-         2. PURCHASE MASTER CREATE
-         (Main purchase table data save)
-               ========================= */
-
 
             $purchase = new $this->purchases();
             $purchase->invoice_no = $request->invoice_no;
@@ -896,9 +1009,7 @@ class PurchaseRepositories
 
             $purchases_id = $purchase->id;
 
-            /* =========================
-          3. DETAILS TABLE DATA PREP
-        ========================= */
+           
             $category_id = $request->category_nm;
             $supplier_nm = $request->supplier_nm ?? [];
             $ledger_nm = $request->ledger_nm ?? [];
@@ -907,10 +1018,7 @@ class PurchaseRepositories
             $grand_total = $request->total;
             $qty = $request->qty;
 
-            /* =========================
-          4. PURCHASE DETAILS INSERT
-         (Each product row save here)
-        ========================= */
+         
             for ($i = 0; $i < count($proName); $i++) {
 
                 $supplierId = $supplier_nm[$i] ?? 0;
@@ -936,17 +1044,14 @@ class PurchaseRepositories
 
                 $purchaseDetail->created_by = Auth::user()->id;
 
-                /* =========================
-              PARTY LOGIC (Supplier / Ledger)
-             যদি supplier 0 হয় → ledger use হবে
-            ========================= */
+              
                 $purchaseDetail->supplier_id = ($supplierId != 0) ? $supplierId : 0;
                 $purchaseDetail->ledger_id = ($ledgerId != 0) ? $ledgerId : 0;
 
                 $purchaseDetail->save();
             }
 
-          
+
             PurchaseOrder::where('id', $request->purchase_order_id)->update([
                 'approved_by' => Auth::user()->id,
                 'approved_at' => date('Y-m-d'),
@@ -954,19 +1059,9 @@ class PurchaseRepositories
             ]);
 
 
-            /* =========================
-   5. ACCOUNTING ENTRY
-   (Double Entry System)
-========================= */
 
             $invoice = (new AccountTransaction())->accountInvoice();
-
             $totalAmount = array_sum($request->total);
-
-            /* =========================
-   5.1 DEBIT ENTRY
-   (Purchase / Expense Account)
-========================= */
 
             AccountTransaction::create([
                 'payment_invoice' => $request->invoice_no,
@@ -983,21 +1078,12 @@ class PurchaseRepositories
                 'created_at' => $request->date,
             ]);
 
-            /* =========================
-   5.2 CREDIT ENTRY
-   (Supplier OR Ledger Payable)
-========================= */
+
 
             $supplierId = $request->supplier_id ?? 0;
             $ledgerId   = $request->ledger_id ?? 0;
 
-            /*
-|--------------------------------------------------------------------------
-| ACCOUNT SELECTION LOGIC
-|--------------------------------------------------------------------------
-| যদি supplier থাকে → supplier account
-| না থাকলে → ledger account
-*/
+
 
             $creditAccountId = 0;
 
@@ -1023,7 +1109,7 @@ class PurchaseRepositories
                 'created_at' => $request->date,
             ]);
 
-           
+
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
@@ -1032,7 +1118,7 @@ class PurchaseRepositories
 
         return $purchase;
     }
-    
+
 
     public function pvupdate($request, $id)
     {
@@ -1259,7 +1345,7 @@ class PurchaseRepositories
             $grand_total = $request->total;
             $qty = $request->qty;
 
-              for ($w = 0; $w < count($oldproName); $w++) {
+            for ($w = 0; $w < count($oldproName); $w++) {
                 // echo $oldproName[$i];
                 $mywhereCondition = array(
                     'branch_id' => $request->old_branch_id,
@@ -1356,7 +1442,7 @@ class PurchaseRepositories
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
-            dd($e->getMessage(),$e->getLine());
+            dd($e->getMessage(), $e->getLine());
             redirect('inventory-purchase-create')->with('error', 'Something Wrong Please try again' . $e->getMessage());
         }
         return $purchase;

@@ -36,4 +36,9 @@ class PurchasesDetails extends Model
     {
         return $this->belongsTo(Supplier::class, 'supplier_id', 'id');
     }
+    
+    public function ledger()
+    {
+        return $this->belongsTo(ChartOfAccount::class, 'ledger_id');
+    }
 }

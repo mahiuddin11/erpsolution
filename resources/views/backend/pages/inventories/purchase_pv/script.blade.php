@@ -28,6 +28,11 @@
             "orderable": false
         },
         {
+            "data": "project",
+            "orderable": true,
+            "orderable": false
+        },
+        {
             "data": "supplier",
             "orderable": true,
             "orderable": false
