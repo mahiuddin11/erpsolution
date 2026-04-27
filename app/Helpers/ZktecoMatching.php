@@ -88,9 +88,10 @@ function createZKTecoEmployee(array $employeeData)
         return $response->body(); // Return error message
     }
 }
+
 function editZKTecoEmployee( $id,array $employeeData)
 {
-    // dd($employeeData);
+    
     $token = zktecoGetToken(); // Fetch JWT Token
     if (!$token) {
         return "Error: Token not retrieved!";

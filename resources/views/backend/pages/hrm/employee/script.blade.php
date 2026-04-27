@@ -1,5 +1,6 @@
 <script type="text/javascript">
-    let currentStatus = 'all'; // default status
+
+    let currentStatus = 'present'; // default status
 
     let table = $('#systemDatatable').DataTable({
         processing: true,

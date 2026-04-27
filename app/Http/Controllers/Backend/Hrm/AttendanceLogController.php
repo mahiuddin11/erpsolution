@@ -22,7 +22,7 @@ class AttendanceLogController extends Controller
     public function index(Request $request)
     {
         $title = 'Attendance Log';
-        $employees = Employee::all();
+        $employees = Employee::where('employee_status', 'present');
         if ($request->method() == "POST") {
             $attendances = Attendance::selectRaw('DATE(date) date,emplyee_id,sign_in,sign_out')->with('employe');
 
@@ -89,6 +89,8 @@ class AttendanceLogController extends Controller
     public function attandanceLog(Request $request)
     {
 
+   
+
         $month = $request->month ?? now()->month;
         $year  = $request->year ?? now()->year;
 
@@ -128,8 +130,8 @@ class AttendanceLogController extends Controller
         }
 
         /* ── Employees ── */
-        $employees = Employee::select('id', 'name', 'email', 'department', 'last_in_time')
-            ->where('employee_status', 'present')
+        $employees = Employee::select('id', 'id_card', 'name', 'email', 'department', 'last_in_time')
+            ->where('employee_status', 'present')->orderBy('id_card', 'asc')
             ->get();
 
         /* ── Attendance rows ── */
@@ -174,9 +176,7 @@ class AttendanceLogController extends Controller
             foreach ($period as $date) {
 
                 $dateStr = $date->toDateString();
-
                 $key = $emp->id . '_' . $dateStr;
-
                 $isFriday = $date->isFriday();
                 $isHoliday = isset($holidaySet[$dateStr]);
                 $isLeave = isset($approvedLeaves[$key]);
@@ -231,9 +231,11 @@ class AttendanceLogController extends Controller
                     }
                 }
 
+               
+
                 $result[] = [
                     'id'       => $row->id,
-                    'empId'    => 'EMP' . $emp->id,
+                    'empId'    => 'EMP :' . $emp->id_card ?? null,
                     'name'     => $emp->name,
                     'email'    => $emp->email,
                     'dept'     => $emp->department,
@@ -250,7 +252,22 @@ class AttendanceLogController extends Controller
             }
         }
 
-        usort($result, fn($a, $b) => strcmp($b['date'], $a['date']));
+        // usort($result, fn($a, $b) => strcmp($b['date'], $a['date']));
+
+        usort($result, function ($a, $b) {
+
+            $dateA = strtotime($a['date']);
+            $dateB = strtotime($b['date']);
+
+            //date desc
+            if ($dateA !== $dateB) {
+                return $dateB <=> $dateA;
+            }
+
+            //  same date হলে id_card asc
+            return (int) filter_var($a['empId'], FILTER_SANITIZE_NUMBER_INT)
+                <=> (int) filter_var($b['empId'], FILTER_SANITIZE_NUMBER_INT);
+        });
 
         $totalEmploye = $employees->count();
         $presentEmploye =  $attendances->count();
@@ -269,9 +286,10 @@ class AttendanceLogController extends Controller
      ══════════════════════════════════════════════════════════ */
     private function buildRow(Employee $emp, string $dateStr, $row, string $status, string $color, string $initials, Carbon $officeStart): array
     {
+        
         return [
             'id'       => $row ? $row->id : null,
-            'empId'    => 'EMP' . $emp->id,
+            'empId'    => 'EMP :' . $emp->id_card ?? null,
             'name'     => $emp->name,
             'email'    => $emp->email,
             'dept'     => $emp->department,

@@ -178,9 +178,7 @@
                 e.preventDefault();
 
                 let row = $('#systemDatatable').DataTable().row(this).data();
-
                 if (!row) return;
-
                 currentRowData = row;
 
                 // Context Menu Position
@@ -196,7 +194,7 @@
             $('.context-item').on('click', function() {
                 let action = $(this).data('action');
 
-                // নিরাপদভাবে ID নেওয়া
+                
                 let employeeId = currentRowData.id || currentRowData[0];
 
                 if (!employeeId) {

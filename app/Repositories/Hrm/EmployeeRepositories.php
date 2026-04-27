@@ -170,6 +170,7 @@ class EmployeeRepositories
         if ($status != 'all') {
             $query->where('employee_status', $status);
         }
+        
         $totalData = $query->count();
         $limit = $request->input('length');
         $start = $request->input('start');
