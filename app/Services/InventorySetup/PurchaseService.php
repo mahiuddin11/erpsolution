@@ -31,6 +31,7 @@ class PurchaseService
     {
         return $this->systemRepositories->getList($request);
     }
+    
     public function getpvList($request)
     {
         return $this->systemRepositories->getpvList($request);

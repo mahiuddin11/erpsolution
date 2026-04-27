@@ -58,6 +58,114 @@ class PurchaseRepositories
      * @param $request
      * @return mixed
      */
+
+    // public function getList($request)
+    // {
+
+    //     $columns = array(
+    //         0 => 'id',
+    //         1 => 'invoice_no',
+    //     );
+
+    //     $edit = Helper::roleAccess('inventorySetup.purchase.edit') ? 1 : 0;
+    //     $delete = Helper::roleAccess('inventorySetup.purchase.destroy') ? 1 : 0;
+    //     $view = Helper::roleAccess('inventorySetup.purchase.show') ? 1 : 0;
+    //     $ced = $edit + $delete + $view;
+
+    //     $totalData = $this->purchases::count();
+
+    //     $limit = $request->input('length');
+    //     $start = $request->input('start');
+    //     $order = $columns[$request->input('order.0.column')];
+    //     $dir = $request->input('order.0.dir');
+
+    //     $auth = Auth::user();
+
+    //     if (empty($request->input('search.value'))) {
+    //         $purchases = $this->purchases::where('purchase_type', 'Direct')->offset($start);
+
+    //         $purchases =  $purchases->limit($limit)
+    //             ->orderBy($order, $dir);
+    //         if ($request->date) {
+    //             $purchases = $purchases->whereDate('date', $request->date);
+    //         }
+    //         $purchases = $purchases->get();
+    //         $totalFiltered = $this->purchases::count();
+    //     } else {
+    //         $search = $request->input('search.value');
+
+    //         $purchases = $this->purchases::where(function ($query) use ($search) {
+    //                 $query->where('invoice_no', 'like', "%{$search}%")
+    //                       ->orWhereHas("supplier", function ($q) use ($search) {
+    //                           $q->where("name", 'like', "%{$search}%");
+    //                       })
+    //                         ->orWhereHas("branch", function ($q) use ($search) {
+    //                             $q->where("name", 'like', "%{$search}%");
+    //                         })
+    //                       ->orWhere('date', 'like' , "%{$search}%")
+    //                       ->orWhere('payment_type', 'like' , "%{$search}%");
+    //             });
+
+    //         $purchases = $purchases->where('purchase_type', 'Direct')
+    //             ->offset($start)
+    //             ->limit($limit)
+    //             ->orderBy($order, $dir)
+    //             ->get();
+
+    //         $totalFiltered = $this->purchases::where('invoice_no', 'like', "%{$search}%")->count();
+    //     }
+
+
+    //     $data = array();
+    //     if ($purchases) {
+    //         foreach ($purchases as $key => $purchase) {
+    //             // dd($purchase->branch);
+    //             $nestedData['id'] = $key + 1;
+    //             $nestedData['invoice_no'] = $purchase->invoice_no;
+    //             $nestedData['date'] = $purchase->date;
+    //             $nestedData['branch'] = $purchase->branch->name ?? 'N/A';
+    //             $nestedData['supplier'] = $purchase->supplier->name ?? 'N/A';
+    //             $nestedData['payment_type'] = $purchase->payment_type;
+    //             $nestedData['quantity'] = $purchase->quantity;
+    //             $nestedData['subtotal'] = $purchase->subtotal;
+    //             $nestedData['discount'] = $purchase->discount;
+    //             $nestedData['grand_total'] = $purchase->grand_total;
+    //             if ($purchase->status == 'Active') :
+    //                 $status = '<input class="status_row" status_route="' . route('inventorySetup.purchase.status', [$purchase->id, 'Inactive']) . '"   id="toggle-demo" type="checkbox" name="my-checkbox" checked data-bootstrap-switch data-off-color="danger" data-on-color="success">';
+    //             else :
+    //                 $status = '<input  class="status_row" status_route="' . route('inventorySetup.purchase.status', [$purchase->id, 'Active']) . '"  id="toggle-demo" type="checkbox" name="my-checkbox"  data-bootstrap-switch data-off-color="danger" data-on-color="success">';
+    //             endif;
+    //             $nestedData['status'] = $status;
+    //             if ($ced != 0) :
+    //                 if ($edit != 0)
+    //                     $edit_data = '<a href="' . route('inventorySetup.purchase.edit', $purchase->id) . '" class="btn btn-xs btn-default"><i class="fa fa-edit" aria-hidden="true"></i></a>';
+    //                 else
+    //                     $edit_data = '';
+    //                 if ($view = !0)
+    //                     $view_data = '<a href="' . route('inventorySetup.purchase.show', $purchase->id) . '" class="btn btn-xs btn-default"><i class="fa fa-eye" aria-hidden="true"></i></a>';
+    //                 else
+    //                     $view_data = '';
+    //                 if ($delete != 0)
+    //                     $delete_data = '<a delete_route="' . route('inventorySetup.purchase.destroy', $purchase->id) . '" delete_id="' . $purchase->id . '" title="Delete" class="btn btn-xs btn-default delete_row uniqueid' . $purchase->id . '"><i class="fa fa-times"></i></a>';
+    //                 else
+    //                     $delete_data = '';
+    //                 $nestedData['action'] = $edit_data . ' ' . $view_data . ' ' . $delete_data;
+    //             else :
+    //                 $nestedData['action'] = '';
+    //             endif;
+    //             $data[] = $nestedData;
+    //         }
+    //     }
+    //     $json_data = array(
+    //         "draw" => intval($request->input('draw')),
+    //         "recordsTotal" => intval($totalData),
+    //         "recordsFiltered" => intval($totalFiltered),
+    //         "data" => $data
+    //     );
+
+    //     return $json_data;
+    // }
+
     public function getList($request)
     {
         $columns = array(
@@ -65,6 +173,7 @@ class PurchaseRepositories
             1 => 'invoice_no',
         );
 
+        //  Permission
         $edit = Helper::roleAccess('inventorySetup.purchase.edit') ? 1 : 0;
         $delete = Helper::roleAccess('inventorySetup.purchase.destroy') ? 1 : 0;
         $view = Helper::roleAccess('inventorySetup.purchase.show') ? 1 : 0;
@@ -72,96 +181,128 @@ class PurchaseRepositories
 
         $totalData = $this->purchases::count();
 
+        // Datatable params
         $limit = $request->input('length');
         $start = $request->input('start');
         $order = $columns[$request->input('order.0.column')];
         $dir = $request->input('order.0.dir');
 
-        $auth = Auth::user();
+       
+        $query = $this->purchases::with(['branch', 'supplier', 'ledger'])
+            ->where('purchase_type', 'Direct');
 
-        if (empty($request->input('search.value'))) {
-            $purchases = $this->purchases::where('purchase_type', 'Direct')->offset($start);
+        // Date Filter
+        if ($request->date) {
+            $query->whereDate('date', $request->date);
+        }
 
-            $purchases =  $purchases->limit($limit)
-                ->orderBy($order, $dir);
-            if ($request->date) {
-                $purchases = $purchases->whereDate('date', $request->date);
-            }
-            $purchases = $purchases->get();
-            $totalFiltered = $this->purchases::count();
-        } else {
+    
+        if (!empty($request->input('search.value'))) {
+
             $search = $request->input('search.value');
-            $purchases = $this->purchases::where(function ($query) use ($search) {
-                    $query->where('invoice_no', 'like', "%{$search}%")
-                          ->orWhereHas("supplier", function ($q) use ($search) {
-                              $q->where("account_name", 'like', "%{$search}%");
-                          })
-                            ->orWhereHas("branch", function ($q) use ($search) {
-                                $q->where("name", 'like', "%{$search}%");
-                            })
-                          ->orWhere('date', 'like' , "%{$search}%")
-                          ->orWhere('payment_type', 'like' , "%{$search}%");
-                });
 
-            $purchases = $purchases->where('purchase_type', 'Direct')
-                ->offset($start)
-                ->limit($limit)
-                ->orderBy($order, $dir)
-                ->get();
+            $query->where(function ($q) use ($search) {
+                $q->where('invoice_no', 'like', "%{$search}%")
+                    ->orWhere('date', 'like', "%{$search}%")
+                    ->orWhere('payment_type', 'like', "%{$search}%")
 
-            $totalFiltered = $this->purchases::where('invoice_no', 'like', "%{$search}%")->count();
+                    // supplier search
+                    ->orWhereHas('supplier', function ($sq) use ($search) {
+                        $sq->where('name', 'like', "%{$search}%");
+                    })
+
+                    // ledger search
+                    ->orWhereHas('ledger', function ($lq) use ($search) {
+                        $lq->where('account_name', 'like', "%{$search}%");
+                    })
+
+                    // branch search
+                    ->orWhereHas('branch', function ($bq) use ($search) {
+                        $bq->where('name', 'like', "%{$search}%");
+                    });
+            });
         }
 
+    
+        $totalFiltered = $query->count();
 
+        $purchases = $query->offset($start)
+            ->limit($limit)
+            ->orderBy($order, $dir)
+            ->get();
         $data = array();
-        if ($purchases) {
-            foreach ($purchases as $key => $purchase) {
-                // dd($purchase->branch);
-                $nestedData['id'] = $key + 1;
-                $nestedData['invoice_no'] = $purchase->invoice_no;
-                $nestedData['date'] = $purchase->date;
-                $nestedData['branch'] = $purchase->branch->name ?? 'N/A';
-                $nestedData['supplier'] = $purchase->supplier->account_name ?? 'N/A';
-                $nestedData['payment_type'] = $purchase->payment_type;
-                $nestedData['quantity'] = $purchase->quantity;
-                $nestedData['subtotal'] = $purchase->subtotal;
-                $nestedData['discount'] = $purchase->discount;
-                $nestedData['grand_total'] = $purchase->grand_total;
-                if ($purchase->status == 'Active') :
-                    $status = '<input class="status_row" status_route="' . route('inventorySetup.purchase.status', [$purchase->id, 'Inactive']) . '"   id="toggle-demo" type="checkbox" name="my-checkbox" checked data-bootstrap-switch data-off-color="danger" data-on-color="success">';
-                else :
-                    $status = '<input  class="status_row" status_route="' . route('inventorySetup.purchase.status', [$purchase->id, 'Active']) . '"  id="toggle-demo" type="checkbox" name="my-checkbox"  data-bootstrap-switch data-off-color="danger" data-on-color="success">';
-                endif;
-                $nestedData['status'] = $status;
-                if ($ced != 0) :
-                    if ($edit != 0)
-                        $edit_data = '<a href="' . route('inventorySetup.purchase.edit', $purchase->id) . '" class="btn btn-xs btn-default"><i class="fa fa-edit" aria-hidden="true"></i></a>';
-                    else
-                        $edit_data = '';
-                    if ($view = !0)
-                        $view_data = '<a href="' . route('inventorySetup.purchase.show', $purchase->id) . '" class="btn btn-xs btn-default"><i class="fa fa-eye" aria-hidden="true"></i></a>';
-                    else
-                        $view_data = '';
-                    if ($delete != 0)
-                        $delete_data = '<a delete_route="' . route('inventorySetup.purchase.destroy', $purchase->id) . '" delete_id="' . $purchase->id . '" title="Delete" class="btn btn-xs btn-default delete_row uniqueid' . $purchase->id . '"><i class="fa fa-times"></i></a>';
-                    else
-                        $delete_data = '';
-                    $nestedData['action'] = $edit_data . ' ' . $view_data . ' ' . $delete_data;
-                else :
-                    $nestedData['action'] = '';
-                endif;
-                $data[] = $nestedData;
+
+        foreach ($purchases as $key => $purchase) {
+
+            $nestedData['id'] = $start + $key + 1;
+            $nestedData['invoice_no'] = $purchase->invoice_no;
+            $nestedData['date'] = $purchase->date;
+            $nestedData['branch'] = $purchase->branch->name ?? 'N/A';
+
+            /* =========================
+            Supplier / Ledger Logic (FIXED)
+        ========================= */
+            $partyName = 'N/A';
+
+            if (!empty($purchase->supplier_id) && $purchase->supplier) {
+                $partyName = $purchase->supplier->name;
+            } elseif (!empty($purchase->ledger_id) && $purchase->ledger) {
+                $partyName = $purchase->ledger->account_name;
             }
+
+            $nestedData['supplier'] = $partyName;
+            $nestedData['payment_type'] = $purchase->payment_type;
+            $nestedData['quantity'] = $purchase->quantity;
+            $nestedData['subtotal'] = $purchase->subtotal;
+            $nestedData['discount'] = $purchase->discount;
+            $nestedData['grand_total'] = $purchase->grand_total;
+
+            /* =========================
+           STATUS TOGGLE
+        ========================= */
+            if ($purchase->status == 'Active') :
+                $status = '<input class="status_row" status_route="' . route('inventorySetup.purchase.status', [$purchase->id, 'Inactive']) . '"   id="toggle-demo" type="checkbox" name="my-checkbox" checked data-bootstrap-switch data-off-color="danger" data-on-color="success">';
+            else :
+                $status = '<input  class="status_row" status_route="' . route('inventorySetup.purchase.status', [$purchase->id, 'Active']) . '"  id="toggle-demo" type="checkbox" name="my-checkbox"  data-bootstrap-switch data-off-color="danger" data-on-color="success">';
+            endif;
+            $nestedData['status'] = $status;
+
+        
+
+            /* =========================
+           ACTION BUTTON (FIXED BUG)
+        ========================= */
+            if ($ced != 0) {
+
+                $edit_data = ($edit != 0)
+                    ? '<a href="' . route('inventorySetup.purchase.edit', $purchase->id) . '" class="btn btn-xs btn-default"><i class="fa fa-edit"></i></a>'
+                    : '';
+
+                $view_data = ($view != 0) 
+                    ? '<a href="' . route('inventorySetup.purchase.show', $purchase->id) . '" class="btn btn-xs btn-default"><i class="fa fa-eye"></i></a>'
+                    : '';
+
+                $delete_data = ($delete != 0)
+                    ? '<a delete_route="' . route('inventorySetup.purchase.destroy', $purchase->id) . '" delete_id="' . $purchase->id . '" class="btn btn-xs btn-default delete_row"><i class="fa fa-times"></i></a>'
+                    : '';
+
+                $nestedData['action'] = $edit_data . ' ' . $view_data . ' ' . $delete_data;
+            } else {
+                $nestedData['action'] = '';
+            }
+
+            $data[] = $nestedData;
         }
-        $json_data = array(
+
+
+        return [
             "draw" => intval($request->input('draw')),
             "recordsTotal" => intval($totalData),
             "recordsFiltered" => intval($totalFiltered),
             "data" => $data
-        );
-
-        return $json_data;
+        ];
     }
+
     public function getpvList($request)
     {
         $columns = array(

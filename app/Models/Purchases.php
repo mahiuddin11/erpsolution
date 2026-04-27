@@ -27,21 +27,16 @@ class Purchases extends Model
         return $this->belongsTo(Branch::class, 'branch_id', 'id');
     }
 
-    // public function supplier()
-    // {
-    //     return $this->belongsTo(Accounts::class, 'ledger_id', 'id');
-    // }
-
+    
     public function supplier()
     {
         return $this->belongsTo(Supplier::class, "supplier_id",'id');
     }
 
-
-    // public function supplier()
-    // {
-    //     return $this->belongsTo(ChartOfAccount::class, 'ledger_id', 'id');
-    // }
+    public function ledger()
+    {
+        return $this->belongsTo(ChartOfAccount::class, 'ledger_id');
+    }
 
 
     public function category()
