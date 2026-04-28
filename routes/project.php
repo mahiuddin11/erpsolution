@@ -14,15 +14,15 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/dataProcessingProject', [ProjectController::class, 'dataProcessingProject'])->name('project.project.dataProcessingProject');
         Route::get('/project-project-create', [ProjectController::class, 'create'])->name('project.project.create');
         Route::post('/project-project-store', [ProjectController::class, 'store'])->name('project.project.store');
-        Route::get('/project-project-edit/{id}', 'ProjectController@edit')->name('project.project.edit');
+        Route::get('/project-project-edit/{id}', [ProjectController::class,'edit'])->name('project.project.edit');
         Route::get('/project-project-show/{id}', [ProjectController::class,'show'])->name('project.project.show');
 
         
-        Route::get('/project-project-loadmanager', 'ProjectController@loadmanager')->name('project.project.loadmanager');
-        Route::post('/project-project-complete', 'ProjectController@complete')->name('project.project.complete');
-        Route::post('/project-project-update/{id}', 'ProjectController@update')->name('project.project.update');
-        Route::get('/project-project-delete/{id}', 'ProjectController@destroy')->name('project.project.destroy');
-        Route::get('/project-project-status/{id}/{status}', 'ProjectController@statusUpdate')->name('project.project.status');
+        Route::get('/project-project-loadmanager', [ProjectController::class, 'loadmanager'])->name('project.project.loadmanager');
+        Route::post('/project-project-complete', [ProjectController::class, 'complete'])->name('project.project.complete');
+        Route::post('/project-project-update/{id}', [ProjectController::class, 'update'])->name('project.project.update');
+        Route::get('/project-project-delete/{id}', [ProjectController::class, 'destroy'])->name('project.project.destroy');
+        Route::get('/project-project-status/{id}/{status}', [ProjectController::class, 'statusUpdate'])->name('project.project.status');
         //project crud operation end
 
         //project Balance crud operation start

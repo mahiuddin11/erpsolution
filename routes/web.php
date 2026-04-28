@@ -9,8 +9,13 @@ use App\Http\Controllers\Backend\Settings\DabitVoucherController;
 use App\Http\Controllers\Backend\Settings\JournalVoucherController;
 use App\Models\Accounts;
 use App\Models\Customer;
+use App\Models\Employee;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
+use Rats\Zkteco\Lib\ZKTeco;
+use App\Jobs\ZktecoSetUser;
+
 
 //use App\Http\Controllers\AttendanceController;
 
@@ -28,6 +33,30 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('frontant.login');
 })->middleware('guest');
+
+
+Route::get('/d-employ', function(){
+
+    $employee = Employee::find(261);
+    $token = zktecoGetToken();
+    $url = env("ZKTECO_IP") . "/personnel/api/employees/";
+
+     $response = Http::withHeaders([
+        'Authorization' => "Token $token",
+        'Content-Type'  => 'application/json',
+    ])->get($url);
+
+    $list = $response->json()['data'] ?? [];
+    $deviceEmp = collect($list)->firstWhere('emp_code', 997);
+
+
+    dd($employee->id_card , $response ,  $list , $deviceEmp);
+
+
+});
+
+
+
 
 
 Route::resource('attends',  AttendanceController::class);

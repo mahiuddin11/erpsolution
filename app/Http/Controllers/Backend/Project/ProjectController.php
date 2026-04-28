@@ -244,6 +244,10 @@ class ProjectController extends Controller
         }
         $branchs = $branchs->get();
         $customer = Customer::all();
+        $ledgers = ChartOfAccount::whereIn('accountable_type', [
+            'App\Models\Customer',
+            'App\Models\Supplier'
+        ])->get();
         
         $managers = User::get()->whereNotIn('id', [1])->where('status', 'Active');
 

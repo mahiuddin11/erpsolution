@@ -473,6 +473,7 @@ class EmployeeRepositories
         $employee->area = json_encode($request->area);
         $employee->save();
 
+        
         if (env("ZKTECO")) {
             $local =  editZKTecoEmployee($employee->device_id, [
                 "emp_code" => $employee->id_card,

@@ -175,7 +175,7 @@ class AttendanceRepositories
 
     public function signout($request)
     {
-        $Date = getEffectiveDate($request->date . ' ' . $request->sign_out);
+        $Date = getEffectiveDate($request->date . '' . $request->sign_out);
         $branch = Branch::first();
         // $user = User::find(Auth()->id());
         // $Attendance['branch_id'] = $user->branch_id;

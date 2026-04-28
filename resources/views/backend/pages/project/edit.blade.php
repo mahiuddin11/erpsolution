@@ -68,14 +68,48 @@
 
                             <div class="col-md-3 mb-3">
                                 <label for="validationCustom01">Company Name * :</label>
-                                <select class="form-control select2" name="customer_id">
+                                {{-- <select class="form-control select2" name="customer_id">
                                     <option selected disabled value="">--Select--</option>
                                     @foreach ($customer as $key => $value)
                                     <option {{ $editInfo->customer_id == $value->id ? 'selected' : '' }} value="{{ $value->id }}">
                                         {{ $value->co_name }}</option>
                                    @endforeach
                               
+                                </select> --}}
+                                @php
+                                    $selected = '';
+
+                                    if ($editInfo->customer_id) {
+                                        $selected = 'customer_' . $editInfo->customer_id;
+                                    } elseif ($editInfo->ledger_id) {
+                                        $selected = 'ledger_' . $editInfo->ledger_id;
+                                    }
+                                @endphp
+
+                                <select class="form-control select2" id="party_select">
+
+                                    <option value="">--Select--</option>
+
+                                    @foreach ($customer as $value)
+                                        <option value="customer_{{ $value->id }}"
+                                            {{ $selected == 'customer_' . $value->id ? 'selected' : '' }}>
+                                            {{ $value->co_name }}
+                                        </option>
+                                    @endforeach
+
+                                    @foreach ($ledgers as $ledger)
+                                        <option value="ledger_{{ $ledger->id }}"
+                                            {{ $selected == 'ledger_' . $ledger->id ? 'selected' : '' }}>
+                                            {{ $ledger->account_name }}
+                                        </option>
+                                    @endforeach
+
                                 </select>
+
+                                <!-- hidden fields -->
+                                <input type="hidden" name="customer_id" id="customer_id_real">
+                                <input type="hidden" name="ledger_id" id="ledger_id_real">
+
                                 <span style="color :red; " id="showamount"></span>
                                 @error('customer_id')
                                     <span class=" error text-red text-bold">{{ $message }}</span>
@@ -86,7 +120,7 @@
                                 <label for="validationCustom01">Manager Name * : * :</label>
                                 <select class="form-control select2" id="manager_id" name="manager_id">
                                     <option selected disabled value="">--Select--</option>
-                                    
+
                                     @foreach ($managers as $key => $value)
                                         <option {{ $editInfo->manager_id == $value->id ? 'selected' : '' }}
                                             value="{{ $value->id }}">
@@ -203,5 +237,34 @@
 
             })
         })
+    </script>
+    <script>
+        $(document).ready(function () {
+
+    function setPartyValue(val) {
+
+        $('#customer_id_real').val('');
+        $('#ledger_id_real').val('');
+
+        if (!val) return;
+
+        if (val.startsWith('customer_')) {
+            $('#customer_id_real').val(val.replace('customer_', ''));
+        }
+
+        if (val.startsWith('ledger_')) {
+            $('#ledger_id_real').val(val.replace('ledger_', ''));
+        }
+    }
+
+    // onchange
+    $(document).on('change', '#party_select', function () {
+        setPartyValue($(this).val());
+    });
+
+    // VERY IMPORTANT: page load selected value set
+    setPartyValue($('#party_select').val());
+
+});
     </script>
 @endsection

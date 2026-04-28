@@ -86,22 +86,38 @@ class ProjectService
      * @param $id
      * @return array
      */
+    // public function updateValidation($request, $id)
+    // {
+
+    //     return [
+
+    //         'name' => 'required',
+    //         'manager_id' => 'required',
+    //         'budget' => 'required',
+    //         'branch_id' => 'nullable',
+    //         // 'customer_id' => 'null',
+    //         'ledger_id' => 'null',
+    //         'start_date' => 'required',
+    //         // 'end_date' => 'required',
+    //         'address' => 'required',
+    //         'status' => 'nullable',
+    //         'estimate_profit'
+    //     ];
+    // }
+
     public function updateValidation($request, $id)
     {
-
         return [
-
-            'name' => 'required',
-            'manager_id' => 'required',
-            'budget' => 'required',
-            'branch_id' => 'nullable',
-            // 'customer_id' => 'required',
-            'ledger_id' => 'required',
-            'start_date' => 'required',
-            // 'end_date' => 'required',
-            'address' => 'required',
-            'status' => 'nullable',
-            'estimate_profit'
+            'name' => 'required|string',
+            'manager_id' => 'required|integer',
+            'budget' => 'required|numeric',
+            'branch_id' => 'nullable|integer',          
+            'ledger_id' => 'nullable|integer',
+            'customer_id' => 'nullable|integer',
+            'start_date' => 'required|date',
+            'end_date' => 'nullable|date',
+            'address' => 'required|string',
+            'estimate_profit' => 'nullable|numeric',
         ];
     }
 

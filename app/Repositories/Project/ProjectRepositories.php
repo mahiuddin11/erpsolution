@@ -222,19 +222,49 @@ class ProjectRepositories
         return $eproject;
     }
 
+    // public function update($request, $id)
+    // {
+
+    // dd($request->all() , $id);
+    //     $eproject = project::find($id);
+    //     $eproject->name = $request->name;
+    //     $eproject->customer_id = $request->customer_id;
+    //     $eproject->manager_id = $request->manager_id ? $request->manager_id : '';
+    //     $eproject->budget = $request->budget;
+    //     $eproject->start_date = $request->start_date;
+    //     $eproject->end_date = $request->end_date;
+    //     $eproject->address = $request->address;
+    //     $eproject->estimate_profit = $request->estimate_profit;
+    //     $eproject->updated_by = Auth::user()->id;
+    //     $eproject->save();
+    //     return $eproject;
+    // }
+
     public function update($request, $id)
     {
-        $eproject = project::find($id);
+        $eproject = Project::find($id);
+
         $eproject->name = $request->name;
-        $eproject->customer_id = $request->customer_id;
-        $eproject->manager_id = $request->manager_id ? $request->manager_id : '';
+
+        // PARTY LOGIC (IMPORTANT FIX)
+        if (!empty($request->customer_id)) {
+            $eproject->customer_id = $request->customer_id;
+            $eproject->ledger_id = null; // clear opposite field
+        } elseif (!empty($request->ledger_id)) {
+            $eproject->ledger_id = $request->ledger_id;
+            $eproject->customer_id = null; // clear opposite field
+        }
+
+        $eproject->manager_id = $request->manager_id ?? null;
         $eproject->budget = $request->budget;
         $eproject->start_date = $request->start_date;
         $eproject->end_date = $request->end_date;
         $eproject->address = $request->address;
         $eproject->estimate_profit = $request->estimate_profit;
-        $eproject->updated_by = Auth::user()->id;
+        $eproject->updated_by = Auth::id();
+
         $eproject->save();
+
         return $eproject;
     }
 
