@@ -91,8 +91,11 @@
                                                     </a>
                                                 @endif
                                             </td>
+
+                                         
+
                                             <td width="70%" style="text-align: center">
-                                                <h3>{{ $account->account_name }}</h3>
+                                                <h3>{{ $account->account_name ?? '' }}</h3>
                                                 <h4><b>From Date: {{ $startDate }}</b>, <b>To date:
                                                         {{ $endDate }} </b></h4>
 
@@ -116,11 +119,15 @@
                                                 <td colspan="6"><strong>Opening Balance</strong></td>
                                                 <td>{{ number_format($openingBalance, 2) }}</td>
                                             </tr>
+                                         
                                             @foreach ($ledgerEntries as $entry)
                                                 <tr>
                                                     <td>{{ $entry['date']->format('Y-m-d') }}</td>
                                                     <td>{{ $entry['invoice'] }}</td>
-                                                    <td>{{ $entry['account_name'] }}</td>
+                                                    {{-- <td>{{ $entry['account_name'] }}</td> --}}
+                                                    
+                                                    <td>{{$account->account_name ?? '' }}</td>
+                                                    
                                                     <td>{{ $entry['description'] }}</td>
                                                     <td>{{ number_format($entry['debit'], 2) }}</td>
                                                     <td>{{ number_format($entry['credit'], 2) }}</td>

@@ -187,7 +187,6 @@ class GrnRepositories
 
             //grn supplyer_id update
             
-
             $category = $request->category_nm;
             $product = $request->product_nm;
             $qty = $request->qty;

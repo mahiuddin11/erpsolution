@@ -974,141 +974,291 @@ class PurchaseRepositories
     //     return $purchase;
     // }
 
+    // public function prstore($request)
+    // {
+    //     DB::beginTransaction();
+
+    //     try {
+
+    //         $request->branch_id = $request->sub_warehouse_id ?? $request->branch_id;
+
+    //         $purchase = new $this->purchases();
+    //         $purchase->invoice_no = $request->invoice_no;
+    //         $purchase->date = $request->date;
+    //         $purchase->purchase_order_id = $request->purchase_order_id;
+    //         $purchase->type = 'Project';
+    //         $purchase->branch_id = 0;
+    //         $purchase->project_id = $request->project_id; // MAIN PROJECT ID
+    //         $purchase->supplier_id = $request->supplier_id ?? 0;
+
+    //         $purchase->quantity = array_sum($request->qty);
+    //         $purchase->purchase_type = 'Manual';
+    //         $purchase->subtotal = array_sum($request->unitprice);
+    //         $purchase->grand_total = array_sum($request->total);
+
+    //         $purchase->status = 'Pending';
+    //         $purchase->payment_type = $request->payment_type;
+    //         $purchase->discount = $request->discount;
+
+    //         $purchase->paid_amount = ($request->paid_amount ?? 0) + ($request->advance_payment ?? 0);
+    //         $purchase->due_amount = $request->cart_due;
+    //         $purchase->created_by = Auth::user()->id;
+    //         $purchase->narration = $request->narration;
+
+    //         $purchase->save();
+
+    //         $purchases_id = $purchase->id;
+
+
+    //         $category_id = $request->category_nm;
+    //         $supplier_nm = $request->supplier_nm ?? [];
+    //         $ledger_nm = $request->ledger_nm ?? [];
+    //         $proName = $request->product_nm;
+    //         $subtotal = $request->unitprice;
+    //         $grand_total = $request->total;
+    //         $qty = $request->qty;
+
+
+    //         for ($i = 0; $i < count($proName); $i++) {
+
+    //             $supplierId = $supplier_nm[$i] ?? 0;
+    //             $ledgerId = $ledger_nm[$i] ?? 0;
+
+    //             $purchaseDetail = new PurchasesDetails();
+    //             $purchaseDetail->product_id = $proName[$i];
+    //             $purchaseDetail->category_id = $category_id[$i];
+    //             $purchaseDetail->project_id = $request->project_id; //FIXED: project_id এখন properly save হবে
+    //             $purchaseDetail->quantity = $qty[$i];
+    //             $purchaseDetail->purchasetype = $request->purchasetype[$i];
+    //             $purchaseDetail->branch_id = $request->branch_id ?? 0;
+    //             $purchaseDetail->unit_price = $subtotal[$i];
+    //             $purchaseDetail->total_price = $grand_total[$i];
+    //             $purchaseDetail->purchases_id = $purchases_id;
+    //             $purchaseDetail->date = $request->date;
+    //             $purchaseDetail->created_by = Auth::user()->id;
+    //             $purchaseDetail->supplier_id = ($supplierId != 0) ? $supplierId : 0;
+    //             $purchaseDetail->ledger_id = ($ledgerId != 0) ? $ledgerId : 0;
+
+    //             $purchaseDetail->save();
+    //         }
+
+
+    //         PurchaseOrder::where('id', $request->purchase_order_id)->update([
+    //             'approved_by' => Auth::user()->id,
+    //             'approved_at' => date('Y-m-d'),
+    //             'status' => 'Complete'
+    //         ]);
+
+
+
+    //         $invoice = (new AccountTransaction())->accountInvoice();
+    //         $totalAmount = array_sum($request->total);
+
+    //         AccountTransaction::create([
+    //             'payment_invoice' => $request->invoice_no,
+    //             'invoice' => $request->invoice_no,
+    //             'table_id' => $purchases_id,
+    //             'account_id' => getAccountByUniqueID(22)->id, // Purchase Account
+    //             'type' => 1,
+    //             'branch_id' => $request->branch_id ?? 0,
+    //             'debit' => $totalAmount,
+    //             'credit' => 0,
+    //             'project_id' => $request->project_id ?? 0,
+    //             'remark' => $request->narration,
+    //             'created_by' => Auth::id(),
+    //             'created_at' => $request->date,
+    //         ]);
+
+
+
+    //         $supplierId = $request->supplier_id ?? 0;
+    //         $ledgerId   = $request->ledger_id ?? 0;
+
+    //         $creditAccountId = 0;
+
+    //         if (!empty($supplierId)) {
+    //             $supplier = Supplier::find($supplierId);
+    //             $creditAccountId = $supplier->account_id ?? 0;
+    //         } elseif (!empty($ledgerId)) {
+    //             $creditAccountId = $ledgerId;
+    //         }
+
+    //         AccountTransaction::create([
+    //             'payment_invoice' => $request->invoice_no,
+    //             'invoice' => $request->invoice_no,
+    //             'table_id' => $purchases_id,
+    //             'account_id' => $creditAccountId,
+    //             'type' => 1,
+    //             'branch_id' => $request->branch_id ?? 0,
+    //             'debit' => 0,
+    //             'credit' => $totalAmount,
+    //             'project_id' => $request->project_id ?? 0,
+    //             'remark' => $request->narration,
+    //             'created_by' => Auth::id(),
+    //             'created_at' => $request->date,
+    //         ]);
+
+
+    //         DB::commit();
+    //     } catch (\Exception $e) {
+    //         DB::rollback();
+    //         dd($e->getMessage());
+    //     }
+
+    //     return $purchase;
+    // }
+
     public function prstore($request)
     {
         DB::beginTransaction();
-
+        
         try {
- 
+            
             $request->branch_id = $request->sub_warehouse_id ?? $request->branch_id;
-
+            
+            // =============================
+            // 1. PURCHASE HEADER
+            // =============================
             $purchase = new $this->purchases();
             $purchase->invoice_no = $request->invoice_no;
             $purchase->date = $request->date;
             $purchase->purchase_order_id = $request->purchase_order_id;
             $purchase->type = 'Project';
             $purchase->branch_id = 0;
-            $purchase->project_id = $request->project_id; // MAIN PROJECT ID
+            $purchase->project_id = $request->project_id;
+            
+            //  optional রাখলাম (single supplier case support)
             $purchase->supplier_id = $request->supplier_id ?? 0;
-
+            
             $purchase->quantity = array_sum($request->qty);
             $purchase->purchase_type = 'Manual';
             $purchase->subtotal = array_sum($request->unitprice);
             $purchase->grand_total = array_sum($request->total);
-
             $purchase->status = 'Pending';
             $purchase->payment_type = $request->payment_type;
             $purchase->discount = $request->discount;
-
             $purchase->paid_amount = ($request->paid_amount ?? 0) + ($request->advance_payment ?? 0);
             $purchase->due_amount = $request->cart_due;
             $purchase->created_by = Auth::user()->id;
             $purchase->narration = $request->narration;
-
+            
+            
             $purchase->save();
-
             $purchases_id = $purchase->id;
+            
 
-           
+            // =============================
+            // 2. DETAILS SAVE
+            // =============================
             $category_id = $request->category_nm;
             $supplier_nm = $request->supplier_nm ?? [];
-            $ledger_nm = $request->ledger_nm ?? [];
-            $proName = $request->product_nm;
-            $subtotal = $request->unitprice;
+            $ledger_nm   = $request->ledger_nm ?? [];
+            $proName     = $request->product_nm;
+            $subtotal    = $request->unitprice;
             $grand_total = $request->total;
-            $qty = $request->qty;
+            $qty         = $request->qty;
 
-         
+            //  grouping array (important)
+            $partyTotals = [];
+
             for ($i = 0; $i < count($proName); $i++) {
 
                 $supplierId = $supplier_nm[$i] ?? 0;
-                $ledgerId = $ledger_nm[$i] ?? 0;
+                $ledgerId   = $ledger_nm[$i] ?? 0;
+                $amount     = $grand_total[$i];
 
+                // -------- Save Details --------
                 $purchaseDetail = new PurchasesDetails();
-
                 $purchaseDetail->product_id = $proName[$i];
                 $purchaseDetail->category_id = $category_id[$i];
-
-                //FIXED: project_id এখন properly save হবে
                 $purchaseDetail->project_id = $request->project_id;
-
                 $purchaseDetail->quantity = $qty[$i];
                 $purchaseDetail->purchasetype = $request->purchasetype[$i];
                 $purchaseDetail->branch_id = $request->branch_id ?? 0;
-
                 $purchaseDetail->unit_price = $subtotal[$i];
-                $purchaseDetail->total_price = $grand_total[$i];
-
+                $purchaseDetail->total_price = $amount;
                 $purchaseDetail->purchases_id = $purchases_id;
                 $purchaseDetail->date = $request->date;
-
                 $purchaseDetail->created_by = Auth::user()->id;
 
-              
-                $purchaseDetail->supplier_id = ($supplierId != 0) ? $supplierId : 0;
-                $purchaseDetail->ledger_id = ($ledgerId != 0) ? $ledgerId : 0;
-
+                $purchaseDetail->supplier_id = $supplierId ?: 0;
+                $purchaseDetail->ledger_id   = $ledgerId ?: 0;
                 $purchaseDetail->save();
+
+                // -------- GROUPING LOGIC --------
+                if ($supplierId) {
+                    $supplier = Supplier::find($supplierId);
+                    $accId = $supplier->account_id ?? 0;
+
+                    if ($accId) {
+                        $partyTotals[$accId] = ($partyTotals[$accId] ?? 0) + $amount;
+                    }
+                } elseif ($ledgerId) {
+
+                    $accId = $ledgerId;
+                    $partyTotals[$accId] = ($partyTotals[$accId] ?? 0) + $amount;
+                }
             }
 
-
+            // =============================
+            // 3. PURCHASE ORDER UPDATE
+            // =============================
             PurchaseOrder::where('id', $request->purchase_order_id)->update([
                 'approved_by' => Auth::user()->id,
                 'approved_at' => date('Y-m-d'),
                 'status' => 'Complete'
             ]);
 
-
-
-            $invoice = (new AccountTransaction())->accountInvoice();
+            // =============================
+            // 4. ACCOUNTING ENTRY
+            // =============================
             $totalAmount = array_sum($request->total);
 
-            AccountTransaction::create([
-                'payment_invoice' => $request->invoice_no,
-                'invoice' => $request->invoice_no,
-                'table_id' => $purchases_id,
-                'account_id' => getAccountByUniqueID(22)->id, // Purchase Account
-                'type' => 1,
-                'branch_id' => $request->branch_id ?? 0,
-                'debit' => $totalAmount,
-                'credit' => 0,
-                'project_id' => $request->project_id ?? 0,
-                'remark' => $request->narration,
-                'created_by' => Auth::id(),
-                'created_at' => $request->date,
-            ]);
+            // Debit (Purchase / Expense)
+            $transaction = new AccountTransaction();
 
+            $transaction->payment_invoice = $request->invoice_no;
+            $transaction->invoice = $request->invoice_no;
+            $transaction->table_id = $purchases_id;
+            $transaction->account_id = getAccountByUniqueID(22)->id;
+            $transaction->type = 1;
+            $transaction->branch_id = $request->branch_id ?? 0;
+            $transaction->debit = $totalAmount;
+            $transaction->credit = 0;
+            $transaction->project_id = $request->project_id ?? 0;
+            $transaction->remark = $request->narration;
+            $transaction->created_by = Auth::id();
+            $transaction->created_at = $request->date;
+            $transaction->save();
 
+            // Multiple Credit Entry  MAIN FIX)
+            foreach ($partyTotals as $accountId => $amount) {
 
-            $supplierId = $request->supplier_id ?? 0;
-            $ledgerId   = $request->ledger_id ?? 0;
+                // skip invalid data
+                if (empty($accountId) || $amount <= 0) {
+                    continue;
+                }
 
+                $transactionParty = new AccountTransaction();
 
+                $transactionParty->payment_invoice = $request->invoice_no;
+                $transactionParty->invoice = $request->invoice_no;
+                $transactionParty->table_id = $purchases_id;
+                $transactionParty->account_id = $accountId;
+                $transactionParty->type = 1;
+                $transactionParty->branch_id = $request->branch_id ?? 0;
+                $transactionParty->debit = 0;
+                $transactionParty->credit = $amount;
+                $transactionParty->project_id = $request->project_id ?? 0;
+                $transactionParty->remark = $request->narration;
+                $transactionParty->created_by = Auth::id();
+                $transactionParty->created_at = $request->date;
 
-            $creditAccountId = 0;
-
-            if (!empty($supplierId)) {
-                $supplier = Supplier::find($supplierId);
-                $creditAccountId = $supplier->account_id ?? 0;
-            } elseif (!empty($ledgerId)) {
-                $creditAccountId = $ledgerId;
+                $transactionParty->save();
             }
 
-            AccountTransaction::create([
-                'payment_invoice' => $request->invoice_no,
-                'invoice' => $request->invoice_no,
-                'table_id' => $purchases_id,
-                'account_id' => $creditAccountId,
-                'type' => 1,
-                'branch_id' => $request->branch_id ?? 0,
-                'debit' => 0,
-                'credit' => $totalAmount,
-                'project_id' => $request->project_id ?? 0,
-                'remark' => $request->narration,
-                'created_by' => Auth::id(),
-                'created_at' => $request->date,
-            ]);
-
+                    // dd('asdfasdf', $transaction , $partyTotals , $transactionParty );
+               
 
             DB::commit();
         } catch (\Exception $e) {

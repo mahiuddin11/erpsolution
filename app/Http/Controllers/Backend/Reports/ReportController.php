@@ -304,7 +304,7 @@ class ReportController extends Controller
 
     public function project(Request $request)
     {
-        
+
         // dd('project', $request->all());
         $title = 'Project Report';
         $project_id = '';
@@ -822,9 +822,11 @@ class ReportController extends Controller
         $accounts = ChartOfAccount::where("parent_id", 0)->get();
         $companyInfo = Company::latest('id')->first();
 
+
         $selectedAccountId = $request->input('account_id');
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
+
 
         $ledgerEntries = [];
         $openingBalance = 0;
@@ -832,6 +834,7 @@ class ReportController extends Controller
         $account = null;
         if ($selectedAccountId) {
             $account = ChartOfAccount::findOrFail($selectedAccountId);
+
 
             // Calculate the opening balance as of the start date
             $debitSumBeforeStartDate = AccountTransaction::where('account_id', $selectedAccountId)
@@ -864,6 +867,7 @@ class ReportController extends Controller
                 ->orderBy('created_at')
                 ->get();
 
+
             foreach ($transactions as $transaction) {
                 $invoice = $transaction->invoice;
                 if ($transaction->type == "purchase") {
@@ -871,15 +875,19 @@ class ReportController extends Controller
                     $invoice = $item->invoice_no ?? "";
                 }
 
+
                 $relatedAccountTransaction = AccountTransaction::where('invoice', $transaction->invoice)
                     ->where('account_id', '!=', $selectedAccountId);
+
                 if ($transaction->debit) {
+
                     $relatedAccountTransaction = $relatedAccountTransaction->whereNotNull('credit');
                 }
                 if ($transaction->credit) {
                     $relatedAccountTransaction = $relatedAccountTransaction->whereNotNull('debit');
                 }
                 $relatedAccountTransaction = $relatedAccountTransaction->first();
+
 
                 $debit = $transaction->debit ?? 0;
                 $credit = $transaction->credit ?? 0;
@@ -916,7 +924,8 @@ class ReportController extends Controller
         return view('backend.pages.reports.ledger', get_defined_vars());
     }
 
-   
+    
+
     public function groupledgerList(Request $request)
     {
         $title = 'Group Ledger';

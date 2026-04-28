@@ -332,7 +332,7 @@ class PurchaseOrderRepositories
 
         try {
 
-            // 1️⃣ Create Purchase Order
+            // Create Purchase Order
             $purchaseorder = new $this->purchaseorder();
             $purchaseorder->order_date = $request->date;
             $purchaseorder->invoice_no = $request->orderCode;
@@ -344,13 +344,13 @@ class PurchaseOrderRepositories
 
             $purchaseOrderId = $purchaseorder->id;
 
-            // 2️⃣ Request arrays
+            //  Request arrays
             $category = $request->category_nm;
             $product = $request->product_nm;
             $qty = $request->qty;
             $purchasetype = $request->purchasetype;
 
-            // 3️⃣ Loop products
+            //  Loop products
             for ($i = 0; $i < count($category); $i++) {
 
                 $productId = $product[$i];
@@ -363,7 +363,7 @@ class PurchaseOrderRepositories
                 $suppliers = $request->input($supplierKey);
                 $amounts = $request->input($amountKey);
 
-                // 4️⃣ Purchase Order Detail
+                //  Purchase Order Detail
                 $purchaseOrderDetails = new PurchaseOrderDetail();
                 $purchaseOrderDetails->purchase_order_id = $purchaseOrderId;
                 $purchaseOrderDetails->supplier_ledger_id = null;
@@ -377,7 +377,7 @@ class PurchaseOrderRepositories
 
                 $supplierPrices = [];
 
-                // 5️⃣ ACCOUNT BASED (NEW)
+                //  ACCOUNT/ledger BASED (NEW)
                 if (!empty($accounts)) {
 
                     foreach ($accounts as $k => $accId) {
@@ -394,7 +394,7 @@ class PurchaseOrderRepositories
                     }
                 }
 
-                // 6️⃣ SUPPLIER BASED (OLD)
+                //  SUPPLIER BASED (OLD)
                 elseif (!empty($suppliers)) {
 
                     foreach ($suppliers as $k => $supId) {

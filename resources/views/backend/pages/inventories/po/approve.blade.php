@@ -202,7 +202,7 @@
                                                         </td>
                                                     @endforeach
 
-                                                    {{-- Loop through accounts (new add) --}}
+                                                    {{-- Loop through leager/accounts (new add) --}}
                                                     @foreach ($accounts as $account)
                                                         {{-- new add --}}
                                                         <td class="text-right"> {{-- new add --}}
