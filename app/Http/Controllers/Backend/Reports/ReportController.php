@@ -68,6 +68,7 @@ class ReportController extends Controller
 
     public function purchase(Request $request)
     {
+       
         $branch_id = '';
         $product_id = '';
         $supplier_id = '';
@@ -86,7 +87,10 @@ class ReportController extends Controller
             $project_id = $request->project_id;
             $type = $request->type;
 
-            $purchaseDetails = Purchases::with("branch", "supplier")->where("type", $type)->whereBetween('date', [$from_date, $to_date]);
+            $purchaseDetails = Purchases::with(["branch", "supplier"])->where("type", $type)->whereBetween('date', [$from_date, $to_date]);
+
+            
+            // $purchaseDetails = Purchases::with(["branch", "supplier"])->where("type", $type)->whereBetween('date', [$from_date, $to_date]);
 
             if ($type == "Branch") {
                 if ($branch_id != 'all') {
@@ -1857,6 +1861,7 @@ class ReportController extends Controller
 
     public function productledger(Request $request)
     {
+        
         $title = 'Product Ledger';
         $branch_id = '';
         $product_id = '';

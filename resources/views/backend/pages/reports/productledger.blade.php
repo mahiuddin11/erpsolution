@@ -134,7 +134,7 @@
                                             </td>
                                             <td width="70%" style="text-align: center">
                                                 <h3>Product Ledger</h3>
-                                                <h4><b>From Date: {{ $from_date }}</b>, <b>To date: {{ $to_date }}
+                                                <h4><b>From Date: {{ $from_date ?? '' }}</b>, <b>To date: {{ $to_date ?? '' }}
                                                     </b></h4>
                                             </td>
                                         </tr>

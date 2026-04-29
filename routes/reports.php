@@ -10,10 +10,10 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
     Route::group(['middleware' => ['web', 'auth'], 'namespace' => 'Reports'], function () {
 
         //report operation start
-        Route::any('/report-purchase-purchase', 'ReportController@purchase')->name('report.purchase.purchase');
-        Route::any('/report.production.production', 'ReportController@production')->name('report.production.production');
-        Route::any('/report-sale-sale', 'ReportController@sale')->name('report.sale.sale');
-        Route::any('/report-transfer-transfer', 'ReportController@transfer')->name('report.transfer.transfer');
+        Route::any('/report-purchase-purchase', [ReportController::class, 'purchase'])->name('report.purchase.purchase');
+        Route::any('/report.production.production', [ReportController::class, 'production'])->name('report.production.production');
+        Route::any('/report-sale-sale', [ReportController::class, 'sale'])->name('report.sale.sale');
+        Route::any('/report-transfer-transfer', [ReportController::class, 'transfer'])->name('report.transfer.transfer');
         
         Route::any('/report-project-project', [ReportController::class, 'project'])->name('report.project.project');
         Route::any('/report-project-projectex', [ReportController::class,'projectexpence'])->name('report.projectexpence.projectex');
@@ -47,7 +47,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::any('/report-purchase-pr', 'ReportController@purchasereq')->name('report.purchase.pr');
         Route::any('/report-purchase-po', 'ReportController@purchaseorder')->name('report.purchase.po');
         Route::any('/report-purchase-grn', 'ReportController@goodrcvnote')->name('report.purchase.grn');
-        Route::any('/report-stock-productledger', 'ReportController@productledger')->name('report.stock.productledger');
+        Route::any('/report-stock-productledger', [ReportController::class, 'productledger'])->name('report.stock.productledger');
 
         Route::any('/report-stock-qty-update', 'ReportController@product_update')->name('report.stock.qty.update');
 

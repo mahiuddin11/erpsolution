@@ -124,10 +124,7 @@
                                                 <tr>
                                                     <td>{{ $entry['date']->format('Y-m-d') }}</td>
                                                     <td>{{ $entry['invoice'] }}</td>
-                                                    {{-- <td>{{ $entry['account_name'] }}</td> --}}
-                                                    
-                                                    <td>{{$account->account_name ?? '' }}</td>
-                                                    
+                                                    <td>{{ $entry['account_name'] }}</td>                                                                                                        
                                                     <td>{{ $entry['description'] }}</td>
                                                     <td>{{ number_format($entry['debit'], 2) }}</td>
                                                     <td>{{ number_format($entry['credit'], 2) }}</td>
