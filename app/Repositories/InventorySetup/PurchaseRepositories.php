@@ -21,9 +21,7 @@ use Illuminate\Support\Facades\DB;
 
 class PurchaseRepositories
 {
-    /**
-     * @var user_id
-     */
+    
     private $user_id;
 
     /**
@@ -31,10 +29,7 @@ class PurchaseRepositories
      */
     private $purchases;
 
-    /**
-     * CourseRepository constructor.
-     * @param brand $purchase
-     */
+   
     public function __construct(purchases $purchases)
     {
         $this->purchases = $purchases;
@@ -844,9 +839,11 @@ class PurchaseRepositories
     }
  */
 
- // update version 0.2
+
     public function prstore($request)
     {
+
+
         DB::beginTransaction();
 
         try {
@@ -911,9 +908,8 @@ class PurchaseRepositories
             $total       = $request->total;
 
             $partyTotals = [];
-            
-            
-            
+
+
             for ($i = 0; $i < count($products); $i++) {
 
                 $supplierId = $supplier_nm[$i] ?? null;
@@ -932,19 +928,18 @@ class PurchaseRepositories
                 $purchaseDetail->date          = $request->date;
                 $purchaseDetail->created_by    = Auth::id();
 
-                
+
                 $purchaseDetail->supplier_id   = !empty($supplierId) ? $supplierId : 0;
                 $purchaseDetail->ledger_id     = !empty($ledgerId)   ? $ledgerId   : 0;
 
-               
+
                 // purchasetype থাকলে সেট করুন (old system)
                 if (isset($request->purchasetype[$i])) {
                     $purchaseDetail->purchasetype = $request->purchasetype[$i];
                 }
-
                 $purchaseDetail->save();
 
-            
+
                 if (!empty($supplierId)) {
 
                     // Supplier থেকে purchase
@@ -967,7 +962,8 @@ class PurchaseRepositories
                     }
                 } elseif (!empty($ledgerId)) {
 
-                  
+                    // Customer / Ledger party থেকে purchase
+                    // ledger_id সরাসরি chart_of_account id হিসেবে ব্যবহার হচ্ছে
                     $key = 'ledger_' . $ledgerId;
 
                     if (isset($partyTotals[$key])) {
@@ -986,6 +982,8 @@ class PurchaseRepositories
             // =========================
             // 3. PURCHASE ORDER UPDATE
             // =========================
+
+
             if ($request->purchase_order_id) {
                 PurchaseOrder::where('id', $request->purchase_order_id)->update([
                     'approved_by' => Auth::id(),
@@ -994,16 +992,20 @@ class PurchaseRepositories
                 ]);
             }
 
-   
-            foreach ($partyTotals as $key => $party) {
-                
-                if (empty($party['amount']) || $party['amount'] <= 0) continue;
-                $ledger = ChartOfAccount::find($party['account_id']);
-                if (!$ledger) continue;
 
+            foreach ($partyTotals as $key => $party) {
+
+                if (empty($party['amount']) || $party['amount'] <= 0) continue;
+
+                $ledger = ChartOfAccount::where('id' , $party['account_id'])->first();
+
+                
+                if (!$ledger) continue;
+                
                 $supId = null;
                 $cusId = null;
-
+                
+                
                 switch ($ledger->accountable_type) {
                     case 'App\Models\Supplier':
                         $supId = $ledger->accountable_id;
@@ -1014,51 +1016,56 @@ class PurchaseRepositories
                         break;
                 }
 
+                // dd($ledger, $party['account_id'] , $cusId , $supId);
+
+
+
                 $invoice = (new AccountTransaction())->accountInvoice();
-                
-          
                 // ---- DEBIT: Purchase A/C (party-tagged) ----
                 $debit = AccountTransaction::where([
                     'payment_invoice' => $request->invoice_no,
-                    'invoice'       => $invoice,
+                    'invoice'       =>   $invoice,
                     'table_id'      => $purchaseId,
                     'account_id'    => getAccountByUniqueID(22)->id, //purchase
                     'project_id'    => $request->project_id,
-                    'supplier_id'   => $supId ?? '',
-                    'customer_id'   => $cusId ?? '' 
+                    // 'supplier_id'   => $supId ?? '',
+                    // 'customer_id'   => $cusId ?? ''
                 ])->first();
 
                 $debitAmnt = isset($debit->debit) ? $debit->debit : 0;
                 $totalDebit = $debitAmnt + $party['amount'];
 
-                AccountTransaction::updateOrCreate([
-                    'payment_invoice' => $request->invoice_no,
-                    'invoice'       => $invoice,
-                    'table_id'      => $purchaseId,
-                    'account_id'    => getAccountByUniqueID(22)->id,
-                    'project_id'    => $request->project_id,
-                    'supplier_id'   => $supId ?? '',
-                    'customer_id'   => $cusId ?? ''
-                ],
-                [
-                    'type' => 1,
-                    'branch_id' => $request->branch_id ?? 0,
-                    'debit' =>  $totalDebit,
-                    'remark' => $request->narration,
-                    'created_at' => $request->date,
-                    'created_by' => Auth::id(),
-                ]);
-                           
+
+                AccountTransaction::updateOrCreate(
+                    [
+                        'payment_invoice' => $request->invoice_no,
+                        'invoice'       =>   $invoice,
+                        'table_id'      => $purchaseId,
+                        'account_id'    => getAccountByUniqueID(22)->id,
+                        'project_id'    => $request->project_id,
+                        // 'supplier_id'   => $supId ?? '',
+                        // 'customer_id'   => $cusId ?? ''
+                    ],
+                    [
+                        'type' => 1,
+                        'branch_id' => $request->branch_id ?? 0,
+                        'debit' =>  $totalDebit,
+                        'remark' => $request->narration,
+                        'created_at' => $request->date,
+                        'created_by' => Auth::id(),
+                    ]
+                );
+
 
                 // ---- CREDIT: Party A/C (supplier / ledger) ----
                 $credit = AccountTransaction::where([
                     'payment_invoice' => $request->invoice_no,
-                    'invoice'       => $invoice,
+                    'invoice'       =>   $invoice,
                     'table_id'      => $purchaseId,
                     'account_id'    => $party['account_id'],
                     'project_id'    => $request->project_id,
-                    'supplier_id'   => $supId ?? '',
-                    'customer_id'   => $cusId ?? ''
+                    // 'supplier_id'   => $supId ?? '',
+                    // 'customer_id'   => $cusId ?? ''
                 ])->first();
 
                 $credit = isset($credit->credit) ? $credit->credit : 0;
@@ -1067,7 +1074,7 @@ class PurchaseRepositories
                 AccountTransaction::updateOrCreate(
                     [
                         'payment_invoice' => $request->invoice_no,
-                        'invoice'       => $invoice,
+                        'invoice'       =>   $invoice,
                         'table_id'      => $purchaseId,
                         'account_id'    => $party['account_id'],
                         'project_id'    => $request->project_id,
@@ -1084,6 +1091,7 @@ class PurchaseRepositories
                     ]
                 );
             }
+
 
 
 
@@ -1105,12 +1113,11 @@ class PurchaseRepositories
             }
 
             DB::commit();
-
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             dd($e->getMessage(), $e->getLine(), $e->getFile());
-         
+
             return redirect()->back()->with('error', 'Something went wrong. Please try again.');
         }
 
