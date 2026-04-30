@@ -14,10 +14,7 @@ class PurchaseService
      */
     private $systemRepositories;
 
-    /**
-     * AdminCourseService constructor.
-     * @param PurchaseRepositories $branchRepositories
-     */
+    
     public function __construct(PurchaseRepositories $systemRepositories)
     {
         $this->systemRepositories = $systemRepositories;

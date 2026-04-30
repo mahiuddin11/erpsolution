@@ -89,7 +89,7 @@ class ReportController extends Controller
 
             $purchaseDetails = Purchases::with(["branch", "supplier"])->where("type", $type)->whereBetween('date', [$from_date, $to_date]);
 
-            
+
             // $purchaseDetails = Purchases::with(["branch", "supplier"])->where("type", $type)->whereBetween('date', [$from_date, $to_date]);
 
             if ($type == "Branch") {
@@ -928,6 +928,7 @@ class ReportController extends Controller
         return view('backend.pages.reports.ledger', get_defined_vars());
     }
 
+ 
     
 
     public function groupledgerList(Request $request)
