@@ -368,12 +368,11 @@ class DabitVoucherController extends Controller
         $companyInfo = Company::latest('id')->first();
         return view('backend.pages.settings.dabit_voucher.debit_voucher_show', get_defined_vars());
     }
-
+    /* 
     public function checkBillByBill(Request $request)
     {
         $accountId = $request->input('account_id');
         $account = ChartOfAccount::find($accountId);
-
 
         $type = "debit";
 
@@ -418,4 +417,119 @@ class DabitVoucherController extends Controller
 
         return response()->json(['bill_by_bill' => false, 'payment_invoices' => []]);
     }
+
+     */
+
+
+    /*   public function checkBillByBill(Request $request)
+    {
+        $accountId = $request->input('account_id');
+        $account   = ChartOfAccount::find($accountId);
+
+        if (!$account || !$account->bill_by_bill) {
+            return response()->json(['bill_by_bill' => false, 'payment_invoices' => []]);
+        }
+
+        $paymentInvoicesDetails = [];
+
+        // ==================== update logic ====================
+        $transactions = AccountTransaction::where('account_id', $accountId)
+            ->whereNotNull('debit')           // Purchase এ debit থাকবে
+            ->where('debit', '>', 0)
+            ->select('invoice', 'created_at', 'debit', 'supplier_id', 'customer_id', 'party_type')
+            ->get();
+
+        foreach ($transactions as $item) {
+
+            // এই ইনভয়েসের বিপরীতে কত টাকা পেমেন্ট (Credit) হয়েছে
+            $paid = AccountTransaction::where('payment_invoice', $item->invoice)
+                ->where('account_id', $accountId)
+                ->sum('credit');
+
+            $due = $item->debit - $paid;
+
+            if ($due > 0.01) {
+                $paymentInvoicesDetails[] = [
+                    "invoice" => $item->invoice,
+                    "date"    => date("Y-m-d", strtotime($item->created_at)),
+                    "amount"  => round($due, 2),
+                ];
+            }
+        }
+
+        // যদি উপরের লজিকে কিছু না পাওয়া যায়, তাহলে Credit দিয়েও চেক করো (Customer এর ক্ষেত্রে)
+        if (count($paymentInvoicesDetails) == 0) {
+            $transactions2 = AccountTransaction::where('account_id', $accountId)
+                ->whereNotNull('credit')
+                ->where('credit', '>', 0)
+                ->select('invoice', 'created_at', 'credit', 'supplier_id', 'customer_id', 'party_type')
+                ->get();
+
+            foreach ($transactions2 as $item) {
+                $paid = AccountTransaction::where('payment_invoice', $item->invoice)
+                    ->where('account_id', $accountId)
+                    ->sum('debit');   // এখানে debit দিয়ে পেমেন্ট হতে পারে
+
+                $due = $item->credit - $paid;
+
+                if ($due > 0.01) {
+                    $paymentInvoicesDetails[] = [
+                        "invoice" => $item->invoice,
+                        "date"    => date("Y-m-d", strtotime($item->created_at)),
+                        "amount"  => round($due, 2),
+                    ];
+                }
+            }
+        }
+
+        return response()->json([
+            'bill_by_bill'     => true,
+            'payment_invoices' => $paymentInvoicesDetails
+        ]);
+    } */
+
+    public function checkBillByBill(Request $request)
+    {
+        $accountId = $request->input('account_id');
+        $account = ChartOfAccount::find($accountId);
+
+        if (!$account || !$account->bill_by_bill) {
+            return response()->json(['bill_by_bill' => false, 'payment_invoices' => []]);
+        }
+
+        $details = [];
+
+        // Party Account-এ Credit Entry থাকে (Purchase এর সময়)
+        $purchases = AccountTransaction::where('account_id', $accountId)
+            ->whereNotNull('credit')
+            ->where('credit', '>', 0)
+            ->select('invoice', 'created_at', 'credit as amount')
+            ->distinct('invoice')
+            ->get();
+
+        foreach ($purchases as $pur) {
+
+            // এই ইনভয়েসের বিপরীতে মোট পেমেন্ট হয়েছে (Debit Voucher-এ Debit হয় Party Account-এ)
+            $totalPaid = AccountTransaction::where('payment_invoice', $pur->invoice)
+                ->where('account_id', $accountId)
+                ->where('debit', '>', 0)          // Payment-এ Debit হয়
+                ->sum('debit');
+
+            $due = $pur->amount - $totalPaid;
+
+            if ($due > 0.01) {
+                $details[] = [
+                    "invoice" => $pur->invoice,
+                    "date"    => date("Y-m-d", strtotime($pur->created_at)),
+                    "amount"  => round($due, 2),
+                ];
+            }
+        }
+
+        return response()->json([
+            'bill_by_bill'     => true,
+            'payment_invoices' => $details
+        ]);
+    }
+   
 }

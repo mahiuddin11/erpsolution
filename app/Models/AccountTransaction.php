@@ -25,6 +25,7 @@ class AccountTransaction extends Model
         'project_id',
         'created_at',
         'payment_invoice',
+        'party_type',
     ];
 
     public function accountInvoice()

@@ -381,7 +381,7 @@
         })
 
 
-        $('#main-table').on('change', '.cost_center_type', function () {
+    $('#main-table').on('change', '.cost_center_type', function () {
     let type = $(this).val();
     let row = $(this).closest('td');
 
