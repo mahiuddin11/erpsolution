@@ -36,17 +36,17 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('group-ledger-data', [ReportController::class, 'groupLedgerData'])->name('group-ledger-data');
 
 
-        Route::any('/report-group-ledger', 'ReportController@groupledger')->name('report.group-ledger');
-        Route::any('/report-ledger-ledger', 'ReportController@ledger')->name('report.ledger.ledger');
-        Route::any('/report-ledger-account-ledger', 'ReportController@accountledger')->name('report.ledger.accountledger');
-        Route::any('/report-trialbalance-trialbalance', 'ReportController@trialbalance')->name('report.trialbalance.trialbalance');
-        Route::any('/report-dashboard-trialbalance', 'ReportController@dashboardtrialbalance')->name('report.dashboard.trialbalance');
-        Route::any('/report-incomestatement-incomestatement', 'ReportController@incomestatement')->name('report.incomestatement.incomestatement');
-        Route::any('/report-balancesheet-balancesheet', 'ReportController@balancesheet')->name('report.balancesheet.balancesheet');
-        Route::any('/report-stock-stock', 'ReportController@stock')->name('report.stock.stock');
-        Route::any('/report-purchase-pr', 'ReportController@purchasereq')->name('report.purchase.pr');
-        Route::any('/report-purchase-po', 'ReportController@purchaseorder')->name('report.purchase.po');
-        Route::any('/report-purchase-grn', 'ReportController@goodrcvnote')->name('report.purchase.grn');
+        Route::any('/report-group-ledger', [ReportController::class, 'groupledger'])->name('report.group-ledger');
+        Route::any('/report-ledger-ledger', [ReportController::class, 'ledger'])->name('report.ledger.ledger');
+        Route::any('/report-ledger-account-ledger', [ReportController::class, 'accountledger'])->name('report.ledger.accountledger');
+        Route::any('/report-trialbalance-trialbalance', [ReportController::class, 'trialbalance'])->name('report.trialbalance.trialbalance');
+        Route::any('/report-dashboard-trialbalance', [ReportController::class, 'dashboardtrialbalance'])->name('report.dashboard.trialbalance');
+        Route::any('/report-incomestatement-incomestatement', [ReportController::class, 'incomestatement'])->name('report.incomestatement.incomestatement');
+        Route::any('/report-balancesheet-balancesheet', [ReportController::class, 'balancesheet'])->name('report.balancesheet.balancesheet');
+        Route::any('/report-stock-stock', [ReportController::class, 'stock'])->name('report.stock.stock');
+        Route::any('/report-purchase-pr', [ReportController::class, 'purchasereq'])->name('report.purchase.pr');
+        Route::any('/report-purchase-po', [ReportController::class, 'purchaseorder'])->name('report.purchase.po');
+        Route::any('/report-purchase-grn', [ReportController::class, 'goodrcvnote'])->name('report.purchase.grn');
         Route::any('/report-stock-productledger', [ReportController::class, 'productledger'])->name('report.stock.productledger');
 
         Route::any('/report-stock-qty-update', 'ReportController@product_update')->name('report.stock.qty.update');

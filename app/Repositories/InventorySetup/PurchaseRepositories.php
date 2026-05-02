@@ -1402,7 +1402,8 @@ class PurchaseRepositories
                     $partyType = 'customer';
                 }
 
-                $invoice = (new AccountTransaction())->accountInvoice();
+                // $invoice = (new AccountTransaction())->accountInvoice();
+                $invoice = $request->invoice_no;
                 // ---- DEBIT: Purchase A/C ----
                 AccountTransaction::updateOrCreate(
                     [

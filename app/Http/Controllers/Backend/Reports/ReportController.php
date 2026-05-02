@@ -819,28 +819,135 @@ class ReportController extends Controller
         return view('backend.pages.reports.daybook', get_defined_vars());
     }
 
+    // public function ledger(Request $request)
+    // {
+    //     $title = 'Ledger Report';
+
+    //     $accounts = ChartOfAccount::where("parent_id", 0)->get();
+    //     $companyInfo = Company::latest('id')->first();
+
+
+    //     $selectedAccountId = $request->input('account_id');
+    //     $startDate = $request->input('start_date');
+    //     $endDate = $request->input('end_date');
+
+
+    //     $ledgerEntries = [];
+    //     $openingBalance = 0;
+    //     $runningBalance = 0;
+    //     $account = null;
+    //     if ($selectedAccountId) {
+    //         $account = ChartOfAccount::findOrFail($selectedAccountId);
+
+
+    //         // Calculate the opening balance as of the start date
+    //         $debitSumBeforeStartDate = AccountTransaction::where('account_id', $selectedAccountId)
+    //             ->whereDate('created_at', '<', $startDate)
+    //             ->sum('debit');
+
+    //         $creditSumBeforeStartDate = AccountTransaction::where('account_id', $selectedAccountId)
+    //             ->whereDate('created_at', '<', $startDate)
+    //             ->sum('credit');
+
+    //         // Adjust opening balance
+    //         if ($account->balance_type === 'debit') {
+    //             $openingBalance = $account->opening_balance + $debitSumBeforeStartDate - $creditSumBeforeStartDate;
+    //         } else {
+    //             $openingBalance = $account->opening_balance + $creditSumBeforeStartDate - $debitSumBeforeStartDate;
+    //         }
+
+    //         $runningBalance = $openingBalance;
+    //         $totalDebit = 0;
+    //         $totalCredit = 0;
+    //         $ledgerEntries = [];
+
+    //         $transactions = AccountTransaction::where('account_id', $selectedAccountId)
+    //             ->when($startDate, function ($query) use ($startDate) {
+    //                 return $query->whereDate('created_at', '>=', $startDate);
+    //             })
+    //             ->when($endDate, function ($query) use ($endDate) {
+    //                 return $query->whereDate('created_at', '<=', $endDate);
+    //             })
+    //             ->orderBy('created_at')
+    //             ->get();
+
+
+    //         foreach ($transactions as $transaction) {
+    //             $invoice = $transaction->invoice;
+    //             if ($transaction->type == "purchase") {
+    //                 $item = DB::table("purchases")->find($transaction->table_id);
+    //                 $invoice = $item->invoice_no ?? "";
+    //             }
+
+
+    //             $relatedAccountTransaction = AccountTransaction::where('invoice', $transaction->invoice)
+    //                 ->where('account_id', '!=', $selectedAccountId);
+
+    //             if ($transaction->debit) {
+
+    //                 $relatedAccountTransaction = $relatedAccountTransaction->whereNotNull('credit');
+    //             }
+    //             if ($transaction->credit) {
+    //                 $relatedAccountTransaction = $relatedAccountTransaction->whereNotNull('debit');
+    //             }
+    //             $relatedAccountTransaction = $relatedAccountTransaction->first();
+
+
+    //             $debit = $transaction->debit ?? 0;
+    //             $credit = $transaction->credit ?? 0;
+
+    //             $totalDebit += $debit;
+    //             $totalCredit += $credit;
+
+    //             if ($account->balance_type == "debit") {
+    //                 $runningBalance += $debit - $credit;
+    //             } else {
+    //                 $runningBalance += $credit -  $debit;
+    //             }
+
+    //             $ledgerEntries[] = [
+    //                 'date' => $transaction->created_at,
+    //                 'invoice' => $invoice,
+    //                 'description' => $transaction->remark,
+    //                 'debit' => $debit,
+    //                 'credit' => $credit,
+    //                 'balance' => $runningBalance,
+    //                 'account_name' => (($relatedAccountTransaction->account->account_name ?? '') . " " . ($relatedAccountTransaction->account->bank_name ?? "") . ' ' . ($relatedAccountTransaction->account->account_code ?? ""))
+    //             ];
+    //         }
+
+    //         // Add subtotals if needed
+    //         $ledgerSummary = [
+    //             'opening_balance' => $openingBalance,
+    //             'total_debit' => $totalDebit,
+    //             'total_credit' => $totalCredit,
+    //             'closing_balance' => $runningBalance,
+    //         ];
+    //     }
+
+    //     return view('backend.pages.reports.ledger', get_defined_vars());
+    // }
+
+
     public function ledger(Request $request)
     {
         $title = 'Ledger Report';
-
         $accounts = ChartOfAccount::where("parent_id", 0)->get();
         $companyInfo = Company::latest('id')->first();
-
 
         $selectedAccountId = $request->input('account_id');
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
-
         $ledgerEntries = [];
         $openingBalance = 0;
         $runningBalance = 0;
         $account = null;
+
         if ($selectedAccountId) {
             $account = ChartOfAccount::findOrFail($selectedAccountId);
 
-
-            // Calculate the opening balance as of the start date
+            // Opening Balance Calculation (আগের কোড ঠিক আছে)
             $debitSumBeforeStartDate = AccountTransaction::where('account_id', $selectedAccountId)
                 ->whereDate('created_at', '<', $startDate)
                 ->sum('debit');
@@ -849,7 +956,6 @@ class ReportController extends Controller
                 ->whereDate('created_at', '<', $startDate)
                 ->sum('credit');
 
-            // Adjust opening balance
             if ($account->balance_type === 'debit') {
                 $openingBalance = $account->opening_balance + $debitSumBeforeStartDate - $creditSumBeforeStartDate;
             } else {
@@ -859,39 +965,26 @@ class ReportController extends Controller
             $runningBalance = $openingBalance;
             $totalDebit = 0;
             $totalCredit = 0;
-            $ledgerEntries = [];
 
-            $transactions = AccountTransaction::where('account_id', $selectedAccountId)
-                ->when($startDate, function ($query) use ($startDate) {
-                    return $query->whereDate('created_at', '>=', $startDate);
-                })
-                ->when($endDate, function ($query) use ($endDate) {
-                    return $query->whereDate('created_at', '<=', $endDate);
-                })
+            $transactions = AccountTransaction::with(['supplier', 'customer', 'account'])
+                ->where('account_id', $selectedAccountId)
+                ->when($startDate, fn($q) => $q->whereDate('created_at', '>=', $startDate))
+                ->when($endDate, fn($q) => $q->whereDate('created_at', '<=', $endDate))
                 ->orderBy('created_at')
                 ->get();
 
-
             foreach ($transactions as $transaction) {
-                $invoice = $transaction->invoice;
-                if ($transaction->type == "purchase") {
-                    $item = DB::table("purchases")->find($transaction->table_id);
-                    $invoice = $item->invoice_no ?? "";
+
+              
+                $oppositeName = 'N/A';
+
+                if ($transaction->supplier_id && $transaction->supplier) {
+                    $oppositeName = $transaction->supplier->name;
+                } elseif ($transaction->customer_id && $transaction->customer) {
+                    $oppositeName = $transaction->customer->name;
+                } elseif ($transaction->remark) {
+                    $oppositeName = $transaction->remark;   // যদি remark এ নাম থাকে
                 }
-
-
-                $relatedAccountTransaction = AccountTransaction::where('invoice', $transaction->invoice)
-                    ->where('account_id', '!=', $selectedAccountId);
-
-                if ($transaction->debit) {
-
-                    $relatedAccountTransaction = $relatedAccountTransaction->whereNotNull('credit');
-                }
-                if ($transaction->credit) {
-                    $relatedAccountTransaction = $relatedAccountTransaction->whereNotNull('debit');
-                }
-                $relatedAccountTransaction = $relatedAccountTransaction->first();
-
 
                 $debit = $transaction->debit ?? 0;
                 $credit = $transaction->credit ?? 0;
@@ -902,32 +995,30 @@ class ReportController extends Controller
                 if ($account->balance_type == "debit") {
                     $runningBalance += $debit - $credit;
                 } else {
-                    $runningBalance += $credit -  $debit;
+                    $runningBalance += $credit - $debit;
                 }
 
                 $ledgerEntries[] = [
-                    'date' => $transaction->created_at,
-                    'invoice' => $invoice,
-                    'description' => $transaction->remark,
-                    'debit' => $debit,
-                    'credit' => $credit,
-                    'balance' => $runningBalance,
-                    'account_name' => (($relatedAccountTransaction->account->account_name ?? '') . " " . ($relatedAccountTransaction->account->bank_name ?? "") . ' ' . ($relatedAccountTransaction->account->account_code ?? ""))
+                    'date'          => $transaction->created_at,
+                    'invoice'       => $transaction->invoice ?? $transaction->payment_invoice,
+                    'description'   => $transaction->remark ?? 'Purchase Voucher',
+                    'debit'         => $debit,
+                    'credit'        => $credit,
+                    'balance'       => $runningBalance,
+                    'account_name'  => $oppositeName,           // 
                 ];
             }
 
-            // Add subtotals if needed
             $ledgerSummary = [
                 'opening_balance' => $openingBalance,
-                'total_debit' => $totalDebit,
-                'total_credit' => $totalCredit,
+                'total_debit'     => $totalDebit,
+                'total_credit'    => $totalCredit,
                 'closing_balance' => $runningBalance,
             ];
         }
 
         return view('backend.pages.reports.ledger', get_defined_vars());
     }
-
  
     
 
