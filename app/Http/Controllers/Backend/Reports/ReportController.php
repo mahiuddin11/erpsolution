@@ -68,7 +68,7 @@ class ReportController extends Controller
 
     public function purchase(Request $request)
     {
-       
+
         $branch_id = '';
         $product_id = '';
         $supplier_id = '';
@@ -975,7 +975,7 @@ class ReportController extends Controller
 
             foreach ($transactions as $transaction) {
 
-              
+
                 $oppositeName = 'N/A';
 
                 if ($transaction->supplier_id && $transaction->supplier) {
@@ -983,7 +983,7 @@ class ReportController extends Controller
                 } elseif ($transaction->customer_id && $transaction->customer) {
                     $oppositeName = $transaction->customer->name;
                 } elseif ($transaction->remark) {
-                    $oppositeName = $transaction->remark;   // যদি remark এ নাম থাকে
+                    $oppositeName = $transaction->remark;
                 }
 
                 $debit = $transaction->debit ?? 0;
@@ -1019,8 +1019,8 @@ class ReportController extends Controller
 
         return view('backend.pages.reports.ledger', get_defined_vars());
     }
- 
-    
+
+
 
     public function groupledgerList(Request $request)
     {
@@ -1953,7 +1953,7 @@ class ReportController extends Controller
 
     public function productledger(Request $request)
     {
-        
+
         $title = 'Product Ledger';
         $branch_id = '';
         $product_id = '';

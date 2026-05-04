@@ -10,19 +10,19 @@
             <div class="row mb-2">
                 <div class="col-sm-6">
                     <h1 class="m-0"> HRM </h1>
-                </div><!-- /.col -->
+                </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('home') }}">Dashboard</a></li>
                         @if (helper::roleAccess('hrm.attendance.index'))
-                            <li class="breadcrumb-item"><a href="{{ route('hrm.attendance.index') }}">Attendence
-                                    List</a></li>
+                            <li class="breadcrumb-item"><a href="{{ route('hrm.attendance.index') }}">Attendence List</a>
+                            </li>
                         @endif
                         <li class="breadcrumb-item active"><span>Add New Attendence</span></li>
                     </ol>
-                </div><!-- /.col -->
-            </div><!-- /.row -->
-        </div><!-- /.container-fluid -->
+                </div>
+            </div>
+        </div>
     </div>
 @endsection
 
@@ -34,6 +34,15 @@
         background: green;
         color: white
     }
+
+    .btn-submit-attendance {
+        transition: opacity 0.3s, cursor 0.3s;
+    }
+
+    .btn-submit-attendance:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
 </style>
 
 @section('admin-content')
@@ -44,9 +53,9 @@
                     <h3 class="card-title">Attendence</h3>
                     <div class="card-tools">
                         @if (helper::roleAccess('hrm.attendance.index'))
-                            <a class="btn btn-default" href="{{ route('hrm.attendance.create') }}"><i
-                                    class="fa fa-plus"></i>
-                                Add New</a>
+                            <a class="btn btn-default" href="{{ route('hrm.attendance.create') }}">
+                                <i class="fa fa-plus"></i> Add New
+                            </a>
                         @endif
                         <span id="buttons"></span>
                         <a class="btn btn-tool btn-default" data-card-widget="collapse">
@@ -57,17 +66,12 @@
                         </a>
                     </div>
                 </div>
-                <!-- /.card-header -->
+
                 <div class="card-body">
+                    <button class="check_in btn-custom" type="button">Check In</button>
+                    <button class="check_out btn-custom" type="button">Check Out</button>
 
-
-                    <button class="check_in btn-custom" type="button">
-                        Check In
-                    </button>
-                    <button class="check_out btn-custom" type="button">
-                        Check Out
-                    </button>
-
+                    {{-- ─── CHECK IN ─── --}}
                     <div class="collapse active show" id="check_in">
                         <div class="card-header">
                             <h4 class="card-title">Check In</h4>
@@ -76,6 +80,7 @@
                             <form class="needs-validation" method="POST" action="{{ route('hrm.attendance.sign_in') }}"
                                 novalidate>
                                 @csrf
+
                                 <div class="form-group row">
                                     <label for="intime" class="col-sm-3 col-form-label">Employee Name*</label>
                                     <div class="col-md-4 mb-1">
@@ -83,10 +88,9 @@
                                             <input type="hidden" readonly name="emplyee_id"
                                                 value="{{ auth()->user()->employee->id ?? 0 }}">
                                         @endif
-
                                         {{ auth()->user()->employee->name ?? 'No Employee Found' }}
                                         @error('emplyee_id')
-                                            <span class=" error text-red text-bold">{{ $message }}</span>
+                                            <span class="error text-red text-bold">{{ $message }}</span>
                                         @enderror
                                     </div>
                                 </div>
@@ -113,22 +117,37 @@
                                         @enderror
                                     </div>
                                 </div>
+
                                 <div class="form-group row">
                                     <label class="col-sm-3 col-form-label">Location</label>
                                     <div class="col-md-4 mb-1">
-                                        <div id="map-checkin" style="height: 200px; width: 100%;"></div>
+                                        <div id="gps-status-checkin" class="gps-status-box mb-2"
+                                            style="padding:10px; border-radius:6px; font-weight:bold; text-align:center; background:#fff3cd; color:#856404;">
+                                            📍 GPS is loading...
+                                        </div>
+                                        <div id="map-checkin" style="height: 200px; width: 100%; display:none;"></div>
                                         <input type="hidden" id="latitude" name="latitude">
                                         <input type="hidden" id="longitude" name="longitude">
                                     </div>
                                 </div>
                                 <div class="form-group row">
-                                    <button class="btn btn-info" type="submit"><i class="fa fa-save"></i>
-                                        &nbsp;Save</button>
+                                    <button class="btn btn-info btn-submit-attendance" id="submit-checkin" type="submit"
+                                        disabled>
+                                        <i class="fa fa-save"></i> &nbsp;Save
+                                    </button>
+                                    &nbsp;
+                                    <button type="button" class="btn btn-warning" id="reload-checkin">
+                                        <i class="fa fa-refresh"></i> &nbsp;Reload Location
+                                    </button>
                                 </div>
+
+
+
                             </form>
                         </div>
                     </div>
 
+                    {{-- ─── CHECK OUT ─── --}}
                     <div class="collapse" id="check_out">
                         <div class="card-header">
                             <h4 class="card-title">Check Out</h4>
@@ -137,6 +156,7 @@
                             <form class="needs-validation" method="POST" action="{{ route('hrm.attendance.sign_out') }}"
                                 novalidate>
                                 @csrf
+
                                 <div class="form-group row">
                                     <label for="intime" class="col-sm-3 col-form-label">Employee Name*</label>
                                     <div class="col-md-4 mb-1">
@@ -144,10 +164,9 @@
                                             <input type="hidden" readonly name="emplyee_id"
                                                 value="{{ auth()->user()->employee->id ?? 0 }}">
                                         @endif
-
                                         {{ auth()->user()->employee->name ?? 'No Employee Found' }}
                                         @error('emplyee_id')
-                                            <span class=" error text-red text-bold">{{ $message }}</span>
+                                            <span class="error text-red text-bold">{{ $message }}</span>
                                         @enderror
                                     </div>
                                 </div>
@@ -178,18 +197,35 @@
                                 <div class="form-group row">
                                     <label class="col-sm-3 col-form-label">Location</label>
                                     <div class="col-md-4 mb-1">
-                                        <div id="map-checkout" style="height: 200px; width: 100%;"></div>
+                                        <div id="gps-status-checkout" class="gps-status-box mb-2"
+                                            style="padding:10px; border-radius:6px; font-weight:bold; text-align:center; background:#fff3cd; color:#856404;">
+                                            📍 GPS লোড হচ্ছে...
+                                        </div>
+                                        <div id="map-checkout" style="height: 200px; width: 100%; display:none;"></div>
                                         <input type="hidden" id="latitude2" name="latitude">
                                         <input type="hidden" id="longitude2" name="longitude">
                                     </div>
                                 </div>
+
                                 <div class="form-group row">
-                                    <button class="btn btn-info" type="submit"><i class="fa fa-save"></i>
-                                        &nbsp;Save</button>
+                                    <button class="btn btn-info btn-submit-attendance" id="submit-checkout"
+                                        type="submit" disabled>
+                                        <i class="fa fa-save"></i> &nbsp;Save
+                                    </button>
+                                    &nbsp;
+                                    <button type="button" class="btn btn-warning" id="reload-checkout">
+                                        <i class="fa fa-refresh"></i> &nbsp;Reload Location
+                                    </button>
                                 </div>
+                                <!--<div class="form-group row">-->
+                                <!--    <button class="btn btn-info btn-submit-attendance" id="submit-checkout" type="submit" disabled>-->
+                                <!--        <i class="fa fa-save"></i> &nbsp;Save-->
+                                <!--    </button>-->
+                                <!--</div>-->
                             </form>
                         </div>
                     </div>
+
                 </div>
                 <!-- /.card-body -->
             </div>
@@ -203,7 +239,7 @@
 
     <script>
         $(document).ready(function() {
-            // Check In / Check Out টগল লজিক (আগেরটা রাখলাম)
+            // ─── Tab Toggle ───────────────────────────────────────────
             if ("{{ session()->get('sign') }}" == "0") {
                 $('#check_in').addClass('active show');
                 $('#check_out').removeClass('active show');
@@ -234,188 +270,207 @@
             });
         });
 
-        // ==================== Improved Map & Location Logic ====================
-        let userLat = null;
-        let userLng = null;
+        // ─── GPS Status Helper ─────────────────────────────────────────
+        function setGpsStatus(boxId, msg, type) {
+            const el = document.getElementById(boxId);
+            if (!el) return;
+
+            const styles = {
+                loading: {
+                    bg: '#fff3cd',
+                    color: '#856404'
+                },
+                success: {
+                    bg: '#d4edda',
+                    color: '#155724'
+                },
+                error: {
+                    bg: '#f8d7da',
+                    color: '#721c24'
+                },
+            };
+            const s = styles[type] || styles.loading;
+            el.style.background = s.bg;
+            el.style.color = s.color;
+            el.innerHTML = msg;
+        }
+
+        // ─── Leaflet Map ───────────────────────────────────────────────
+        var mapCheckin = null;
+        var mapCheckout = null;
 
         function initMap(mapId, lat, lng) {
-            var map = L.map(mapId, {
-                zoomControl: true,
-                scrollWheelZoom: true
-            }).setView([lat, lng], 17);   // 17-18 এর মাঝামাঝি রাখলাম
+            const container = document.getElementById(mapId);
+            if (!container) return;
 
+            container.style.display = 'block';
+            container.innerHTML = '';
+
+            if (mapId === 'map-checkin' && mapCheckin) {
+                mapCheckin.remove();
+                mapCheckin = null;
+            }
+            if (mapId === 'map-checkout' && mapCheckout) {
+                mapCheckout.remove();
+                mapCheckout = null;
+            }
+
+            const map = L.map(mapId).setView([lat, lng], 17);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                maxZoom: 19
+                attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
 
             L.marker([lat, lng]).addTo(map)
-                .bindPopup('Your Current Location<br>Lat: ' + lat.toFixed(6) + '<br>Lng: ' + lng.toFixed(6))
+                .bindPopup('Your current location')
                 .openPopup();
+
+            if (mapId === 'map-checkin') mapCheckin = map;
+            if (mapId === 'map-checkout') mapCheckout = map;
         }
 
-        function getLocation() {
-            if (!navigator.geolocation) {
-                alert('Geolocation is not supported by this browser.');
-                return;
-            }
+        // ─── GPS → Map → Submit enable ────────────────────────────────
+        async function forceLocationOnLoad() {
 
-            // Loading দেখানোর জন্য (ঐচ্ছিক)
-            // document.getElementById('map-checkin').innerHTML = '<p style="text-align:center;padding:50px;">Getting your location...</p>';
+            document.getElementById('submit-checkin').disabled = true;
+            document.getElementById('submit-checkout').disabled = true;
 
-            navigator.geolocation.getCurrentPosition(
-                function(position) {                    // SUCCESS
-                    userLat = position.coords.latitude;
-                    userLng = position.coords.longitude;
+            setGpsStatus('gps-status-checkin', '📍 Turning on GPS... Please wait', 'loading');
+            setGpsStatus('gps-status-checkout', '📍 Turning on GPS... Please wait', 'loading');
 
-                    console.log("✅ Location Received:", userLat, userLng);
-                    console.log("Accuracy:", position.coords.accuracy + " meters");
-
-                    // Hidden inputs এ ভ্যালু সেট
-                    document.getElementById('latitude').value = userLat;
-                    document.getElementById('longitude').value = userLng;
-                    document.getElementById('latitude2').value = userLat;
-                    document.getElementById('longitude2').value = userLng;
-
-                    // দুটো ম্যাপই লোড করো
-                    initMap('map-checkin', userLat, userLng);
-                    initMap('map-checkout', userLat, userLng);
-                },
-                function(error) {                       // ERROR
-                    console.error("Geolocation Error Code:", error.code);
-                    let msg = '';
-                    switch(error.code) {
-                        case error.PERMISSION_DENIED:
-                            msg = "Location permission denied. Please allow it.";
-                            break;
-                        case error.POSITION_UNAVAILABLE:
-                            msg = "Location information unavailable.";
-                            break;
-                        case error.TIMEOUT:
-                            msg = "Location request timed out.";
-                            break;
-                        default:
-                            msg = "Unknown error getting location.";
+            try {
+                if (typeof median !== 'undefined') {
+                    if (median.android && median.android.geoLocation) {
+                        try {
+                            await median.android.geoLocation.promptLocationServices();
+                        } catch (e) {}
                     }
-                    alert("Location Error: " + msg);
-                },
-                {
-                    enableHighAccuracy: true,   // ← এটা খুব জরুরি (GPS ব্যবহার করবে)
-                    timeout: 15000,             // 15 সেকেন্ড
-                    maximumAge: 0               // ক্যাশ ব্যবহার করবে না
                 }
-            );
-        }
 
-        // Page Load হলে
-        window.onload = function() {
-            // Date & Time সেট
-            var currentDate = new Date().toISOString().slice(0, 10);
-            var currentTime = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude.toFixed(6);
+                        const lng = position.coords.longitude.toFixed(6);
+                        const acc = Math.round(position.coords.accuracy);
 
-            document.getElementById('current-date').value = currentDate;
-            document.getElementById('current-date2').value = currentDate;
-            document.getElementById('current-time').value = currentTime;
-            document.getElementById('current-time2').value = currentTime;
+                        document.getElementById('latitude').value = lat;
+                        document.getElementById('longitude').value = lng;
+                        document.getElementById('latitude2').value = lat;
+                        document.getElementById('longitude2').value = lng;
 
-            // লোকেশন নাও
-            getLocation();
-        };
-    </script>
-@endsection
+                        try {
+                            initMap('map-checkin', lat, lng);
+                        } catch (e) {
+                            console.error('map-checkin error:', e);
+                        }
+                        try {
+                            initMap('map-checkout', lat, lng);
+                        } catch (e) {
+                            console.error('map-checkout error:', e);
+                        }
 
-{{-- @section('scripts')
-    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-    <script>
-        $(document).ready(function() {
-            if ("{{ session()->get('sign') }}" == "0") {
-                $('#check_in').addClass('active show');
-                $('#check_out').removeClass('active show');
-                $('.check_out').css('background', '#8fbc8f');
-                $('.check_in').css('background', 'green');
-            } else if ("{{ session()->get('sign') }}" == "1") {
-                $('#check_out').addClass('active show');
-                $('#check_in').removeClass('active show');
-                $('.check_in').css('background', '#8fbc8f');
-                $('.check_out').css('background', 'green');
-            } else {
-                $('.check_out').css('background', '#8fbc8f');
-                $('.check_in').css('background', 'green');
-            }
+                        const successMsg = `Location acquired. Accuracy: ${acc}m`;
+                        setGpsStatus('gps-status-checkin', successMsg, 'success');
+                        setGpsStatus('gps-status-checkout', successMsg, 'success');
 
-            $('.check_in').on('click', function() {
-                $('#check_in').addClass('active show');
-                $('#check_out').removeClass('active show');
-                $('.check_out').css('background', '#8fbc8f');
-                $('.check_in').css('background', 'green');
+                        document.getElementById('submit-checkin').disabled = false;
+                        document.getElementById('submit-checkout').disabled = false;
+                    },
 
-            })
-            $('.check_out').on('click', function() {
-                $('#check_out').addClass('active show');
-                $('#check_in').removeClass('active show');
-                $('.check_in').css('background', '#8fbc8f');
-                $('.check_out').css('background', 'green');
+                    function(error) {
+                        let msg = '';
+                        switch (error.code) {
+                            case 1:
+                                msg =
+                                    'Location permission denied. Please allow permission from browser/app settings and refresh the page.';
+                                break;
+                            case 2:
+                                msg = 'Unable to get GPS signal. Please go outside or check if GPS is turned on.';
+                                break;
+                            case 3:
+                                msg = 'GPS request timed out. Please refresh the page and try again.';
+                                break;
+                            default:
+                                msg = 'known GPS error. Please refresh the page.';
+                        }
+                        setGpsStatus('gps-status-checkin', msg, 'error');
+                        setGpsStatus('gps-status-checkout', msg, 'error');
 
-            })
-        })
-    </script>
+                        document.getElementById('submit-checkin').disabled = true;
+                        document.getElementById('submit-checkout').disabled = true;
+                    },
 
-    <script>
-        function initMap(id, lat, lng) {
-            // Initialize the map and set its view to the user's location
-            var map = L.map(id).setView([lat, lng], 18);
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 30000,
+                        maximumAge: 0
+                    }
+                );
 
-            // Load and display the tile layer from OpenStreetMap
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map);
-
-            // Add a marker at the user's location
-            L.marker([lat, lng]).addTo(map)
-                .bindPopup('You are here!')
-                .openPopup();
-        }
-
-        // Function to get the user's location
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    var lat = position.coords.latitude;
-                    var lng = position.coords.longitude;
-
-                    // Set the hidden input values for both maps
-                    document.getElementById('latitude').value = lat;
-                    document.getElementById('longitude').value = lng;
-                    document.getElementById('latitude2').value = lat;
-                    document.getElementById('longitude2').value = lng;
-
-                    // Initialize both maps with the user's location
-                    initMap('map-checkin', lat, lng); // Map for Check In
-                    initMap('map-checkout', lat, lng); // Map for Check Out
-                }, function() {
-                    alert('Geolocation failed or permission denied.');
-                });
-            } else {
-                alert('Geolocation is not supported by this browser.');
+            } catch (e) {
+                console.error('forceLocationOnLoad error:', e);
+                const errMsg = 'mething went wrong. Please refresh the page.';
+                setGpsStatus('gps-status-checkin', errMsg, 'error');
+                setGpsStatus('gps-status-checkout', errMsg, 'error');
             }
         }
 
-        window.onload = function() {
-            // Get current date and time
-            var currentDate = new Date().toISOString().slice(0, 10);
-            var currentTime = new Date().toLocaleTimeString('en-GB', {
+        // ─── Reload Location Button ────────────────────────────────
+        document.getElementById('reload-checkin').addEventListener('click', function() {
+            location.reload();
+        });
+
+        document.getElementById('reload-checkout').addEventListener('click', function() {
+            location.reload();
+        });
+
+        // ─── Page Load ────────────────────────────────────────────────
+        window.addEventListener('load', function() {
+            const now = new Date();
+            const currentDate = now.toISOString().slice(0, 10);
+            const currentTime = now.toLocaleTimeString('en-GB', {
                 hour: '2-digit',
                 minute: '2-digit'
             });
 
-            // Set date and time values
-            document.getElementById('current-date2').value = currentDate;
             document.getElementById('current-date').value = currentDate;
+            document.getElementById('current-date2').value = currentDate;
             document.getElementById('current-time').value = currentTime;
             document.getElementById('current-time2').value = currentTime;
 
-            // Get user's location and display maps
-            getLocation();
-        }
+            setTimeout(forceLocationOnLoad, 800);
+        });
+
+        // ─── Submit Button Click Guard ─────────────────────────────────
+        document.getElementById('submit-checkin').addEventListener('click', function(e) {
+            const lat = document.getElementById('latitude').value;
+            const lng = document.getElementById('longitude').value;
+            const mapVisible = document.getElementById('map-checkin').style.display !== 'none';
+
+            if (!lat || !lng || !mapVisible) {
+                e.preventDefault();
+
+                alert('📍 Location not determined yet.\nPlease turn on GPS.\nRefreshing the page...');
+
+                setTimeout(function() {
+                    location.reload();
+                }, 2000);
+            }
+        });
+
+        document.getElementById('submit-checkout').addEventListener('click', function(e) {
+            const lat = document.getElementById('latitude2').value;
+            const lng = document.getElementById('longitude2').value;
+            const mapVisible = document.getElementById('map-checkout').style.display !== 'none';
+
+            if (!lat || !lng || !mapVisible) {
+                e.preventDefault();
+
+                alert('📍 Location has not been determined yet.\nPlease turn on GPS.\nRefreshing the page...');
+
+                setTimeout(function() {
+                    location.reload();
+                }, 2000);
+            }
+        });
     </script>
-@endsection --}}
+@endsection

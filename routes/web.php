@@ -35,26 +35,58 @@ Route::get('/', function () {
 })->middleware('guest');
 
 
-Route::get('/d-employ', function(){
+Route::get('/create-employee', function () {
 
-    $employee = Employee::find(261);
+    $employee = Employee::find(249);
+
+    // dd($employee);
     $token = zktecoGetToken();
-    $url = env("ZKTECO_IP") . "/personnel/api/employees/";
+    if (!$token) {
+        return "Error: Token not retrieved!";
+    }
 
-     $response = Http::withHeaders([
+    $url = env("ZKTECO_IP") . "/personnel/api/employees/{$employee->id_card}/";
+
+    $response = Http::withHeaders([
         'Authorization' => "Token $token",
         'Content-Type'  => 'application/json',
     ])->get($url);
 
-    $list = $response->json()['data'] ?? [];
-    $deviceEmp = collect($list)->firstWhere('emp_code', 997);
+    // Employee NOT found → create
+    if ($response->status() == 404) {
 
+        $createResponse = createZKTecoEmployee([
+            "emp_code" => $employee->id_card,
+            "first_name" => $employee->am_name,
+            "card_no" => $employee->id_card ?? '',
+            "department" => 1,
+            "hire_date" => $employee->join_date ?? '',
+            "gender" => strtolower($employee->gender) == 'male' ? 'M' : 'F',
+            "birthday" => $employee->dob ?? null,
+            "mobile" => $employee->personal_phone ?? null,
+            "address" => $employee->present_address ?? null,
+            "email" => $employee->email ?? null,
+            "enable_att" => true,
+            "enable_holiday" => true,
+            "area" => [2],
+            "app_status" => 0,
+            "app_role" => 1
+        ]);
+        $employee->device_id = $createResponse['id'] ?? 0;
+        $employee->save();
 
-    dd($employee->id_card , $response ,  $list , $deviceEmp);
+        return [
+            'message' => 'Employee created in ZKTeco',
+            'data' => $createResponse
+        ];
+    }
 
-
+    // Employee already exists
+    return [
+        'message' => 'Employee already exists',
+        'data' => $response->json()
+    ];
 });
-
 
 
 
@@ -83,7 +115,6 @@ Route::get('/comparison', function () {
     } else {
         return "0";
     }
-
 });
 
 
@@ -293,19 +324,19 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
 
 
         //Contra Voicher crud operation start
-        Route::get('/settings-contra-voucher-list', [ContraVoucherController::class,'index'])->name('settings.contra.voucher.index');
-        Route::get('/dataProcessingcontravoucher', [ContraVoucherController::class,'dataProcessing'])->name('settings.contra.voucher.dataProcessingContraVoucher');
-        Route::get('/settings-contra-voucher-create', [ContraVoucherController::class,'create'])->name('settings.contra.voucher.create');
-        Route::get('/settings-contra-voucher-accountsearch', [ContraVoucherController::class,'accountsearch'])->name('settings.contra.voucher.accountsearch');
-        Route::post('/settings-contra-voucher-store', [ContraVoucherController::class,'store'])->name('settings.contra.voucher.store');
-        Route::get('/settings-contra-voucher-edit/{id}', [ContraVoucherController::class,'edit'])->name('settings.contra.voucher.edit');
-        Route::get('/settings-contra-voucher-show/{id}', [ContraVoucherController::class,'show'])->name('settings.contra.voucher.show');
-        Route::post('/settings-contra-voucher-update/{id}', [ContraVoucherController::class,'update'])->name('settings.contra.voucher.update');
-        Route::get('/settings-contra-voucher-delete/{id}', [ContraVoucherController::class,'destroy'])->name('settings.contra.voucher.destroy');
-        Route::get('/settings-contra-voucher-singledestroy/{id}', [ContraVoucherController::class,'singledestroy'])->name('settings.contra.voucher.singledestroy');
-        Route::get('/settings-contra-voucher-status/{id}/{status}', [ContraVoucherController::class,'statusUpdate'])->name('settings.contra.voucher.status');
-        Route::get('/getSubCategory', [ContraVoucherController::class,'getSubCategory'])->name('settings.contra.voucher.getSubCategory');
-        Route::get('/contra-getAccountBalance', [ContraVoucherController::class,'getAccountBalance'])->name('settings.contra.checkBalance');
+        Route::get('/settings-contra-voucher-list', [ContraVoucherController::class, 'index'])->name('settings.contra.voucher.index');
+        Route::get('/dataProcessingcontravoucher', [ContraVoucherController::class, 'dataProcessing'])->name('settings.contra.voucher.dataProcessingContraVoucher');
+        Route::get('/settings-contra-voucher-create', [ContraVoucherController::class, 'create'])->name('settings.contra.voucher.create');
+        Route::get('/settings-contra-voucher-accountsearch', [ContraVoucherController::class, 'accountsearch'])->name('settings.contra.voucher.accountsearch');
+        Route::post('/settings-contra-voucher-store', [ContraVoucherController::class, 'store'])->name('settings.contra.voucher.store');
+        Route::get('/settings-contra-voucher-edit/{id}', [ContraVoucherController::class, 'edit'])->name('settings.contra.voucher.edit');
+        Route::get('/settings-contra-voucher-show/{id}', [ContraVoucherController::class, 'show'])->name('settings.contra.voucher.show');
+        Route::post('/settings-contra-voucher-update/{id}', [ContraVoucherController::class, 'update'])->name('settings.contra.voucher.update');
+        Route::get('/settings-contra-voucher-delete/{id}', [ContraVoucherController::class, 'destroy'])->name('settings.contra.voucher.destroy');
+        Route::get('/settings-contra-voucher-singledestroy/{id}', [ContraVoucherController::class, 'singledestroy'])->name('settings.contra.voucher.singledestroy');
+        Route::get('/settings-contra-voucher-status/{id}/{status}', [ContraVoucherController::class, 'statusUpdate'])->name('settings.contra.voucher.status');
+        Route::get('/getSubCategory', [ContraVoucherController::class, 'getSubCategory'])->name('settings.contra.voucher.getSubCategory');
+        Route::get('/contra-getAccountBalance', [ContraVoucherController::class, 'getAccountBalance'])->name('settings.contra.checkBalance');
 
 
 

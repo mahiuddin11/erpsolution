@@ -28,7 +28,7 @@ class EmployeeController extends Controller
      * @var Transformer
      */
     private $systemTransformer;
-    
+
     protected $userRoleService;
     /**
      * CategoryController constructor.
@@ -73,9 +73,9 @@ class EmployeeController extends Controller
         $positions = Position::get();
 
         $area = [];
-        if(env("ZKTECO")){
+        if (env("ZKTECO")) {
             $area =  isset(getZKTecoAreas()['data']) ? getZKTecoAreas()['data'] : [];
-        }else{
+        } else {
             $area = [];
         }
 
@@ -86,7 +86,7 @@ class EmployeeController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
-    {   
+    {
         // dd($request->all(), "Employee store");
         try {
             $this->validate($request, $this->systemService->storeValidation($request));
@@ -98,7 +98,7 @@ class EmployeeController extends Controller
         session()->flash('success', 'Data successfully save!!');
         return redirect()->route('hrm.employee.index');
     }
-    
+
     /**
      * @param $slug
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
@@ -106,7 +106,7 @@ class EmployeeController extends Controller
 
     public function edit($id)
     {
-      
+
         if (!is_numeric($id)) {
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
@@ -115,15 +115,15 @@ class EmployeeController extends Controller
         if (!$editInfo) {
             session()->flash('error', 'Edit info is invalid!!');
             return redirect()->back();
-            }
-            $title = 'Add New Employee';
-            $userRoll = $this->userRoleService->getAllRole();
-            $branchs = Branch::where('status', 'Active')->get();
-            $positions = Position::get();
-           
-        if(env("ZKTECO")){
-            $area =  isset(getZKTecoAreas()['data']) ? getZKTecoAreas()['data']:[] ;
-        }else{
+        }
+        $title = 'Add New Employee';
+        $userRoll = $this->userRoleService->getAllRole();
+        $branchs = Branch::where('status', 'Active')->get();
+        $positions = Position::get();
+
+        if (env("ZKTECO")) {
+            $area =  isset(getZKTecoAreas()['data']) ? getZKTecoAreas()['data'] : [];
+        } else {
             $area = [];
         }
         return view('backend.pages.hrm.employee.edit', get_defined_vars());
@@ -143,12 +143,12 @@ class EmployeeController extends Controller
      */
     public function update(Request $request, $id)
     {
-        
+
         if (!is_numeric($id)) {
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
         }
-        
+
         try {
             $this->validate($request, $this->systemService->updateValidation($request, $id));
         } catch (ValidationException $e) {

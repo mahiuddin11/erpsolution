@@ -1270,13 +1270,13 @@ class PurchaseRepositories
             // =========================
 
 
-            // if ($request->purchase_order_id) {
-            //     PurchaseOrder::where('id', $request->purchase_order_id)->update([
-            //         'approved_by' => Auth::id(),
-            //         'approved_at' => now()->toDateString(),
-            //         'status'      => 'Complete',
-            //     ]);
-            // }
+            if ($request->purchase_order_id) {
+                PurchaseOrder::where('id', $request->purchase_order_id)->update([
+                    'approved_by' => Auth::id(),
+                    'approved_at' => now()->toDateString(),
+                    'status'      => 'Complete',
+                ]);
+            }
 
             // foreach ($partyTotals as $key => $party) {
 
@@ -1448,7 +1448,7 @@ class PurchaseRepositories
                     ]
                 );
             }
- 
+
 
 
             // =========================

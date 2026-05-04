@@ -71,6 +71,7 @@ function createZKTecoEmployee(array $employeeData)
 
     $url = env("ZKTECO_IP") . '/personnel/api/employees/';
 
+
     // Debugging: Check what data is being sent
     Log::info("Creating Employee Request Data: ", $employeeData);
 
@@ -89,9 +90,9 @@ function createZKTecoEmployee(array $employeeData)
     }
 }
 
-function editZKTecoEmployee( $id,array $employeeData)
+function editZKTecoEmployee($id, array $employeeData)
 {
-    
+
     $token = zktecoGetToken(); // Fetch JWT Token
     if (!$token) {
         return "Error: Token not retrieved!";
