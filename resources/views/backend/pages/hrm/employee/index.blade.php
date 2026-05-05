@@ -96,6 +96,7 @@
                                     <th style="width: 1%; display: none;">ID</th>
                                     <th>SL</th>
                                     <th>Name</th>
+                                    <th>Card No</th>
                                     <th>dob</th>
                                     <th>Gender</th>
                                     <th>Personal Phone</th>
@@ -118,6 +119,7 @@
                                     <th style="width: 1%; display: none;">ID</th>
                                     <th>SL</th>
                                     <th>Name</th>
+                                    <th>Card No</th>
                                     <th>dob</th>
                                     <th>Gender</th>
                                     <th>Personal Phone</th>
@@ -194,7 +196,7 @@
             $('.context-item').on('click', function() {
                 let action = $(this).data('action');
 
-                
+
                 let employeeId = currentRowData.id || currentRowData[0];
 
                 if (!employeeId) {
@@ -210,7 +212,7 @@
                 } else if (action === 'delete') {
                     if (confirm(
                             'Are you sure you want to delete this employee? This action cannot be undone.'
-                            )) {
+                        )) {
                         $.ajax({
                             url: "{{ route('hrm.employee.destroy', '') }}/" + employeeId,
                             type: 'DELETE',

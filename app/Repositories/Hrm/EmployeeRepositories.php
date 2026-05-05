@@ -163,18 +163,18 @@ class EmployeeRepositories
         $delete = Helper::roleAccess('hrm.employee.destroy') ? 1 : 0;
         $view = Helper::roleAccess('hrm.employee.show') ? 1 : 0;
         $ced = $edit + $delete + $view;
-        $status = $request->status ?? 'present'; 
+        $status = $request->status ?? 'present';
 
         $query = $this->model::query();
 
         if ($status != 'all') {
             $query->where('employee_status', $status);
         }
-        
+
         $totalData = $query->count();
         $limit = $request->input('length');
         $start = $request->input('start');
-        
+
         $search = $request->input('search.value');
 
         // =============================
@@ -197,6 +197,8 @@ class EmployeeRepositories
 
         $data = [];
 
+
+
         foreach ($employees as $key => $value) {
 
             $nestedData = [];
@@ -204,6 +206,7 @@ class EmployeeRepositories
             $nestedData['id'] = $value->id;
             $nestedData['sl'] = $start + $key + 1;
             $nestedData['name'] = $value->name;
+            $nestedData['id_card'] = $value->id_card ?? '';
             $nestedData['dob'] = $value->dob;
             $nestedData['gender'] = $value->gender;
             $nestedData['personal_phone'] = $value->personal_phone;
@@ -248,7 +251,7 @@ class EmployeeRepositories
             "data" => $data
         ];
     }
-    
+
     /**
      * @param $request
      * @return mixed
@@ -291,7 +294,7 @@ class EmployeeRepositories
         $employee->guardian_number = $request->guardian_number;
         $employee->employee_status = $request->status;
         $employee->auto_checkout = $request->auto_checkout;
-        
+
 
         $image = $request->file('image');
         if (isset($image)) {
@@ -347,42 +350,42 @@ class EmployeeRepositories
         $employee->area = json_encode($request->area);
         $employee->save();
 
-     if(env("ZKTECO")){
-              $employeedf = createZKTecoEmployee([
-                "emp_code"=> $employee->id_card,
-                "first_name"=> $request->am_name,
-                "last_name"=> null,
-                "nickname"=> null,
-                "card_no"=> null,
-                "department"=> 1,
-                "position"=> null,
-                "hire_date"=> $request->join_date ?? date("Y-m-d"),
-                "gender"=> $employee['gender'] ?? null,
-                "birthday"=> $employee['dob'] ?? null,
-                "verify_mode"=> 0,
-                "emp_type"=> null,
-                "contact_tel"=> null,
-                "office_tel"=> $employee['office_phone'] ?? null,
-                "mobile"=> $employee['personal_phone'] ?? null,
-                "national"=> null,
-                "city"=> null,
-                "address"=> $employee['permanent_address'] ?? null,
-                "postcode"=> null,
-                "email"=> $employee['email'] ?? null,
-                "enroll_sn"=> "",
-                "ssn"=> null,
-                "religion"=> null,
-                "enable_att"=> true,
-                "enable_overtime"=> false,
-                "enable_holiday"=> true,
-                "dev_privilege"=> 0,
-                "area"=> $request->area,
-                "app_status"=> 0,
-                "app_role"=> 1
+        if (env("ZKTECO")) {
+            $employeedf = createZKTecoEmployee([
+                "emp_code" => $employee->id_card,
+                "first_name" => $request->am_name,
+                "last_name" => null,
+                "nickname" => null,
+                "card_no" => null,
+                "department" => 1,
+                "position" => null,
+                "hire_date" => $request->join_date ?? date("Y-m-d"),
+                "gender" => $employee['gender'] ?? null,
+                "birthday" => $employee['dob'] ?? null,
+                "verify_mode" => 0,
+                "emp_type" => null,
+                "contact_tel" => null,
+                "office_tel" => $employee['office_phone'] ?? null,
+                "mobile" => $employee['personal_phone'] ?? null,
+                "national" => null,
+                "city" => null,
+                "address" => $employee['permanent_address'] ?? null,
+                "postcode" => null,
+                "email" => $employee['email'] ?? null,
+                "enroll_sn" => "",
+                "ssn" => null,
+                "religion" => null,
+                "enable_att" => true,
+                "enable_overtime" => false,
+                "enable_holiday" => true,
+                "dev_privilege" => 0,
+                "area" => $request->area,
+                "app_status" => 0,
+                "app_role" => 1
             ]);
             $employee->device_id = $employeedf['id'] ?? 0;
             $employee->save();
-        }else{
+        } else {
             $employee->save();
         }
 
@@ -473,7 +476,7 @@ class EmployeeRepositories
         $employee->area = json_encode($request->area);
         $employee->save();
 
-        
+
         if (env("ZKTECO")) {
             $local =  editZKTecoEmployee($employee->device_id, [
                 "emp_code" => $employee->id_card,
