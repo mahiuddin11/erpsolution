@@ -2,6 +2,7 @@
 
 // use Illuminate\Support\Facades\Artisan;
 
+use App\Http\Controllers\Backend\ActivityLogs\ActivityLogsController;
 use App\Http\Controllers\Backend\Hrm\AttendanceController;
 use App\Http\Controllers\Backend\Settings\ContraVoucherController;
 use App\Http\Controllers\Backend\Settings\CreditVoucherController;
@@ -37,9 +38,9 @@ Route::get('/', function () {
 
 Route::get('/create-employee', function () {
 
-    $employee = Employee::find(259);
+    $employee = Employee::find(245);
 
-    // dd($employee);
+    dd($employee);
 
     $token = zktecoGetToken();
     if (!$token) {
@@ -127,6 +128,13 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
     Route::group(['middleware' => ['web', 'auth'], 'namespace' => 'Dashboard'], function () {
         Route::get('/home', 'HomeController@index')->name('home');
     });
+
+    Route::group(['middleware' => ['web', 'auth'], 'namespace' => 'Backend\ActivityLog'], function () {
+        Route::get('/activity-log-list', [ActivityLogsController::class, 'index'])->name('activitylog.index');
+        Route::get('/activity-log-dataprocessing', [ActivityLogsController::class, 'dataProcessing'])->name('activitylog.dataProcessingActivity');
+    });
+
+
     Route::group(['middleware' => ['web', 'auth'], 'namespace' => 'Settings'], function () {
 
         //Commission Role crud operation start

@@ -12,10 +12,7 @@ class EmployeeService
      */
     private $employeeRepositories;
 
-    /**
-     * 
-     * @param EmployeeRepositories $employeeRepositories 
-     */
+
     public function __construct(EmployeeRepositories $employeeRepositories)
     {
         $this->employeeRepositories = $employeeRepositories;

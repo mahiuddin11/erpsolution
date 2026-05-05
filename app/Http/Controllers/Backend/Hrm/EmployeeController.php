@@ -39,9 +39,7 @@ class EmployeeController extends Controller
     public function __construct(UserRoleService $userRoleService, EmployeeService $employeeService, Transformers $transformers)
     {
         $this->userRoleService = $userRoleService;
-
         $this->systemService = $employeeService;
-
         $this->systemTransformer = $transformers;
     }
 

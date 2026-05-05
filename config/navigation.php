@@ -327,7 +327,7 @@ $parent_menu = array(
                 )
             ),
 
-           
+
 
             (object) array(
                 'label' => 'Attendance',
@@ -1672,6 +1672,31 @@ $parent_menu = array(
             ),
 
         )
+    ),
+
+    (object) array(
+        'label'      => 'Activity Logs',
+        'route'      => '',
+        'uniqueName' => 'activityLogs',
+        'icon'       => 'fa fa-history',
+        'parent_id'  => 0,
+        'navigate_status' => 1,
+        // ==================== Submenu (Optional কিন্তু Recommended) ====================
+        'submenu' => (object) array(
+            (object) array(
+                'label' => 'User ActivityLog',
+                'route' => null,
+                'uniqueName' => "activitylog",
+                'icon' => 'fa fa-history',
+                'parent_id' => null,
+                'childMenu' => (object) array(
+                    (object) array('label' => 'All Logs', 'route' => 'activitylog.index', 'icon' => 'fa fa-history', 'navigate_status' => 1),
+                    (object) array('label' => 'Show Logs', 'route' => 'settings.commissionRules.show', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
+                    (object) array('label' => 'Destroy Logs', 'route' => 'settings.commissionRules.destroy', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
+                )
+            ),
+        )
+
     ),
 
     (object) array(
