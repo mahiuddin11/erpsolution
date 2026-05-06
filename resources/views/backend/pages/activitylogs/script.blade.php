@@ -45,11 +45,6 @@
                 "class": "text-center"
             },
             {
-                "data": "status",
-                "orderable": false,
-                "class": "text-center"
-            },
-            {
                 "data": "user_agent",
                 "class": 'text-nowrap text-center',
                 "searchable": false,

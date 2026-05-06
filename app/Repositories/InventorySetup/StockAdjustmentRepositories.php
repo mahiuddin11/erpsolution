@@ -381,7 +381,18 @@ class StockAdjustmentRepositories
     public function destroy($id)
     {
         $purchase = $this->StockAjdustment::find($id);
+        $oldData = $purchase->toArray();
+
         $purchase->delete();
+
+        activity_log(
+            'delete',
+            'stock_adjustments',
+            [],
+            $oldData,
+            "Stock Adjustment deleted (Invoice: {$oldData['invoice_no']}) — Type: {$oldData['adjustment_type']}"
+        );
+
         return true;
     }
 }

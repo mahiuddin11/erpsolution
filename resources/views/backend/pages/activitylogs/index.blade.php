@@ -93,7 +93,7 @@
                                     <th>Description</th>
                                     <th>Change Data</th>
                                     <th>IP Address</th>
-                                    <th>Status</th>
+
                                     <th>Device</th>
                                 </tr>
                             </thead>
@@ -109,7 +109,6 @@
                                     <th>Module</th>
                                     <th>Description</th>
                                     <th>Change Data</th>
-                                    <th>Status</th>
                                     <th>IP Address</th>
                                     <th>Device</th>
                                 </tr>

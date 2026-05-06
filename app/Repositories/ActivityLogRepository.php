@@ -87,17 +87,30 @@ class ActivityLogRepository
 
         foreach ($logs as $key => $value) {
 
+
+            $action = strtolower(trim($value->action ?? ''));
+
+            $badgeColors = [
+                'create'  => 'success',
+                'update'  => 'primary',
+                'delete'  => 'danger',
+                'success' => 'success',
+            ];
+
+            $badgeClass = $badgeColors[$action] ?? 'secondary';
+
             $nestedData = [];
 
             $nestedData['id']           = $value->id;
             $nestedData['sl']           = $start + $key + 1;
             $nestedData['created_at']   = $value->created_at ? $value->created_at->format('d M, Y h:i A') : '';
             $nestedData['user_name']    = $value->user_name ?? 'System';
-            $nestedData['action']       = '<span class="badge badge-' . ($value->status == 'success' ? 'success' : 'danger') . '">' . ucfirst($value->action) . '</span>';
+            $nestedData['action'] = '<span class="badge badge-' . $badgeClass . '">'
+                . ucfirst($value->action)
+                . '</span>';
             $nestedData['module']       = '<strong>' . $value->module . '</strong>';
             $nestedData['description']  = $value->description ?? 'N/A';
             $nestedData['changed_fields'] =  $this->formatChangedFields($value->changed_fields, $value->old_values, $value->new_values);
-            $nestedData['status']       = '<span class="badge badge-' . ($value->status == 'success' ? 'success' : 'warning') . '">' . ucfirst($value->status) . '</span>';
             $nestedData['ip_address']   = $this->maskIPAddress($value->ip_address) ?? '';
             $nestedData['user_agent']   = $this->maskUserAgent($value->user_agent) ?? '';
             $data[] = $nestedData;
