@@ -96,7 +96,7 @@ class ActivityLogRepository
             $nestedData['action']       = '<span class="badge badge-' . ($value->status == 'success' ? 'success' : 'danger') . '">' . ucfirst($value->action) . '</span>';
             $nestedData['module']       = '<strong>' . $value->module . '</strong>';
             $nestedData['description']  = $value->description ?? 'N/A';
-            $nestedData['changed_fields'] = $this->formatChangedFields($value->changed_fields);
+            $nestedData['changed_fields'] =  $this->formatChangedFields($value->changed_fields, $value->old_values, $value->new_values);
             $nestedData['status']       = '<span class="badge badge-' . ($value->status == 'success' ? 'success' : 'warning') . '">' . ucfirst($value->status) . '</span>';
             $nestedData['ip_address']   = $this->maskIPAddress($value->ip_address) ?? '';
             $nestedData['user_agent']   = $this->maskUserAgent($value->user_agent) ?? '';
@@ -111,24 +111,58 @@ class ActivityLogRepository
         ];
     }
 
-    private function formatChangedFields($changedFields)
+    // private function formatChangedFields($changedFields)
+    // {
+    //     if (empty($changedFields)) {
+    //         return '<span class="text-muted">No changes</span>';
+    //     }
+
+    //     $html = '<ul style="padding-left:15px; margin:0;">';
+    //     foreach ($changedFields as $field => $data) {
+    //         $old = $data['old'] ?? 'NULL';
+    //         $new = $data['new'] ?? 'NULL';
+
+    //         $html .= "<li><strong>" . ucfirst(str_replace('_', ' ', $field)) . ":</strong> 
+    //                 <span class='text-danger'>{$old}</span> 
+    //                 → 
+    //                 <span class='text-success'>{$new}</span></li>";
+    //     }
+    //     $html .= '</ul>';
+
+    //     return $html;
+    // }
+
+    private function formatChangedFields($changedFields, $oldValues = null, $newValues = null)
     {
+        // JSON string হলে decode
+        if (is_string($changedFields)) {
+            $changedFields = json_decode($changedFields, true) ?? [];
+        }
+
         if (empty($changedFields)) {
             return '<span class="text-muted">No changes</span>';
         }
 
+        $old = is_string($oldValues) ? json_decode($oldValues, true) ?? [] : ($oldValues ?? []);
+        $new = is_string($newValues) ? json_decode($newValues, true) ?? [] : ($newValues ?? []);
+
         $html = '<ul style="padding-left:15px; margin:0;">';
-        foreach ($changedFields as $field => $data) {
-            $old = $data['old'] ?? 'NULL';
-            $new = $data['new'] ?? 'NULL';
 
-            $html .= "<li><strong>" . ucfirst(str_replace('_', ' ', $field)) . ":</strong> 
-                    <span class='text-danger'>{$old}</span> 
-                    → 
-                    <span class='text-success'>{$new}</span></li>";
+        foreach ($changedFields as $field) {
+            $oldVal = $old[$field] ?? 'NULL';
+            $newVal = $new[$field] ?? 'NULL';
+            $label  = ucfirst(str_replace('_', ' ', $field));
+
+            $html .= "
+            <li>
+                <strong>{$label}:</strong>
+                <span class='text-danger'>{$oldVal}</span>
+                →
+                <span class='text-success'>{$newVal}</span>
+            </li>";
         }
-        $html .= '</ul>';
 
+        $html .= '</ul>';
         return $html;
     }
 

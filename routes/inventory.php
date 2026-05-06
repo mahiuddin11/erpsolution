@@ -53,7 +53,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
 
         //product crud operation start
         // Route::get('/inventory-setup-product-list', 'ProductController@index')->name('inventorySetup.product.index');
-        Route::get('/inventory-setup-product-list', [ProductController::class,'index'])->name('inventorySetup.product.index');
+        Route::get('/inventory-setup-product-list', [ProductController::class, 'index'])->name('inventorySetup.product.index');
 
 
 
@@ -132,7 +132,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/inventory-purchaserequisition-filterproduct', [PurchaseRequisitionController::class, 'filterproduct'])->name('inventorySetup.purchaserequisition.filterproduct');
         Route::get('/inventorySetup.purchaserequisition.approve/{id}', [PurchaseRequisitionController::class, 'approve'])->name('inventorySetup.purchaserequisition.approve');
         Route::get('/inventorySetup.purchaserequisition.approveUpdate/{id}', [PurchaseRequisitionController::class, 'approveUpdate'])->name('inventorySetup.purchaserequisition.approveUpdate');
-        
+
 
         Route::get('/inventorySetup.purchaserequisition.invoice/{id}', [PurchaseRequisitionController::class, 'invoice'])->name('inventorySetup.purchaserequisition.invoice');
         //purchaserequisition  crud operation end
@@ -140,28 +140,28 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //purchaseorder  crud operation start
         Route::get('/inventory-purchaseorder-list', [PurchaseOrderController::class, 'index'])->name('inventorySetup.purchaseorder.index');
         Route::get('/dataProcessingpurchaseorder', [PurchaseOrderController::class, 'datapurchaseorder'])->name('inventorySetup.purchaseorder.datapurchaseorder');
-        Route::post('/inventory-purchaseorder-store', [PurchaseOrderController::class,'store'])->name('inventorySetup.purchaseorder.store');
-        Route::get('/inventory-purchaseorder-searchpr', [PurchaseOrderController::class,"searchpr"])->name('inventorySetup.purchaseorder.searchpr');
-        Route::get('/inventory-purchaseorder-create', [PurchaseOrderController::class,'create'])->name('inventorySetup.purchaseorder.create');
+        Route::post('/inventory-purchaseorder-store', [PurchaseOrderController::class, 'store'])->name('inventorySetup.purchaseorder.store');
+        Route::get('/inventory-purchaseorder-searchpr', [PurchaseOrderController::class, "searchpr"])->name('inventorySetup.purchaseorder.searchpr');
+        Route::get('/inventory-purchaseorder-create', [PurchaseOrderController::class, 'create'])->name('inventorySetup.purchaseorder.create');
         Route::get('/inventory-purchaseorder-edit/{id}', [PurchaseOrderController::class, 'edit'])->name('inventorySetup.purchaseorder.edit');
         Route::get('/inventory-select-supplier-edit', [PurchaseOrderController::class, 'selectSupplier'])->name('inventorySetup.select.supplier');
         Route::post('/inventory-purchaseorder-update/{id}', [PurchaseOrderController::class, 'update'])->name('inventorySetup.purchaseorder.update');
-        Route::get('/inventory-purchaseorder-delete/{id}', [PurchaseOrderController::class,'destroy'])->name('inventorySetup.purchaseorder.destroy');
-        Route::get('/inventory-purchaseorder-filterproduct', [PurchaseOrderController::class,'filterproduct'])->name('inventorySetup.purchaseorder.filterproduct');
+        Route::get('/inventory-purchaseorder-delete/{id}', [PurchaseOrderController::class, 'destroy'])->name('inventorySetup.purchaseorder.destroy');
+        Route::get('/inventory-purchaseorder-filterproduct', [PurchaseOrderController::class, 'filterproduct'])->name('inventorySetup.purchaseorder.filterproduct');
         Route::get('/inventorySetup/purchaseorder/invoice/{id}', [PurchaseOrderController::class, 'invoice'])->name('inventorySetup.purchaseorder.invoice');
         Route::get('/inventorySetup/purchaseorder/approve/{id}', [PurchaseOrderController::class, 'approve'])->name('inventorySetup.purchaseorder.approve');
         Route::post('/inventorySetup/supplier/purchaseorder/approve/', [PurchaseOrderController::class, 'supplierPurchaseApprove'])->name('inventorySetup.supplierpurchaseorder.approve');
         //purchaseorder  crud operation end
 
         //purchase  crud operation start
-        Route::get('/inventory-purchase-pvlist', [PurchaseController::class,'pvindex'])->name('inventorySetup.purchase.pvindex');
+        Route::get('/inventory-purchase-pvlist', [PurchaseController::class, 'pvindex'])->name('inventorySetup.purchase.pvindex');
         Route::post('/inventory-purchase-pvcloseopen', [PurchaseController::class, 'pvcloseopen'])->name('inventorySetup.purchase.pvcloseopen');
         Route::get('/dataProcessinpv', [PurchaseController::class, 'dataProcessinpv'])->name('inventorySetup.purchase.dataProcessinpv');
-        Route::get('/inventory-purchase-searchpr', [PurchaseController::class,'searchpo'])->name('inventorySetup.purchase.searchpo');
+        Route::get('/inventory-purchase-searchpr', [PurchaseController::class, 'searchpo'])->name('inventorySetup.purchase.searchpo');
         Route::get('/inventory-purchase-pvcreate', [PurchaseController::class, 'pvcreate'])->name('inventorySetup.purchase.pvcreate');
         Route::post('/inventory-purchase-pvstore', [PurchaseController::class, 'pvstore'])->name('inventorySetup.purchase.pvstore');
 
-        Route::get('/inventory-purchase-pvedit/{id}', [PurchaseController::class,'pvedit'])->name('inventorySetup.purchase.pvedit');
+        Route::get('/inventory-purchase-pvedit/{id}', [PurchaseController::class, 'pvedit'])->name('inventorySetup.purchase.pvedit');
         Route::post('/inventory-purchase-pvupdate/{id}', 'PurchaseController@pvupdate')->name('inventorySetup.purchase.pvupdate');
         Route::get('/inventory-purchase-pvdelete/{id}', 'PurchaseController@destroy')->name('inventorySetup.purchase.pvdestroy');
 
@@ -171,7 +171,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //Good received note  crud operation start
         Route::get('/inventory-goodrcvnote-list', [GrnController::class, 'index'])->name('inventorySetup.goodrcvnote.index');
         Route::get('/dataProcessinggoodrcvnote', [GrnController::class, 'datagoodrcvnote'])->name('inventorySetup.goodrcvnote.datagoodrcvnote');
-        Route::post('/inventory-goodrcvnote-store', [GrnController::class,'store'])->name('inventorySetup.goodrcvnote.store');
+        Route::post('/inventory-goodrcvnote-store', [GrnController::class, 'store'])->name('inventorySetup.goodrcvnote.store');
         Route::get('/inventory-goodrcvnote-searchgrn', [GrnController::class, 'searchgrn'])->name('inventorySetup.goodrcvnote.searchgrn');
         Route::get('/inventory-goodrcvnote-create', [GrnController::class, 'create'])->name('inventorySetup.goodrcvnote.create');
 
@@ -180,7 +180,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::post('/inventory-goodrcvnote-update/{id}', [GrnController::class, 'update'])->name('inventorySetup.goodrcvnote.update');
         Route::get('/inventory-goodrcvnote-delete/{id}', [GrnController::class, 'destroy'])->name('inventorySetup.goodrcvnote.destroy');
         Route::get('/inventory-goodrcvnote-filterproduct', [GrnController::class, 'filterproduct'])->name('inventorySetup.goodrcvnote.filterproduct');
-      
+
 
         Route::get('/inventorySetup.goodrcvnote.invoice/{id}', [GrnController::class, 'invoice'])->name('inventorySetup.goodrcvnote.invoice');
         //Good received note  crud operation end
@@ -256,13 +256,13 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/inventory-returnDeposit-returnshow', 'AdjustmentDepostiController@returnshow')->name('inventorySetup.returnDeposit.returnshow');
 
         //purchase crud operation start
-        Route::get('/inventory-purchase-list', [PurchaseController::class,'index'])->name('inventorySetup.purchase.index');
+        Route::get('/inventory-purchase-list', [PurchaseController::class, 'index'])->name('inventorySetup.purchase.index');
         Route::get('/dataProcessingPurchase', [PurchaseController::class, 'dataProcessingPurchase'])->name('inventorySetup.purchase.dataProcessingPurchase');
-        
+
         Route::get('/inventory-purchase-create', [PurchaseController::class, 'create'])->name('inventorySetup.purchase.create');
         Route::post('/inventory-purchase-store', [PurchaseController::class, 'store'])->name('inventorySetup.purchase.store');
         Route::get('/inventory-purchase-edit/{id}', [PurchaseController::class, 'edit'])->name('inventorySetup.purchase.edit');
-        Route::get('/inventory-purchase-show/{id}', [PurchaseController::class,'show'])->name('inventorySetup.purchase.show');
+        Route::get('/inventory-purchase-show/{id}', [PurchaseController::class, 'show'])->name('inventorySetup.purchase.show');
 
 
         Route::post('/inventory-purchase-update/{id}', 'PurchaseController@update')->name('inventorySetup.purchase.update');
@@ -275,40 +275,37 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //purchase crud operation end
 
         //stock adjustment crud operation start
-        Route::get('/inventory-stockAdjustment-list', 'StockAjdustmentController@index')->name('inventorySetup.stockAdjustment.index');
-        Route::get('/dataProcessingStockAdjustment', 'StockAjdustmentController@dataProcessingStockAdjustment')->name('inventorySetup.stockAdjustment.dataProcessingStockAdjustment');
-        Route::get('/inventory-stockAdjustment-create', 'StockAjdustmentController@create')->name('inventorySetup.stockAdjustment.create');
-        Route::post('/inventory-stockAdjustment-store', 'StockAjdustmentController@store')->name('inventorySetup.stockAdjustment.store');
-        Route::get('/inventory-stockAdjustment-edit/{id}', 'StockAjdustmentController@edit')->name('inventorySetup.stockAdjustment.edit');
-
+        Route::get('/inventory-stockAdjustment-list', [StockAjdustmentController::class, 'index'])->name('inventorySetup.stockAdjustment.index');
+        Route::get('/dataProcessingStockAdjustment', [StockAjdustmentController::class, 'dataProcessingStockAdjustment'])->name('inventorySetup.stockAdjustment.dataProcessingStockAdjustment');
+        Route::get('/inventory-stockAdjustment-create', [StockAjdustmentController::class, 'create'])->name('inventorySetup.stockAdjustment.create');
+        Route::post('/inventory-stockAdjustment-store', [StockAjdustmentController::class, 'store'])->name('inventorySetup.stockAdjustment.store');
+        Route::get('/inventory-stockAdjustment-edit/{id}', [StockAjdustmentController::class, 'edit'])->name('inventorySetup.stockAdjustment.edit');
         Route::get('/inventory-stockAdjustment-show/{id}', [StockAjdustmentController::class, 'show'])->name('inventorySetup.stockAdjustment.show');
 
-        Route::post('/inventory-stockAdjustment-update/{id}', 'StockAjdustmentController@update')->name('inventorySetup.stockAdjustment.update');
-        Route::get('/inventory-stockAdjustment-delete/{id}', 'StockAjdustmentController@destroy')->name('inventorySetup.stockAdjustment.destroy');
-        Route::get('/inventory-stockAdjustment-status/{id}/{status}', 'StockAjdustmentController@statusUpdate')->name('inventorySetup.stockAdjustment.status');
-        Route::get('/inventory-stockAdjustment-approval/{id}/', 'StockAjdustmentController@approval')->name('inventorySetup.stockAdjustment.approval');
-        Route::post('/inventory-stockAdjustment-storeapproval/{id}/', 'StockAjdustmentController@storeapproval')->name('inventorySetup.stockAdjustment.storeapproval');
+        Route::post('/inventory-stockAdjustment-update/{id}', [StockAjdustmentController::class, 'update'])->name('inventorySetup.stockAdjustment.update');
+        Route::get('/inventory-stockAdjustment-delete/{id}', [StockAjdustmentController::class, 'destroy'])->name('inventorySetup.stockAdjustment.destroy');
+        Route::get('/inventory-stockAdjustment-status/{id}/{status}', [StockAjdustmentController::class, 'statusUpdate'])->name('inventorySetup.stockAdjustment.status');
+        Route::get('/inventory-stockAdjustment-approval/{id}/', [StockAjdustmentController::class, 'approval'])->name('inventorySetup.stockAdjustment.approval');
+        Route::post('/inventory-stockAdjustment-storeapproval/{id}/', [StockAjdustmentController::class, 'storeapproval'])->name('inventorySetup.stockAdjustment.storeapproval');
 
-        Route::get('/getProductListforadjust', 'StockAjdustmentController@getProductListforadjust')->name('inventorySetup.stockAdjustment.getProductListforadjust');
-        Route::get('/unitPriceforadjust', 'StockAjdustmentController@unitPriceforadjust')->name('inventorySetup.stockAdjustment.unitPriceforadjust');
-        Route::get('/accountsforadjust', 'StockAjdustmentController@accountsforadjust')->name('inventorySetup.stockAdjustment.accountsforadjust');
+        Route::get('/getProductListforadjust', [StockAjdustmentController::class, 'getProductListforadjust'])->name('inventorySetup.stockAdjustment.getProductListforadjust');
+        Route::get('/unitPriceforadjust', [StockAjdustmentController::class, 'unitPriceforadjust'])->name('inventorySetup.stockAdjustment.unitPriceforadjust');
+        Route::get('/accountsforadjust', [StockAjdustmentController::class, 'accountsforadjust'])->name('inventorySetup.stockAdjustment.accountsforadjust');
         //stock adjustment crud operation end
 
 
         //Prodyct Opening Stock operation start
-        Route::get('/inventory-product-opening-stock-list', 'ProductOpeningStockController@index')->name('inventorySetup.productOS.index');
-        Route::get('/dataProcessingproduct-opening-stock', 'ProductOpeningStockController@dataProcessing')->name('inventorySetup.productOS.dataProcessingproduct-opening-stock');
-        Route::get('/inventory-product-opening-stock-create', 'ProductOpeningStockController@create')->name('inventorySetup.productOS.create');
-        Route::post('/inventory-product-opening-stock-store', 'ProductOpeningStockController@store')->name('inventorySetup.productOS.store');
-        Route::get('/inventory-product-opening-stock-edit/{id}', 'ProductOpeningStockController@edit')->name('inventorySetup.productOS.edit');
-
-        Route::get('/inventory-product-opening-stock-show/{id}', [ProductOpeningStockController::class,'show'])->name('inventorySetup.productOS.show');
-
-        Route::post('/inventory-product-opening-stock-update/{id}', 'ProductOpeningStockController@update')->name('inventorySetup.productOS.update');
-        Route::get('/inventory-product-opening-stock-delete/{id}', 'ProductOpeningStockController@destroy')->name('inventorySetup.productOS.destroy');
-        Route::get('/inventory-product-opening-stock-status/{id}/{status}', 'ProductOpeningStockController@statusUpdate')->name('inventorySetup.productOS.status');
-        Route::get('/inventory-product-opening-stock-approval/{id}/', 'ProductOpeningStockController@approval')->name('inventorySetup.productOS.approval');
-        Route::post('/inventory-product-opening-stock-storeapproval/{id}/', 'ProductOpeningStockController@storeapproval')->name('inventorySetup.productOS.storeapproval');
+        Route::get('/inventory-product-opening-stock-list', [ProductOpeningStockController::class, 'index'])->name('inventorySetup.productOS.index');
+        Route::get('/dataProcessingproduct-opening-stock', [ProductOpeningStockController::class, 'dataProcessing'])->name('inventorySetup.productOS.dataProcessingproduct-opening-stock');
+        Route::get('/inventory-product-opening-stock-create', [ProductOpeningStockController::class, 'create'])->name('inventorySetup.productOS.create');
+        Route::post('/inventory-product-opening-stock-store', [ProductOpeningStockController::class, 'store'])->name('inventorySetup.productOS.store');
+        Route::get('/inventory-product-opening-stock-edit/{id}', [ProductOpeningStockController::class, 'edit'])->name('inventorySetup.productOS.edit');
+        Route::get('/inventory-product-opening-stock-show/{id}', [ProductOpeningStockController::class, 'show'])->name('inventorySetup.productOS.show');
+        Route::post('/inventory-product-opening-stock-update/{id}', [ProductOpeningStockController::class, 'update'])->name('inventorySetup.productOS.update');
+        Route::get('/inventory-product-opening-stock-delete/{id}', [ProductOpeningStockController::class, 'destroy'])->name('inventorySetup.productOS.destroy');
+        Route::get('/inventory-product-opening-stock-status/{id}/{status}', [ProductOpeningStockController::class, 'statusUpdate'])->name('inventorySetup.productOS.status');
+        Route::get('/inventory-product-opening-stock-approval/{id}/', [ProductOpeningStockController::class, 'approval'])->name('inventorySetup.productOS.approval');
+        Route::post('/inventory-product-opening-stock-storeapproval/{id}/', [ProductOpeningStockController::class, 'storeapproval'])->name('inventorySetup.productOS.storeapproval');
         //Prodyct Opening Stock operation end
 
         //stock transfer curd operation start
@@ -328,7 +325,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::post('/inventorySetup.transfer.approveedit/{id}', 'StockTransferController@updateapprove')->name('inventorySetup.transfer.approveedit');
 
         //stock transfer curd operation end
-        Route::any('/inventory-currentStock-list', [StockReportController::class,'index'])->name('inventorySetup.currentStock.index');
+        Route::any('/inventory-currentStock-list', [StockReportController::class, 'index'])->name('inventorySetup.currentStock.index');
     });
     // Inventory setup crud end
 });

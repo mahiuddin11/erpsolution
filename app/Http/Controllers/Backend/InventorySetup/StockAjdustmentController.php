@@ -36,7 +36,7 @@ class StockAjdustmentController extends Controller
      * @param StockAdjustmentService $systemService
      * @param StockAdjustmentService $systemTransformer
      */
-    
+
     public function __construct(StockAdjustmentService $StockAdjustmentService, StockAdjustmentTransformer $StockAdjustmentTransformer)
     {
         $this->systemService = $StockAdjustmentService;

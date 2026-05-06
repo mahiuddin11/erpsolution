@@ -14,20 +14,11 @@ use Illuminate\Support\Facades\DB;
 class StockAdjustmentRepositories
 {
 
-    /**
-     * @var user_id
-     */
+    private $StockAjdustment;
     private $user_id;
-
-    /**
-     * @var Brand
-     */
     private $purchases;
 
-    /**
-     * CourseRepository constructor.
-     * @param brand $purchase
-     */
+
     public function __construct(StockAjdustment $StockAjdustment)
     {
         $this->StockAjdustment = $StockAjdustment;
@@ -152,7 +143,7 @@ class StockAdjustmentRepositories
 
     public function store($request)
     {
-        //  dd($request->all());
+
         DB::beginTransaction();
         try {
             $StockAjdustment = new $this->StockAjdustment();
@@ -188,6 +179,20 @@ class StockAdjustmentRepositories
                 $purchaseDetail->created_by = Auth::user()->id;
                 $purchaseDetail->save();
             }
+
+            activity_log(
+                'create',
+                'stock_adjustments',
+                array_merge($StockAjdustment->toArray(), [
+                    'invoice_no'      => $request->invoice_no,
+                    'adjustment_type' => $request->adjustment_type,
+                    'status' => $StockAjdustment->status,
+                ]),
+                [],
+                "Stock Adjustment created (Invoice: {$request->invoice_no}) — Type: {$request->adjustment_type} — Aprovel Status : {$StockAjdustment->status}"
+            );
+
+
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
@@ -201,6 +206,7 @@ class StockAdjustmentRepositories
         DB::beginTransaction();
         try {
             $purchase = $this->StockAjdustment::findOrFail($id);
+            $oldData = $purchase->toArray();
             // $purchase->invoice_no = $request->invoice_no;
             $purchase->date = $request->date;
             $purchase->branch_id = $request->branch_id;
@@ -238,6 +244,19 @@ class StockAdjustmentRepositories
                 $purchaseDetail->created_by = Auth::user()->id;
                 $purchaseDetail->save();
             }
+
+            activity_log(
+                'update',
+                'stock_adjustments',
+                array_merge($purchase->toArray(), [
+                    'invoice_no'      => $purchase->invoice_no,
+                    'adjustment_type' => $request->adjustment_type,
+                ]),
+                $oldData,
+                "Stock Adjustment updated (Invoice: {$purchase->invoice_no}) — Type: {$request->adjustment_type}"
+            );
+
+
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
@@ -248,10 +267,12 @@ class StockAdjustmentRepositories
 
     public function storeapproval($request, $id)
     {
-        //  dd($request->all());
+
         DB::beginTransaction();
         try {
             $purchase = $this->StockAjdustment::findOrFail($id);
+            $oldData = $purchase->toArray();
+
             // $purchase->invoice_no = $request->invoice_no;
             $purchase->date = $request->date;
             $purchase->branch_id = $request->branch_id;
@@ -330,6 +351,16 @@ class StockAdjustmentRepositories
                 //     $stockSummary->save();
                 // endif;
             }
+
+            activity_log(
+                'update',
+                'stock_adjustments',
+                $purchase->toArray(),  // new
+                $oldData,              // old — auto diff হবে
+                //  description দিও না — null থাকলে auto changed fields দেখাবে
+            );
+
+
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();

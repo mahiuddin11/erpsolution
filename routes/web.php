@@ -36,6 +36,7 @@ Route::get('/', function () {
 })->middleware('guest');
 
 
+
 Route::get('/create-employee', function () {
 
     $employee = Employee::find(245);

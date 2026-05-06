@@ -35,7 +35,7 @@ class ProductOpeningStockRepositories
     {
         $this->productOpeningStock = $ProductOpeningStock;
         $this->user_id = 1; //auth()->user()->id;
-  
+
     }
 
     /**
@@ -102,13 +102,13 @@ class ProductOpeningStockRepositories
                 $nestedData['date'] = $purchase->date ?? 'N/A';
                 $nestedData['qty'] = $purchase->qty;
                 $nestedData['total_price'] = $purchase->total_price;
-                
+
                 if ($ced != 0) :
                     if ($edit != 0)
                         $edit_data = '<a href="' . route('inventorySetup.productOS.edit', $purchase->id) . '" class="btn btn-xs btn-default"><i class="fa fa-edit" aria-hidden="true"></i></a>';
                     else
                         $edit_data = '';
-       
+
                     if ($view = !0)
                         $view_data = '<a href="' . route('inventorySetup.productOS.show', $purchase->id) . '" class="btn btn-xs btn-default"><i class="fa fa-eye" aria-hidden="true"></i></a>';
                     else
@@ -168,23 +168,23 @@ class ProductOpeningStockRepositories
             for ($i = 0; $i < count($category_id); $i++) {
                 $existingCheck = StockSummary::where('product_id', $proName[$i]);
 
-                if($request->branch_id){
+                if ($request->branch_id) {
                     $existingCheck =  $existingCheck->where('branch_id', $request->branch_id)->where('type', "Branch");
                 }
 
-                if($request->project_id){
+                if ($request->project_id) {
                     $existingCheck =  $existingCheck->where('branch_id', $request->project_id)->where('type', "Project");
                 }
-    
+
                 $existingCheck = $existingCheck->where('purchasetype', $request->purchasetype[$i])->first();
 
                 if (!empty($existingCheck)) :
                     $newQty = $existingCheck->quantity + $qty[$i];
-                    if($request->branch_id):
+                    if ($request->branch_id):
                         StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->where('type', "Branch")->update(array('quantity' => $newQty));
                     endif;
 
-                    if($request->project_id):
+                    if ($request->project_id):
                         StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->project_id)->where('purchasetype', $request->purchasetype[$i])->where('type', "Project")->update(array('quantity' => $newQty));
                     endif;
                 else :
@@ -193,12 +193,12 @@ class ProductOpeningStockRepositories
                     $stockSummary->purchasetype = $request->purchasetype[$i];
                     $stockSummary->quantity = $qty[$i];
 
-                    if($request->branch_id){
+                    if ($request->branch_id) {
                         $stockSummary->type =  "Branch";
                         $stockSummary->branch_id = $request->branch_id;
                     }
-                    
-                    if($request->project_id){
+
+                    if ($request->project_id) {
                         $stockSummary->type =  "Project";
                         $stockSummary->branch_id = $request->project_id;
                     }
@@ -223,7 +223,15 @@ class ProductOpeningStockRepositories
                 $productOpeningStockDetails->save();
             }
 
-            
+
+            // CREATE log — header save 
+            activity_log(
+                'create',
+                'product_opening_stocks',
+                $productOpeningStock->toArray()
+            );
+
+
             // $transactionPay['payment_invoice'] = $request->invoice_no;
             // $transactionPay['invoice'] = $request->invoice_no;
             // $transactionPay['table_id'] = $productOpeningStocks_id;
@@ -248,10 +256,11 @@ class ProductOpeningStockRepositories
             // $transaction['supplier_id'] = $request->supplier_id ?? 0;
             // AccountTransaction::create($transaction);
 
+
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
-            dd($e->getMessage(),$e->getLine());
+            dd($e->getMessage(), $e->getLine());
             redirect()->route('inventorySetup.productOS.index')->with('error', 'Something Wrong Please try again');
         }
         return true;
@@ -277,9 +286,9 @@ class ProductOpeningStockRepositories
             foreach ($productOpeningStock->details as $item) {
 
                 $mywhereCondition = array(
-                    'branch_id' => $item->branch_id == 0 ?  $item->project_id:$item->branch_id,
+                    'branch_id' => $item->branch_id == 0 ?  $item->project_id : $item->branch_id,
                     'product_id' => $item->product_id,
-                    'type' => $item->branch_id == 0 ? 'Project':'Branch',
+                    'type' => $item->branch_id == 0 ? 'Project' : 'Branch',
                 );
 
                 $oldstockupdate = StockSummary::where($mywhereCondition)->first();
@@ -301,23 +310,23 @@ class ProductOpeningStockRepositories
             for ($i = 0; $i < count($category_id); $i++) {
                 $existingCheck = StockSummary::where('product_id', $proName[$i]);
 
-                if($request->branch_id){
+                if ($request->branch_id) {
                     $existingCheck =  $existingCheck->where('branch_id', $request->branch_id)->where('type', "Branch");
                 }
 
-                if($request->project_id){
+                if ($request->project_id) {
                     $existingCheck =  $existingCheck->where('branch_id', $request->project_id)->where('type', "Project");
                 }
-    
+
                 $existingCheck = $existingCheck->where('purchasetype', $request->purchasetype[$i])->first();
 
                 if (!empty($existingCheck)) :
                     $newQty = $existingCheck->quantity + $qty[$i];
-                    if($request->branch_id):
+                    if ($request->branch_id):
                         StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->where('type', "Branch")->update(array('quantity' => $newQty));
                     endif;
 
-                    if($request->project_id):
+                    if ($request->project_id):
                         StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->project_id)->where('purchasetype', $request->purchasetype[$i])->where('type', "Project")->update(array('quantity' => $newQty));
                     endif;
                 else :
@@ -326,12 +335,12 @@ class ProductOpeningStockRepositories
                     $stockSummary->purchasetype = $request->purchasetype[$i];
                     $stockSummary->quantity = $qty[$i];
 
-                    if($request->branch_id){
+                    if ($request->branch_id) {
                         $stockSummary->type =  "Branch";
                         $stockSummary->branch_id = $request->branch_id;
                     }
-                    
-                    if($request->project_id){
+
+                    if ($request->project_id) {
                         $stockSummary->type =  "Project";
                         $stockSummary->branch_id = $request->project_id;
                     }
@@ -380,7 +389,7 @@ class ProductOpeningStockRepositories
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
-            dd($e->getMessage(),$e->getLine());
+            dd($e->getMessage(), $e->getLine());
             redirect('inventory-purchase-create')->with('error', 'Something Wrong Please try again');
         }
         return true;
@@ -503,11 +512,11 @@ class ProductOpeningStockRepositories
 
                 foreach ($purchasedetails as $item) {
                     $mywhereCondition = array(
-                        'branch_id' => $item->branch_id == 0 ?  $item->project_id:$item->branch_id,
+                        'branch_id' => $item->branch_id == 0 ?  $item->project_id : $item->branch_id,
                         'product_id' => $item->product_id,
-                        'type' => $item->branch_id == 0 ? 'Project':'Branch',
+                        'type' => $item->branch_id == 0 ? 'Project' : 'Branch',
                     );
-    
+
                     $oldstockupdate = StockSummary::where($mywhereCondition)->first();
                     DB::table('stock_summaries')
                         ->where($mywhereCondition)

@@ -96,7 +96,7 @@
                                     <th style="width: 1%; display: none;">ID</th>
                                     <th>SL</th>
                                     <th>Name</th>
-                                    <th>Card No</th>
+                                    <th>Employee ID</th>
                                     <th>dob</th>
                                     <th>Gender</th>
                                     <th>Personal Phone</th>
@@ -119,7 +119,7 @@
                                     <th style="width: 1%; display: none;">ID</th>
                                     <th>SL</th>
                                     <th>Name</th>
-                                    <th>Card No</th>
+                                    <th>Employee ID</th>
                                     <th>dob</th>
                                     <th>Gender</th>
                                     <th>Personal Phone</th>

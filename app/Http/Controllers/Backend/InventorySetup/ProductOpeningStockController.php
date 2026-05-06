@@ -82,6 +82,7 @@ class ProductOpeningStockController extends Controller
 
         return view('backend.pages.inventories.product_opening_stock.create', get_defined_vars());
     }
+
     public function show(Request $request, $id)
     {
         $title = 'Purchase Invoice';

@@ -79,6 +79,7 @@ class EmployeeController extends Controller
 
         return view('backend.pages.hrm.employee.create', get_defined_vars());
     }
+
     /**
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
