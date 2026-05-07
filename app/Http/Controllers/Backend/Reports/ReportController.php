@@ -1692,81 +1692,174 @@ class ReportController extends Controller
         return view('backend.pages.reports.stock', get_defined_vars());
     }
 
+    // public function stocksummery(Request $request)
+    // {
+    //     $title = 'Stock Summery';
+    //     $branch_id = '';
+    //     $product_id = '';
+    //     $category_id = '';
+
+
+    //     if ($request->method() == 'POST') {
+    //         $StocksumDetails = '';
+
+    //         $branch_id = $request->branch_id;
+    //         $product_id = $request->product_id;
+    //         $category_id = $request->category;
+
+
+    //         $inPro = array('Purchase', 'Manual Purchase', 'Production', 'Gain', 'Transfer In', 'Project In', 'Return');
+    //         $outPro = array('Production Sale', 'Production Out', 'Sale', 'Damage', 'Lost', 'Transfer Out', 'Project Out', 'Project Use');
+
+
+    //         // $StocksumDetails = Stock::orderBy('stocks.product_id', 'asc')
+    //         //     ->select('stocks.branch_id', 'stocks.product_id', 'stocks.status', 'branches.branchCode', 'branches.name as bname', 'categories.name as catname', 'products.name as proname', 'products.productCode', 'products.category_id')
+    //         //     ->join('products', 'products.id', '=', 'stocks.product_id')
+    //         //     ->join('categories', 'categories.id', '=', 'products.category_id')
+    //         //     ->join('branches', 'branches.id', '=', 'stocks.branch_id')
+    //         //     // ->wherein('status', $inPro)
+    //         //     ->orderBy("stocks.product_id", "ASC")
+    //         //     ->groupBy('stocks.product_id');
+
+    //         $StocksumDetails = Stock::select(
+    //             'stocks.product_id',
+    //             'products.productCode',
+    //             'products.name as proname',
+    //             'categories.name as catname',
+    //             'branches.branchCode',
+    //             'branches.name as bname',
+
+    //             DB::raw('SUM(CASE WHEN stocks.status IN ("Opening") THEN stocks.quantity ELSE 0 END) as opening_stock'),
+    //             DB::raw('SUM(CASE WHEN stocks.status IN ("Purchase", "Manual Purchase", "Production", "Gain", "Transfer In", "Project In", "Return") THEN stocks.quantity ELSE 0 END) as total_in'),
+    //             DB::raw('SUM(CASE WHEN stocks.status IN ("Production Sale", "Production Out", "Sale", "Damage", "Lost", "Transfer Out", "Project Out", "Project Use") THEN stocks.quantity ELSE 0 END) as total_out'),
+    //             DB::raw('SUM(stocks.quantity) as current_stock'),
+    //             DB::raw('AVG(stocks.unit_price) as avg_unit_price'),
+    //             DB::raw('SUM(stocks.total_price) as total_value')
+    //         )
+    //             ->join('products', 'products.id', '=', 'stocks.product_id')
+    //             ->join('categories', 'categories.id', '=', 'products.category_id')
+    //             ->join('branches', 'branches.id', '=', 'stocks.branch_id')
+    //             ->groupBy('stocks.product_id', 'products.productCode', 'products.name', 'categories.name', 'branches.branchCode', 'branches.name');
+
+    //         if ($branch_id != 'all') {
+    //             $StocksumDetails =   $StocksumDetails->where('stocks.branch_id', $branch_id);
+    //         }
+    //         if ($product_id != 'all') {
+    //             $StocksumDetails =   $StocksumDetails->where('stocks.product_id', $product_id);
+    //         }
+    //         if ($category_id != 'all') {
+    //             $StocksumDetails =   $StocksumDetails->where('products.category_id', $category_id);
+    //         }
+
+    //         $StocksumDetails =  $StocksumDetails->get();
+
+    //         // echo '<pre>';
+    //         // print_r($StocksumDetails->toArray());
+    //         // die();
+
+    //         // dd($StocksumDetails);
+
+
+    //         // StockSummary::join('branches', 'stock_summaries.branch_id', '=', 'branches.id')
+    //         //     ->select('products.*', 'branches.branchCode as brcode', 'branches.name as brname', 'stock_summaries.*', 'stock_summaries.quantity as stock_qty')
+    //         //     // ->join('purchases_details', 'purchases_details.product_id', '=', 'stock_summaries.product_id')
+    //         //     ->join('products', 'stock_summaries.product_id', '=', 'products.id');
+
+    //         // if ($branch_id != 'all') {
+    //         //     $StocksumDetails =   $StocksumDetails->where('stock_summaries.branch_id', $branch_id);
+    //         // }
+    //         // if ($product_id != 'all') {
+    //         //     $StocksumDetails =   $StocksumDetails->where('stock_summaries.branch_id', $branch_id);
+    //         // }
+    //         // if ($category_id != 'all') {
+    //         //     $StocksumDetails =   $StocksumDetails->where('stock_summaries.branch_id', $branch_id);
+    //         // }
+
+
+    //         // $StocksumDetails =   $StocksumDetails->where('stock_summaries.product_id', $product_id);
+
+    //         // $StocksumDetails =  $StocksumDetails->get();
+    //         // dd($StocksumDetails);
+    //     }
+
+    //     $companyInfo = Company::latest('id')->first();
+
+    //     $branch = Branch::where('status', 'Active')->get();
+    //     $accounts = ChartOfAccount::get()->where('status', 'Active');
+    //     $category_info = Category::where('status', 'Active')->get();
+    //     return view('backend.pages.reports.stocksummery', get_defined_vars());
+    // }
+
     public function stocksummery(Request $request)
     {
         $title = 'Stock Summery';
-        $branch_id = '';
-        $product_id = '';
-        $category_id = '';
 
+        // ফিল্টারের জন্য ভেরিয়েবল
+        $branch_id   = $request->branch_id;
+        $product_id  = $request->product_id;
+        $category_id = $request->category;
 
         if ($request->method() == 'POST') {
-            $StocksumDetails = '';
 
-            $branch_id = $request->branch_id;
-            $product_id = $request->product_id;
-            $category_id = $request->category;
+            // ==================== Main Query ====================
+            $StocksumDetails = Stock::select(
+                'stocks.product_id',
+                'products.productCode',
+                'products.name as proname',
+                'categories.name as catname',
+                'branches.branchCode',
+                'branches.name as bname',
 
+                // Opening Stock
+                DB::raw('SUM(CASE WHEN stocks.status IN ("Opening") THEN stocks.quantity ELSE 0 END) as opening_stock'),
 
-            $inPro = array('Purchase', 'Manual Purchase', 'Production', 'Gain', 'Transfer In', 'Project In', 'Return');
-            $outPro = array('Production Sale', 'Production Out', 'Sale', 'Damage', 'Lost', 'Transfer Out', 'Project Out', 'Project Use');
+                // Stock In
+                DB::raw('SUM(CASE WHEN stocks.status IN ("Purchase", "Manual Purchase", "Production", "Gain", "Transfer In", "Project In", "Return") 
+                     THEN stocks.quantity ELSE 0 END) as total_in'),
 
+                // Stock Out
+                DB::raw('SUM(CASE WHEN stocks.status IN ("Production Sale", "Production Out", "Sale", "Damage", "Lost", "Transfer Out", "Project Out", "Project Use") 
+                     THEN stocks.quantity ELSE 0 END) as total_out'),
 
-            $StocksumDetails = Stock::orderBy('stocks.product_id', 'asc')
-                ->select('stocks.branch_id', 'stocks.product_id', 'stocks.status', 'branches.branchCode', 'branches.name as bname', 'categories.name as catname', 'products.name as proname', 'products.productCode', 'products.category_id')
+                // Current Stock
+                DB::raw('SUM(stocks.quantity) as current_stock'),
+
+                DB::raw('AVG(stocks.unit_price) as avg_unit_price'),
+                DB::raw('SUM(stocks.total_price) as total_value')
+            )
                 ->join('products', 'products.id', '=', 'stocks.product_id')
                 ->join('categories', 'categories.id', '=', 'products.category_id')
                 ->join('branches', 'branches.id', '=', 'stocks.branch_id')
-                // ->wherein('status', $inPro)
-                ->orderBy("stocks.product_id", "ASC")
-                ->groupBy('stocks.product_id');
+                ->groupBy(
+                    'stocks.product_id',
+                    'products.productCode',
+                    'products.name',
+                    'categories.name',
+                    'branches.branchCode',
+                    'branches.name'
+                );
 
+            // ==================== Filters ====================
             if ($branch_id != 'all') {
-                $StocksumDetails =   $StocksumDetails->where('stocks.branch_id', $branch_id);
+                $StocksumDetails = $StocksumDetails->where('stocks.branch_id', $branch_id);
             }
+
             if ($product_id != 'all') {
-                $StocksumDetails =   $StocksumDetails->where('stocks.product_id', $product_id);
+                $StocksumDetails = $StocksumDetails->where('stocks.product_id', $product_id);
             }
+
             if ($category_id != 'all') {
-                $StocksumDetails =   $StocksumDetails->where('products.category_id', $category_id);
+                $StocksumDetails = $StocksumDetails->where('products.category_id', $category_id);
             }
 
-            $StocksumDetails =  $StocksumDetails->get();
-
-            // echo '<pre>';
-            // print_r($StocksumDetails->toArray());
-            // die();
-
-            // dd($StocksumDetails);
-
-
-            // StockSummary::join('branches', 'stock_summaries.branch_id', '=', 'branches.id')
-            //     ->select('products.*', 'branches.branchCode as brcode', 'branches.name as brname', 'stock_summaries.*', 'stock_summaries.quantity as stock_qty')
-            //     // ->join('purchases_details', 'purchases_details.product_id', '=', 'stock_summaries.product_id')
-            //     ->join('products', 'stock_summaries.product_id', '=', 'products.id');
-
-            // if ($branch_id != 'all') {
-            //     $StocksumDetails =   $StocksumDetails->where('stock_summaries.branch_id', $branch_id);
-            // }
-            // if ($product_id != 'all') {
-            //     $StocksumDetails =   $StocksumDetails->where('stock_summaries.branch_id', $branch_id);
-            // }
-            // if ($category_id != 'all') {
-            //     $StocksumDetails =   $StocksumDetails->where('stock_summaries.branch_id', $branch_id);
-            // }
-
-
-            // $StocksumDetails =   $StocksumDetails->where('stock_summaries.product_id', $product_id);
-
-            // $StocksumDetails =  $StocksumDetails->get();
-            // dd($StocksumDetails);
+            $StocksumDetails = $StocksumDetails->get();
         }
 
-        $companyInfo = Company::latest('id')->first();
-
-        $branch = Branch::where('status', 'Active')->get();
-        $accounts = ChartOfAccount::get()->where('status', 'Active');
+        // View এর জন্য ডাটা
+        $companyInfo   = Company::latest('id')->first();
+        $branch        = Branch::where('status', 'Active')->get();
         $category_info = Category::where('status', 'Active')->get();
+
         return view('backend.pages.reports.stocksummery', get_defined_vars());
     }
 

@@ -10,25 +10,16 @@ use Illuminate\Support\Facades\Validator;
 class ProductOpeningStockService
 {
 
-    /**
-     * @var ProductOpeningStockRepositories
-     */
+
     private $systemRepositories;
 
-    /**
-     * AdminCourseService constructor.
-     * @param ProductOpeningStockRepositories $branchRepositories
-     */
 
     public function __construct(ProductOpeningStockRepositories $systemRepositories)
     {
         $this->systemRepositories = $systemRepositories;
     }
 
-    /**
-     * @param $request
-     * @return mixed
-     */
+
     public function getList($request)
     {
         return $this->systemRepositories->getList($request);

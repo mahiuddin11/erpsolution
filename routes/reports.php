@@ -14,10 +14,10 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::any('/report.production.production', [ReportController::class, 'production'])->name('report.production.production');
         Route::any('/report-sale-sale', [ReportController::class, 'sale'])->name('report.sale.sale');
         Route::any('/report-transfer-transfer', [ReportController::class, 'transfer'])->name('report.transfer.transfer');
-        
+
         Route::any('/report-project-project', [ReportController::class, 'project'])->name('report.project.project');
-        Route::any('/report-project-projectex', [ReportController::class,'projectexpence'])->name('report.projectexpence.projectex');
-      
+        Route::any('/report-project-projectex', [ReportController::class, 'projectexpence'])->name('report.projectexpence.projectex');
+
 
 
         Route::any('/report-employee-salary', 'ReportController@empSalary')->name('report.employee.salary');
@@ -49,16 +49,16 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::any('/report-purchase-grn', [ReportController::class, 'goodrcvnote'])->name('report.purchase.grn');
         Route::any('/report-stock-productledger', [ReportController::class, 'productledger'])->name('report.stock.productledger');
 
-        Route::any('/report-stock-qty-update', 'ReportController@product_update')->name('report.stock.qty.update');
+        Route::any('/report-stock-qty-update', [ReportController::class, 'product_update'])->name('report.stock.qty.update');
 
-        Route::any('/report-stock-lowstocks', 'ReportController@lowstocks')->name('report.stock.lowstocks');
-        Route::any('/report-stock-stocksummery', 'ReportController@stocksummery')->name('report.stock.stocksummery');
-        Route::any('/report-day-book', 'ReportController@daybook')->name('report.day.book');
-        Route::any('/report-cashflow', 'ReportController@cashflow')->name('report.cashflow');
-        Route::any('/report-retained-earning', 'ReportController@retainedearning')->name('report.retained_earning');
-        Route::any('/report-bank-book', 'ReportController@bankbook')->name('report.bank_book');
-        Route::any('/report-expense-book', 'ReportController@newexpense')->name('report.expense');
-        Route::any('/report-voucher-report', 'ReportController@voucher')->name('report.voucher.report');
-        Route::any('/report-income-trans-details', 'ReportController@incomeDetails')->name('report.incomestatement.details');
+        Route::any('/report-stock-lowstocks', [ReportController::class, 'lowstocks'])->name('report.stock.lowstocks');
+        Route::any('/report-stock-stocksummery', [ReportController::class, 'stocksummery'])->name('report.stock.stocksummery');
+        Route::any('/report-day-book', [ReportController::class, 'daybook'])->name('report.day.book');
+        Route::any('/report-cashflow', [ReportController::class, 'cashflow'])->name('report.cashflow');
+        Route::any('/report-retained-earning', [ReportController::class, 'retainedearning'])->name('report.retained_earning');
+        Route::any('/report-bank-book', [ReportController::class, 'bankbook'])->name('report.bank_book');
+        Route::any('/report-expense-book', [ReportController::class, 'newexpense'])->name('report.expense');
+        Route::any('/report-voucher-report', [ReportController::class, 'voucher'])->name('report.voucher.report');
+        Route::any('/report-income-trans-details', [ReportController::class, 'incomeDetails'])->name('report.incomestatement.details');
     });
 });

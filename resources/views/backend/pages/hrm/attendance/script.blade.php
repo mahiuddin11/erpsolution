@@ -11,47 +11,49 @@
             }
         },
         "columns": [{
-            "data": "id",
-            "orderable": true
-        },
-        {
-            "data": "emplyee_id",
-            "orderable": true
-        },
-        {
-            "data": "date",
-            "orderable": true
-        },
-        {
-        "data": "sign_in",
-        "orderable": true
-        },
-        {
-        "data": "location_in",
-        "orderable": true
-        },
-        {
-        "data": "sign_out",
-        "orderable": true
-        },
-        {
-        "data": "location_out",
-        "orderable": true
-        },
-        // {
-        // "data": "status",
-        // "orderable": true
-        // },
-    
-        {
-            "data": "action",
-            "class": 'text-nowrap',
-            "searchable": false,
-            "orderable": false
-        },
+                "data": "id",
+                "orderable": true
+            },
+            {
+                "data": "emplyee_id",
+                "orderable": true
+            },
+            {
+                "data": "date",
+                "orderable": true
+            },
+            {
+                "data": "sign_in",
+                "orderable": true
+            },
+            {
+                "data": "location_in",
+                "orderable": true
+            },
+            {
+                "data": "sign_out",
+                "orderable": true
+            },
+            {
+                "data": "location_out",
+                "orderable": true
+            },
+            // {
+            // "data": "status",
+            // "orderable": true
+            // },
+
+            {
+                "data": "action",
+                "class": 'text-nowrap',
+                "searchable": false,
+                "orderable": false
+            },
         ],
-        "order": [[0, "desc"]],
-        "fnDrawCallback": function () {
+        "order": [
+            [0, "desc"]
+        ],
+        "fnDrawCallback": function() {
             $("[name='my-checkbox']").bootstrapSwitch({
                 size: "small",
                 onColor: "success",

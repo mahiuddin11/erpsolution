@@ -128,6 +128,9 @@ if (!function_exists('_log_resolve_module')) {
             'purchase_orders'                => ['Inventory',  'Purchase Order'],
             'purchase_order_details'         => ['Inventory',  'Purchase Order Details'],
 
+            //Direct_purchase
+            'derect_purchase'                       => ['Direct Purchase',  'Direct Purchase'],
+
             // ── HR ──
             'employees'                      => ['HR',         'Employee'],
             'departments'                    => ['HR',         'Department'],

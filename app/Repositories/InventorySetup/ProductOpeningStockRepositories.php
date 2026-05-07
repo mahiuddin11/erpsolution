@@ -148,6 +148,7 @@ class ProductOpeningStockRepositories
     {
         DB::beginTransaction();
         try {
+
             $productOpeningStock = new $this->productOpeningStock();
             $productOpeningStock->invoice_no = $request->invoice_no;
             $productOpeningStock->created_by = auth()->id();
@@ -165,6 +166,7 @@ class ProductOpeningStockRepositories
             $subtotal = $request->unitprice;
             $grand_total = $request->total;
             $qty = $request->qty;
+
             for ($i = 0; $i < count($category_id); $i++) {
                 $existingCheck = StockSummary::where('product_id', $proName[$i]);
 
@@ -221,7 +223,23 @@ class ProductOpeningStockRepositories
                 $productOpeningStockDetails->created_by = Auth::user()->id;
                 $productOpeningStockDetails->deleted_by = Auth::user()->id;
                 $productOpeningStockDetails->save();
+
+
+                // ==================== STOCKS Opening Stock ====================
+                $stock = new Stock();
+                $stock->date          = $request->date;
+                $stock->product_id    = $proName[$i];
+                $stock->branch_id     = $request->branch_id;
+                $stock->project_id    = $request->project_id ?? null;
+                $stock->quantity      = $qty[$i];
+                $stock->unit_price    = $subtotal[$i];
+                $stock->total_price   = $grand_total[$i];
+                $stock->status        = 'Opening';
+                $stock->created_by    = Auth::id();
+                $stock->save();
             }
+
+
 
 
             // CREATE log — header save 

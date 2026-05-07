@@ -100,7 +100,7 @@ class ProductOpeningStockController extends Controller
      */
     public function store(Request $request)
     {
-        // dd($request->all());
+
         try {
             $this->validate($request, $this->systemService->storeValidation($request));
         } catch (ValidationException $e) {

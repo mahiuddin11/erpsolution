@@ -583,6 +583,17 @@ class PurchaseRepositories
 
             $purchases_id = $purchase->id;
 
+            $supplierName = ChartOfAccount::find($request->ledger_id)?->account_name ?? 'N/A';
+
+
+            activity_log(
+                'create',
+                'derect_purchase',
+                $purchase->toArray(),
+                [],
+                "Direct Purchase created (Invoice: {$request->invoice_no}) — Supplier: {$supplierName}, Total: {$purchase->grand_total}, Payment: {$request->payment_type} , "
+            );
+
             $category_id = $request->catName;
             $proName = $request->proName;
             $subtotal = $request->unitprice;
