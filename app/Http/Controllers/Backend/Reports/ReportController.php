@@ -1790,18 +1790,92 @@ class ReportController extends Controller
     //     return view('backend.pages.reports.stocksummery', get_defined_vars());
     // }
 
+    // public function stocksummery(Request $request)
+    // {
+    //     $title = 'Stock Summery';
+
+    //     // ফিল্টারের জন্য ভেরিয়েবল
+    //     $branch_id   = $request->branch_id;
+    //     $product_id  = $request->product_id;
+    //     $category_id = $request->category;
+
+    //     if ($request->method() == 'POST') {
+
+    //         // ==================== Main Query ====================
+    //         $StocksumDetails = Stock::select(
+    //             'stocks.product_id',
+    //             'products.productCode',
+    //             'products.name as proname',
+    //             'categories.name as catname',
+    //             'branches.branchCode',
+    //             'branches.name as bname',
+
+    //             // Opening Stock
+    //             DB::raw('SUM(CASE WHEN stocks.status IN ("Opening") THEN stocks.quantity ELSE 0 END) as opening_stock'),
+
+    //             // Stock In
+    //             DB::raw('SUM(CASE WHEN stocks.status IN ("Purchase", "Manual Purchase", "Production", "Gain", "Transfer In", "Project In", "Return") 
+    //                  THEN stocks.quantity ELSE 0 END) as total_in'),
+
+    //             // Stock Out
+    //             DB::raw('SUM(CASE WHEN stocks.status IN ("Production Sale", "Production Out", "Sale", "Damage", "Lost", "Transfer Out", "Project Out", "Project Use") 
+    //                  THEN stocks.quantity ELSE 0 END) as total_out'),
+
+    //             // Current Stock
+    //             DB::raw('SUM(stocks.quantity) as current_stock'),
+
+    //             DB::raw('AVG(stocks.unit_price) as avg_unit_price'),
+    //             DB::raw('SUM(stocks.total_price) as total_value')
+    //         )
+    //             ->join('products', 'products.id', '=', 'stocks.product_id')
+    //             ->join('categories', 'categories.id', '=', 'products.category_id')
+    //             ->join('branches', 'branches.id', '=', 'stocks.branch_id')
+    //             ->groupBy(
+    //                 'stocks.product_id',
+    //                 'products.productCode',
+    //                 'products.name',
+    //                 'categories.name',
+    //                 'branches.branchCode',
+    //                 'branches.name'
+    //             );
+
+    //         // ==================== Filters ====================
+    //         if ($branch_id != 'all') {
+    //             $StocksumDetails = $StocksumDetails->where('stocks.branch_id', $branch_id);
+    //         }
+
+    //         if ($product_id != 'all') {
+    //             $StocksumDetails = $StocksumDetails->where('stocks.product_id', $product_id);
+    //         }
+
+    //         if ($category_id != 'all') {
+    //             $StocksumDetails = $StocksumDetails->where('products.category_id', $category_id);
+    //         }
+
+    //         $StocksumDetails = $StocksumDetails->get();
+    //     }
+
+    //     // View এর জন্য ডাটা
+    //     $companyInfo   = Company::latest('id')->first();
+    //     $branch        = Branch::where('status', 'Active')->get();
+    //     $category_info = Category::where('status', 'Active')->get();
+
+    //     return view('backend.pages.reports.stocksummery', get_defined_vars());
+    // }
+
     public function stocksummery(Request $request)
     {
-        $title = 'Stock Summery';
+        $title = 'Stock Summary Report';
 
-        // ফিল্টারের জন্য ভেরিয়েবল
-        $branch_id   = $request->branch_id;
-        $product_id  = $request->product_id;
-        $category_id = $request->category;
+        $branch_id   = $request->branch_id ?? 'all';
+        $product_id  = $request->product_id ?? 'all';
+        $category_id = $request->category ?? 'all';
 
-        if ($request->method() == 'POST') {
+        $StocksumDetails = collect();
 
-            // ==================== Main Query ====================
+        if ($request->isMethod('POST')) {
+
+
             $StocksumDetails = Stock::select(
                 'stocks.product_id',
                 'products.productCode',
@@ -1810,19 +1884,25 @@ class ReportController extends Controller
                 'branches.branchCode',
                 'branches.name as bname',
 
-                // Opening Stock
-                DB::raw('SUM(CASE WHEN stocks.status IN ("Opening") THEN stocks.quantity ELSE 0 END) as opening_stock'),
+                DB::raw('SUM(CASE WHEN stocks.status = "Opening" THEN stocks.quantity ELSE 0 END) as opening_stock'),
 
-                // Stock In
-                DB::raw('SUM(CASE WHEN stocks.status IN ("Purchase", "Manual Purchase", "Production", "Gain", "Transfer In", "Project In", "Return") 
-                     THEN stocks.quantity ELSE 0 END) as total_in'),
+                DB::raw('SUM(CASE WHEN stocks.status IN ("Purchase", "Manual Purchase", "Production", "Gain", "Transfer In", "Project In", "Return", "Purchase Return") 
+             THEN stocks.quantity ELSE 0 END) as total_in'),
 
-                // Stock Out
-                DB::raw('SUM(CASE WHEN stocks.status IN ("Production Sale", "Production Out", "Sale", "Damage", "Lost", "Transfer Out", "Project Out", "Project Use") 
-                     THEN stocks.quantity ELSE 0 END) as total_out'),
+                DB::raw('SUM(CASE WHEN stocks.status IN ("Production Sale", "Production Out", "Sale", "Damage", "Lost", "Transfer Out", "Project Out", "Project Use", "Sale Return") 
+             THEN stocks.quantity ELSE 0 END) as total_out'),
 
-                // Current Stock
-                DB::raw('SUM(stocks.quantity) as current_stock'),
+                // সবচেয়ে গুরুত্বপূর্ণ — সঠিক Current Stock
+                DB::raw('
+        SUM(
+            CASE 
+                WHEN stocks.status = "Opening" THEN stocks.quantity 
+                WHEN stocks.status IN ("Purchase", "Manual Purchase", "Production", "Gain", "Transfer In", "Project In", "Return", "Purchase Return") THEN stocks.quantity 
+                WHEN stocks.status IN ("Production Sale", "Production Out", "Sale", "Damage", "Lost", "Transfer Out", "Project Out", "Project Use", "Sale Return") THEN -stocks.quantity 
+                ELSE 0 
+            END
+        ) as current_stock
+    '),
 
                 DB::raw('AVG(stocks.unit_price) as avg_unit_price'),
                 DB::raw('SUM(stocks.total_price) as total_value')
@@ -1830,32 +1910,22 @@ class ReportController extends Controller
                 ->join('products', 'products.id', '=', 'stocks.product_id')
                 ->join('categories', 'categories.id', '=', 'products.category_id')
                 ->join('branches', 'branches.id', '=', 'stocks.branch_id')
-                ->groupBy(
-                    'stocks.product_id',
-                    'products.productCode',
-                    'products.name',
-                    'categories.name',
-                    'branches.branchCode',
-                    'branches.name'
-                );
+                ->groupBy('stocks.product_id', 'products.productCode', 'products.name', 'categories.name', 'branches.branchCode', 'branches.name');
 
-            // ==================== Filters ====================
+            // Filters
             if ($branch_id != 'all') {
-                $StocksumDetails = $StocksumDetails->where('stocks.branch_id', $branch_id);
+                $StocksumDetails->where('stocks.branch_id', $branch_id);
             }
-
             if ($product_id != 'all') {
-                $StocksumDetails = $StocksumDetails->where('stocks.product_id', $product_id);
+                $StocksumDetails->where('stocks.product_id', $product_id);
             }
-
             if ($category_id != 'all') {
-                $StocksumDetails = $StocksumDetails->where('products.category_id', $category_id);
+                $StocksumDetails->where('products.category_id', $category_id);
             }
 
             $StocksumDetails = $StocksumDetails->get();
         }
 
-        // View এর জন্য ডাটা
         $companyInfo   = Company::latest('id')->first();
         $branch        = Branch::where('status', 'Active')->get();
         $category_info = Category::where('status', 'Active')->get();

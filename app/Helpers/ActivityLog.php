@@ -95,11 +95,7 @@ if (!function_exists('activity_log')) {
             ]);
         } catch (\Throwable $e) {
             // Log fail হলে main flow break হবে না
-            \Log::error('[ActivityLog] ' . $e->getMessage(), [
-                'action' => $action,
-                'table'  => $table,
-                'line'   => $e->getLine(),
-            ]);
+            dd($e->getMessage());
         }
     }
 }
@@ -148,8 +144,8 @@ if (!function_exists('_log_resolve_module')) {
             'chart_of_accounts'              => ['Accounts',   'Chart of Accounts'],
 
             // ── Sales ──
-            'customers'                      => ['Sales',      'Customer'],
             'sales_orders'                   => ['Sales',      'Sales Order'],
+            'Sales'                          => ['Sales',      'Sales'],
             'quotations'                     => ['Sales',      'Quotation'],
             'leads'                          => ['Sales',      'CRM Lead'],
 

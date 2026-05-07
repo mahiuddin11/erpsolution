@@ -310,32 +310,57 @@ class StockAdjustmentRepositories
                 $purchaseDetail['approval_date'] = date('Y-m-d');
                 StockAjdustmentDetailst::where('purchases_id', $stockDetailsId[$i])->update($purchaseDetail);
 
+                // $stock = new Stock();
+                // $stock->general_id = $purchases_id;
+                // $stock->branch_id = $request->branch_id;
+                // $stock->product_id = $proName[$i];
+                // $stock->unit_price = $subtotal[$i];
+                // $stock->total_price = $grand_total[$i];
+                // $stock->quantity = $qty[$i];
+                // $stock->status = $request->adjustment_type;
+                // $stock->save();
+
                 $stock = new Stock();
-                $stock->general_id = $purchases_id;
-                $stock->branch_id = $request->branch_id;
-                $stock->product_id = $proName[$i];
-                $stock->unit_price = $subtotal[$i];
-                $stock->total_price = $grand_total[$i];
-                $stock->quantity = $qty[$i];
-                $stock->status = $request->adjustment_type;
+                $stock->general_id     = $purchases_id;
+                $stock->branch_id      = $request->branch_id;
+                $stock->product_id     = $proName[$i];
+                $stock->unit_price     = $subtotal[$i];
+                $stock->total_price    = $grand_total[$i];
+                $stock->quantity       = $qty[$i];
+                $stock->status         = $request->adjustment_type;   // Gain / Lost / Damage
+                $stock->created_by     = Auth::id();
                 $stock->save();
 
 
+                // if ($request->adjustment_type == 'Lost'  || $request->adjustment_type == 'Damange') {
+                //     $existingCheck = StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('type', 'Branch')->first();
+                //     if (!empty($existingCheck)) :
+                //         $newQty = $existingCheck->quantity - $qty[$i];
+                //         StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('type', 'Branch')->update(array('quantity' => $newQty));
+                //     endif;
+                // }
+                // if ($request->adjustment_type == 'Gain') {
+                //     $existingCheck = StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('type', 'Branch')->first();
+                //     if (!empty($existingCheck)) :
+                //         $newQty = $existingCheck->quantity + $qty[$i];
+                //         StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('type', 'Branch')->update(array('quantity' => $newQty));
+                //     endif;
+                // }
 
-                if ($request->adjustment_type == 'Lost'  || $request->adjustment_type == 'Damange') {
-                    $existingCheck = StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('type', 'Branch')->first();
-                    if (!empty($existingCheck)) :
-                        $newQty = $existingCheck->quantity - $qty[$i];
-                        StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('type', 'Branch')->update(array('quantity' => $newQty));
-                    endif;
-                }
+                // StockSummary updated
+                $summary = StockSummary::firstOrNew([
+                    'product_id' => $proName[$i],
+                    'branch_id'  => $request->branch_id,
+                    'type'       => 'Branch'
+                ]);
+
                 if ($request->adjustment_type == 'Gain') {
-                    $existingCheck = StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('type', 'Branch')->first();
-                    if (!empty($existingCheck)) :
-                        $newQty = $existingCheck->quantity + $qty[$i];
-                        StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('type', 'Branch')->update(array('quantity' => $newQty));
-                    endif;
+                    $summary->quantity += $qty[$i];
+                } else if (in_array($request->adjustment_type, ['Lost', 'Damage'])) {
+                    $summary->quantity -= $qty[$i];
                 }
+
+                $summary->save();
 
 
                 // $existingCheck = StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('type', 'Branch')->first();

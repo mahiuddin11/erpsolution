@@ -4,6 +4,7 @@ namespace App\Services\InventorySetup;
 
 use App\Repositories\InventorySetup\StockAdjustmentRepositories;
 use App\Rules\PhoneNumberValidationRules;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class StockAdjustmentService

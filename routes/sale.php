@@ -8,26 +8,20 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
     // Sale setup crud start
     Route::group(['middleware' => ['web', 'auth'], 'namespace' => 'Sale'], function () {
         //Sale crud operation start
-     
+
         Route::get('/sale-sale-list', [SaleController::class, 'index'])->name('sale.sale.index');
         Route::get('/dataProcessingSale', [SaleController::class, 'dataProcessingSale'])->name('sale.sale.dataProcessingSale');
-        
-
         Route::get('/sale-sale-create', [SaleController::class, 'create'])->name('sale.sale.create');
-
-        Route::post('/sale-sale-store', 'SaleController@store')->name('sale.sale.store');
-        Route::get('/sale-sale-edit/{id}', 'SaleController@edit')->name('sale.sale.edit');
-       
-        Route::get('/sale-sale-show/{id}',[SaleController::class, 'show'])->name('sale.sale.show');
-
-
-        Route::get('/sale-sale-challan/{id}', 'SaleController@challan')->name('sale.sale.challan');
-        Route::post('/sale-sale-update/{id}', 'SaleController@update')->name('sale.sale.update');
-        Route::get('/sale-sale-delete/{id}', 'SaleController@destroy')->name('sale.sale.destroy');
-        Route::get('/sale-sale-status/{id}/{status}', 'SaleController@statusUpdate')->name('sale.sale.status');
-        Route::get('/getProductListForSale', 'SaleController@getProductListForSale')->name('sale.sale.getProductListForSale');
-        Route::get('/unitPiceForSale', 'SaleController@unitPiceForSale')->name('sale.sale.unitPiceForSale');
-        Route::post('/sale-sale-quiceAddCustomer', 'SaleController@quiceAddCustomer')->name('sale.sale.quiceAddCustomer');
+        Route::post('/sale-sale-store', [SaleController::class, 'store'])->name('sale.sale.store');
+        Route::get('/sale-sale-edit/{id}', [SaleController::class, 'edit'])->name('sale.sale.edit');
+        Route::get('/sale-sale-show/{id}', [SaleController::class, 'show'])->name('sale.sale.show');
+        Route::get('/sale-sale-challan/{id}', [SaleController::class, 'challan'])->name('sale.sale.challan');
+        Route::post('/sale-sale-update/{id}', [SaleController::class, 'update'])->name('sale.sale.update');
+        Route::get('/sale-sale-delete/{id}', [SaleController::class, 'destroy'])->name('sale.sale.destroy');
+        Route::get('/sale-sale-status/{id}/{status}', [SaleController::class, 'statusUpdate'])->name('sale.sale.status');
+        Route::get('/getProductListForSale', [SaleController::class, 'getProductListForSale'])->name('sale.sale.getProductListForSale');
+        Route::get('/unitPiceForSale', [SaleController::class, 'unitPiceForSale'])->name('sale.sale.unitPiceForSale');
+        Route::post('/sale-sale-quiceAddCustomer', [SaleController::class, 'quiceAddCustomer'])->name('sale.sale.quiceAddCustomer');
 
         //Sale crud operation end
         Route::get('/getCustomerBalance', 'SaleController@getCustomerBalance')->name('sale.sale.getCustomerBalance');

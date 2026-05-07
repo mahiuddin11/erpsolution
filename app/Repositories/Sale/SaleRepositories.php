@@ -5,6 +5,7 @@ namespace App\Repositories\Sale;
 use App\Helpers\Helper;
 use App\Models\AccountTransaction;
 use App\Models\Brand;
+use App\Models\ChartOfAccount;
 use App\Models\Commission;
 use App\Models\CommissionRule;
 use App\Models\customerLedger;
@@ -23,7 +24,7 @@ class SaleRepositories
      * @var user_id
      */
 
-     private $user_id;
+    private $user_id;
 
     /**
      * @var Brand
@@ -91,11 +92,11 @@ class SaleRepositories
         } else {
             $search = $request->input('search.value');
             $Sale = $this->Sale::where('invoice_no', 'like', "%{$search}%")
-            ->orWhereHas('branch', function ($query) use ($search) {
-                 $query->where('name', 'like', "%{$search}%");
-            })
-            
-            ->orWhere('date', 'like', "%$search%");
+                ->orWhereHas('branch', function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%");
+                })
+
+                ->orWhere('date', 'like', "%$search%");
 
             $Sale = $Sale->offset($start)
                 ->limit($limit)
@@ -211,6 +212,16 @@ class SaleRepositories
             $esale->created_by = Auth::user()->id;
             $esale->save();
             $Sale_id = $esale->id;
+
+
+            $customerName = ChartOfAccount::find($request->ledger_id)?->account_name ?? 'N/A';
+            activity_log(
+                'create',
+                'Sales',
+                $esale->toArray(),
+                [],
+                "Sales created (Invoice: {$request->invoice_no}) — Customer: {$customerName}, Total: {$esale->grand_total}, Payment: {$request->payment_type} , "
+            );
 
             $category_id = $request->catName;
             $proName = $request->proName;
