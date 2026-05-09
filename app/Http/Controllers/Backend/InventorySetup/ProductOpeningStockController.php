@@ -58,30 +58,68 @@ class ProductOpeningStockController extends Controller
         return json_encode($this->systemTransformer->dataTable($json_data));
     }
 
-    /**
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
-     */
+
+    // public function create()
+    // {
+    //     $title = 'Add New Product Opening Stock';
+    //     $category_info = Category::get()->where('status', 'Active');
+    //     $supplier = Supplier::get()->where('status', 'Active');
+    //     $projects = Project::get();
+    //     $user = auth()->user();
+    //     $branchs = Branch::where('status', 'Active');
+
+    //     $branchs = $branchs->get();
+
+    //     $purchaseLastData = ProductOpeningStock::latest('id')->first();
+    //     if ($purchaseLastData) :
+    //         $purchaseData = $purchaseLastData->id + 1;
+    //     else :
+    //         $purchaseData = 1;
+    //     endif;
+    //     $invoice_no = 'OS' . str_pad($purchaseData, 5, "0", STR_PAD_LEFT);
+
+    //     return view('backend.pages.inventories.product_opening_stock.create', get_defined_vars());
+    // }
+
+
     public function create()
     {
         $title = 'Add New Product Opening Stock';
-        $category_info = Category::get()->where('status', 'Active');
-        $supplier = Supplier::get()->where('status', 'Active');
-        $projects = Project::get();
-        $user = auth()->user();
-        $branchs = Branch::where('status', 'Active');
 
-        $branchs = $branchs->get();
+        $category_info = Category::where('status', 'Active')->get();
+        $supplier      = Supplier::where('status', 'Active')->get();
+        $projects      = Project::get();
+        $user          = auth()->user();
 
+        //  Branch List with Parent Name
+        $branchs = Branch::where('status', 'Active')
+            ->orderBy('parent_id')
+            ->orderBy('name')
+            ->get();
+
+        // Branch  Parent 
+        $formattedBranches = $branchs->map(function ($branch) use ($branchs) {
+            $displayName = $branch->name;
+
+            if ($branch->parent_id && $branch->parent_id > 0) {
+                $parent = $branchs->where('id', $branch->parent_id)->first();
+                if ($parent) {
+                    $displayName .= " (" . $parent->name . ")";
+                }
+            }
+
+            $branch->display_name = $displayName;
+            return $branch;
+        });
+
+        // Invoice Number
         $purchaseLastData = ProductOpeningStock::latest('id')->first();
-        if ($purchaseLastData) :
-            $purchaseData = $purchaseLastData->id + 1;
-        else :
-            $purchaseData = 1;
-        endif;
+        $purchaseData = $purchaseLastData ? $purchaseLastData->id + 1 : 1;
         $invoice_no = 'OS' . str_pad($purchaseData, 5, "0", STR_PAD_LEFT);
 
         return view('backend.pages.inventories.product_opening_stock.create', get_defined_vars());
     }
+
 
     public function show(Request $request, $id)
     {

@@ -62,29 +62,71 @@ class StockAjdustmentController extends Controller
     /**
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
+    // public function create()
+    // {
+    //     $title = 'Add New Stock Adjustment';
+    //     $category_info = Category::get()->where('status', 'Active');
+    //     $supplier = Supplier::get()->where('status', 'Active');
+    //     // $branch = Branch::get()->where('status', 'Active');
+    //     $user = auth()->user();
+    //     $branch = Branch::where('status', 'Active');
+    //     if ($user->branch_id !== null) {
+    //         $branch = $branch->where('id', $user->branch_id);
+    //     }
+    //     $branch = $branch->get();
+
+    //     $purchaseLastData = StockAjdustment::latest('id')->first();
+    //     if ($purchaseLastData) :
+    //         $purchaseData = $purchaseLastData->id + 1;
+    //     else :
+    //         $purchaseData = 1;
+    //     endif;
+    //     $invoice_no = 'SA' . str_pad($purchaseData, 5, "0", STR_PAD_LEFT);
+
+    //     return view('backend.pages.inventories.stockAdjustment.create', get_defined_vars());
+    // }
+
+
     public function create()
     {
         $title = 'Add New Stock Adjustment';
-        $category_info = Category::get()->where('status', 'Active');
-        $supplier = Supplier::get()->where('status', 'Active');
-        // $branch = Branch::get()->where('status', 'Active');
-        $user = auth()->user();
-        $branch = Branch::where('status', 'Active');
-        if ($user->branch_id !== null) {
-            $branch = $branch->where('id', $user->branch_id);
-        }
-        $branch = $branch->get();
 
+        $category_info = Category::where('status', 'Active')->get();
+        $supplier      = Supplier::where('status', 'Active')->get();
+        $user          = auth()->user();
+
+        // Branch Query
+        $branchQuery = Branch::where('status', 'Active');
+
+        if ($user->branch_id !== null) {
+            $branchQuery = $branchQuery->where('id', $user->branch_id);
+        }
+
+        $branches = $branchQuery->orderBy('parent_id')->orderBy('name')->get();
+
+        // ✅ Parent Branch এর নাম যোগ করে Display Name তৈরি
+        $formattedBranches = $branches->map(function ($branch) use ($branches) {
+            $displayName = $branch->branchCode . ' - ' . $branch->name;
+
+            if (!empty($branch->parent_id) && $branch->parent_id > 0) {
+                $parent = $branches->where('id', $branch->parent_id)->first();
+                if ($parent) {
+                    $displayName .= " (" . $parent->name . ")";
+                }
+            }
+
+            $branch->display_name = $displayName;
+            return $branch;
+        });
+
+        // Invoice Number
         $purchaseLastData = StockAjdustment::latest('id')->first();
-        if ($purchaseLastData) :
-            $purchaseData = $purchaseLastData->id + 1;
-        else :
-            $purchaseData = 1;
-        endif;
+        $purchaseData = $purchaseLastData ? $purchaseLastData->id + 1 : 1;
         $invoice_no = 'SA' . str_pad($purchaseData, 5, "0", STR_PAD_LEFT);
 
         return view('backend.pages.inventories.stockAdjustment.create', get_defined_vars());
     }
+
     public function show(Request $request, $id)
     {
         $title = 'Purchase Invoice';

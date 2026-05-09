@@ -536,6 +536,7 @@ class PurchaseRepositories
 
     public function store($request)
     {
+
         DB::beginTransaction();
         try {
 

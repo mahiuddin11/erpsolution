@@ -75,9 +75,7 @@ class PurchaseController extends Controller
         return json_encode($this->systemTransformer->dataTable($json_data));
     }
 
-    /**
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
-     */
+
     public function create()
     {
 
@@ -190,7 +188,7 @@ class PurchaseController extends Controller
      */
     public function store(Request $request)
     {
-        // dd($request->all());
+
         try {
             $this->validate($request, $this->systemService->storeValidation($request));
         } catch (ValidationException $e) {

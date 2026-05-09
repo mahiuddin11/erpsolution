@@ -129,6 +129,7 @@
                                     <span class=" error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div> --}}
+
                             <div class="col-md-2 mb-3">
                                 <label for="ledger_id">Ledger * :
                                     <button type="button" class="btn btn-sm btn-primary ml-2" data-toggle="modal"
@@ -501,8 +502,8 @@
                 var proId = $('.proName').val();
                 var proName = $(".proName").find('option:selected').text();
 
-var qty = parseFloat(parent.find('.qty').val());
-var unitprice = parseFloat(parent.find('.unitprice').val());
+                var qty = parseFloat(parent.find('.qty').val());
+                var unitprice = parseFloat(parent.find('.unitprice').val());
 
 
 
@@ -656,47 +657,47 @@ var unitprice = parseFloat(parent.find('.unitprice').val());
                 getBalance(val);
             });
 
-// Quantity price calculate
-$(document).on('input', '.qty', function() {
-    let self = $(this);
-    let parent = self.parents('tr');
+            // Quantity price calculate
+            $(document).on('input', '.qty', function() {
+                let self = $(this);
+                let parent = self.parents('tr');
 
-    let qty = parseFloat(self.val());
-    if (isNaN(qty) || qty <= 0) {
-        qty = 1;
-        self.val(qty);
-    }
+                let qty = parseFloat(self.val());
+                if (isNaN(qty) || qty <= 0) {
+                    qty = 1;
+                    self.val(qty);
+                }
 
-    let unitPrice = parseFloat(parent.find('.unitprice').val());
-    if (isNaN(unitPrice) || unitPrice <= 0) {
-        unitPrice = 1;
-        parent.find('.unitprice').val(unitPrice);
-    }
+                let unitPrice = parseFloat(parent.find('.unitprice').val());
+                if (isNaN(unitPrice) || unitPrice <= 0) {
+                    unitPrice = 1;
+                    parent.find('.unitprice').val(unitPrice);
+                }
 
-    let total = unitPrice * qty;
-    parent.find('.total').val(total.toFixed(2));
-});
+                let total = unitPrice * qty;
+                parent.find('.total').val(total.toFixed(2));
+            });
 
-// Unit price to quantity calculate
-$(document).on('input', '.unitprice', function() {
-    let self = $(this);
-    let parent = self.parents('tr');
+            // Unit price to quantity calculate
+            $(document).on('input', '.unitprice', function() {
+                let self = $(this);
+                let parent = self.parents('tr');
 
-    let unitPrice = parseFloat(self.val());
-    if (isNaN(unitPrice) || unitPrice <= 0) {
-        unitPrice = 1;
-        self.val(unitPrice);
-    }
+                let unitPrice = parseFloat(self.val());
+                if (isNaN(unitPrice) || unitPrice <= 0) {
+                    unitPrice = 1;
+                    self.val(unitPrice);
+                }
 
-    let qty = parseFloat(parent.find('.qty').val());
-    if (isNaN(qty) || qty <= 0) {
-        qty = 1;
-        parent.find('.qty').val(qty);
-    }
+                let qty = parseFloat(parent.find('.qty').val());
+                if (isNaN(qty) || qty <= 0) {
+                    qty = 1;
+                    parent.find('.qty').val(qty);
+                }
 
-    let total = unitPrice * qty;
-    parent.find('.total').val(total.toFixed(2));
-});
+                let total = unitPrice * qty;
+                parent.find('.total').val(total.toFixed(2));
+            });
 
 
             $(document).on('input', '.input-checker', function() {

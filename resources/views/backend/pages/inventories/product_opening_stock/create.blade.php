@@ -99,7 +99,7 @@
                                 <span class="error text-red text-bold"></span>
                             </div>
 
-                            <div class="col-md-4 mb-3" id="branch_div" style="display: none;">
+                            {{-- <div class="col-md-4 mb-3" id="branch_div" style="display: none;">
                                 <label for="validationCustom01">Branch *:</label>
                                 <select class="form-control select2" id="branch_id" name="branch_id">
                                     <option selected value="0">--Select--</option>
@@ -108,7 +108,23 @@
                                     @endforeach
                                 </select>
                                 <span class="error text-red text-bold"></span>
+                            </div> --}}
+
+                            <div class="col-md-4 mb-3" id="branch_div" style="display: none;">
+                                <label for="validationCustom01">Branch *:</label>
+                                <select class="form-control select2" id="branch_id" name="branch_id">
+                                    <option selected value="0">--Select Branch--</option>
+                                    @foreach ($formattedBranches as $item)
+                                        <option value="{{ $item->id }}">
+                                            {{ $item->display_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <span class="error text-red text-bold"></span>
                             </div>
+
+
+
                             {{-- html load by js --}}
                             <div class="account-section col-md-12"></div>
 
@@ -638,6 +654,7 @@
             var costCenter = $('#cost_center option:selected').val();
             var projectSelected = $('#project_id option:selected').val();
             var branchSelected = $('#branch_id option:selected').val();
+
 
             if (costCenter == 0) {
                 e.preventDefault(); // Prevent form submission

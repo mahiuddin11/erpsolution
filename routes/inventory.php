@@ -298,6 +298,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/inventory-product-opening-stock-list', [ProductOpeningStockController::class, 'index'])->name('inventorySetup.productOS.index');
         Route::get('/dataProcessingproduct-opening-stock', [ProductOpeningStockController::class, 'dataProcessing'])->name('inventorySetup.productOS.dataProcessingproduct-opening-stock');
         Route::get('/inventory-product-opening-stock-create', [ProductOpeningStockController::class, 'create'])->name('inventorySetup.productOS.create');
+
         Route::post('/inventory-product-opening-stock-store', [ProductOpeningStockController::class, 'store'])->name('inventorySetup.productOS.store');
         Route::get('/inventory-product-opening-stock-edit/{id}', [ProductOpeningStockController::class, 'edit'])->name('inventorySetup.productOS.edit');
         Route::get('/inventory-product-opening-stock-show/{id}', [ProductOpeningStockController::class, 'show'])->name('inventorySetup.productOS.show');

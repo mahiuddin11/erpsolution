@@ -1639,56 +1639,150 @@ class ReportController extends Controller
         return view('backend.pages.reports.balancesheet', get_defined_vars());
     }
 
+    // public function stock(Request $request)
+    // {
+
+    //     $title = 'Stock Detail';
+
+    //     $branch_id = '';
+    //     $product_id = '';
+
+    //     if ($request->method() == 'POST') {
+    //         $StockDetails = '';
+    //         $datas = explode('-', $request->dateRange);
+    //         $from_date = date('Y-m-d', strtotime($datas[0]));
+    //         $to_date = date('Y-m-d', strtotime($datas[1]));
+
+    //         $branch_id = $request->branch_id;
+    //         $product_id = $request->product_id;
+
+
+    //         // dd($request->all());
+    //         if ($product_id ==  '---Select Product---' || $product_id == null) {
+    //             return Redirect::back()->withErrors(['msg' => 'Product Can not be empty!']);
+    //         }
+
+    //         // $currentSrock = StockSummary::orderBy('stock_summaries.id', 'desc')
+    //         //     ->select('stock_summaries.*', 'stock_summaries.quantity as stock_qty', 'purchases_details.*', DB::raw("avg(purchases_details.unit_price) as avgPrice"))
+    //         //     ->join('purchases_details', 'purchases_details.product_id', '=', 'stock_summaries.product_id')
+    //         //     ->orderBy("stock_summaries.product_id", "ASC")
+    //         //     ->groupBy('stock_summaries.product_id')
+    //         //     ->get();
+
+    //         $StockDetails = Stock::join('branches', 'stocks.branch_id', '=', 'branches.id')
+    //             ->select('products.*', 'purchases_details.*', DB::raw("avg(purchases_details.unit_price) as avgPrice"))
+    //             ->join('purchases_details', 'purchases_details.product_id', '=', 'stocks.product_id')
+    //             ->join('products', 'stocks.product_id', '=', 'products.id')
+    //             ->whereBetween('stocks.date', [$from_date, $to_date]);
+
+    //         if ($branch_id != 'all') {
+    //             $StockDetails =   $StockDetails->where('stocks.branch_id', $branch_id);
+    //         }
+    //         $StockDetails =   $StockDetails->where('stocks.product_id', $product_id);
+
+    //         $StockDetails =  $StockDetails->get();
+    //         // dd(count($StockDetails));
+    //     }
+
+    //     $companyInfo = Company::latest('id')->first();
+
+    //     $branch = Branch::where('status', 'Active')->get();
+    //     $accounts = ChartOfAccount::get()->where('status', 'Active');
+    //     $category_info = Category::where('status', 'Active')->get();
+    //     return view('backend.pages.reports.stock', get_defined_vars());
+    // }
+
     public function stock(Request $request)
     {
+        $title = 'Stock Details Report';
 
-        $title = 'Stock Detail';
+        $branch_id   = $request->branch_id ?? 'all';
+        $product_id  = $request->product_id;
+        $from_date   = null;
+        $to_date     = null;
 
-        $branch_id = '';
-        $product_id = '';
+        // ==================== Date Range Processing (Fixed) ====================
+        if ($request->filled('dateRange')) {
+            $dateStr = trim($request->dateRange);
+            // Remove extra spaces and split
+            $dateStr = str_replace(' ', '', $dateStr);
+            $datas   = explode('-', $dateStr);
 
-        if ($request->method() == 'POST') {
-            $StockDetails = '';
-            $datas = explode('-', $request->dateRange);
-            $from_date = date('Y-m-d', strtotime($datas[0]));
-            $to_date = date('Y-m-d', strtotime($datas[1]));
-
-            $branch_id = $request->branch_id;
-            $product_id = $request->product_id;
-
-
-            // dd($request->all());
-            if ($product_id ==  '---Select Product---' || $product_id == null) {
-                return Redirect::back()->withErrors(['msg' => 'Product Can not be empty!']);
+            if (count($datas) == 2) {
+                $from_date = date('Y-m-d', strtotime(trim($datas[0])));
+                $to_date   = date('Y-m-d', strtotime(trim($datas[1])));
             }
-
-            // $currentSrock = StockSummary::orderBy('stock_summaries.id', 'desc')
-            //     ->select('stock_summaries.*', 'stock_summaries.quantity as stock_qty', 'purchases_details.*', DB::raw("avg(purchases_details.unit_price) as avgPrice"))
-            //     ->join('purchases_details', 'purchases_details.product_id', '=', 'stock_summaries.product_id')
-            //     ->orderBy("stock_summaries.product_id", "ASC")
-            //     ->groupBy('stock_summaries.product_id')
-            //     ->get();
-
-            $StockDetails = Stock::join('branches', 'stocks.branch_id', '=', 'branches.id')
-                ->select('products.*', 'purchases_details.*', DB::raw("avg(purchases_details.unit_price) as avgPrice"))
-                ->join('purchases_details', 'purchases_details.product_id', '=', 'stocks.product_id')
-                ->join('products', 'stocks.product_id', '=', 'products.id')
-                ->whereBetween('stocks.date', [$from_date, $to_date]);
-
-            if ($branch_id != 'all') {
-                $StockDetails =   $StockDetails->where('stocks.branch_id', $branch_id);
-            }
-            $StockDetails =   $StockDetails->where('stocks.product_id', $product_id);
-
-            $StockDetails =  $StockDetails->get();
-            // dd(count($StockDetails));
         }
 
-        $companyInfo = Company::latest('id')->first();
+        $StockDetails = collect();
 
-        $branch = Branch::where('status', 'Active')->get();
-        $accounts = ChartOfAccount::get()->where('status', 'Active');
+        if ($request->isMethod('POST')) {
+
+            if (empty($product_id) || $product_id == '---Select Product---') {
+                return redirect()->back()->withErrors(['msg' => 'Product is required!']);
+            }
+
+            // ==================== Main Query ====================
+            $query = Stock::select(
+                'stocks.*',
+                'products.productCode',
+                'products.name as product_name',
+                'branches.branchCode',
+                'branches.name as branch_name'
+            )
+                ->leftJoin('products', 'products.id', '=', 'stocks.product_id')
+                ->leftJoin('branches', 'branches.id', '=', 'stocks.branch_id')
+                ->where('stocks.product_id', $product_id)
+                ->orderBy('stocks.date', 'asc')
+                ->orderBy('stocks.id', 'asc');
+
+            if ($branch_id != 'all') {
+                $query->where('stocks.branch_id', $branch_id);
+            }
+
+            // ==================== Date Filter ====================
+            if ($from_date && $to_date) {
+                $query->whereBetween('stocks.date', [$from_date, $to_date]);
+            }
+
+            $StockDetails = $query->get();
+
+            // ==================== Running Balance Calculation ====================
+            $runningBalance = 0;
+            foreach ($StockDetails as $item) {
+
+                $positiveStatuses = [
+                    'Opening',
+                    'Purchase',
+                    'Manual Purchase',
+                    'Production',
+                    'Gain',
+                    'Transfer In',
+                    'Project In',
+                    'Return',
+                    'Purchase Return'
+                ];
+
+                $isIn = in_array($item->status, $positiveStatuses);
+
+                if ($isIn) {
+                    $runningBalance += $item->quantity ?? 0;
+                    $item->in_qty  = $item->quantity ?? 0;
+                    $item->out_qty = 0;
+                } else {
+                    $runningBalance -= $item->quantity ?? 0;
+                    $item->in_qty  = 0;
+                    $item->out_qty = $item->quantity ?? 0;
+                }
+
+                $item->running_balance = $runningBalance;
+            }
+        }
+
+        $companyInfo   = Company::latest('id')->first();
+        $branch        = Branch::where('status', 'Active')->get();
         $category_info = Category::where('status', 'Active')->get();
+
         return view('backend.pages.reports.stock', get_defined_vars());
     }
 
@@ -1892,7 +1986,7 @@ class ReportController extends Controller
                 DB::raw('SUM(CASE WHEN stocks.status IN ("Production Sale", "Production Out", "Sale", "Damage", "Lost", "Transfer Out", "Project Out", "Project Use", "Sale Return") 
              THEN stocks.quantity ELSE 0 END) as total_out'),
 
-                // সবচেয়ে গুরুত্বপূর্ণ — সঠিক Current Stock
+
                 DB::raw('
         SUM(
             CASE 
