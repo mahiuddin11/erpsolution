@@ -64,27 +64,83 @@ class StockTransferController extends Controller
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
 
+    // public function create()
+    // {
+    //     $title = 'Add New Transfer';
+    //     $tobranch = Branch::get()->where('status', 'Active');
+    //     $user = auth()->user();
+    //     $branch = Branch::where('status', 'Active');
+    //     if ($user->branch_id !== null) {
+    //         $branch = $branch->where('id', $user->branch_id);
+    //     }
+    //     $branch = $branch->get();
+    //     $category_info = Category::get()->where('status', 'Active');
+
+    //     $stockTransferData = Transfer::latest('id')->first();
+    //     if ($stockTransferData) :
+    //         $stockTransfer = $stockTransferData->id + 1;
+    //     else :
+    //         $stockTransfer = 1;
+    //     endif;
+    //     $invoice_no = 'TV' . str_pad($stockTransfer, 5, "0", STR_PAD_LEFT);
+    //     return view('backend.pages.inventories.transfer.create', get_defined_vars());
+    // }
+
     public function create()
     {
         $title = 'Add New Transfer';
-        $tobranch = Branch::get()->where('status', 'Active');
         $user = auth()->user();
-        $branch = Branch::where('status', 'Active');
-        if ($user->branch_id !== null) {
-            $branch = $branch->where('id', $user->branch_id);
-        }
-        $branch = $branch->get();
-        $category_info = Category::get()->where('status', 'Active');
+        $category_info = Category::where('status', 'Active')->get();
 
+
+        $branchQuery = Branch::where('status', 'Active');
+        if ($user->branch_id !== null) {
+            $branchQuery = $branchQuery->where('id', $user->branch_id);
+        }
+        $branches = $branchQuery->orderBy('parent_id')->orderBy('name')->get();
+
+        // To Branch ( Active Branch)
+        $toBranches = Branch::where('status', 'Active')
+            ->orderBy('parent_id')
+            ->orderBy('name')
+            ->get();
+
+        //  Display Name (From Branch)
+        $formattedBranches = $branches->map(function ($branch) use ($branches) {
+            $displayName = $branch->branchCode . ' - ' . $branch->name;
+
+            if (!empty($branch->parent_id) && $branch->parent_id > 0) {
+                $parent = $branches->where('id', $branch->parent_id)->first();
+                if ($parent) {
+                    $displayName .= " (" . $parent->name . ")";
+                }
+            }
+            $branch->display_name = $displayName;
+            return $branch;
+        });
+
+        // Display Name (To Branch)
+        $formattedToBranches = $toBranches->map(function ($branch) use ($toBranches) {
+            $displayName = $branch->branchCode . ' - ' . $branch->name;
+
+            if (!empty($branch->parent_id) && $branch->parent_id > 0) {
+                $parent = $toBranches->where('id', $branch->parent_id)->first();
+                if ($parent) {
+                    $displayName .= " (" . $parent->name . ")";
+                }
+            }
+            $branch->display_name = $displayName;
+            return $branch;
+        });
+
+        // Invoice Number
         $stockTransferData = Transfer::latest('id')->first();
-        if ($stockTransferData) :
-            $stockTransfer = $stockTransferData->id + 1;
-        else :
-            $stockTransfer = 1;
-        endif;
+        $stockTransfer = $stockTransferData ? $stockTransferData->id + 1 : 1;
         $invoice_no = 'TV' . str_pad($stockTransfer, 5, "0", STR_PAD_LEFT);
+
         return view('backend.pages.inventories.transfer.create', get_defined_vars());
     }
+
 
     public function show(Request $request, $id)
     {
@@ -162,7 +218,7 @@ class StockTransferController extends Controller
      */
     public function store(Request $request)
     {
-        // dd($request->all());
+
         try {
             $this->validate($request, $this->systemService->storeValidation($request));
         } catch (ValidationException $e) {

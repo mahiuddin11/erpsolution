@@ -9,6 +9,7 @@ use App\Http\Controllers\Backend\InventorySetup\PurchaseOrderController;
 use App\Http\Controllers\Backend\InventorySetup\PurchaseRequisitionController;
 use App\Http\Controllers\Backend\InventorySetup\StockAjdustmentController;
 use App\Http\Controllers\Backend\InventorySetup\StockReportController;
+use App\Http\Controllers\Backend\InventorySetup\StockTransferController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -310,23 +311,28 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //Prodyct Opening Stock operation end
 
         //stock transfer curd operation start
-        Route::get('/inventory-transfer-list', 'StockTransferController@index')->name('inventorySetup.transfer.index');
-        Route::get('/dataProcessingTransfer', 'StockTransferController@dataProcessingTransfer')->name('inventorySetup.transfer.dataProcessingTransfer');
-        Route::get('/inventory-transfer-create', 'StockTransferController@create')->name('inventorySetup.transfer.create');
-        Route::post('/inventory-transfer-store', 'StockTransferController@store')->name('inventorySetup.transfer.store');
-        Route::post('/inventory-transfer-approval-store', 'StockTransferController@approval_store')->name('inventorySetup.transfer.approval_store');
-        Route::get('/inventory-transfer-edit/{id}', 'StockTransferController@edit')->name('inventorySetup.transfer.edit');
-        Route::get('/inventory-transfer-show/{id}', 'StockTransferController@show')->name('inventorySetup.transfer.show');
-        Route::get('/inventory-transfer-approval/{id}', 'StockTransferController@approval')->name('inventorySetup.transfer.approval');
-        Route::get('/inventory-transfer-getProductListTransfer', 'StockTransferController@getProductListTransfer')->name('inventorySetup.transfer.getProductListTransfer');
-        Route::post('/inventory-transfer-update/{id}', 'StockTransferController@update')->name('inventorySetup.transfer.update');
-        Route::get('/inventory-transfer-delete/{id}', 'StockTransferController@destroy')->name('inventorySetup.transfer.destroy');
-        Route::get('/inventory-transfer-status/{id}/{status}', 'StockTransferController@statusUpdate')->name('inventorySetup.transfer.status');
-        Route::get('/inventory-transfer-editapproval/{id}', 'StockTransferController@editapproval')->name('inventorySetup.transfer.editapproval');
-        Route::post('/inventorySetup.transfer.approveedit/{id}', 'StockTransferController@updateapprove')->name('inventorySetup.transfer.approveedit');
+        Route::get('/inventory-transfer-list', [StockTransferController::class, 'index'])->name('inventorySetup.transfer.index');
+        Route::get('/dataProcessingTransfer', [StockTransferController::class, 'dataProcessingTransfer'])->name('inventorySetup.transfer.dataProcessingTransfer');
+        Route::get('/inventory-transfer-create', [StockTransferController::class, 'create'])->name('inventorySetup.transfer.create');
+        Route::post('/inventory-transfer-store', [StockTransferController::class, 'store'])->name('inventorySetup.transfer.store');
+        Route::post('/inventory-transfer-approval-store', [StockTransferController::class, 'approval_store'])->name('inventorySetup.transfer.approval_store');
+        Route::get('/inventory-transfer-edit/{id}', [StockTransferController::class, 'edit'])->name('inventorySetup.transfer.edit');
+        Route::get('/inventory-transfer-show/{id}', [StockTransferController::class, 'show'])->name('inventorySetup.transfer.show');
+        Route::get('/inventory-transfer-approval/{id}', [StockTransferController::class, 'approval'])->name('inventorySetup.transfer.approval');
+        Route::get('/inventory-transfer-getProductListTransfer', [StockTransferController::class, 'getProductListTransfer'])->name('inventorySetup.transfer.getProductListTransfer');
+        Route::post('/inventory-transfer-update/{id}', [StockTransferController::class, 'update'])->name('inventorySetup.transfer.update');
+        Route::get('/inventory-transfer-delete/{id}', [StockTransferController::class, 'destroy'])->name('inventorySetup.transfer.destroy');
+        Route::get('/inventory-transfer-status/{id}/{status}', [StockTransferController::class, 'statusUpdate'])->name('inventorySetup.transfer.status');
+        Route::get('/inventory-transfer-editapproval/{id}', [StockTransferController::class, 'editapproval'])->name('inventorySetup.transfer.editapproval');
+        Route::post('/inventorySetup.transfer.approveedit/{id}', [StockTransferController::class, 'updateapprove'])->name('inventorySetup.transfer.approveedit');
 
         //stock transfer curd operation end
         Route::any('/inventory-currentStock-list', [StockReportController::class, 'index'])->name('inventorySetup.currentStock.index');
+
+
+        Route::get('/unit-price', [StockTransferController::class, 'unitPiceForSale'])->name('InventorySetup.unitPiceForSale');
+        Route::get('/product-stock', [StockTransferController::class, 'getProductStock'])->name('InventorySetup.getProductStock');
+        Route::get('/product-list', [StockTransferController::class, 'getProductListTransfer'])->name('InventorySetup.getProductListTransfer');
     });
     // Inventory setup crud end
 });

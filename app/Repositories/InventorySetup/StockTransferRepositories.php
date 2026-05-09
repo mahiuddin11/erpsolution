@@ -199,7 +199,7 @@ class StockTransferRepositories
 
     public function store($request)
     {
-        // dd($request->all());
+
         DB::beginTransaction();
         try {
             $transfer = new $this->transfer();
@@ -295,7 +295,7 @@ class StockTransferRepositories
                 endif;
             }
 
-            dd($request->all());
+
 
             $category_id = $request->catName;
             $proName = $request->proName;
