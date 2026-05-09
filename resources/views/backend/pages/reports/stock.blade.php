@@ -232,7 +232,7 @@
                                                 <th>Branch</th>
                                                 <th style="text-align: right">In Qty</th>
                                                 <th style="text-align: right">Out Qty</th>
-                                                <th style="text-align: right">Balance</th>
+                                                <th style="text-align: right">Current Stock</th>
                                                 <th style="text-align: right">Unit Price</th>
                                                 <th style="text-align: right">Amount</th>
                                             </tr>
@@ -245,6 +245,7 @@
 
                                             @foreach ($StockDetails as $item)
                                                 @php
+                                                    // Stock In / Out Logic
                                                     $positiveStatuses = [
                                                         'Opening',
                                                         'Purchase',
@@ -268,6 +269,22 @@
                                                         $inQty = 0;
                                                         $outQty = $item->quantity ?? 0;
                                                     }
+
+                                                    // Smart Invoice / Reference Logic
+                                                    $invoiceRef = '-';
+                                                    if (!empty($item->invoice_no)) {
+                                                        $invoiceRef = $item->invoice_no;
+                                                    } elseif (!empty($item->general_id)) {
+                                                        $invoiceRef = $item->general_id;
+                                                    } elseif ($item->status == 'Opening') {
+                                                        $invoiceRef = 'Opening Stock';
+                                                    } elseif (in_array($item->status, ['Gain', 'Damage', 'Lost'])) {
+                                                        $invoiceRef =
+                                                            $item->general_id ??
+                                                            'ADJ-' . str_pad($item->id ?? '', 5, '0', STR_PAD_LEFT);
+                                                    } else {
+                                                        $invoiceRef = $item->general_id ?? '-';
+                                                    }
                                                 @endphp
 
                                                 <tr>
@@ -276,11 +293,10 @@
                                                     <td>{{ $item->product_name ?? ($item->name ?? 'N/A') }}</td>
                                                     <td>{{ $item->date ? date('d-m-Y', strtotime($item->date)) : '' }}</td>
 
-                                                    <td>
-                                                        <strong>{{ ucwords(str_replace(['_', '-'], ' ', $item->status)) }}</strong>
+                                                    <td><strong>{{ ucwords(str_replace(['_', '-'], ' ', $item->status)) }}</strong>
                                                     </td>
 
-                                                    <td>{{ $item->general_id ?? ($item->invoice_no ?? '-') }}</td>
+                                                    <td><strong>{{ $invoiceRef }}</strong></td>
 
                                                     <td>{{ $item->branchCode ?? '' }} -
                                                         {{ $item->branch_name ?? ($item->bname ?? '') }}</td>

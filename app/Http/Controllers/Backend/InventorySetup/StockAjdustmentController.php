@@ -104,7 +104,7 @@ class StockAjdustmentController extends Controller
 
         $branches = $branchQuery->orderBy('parent_id')->orderBy('name')->get();
 
-        // ✅ Parent Branch এর নাম যোগ করে Display Name তৈরি
+        // Parent Branch Display Logic
         $formattedBranches = $branches->map(function ($branch) use ($branches) {
             $displayName = $branch->branchCode . ' - ' . $branch->name;
 

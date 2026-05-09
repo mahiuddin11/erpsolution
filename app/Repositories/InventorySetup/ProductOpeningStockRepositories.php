@@ -228,6 +228,7 @@ class ProductOpeningStockRepositories
                 // ==================== STOCKS Opening Stock ====================
                 $stock = new Stock();
                 $stock->date          = $request->date;
+                $stock->invoice_no     = $request->invoice_no;
                 $stock->product_id    = $proName[$i];
                 $stock->branch_id     = $request->branch_id;
                 $stock->project_id    = $request->project_id ?? null;

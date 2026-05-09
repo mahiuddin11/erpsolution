@@ -268,6 +268,7 @@ class StockAdjustmentRepositories
     public function storeapproval($request, $id)
     {
 
+
         DB::beginTransaction();
         try {
             $purchase = $this->StockAjdustment::findOrFail($id);
@@ -320,9 +321,13 @@ class StockAdjustmentRepositories
                 // $stock->status = $request->adjustment_type;
                 // $stock->save();
 
+
+
                 $stock = new Stock();
                 $stock->general_id     = $purchases_id;
+                $stock->date           = $purchase->date;
                 $stock->branch_id      = $request->branch_id;
+                $stock->invoice_no      = $purchase->invoice_no;
                 $stock->product_id     = $proName[$i];
                 $stock->unit_price     = $subtotal[$i];
                 $stock->total_price    = $grand_total[$i];
