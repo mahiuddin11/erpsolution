@@ -200,6 +200,7 @@ class StockTransferRepositories
     public function store($request)
     {
 
+
         DB::beginTransaction();
         try {
             $transfer = new $this->transfer();
@@ -239,6 +240,17 @@ class StockTransferRepositories
                 $transferDetails->save();
             }
 
+            activity_log(
+                'create',
+                'stock_transfer',
+                array_merge($transfer->toArray(), [
+                    'invoice_no'      => $request->invoice_no,
+                    'status' => $transfer->status,
+                ]),
+                [],
+                "Stock Transfer created (Invoice: {$request->invoice_no}) — Aprovel Status : {$transfer->status}"
+            );
+
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
@@ -250,10 +262,13 @@ class StockTransferRepositories
     public function approval($request)
     {
 
+
         DB::beginTransaction();
         try {
             $transferId = $request->transferId;
             $transfer = Transfer::find($transferId);
+            $oldData = $transfer->toArray();
+
             $transfer->approved_date =  date('Y-m-d');
             $transfer->status = 'Approved';
             $transfer->approve_qty = array_sum($request->qty);
@@ -328,7 +343,13 @@ class StockTransferRepositories
                 $stock->save();
             }
 
-
+            activity_log(
+                'approve',                                   // action
+                'stock_transfer',                             // table/model
+                $transfer->toArray(),                        // new data
+                $oldData,                                    // old data
+                "Transfer approved successfully (Transfer ID: {$transfer->voucher_code}) — Status: Pending → Approved"
+            );
 
             DB::commit();
         } catch (\Exception $e) {

@@ -79,9 +79,9 @@ class StockTransferService
     public function storeValidation_approval($request)
     {
 
-// dd($request->all());
+        // dd($request->all());
         return [
-            
+
             'date'                   => 'required',
             'catName'                   => 'required',
             'proName'                   => 'required',
@@ -123,15 +123,12 @@ class StockTransferService
         ];
     }
 
-    /**
-     * @param $request
-     * @return \App\Models\Currency
-     */
+
     public function store($request)
     {
         return $this->systemRepositories->store($request);
     }
-    
+
     public function stotransferStore($request)
     {
         return $this->systemRepositories->stotransferStore($request);

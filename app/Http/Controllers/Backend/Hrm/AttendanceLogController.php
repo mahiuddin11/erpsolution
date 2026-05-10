@@ -21,8 +21,13 @@ class AttendanceLogController extends Controller
 
     public function index(Request $request)
     {
+
+
         $title = 'Attendance Log';
+
         $employees = Employee::where('employee_status', 'present');
+
+
         if ($request->method() == "POST") {
             $attendances = Attendance::selectRaw('DATE(date) date,emplyee_id,sign_in,sign_out')->with('employe');
 
@@ -36,6 +41,8 @@ class AttendanceLogController extends Controller
             }
 
             $attendances = $attendances->get();
+
+
 
             $dayes = Attendance::selectRaw('DATE(date) date');
             if ($request->from && $request->to) {
@@ -65,7 +72,6 @@ class AttendanceLogController extends Controller
         return view('backend.pages.hrm.attendance.attendance-log.newemployee', compact("employees", "title"));
     }
 
-
     /* ══════════════════════════════════════════════════════════
      | JSON API — attendance log
      |
@@ -84,15 +90,15 @@ class AttendanceLogController extends Controller
      | Friday and $holidays are always SKIPPED (not in result at all).
      | Holidays still appear but with status = 'Holiday'.
      ══════════════════════════════════════════════════════════ */
-   
+
 
     public function attandanceLog(Request $request)
     {
 
-   
 
         $month = $request->month ?? now()->month;
         $year  = $request->year ?? now()->year;
+
 
         /* ── Date range ── */
         $start = $request->start_date ?? Carbon::create($year, $month, 1)->toDateString();
@@ -134,13 +140,13 @@ class AttendanceLogController extends Controller
             ->where('employee_status', 'present')->orderBy('id_card', 'asc')
             ->get();
 
+
+
         /* ── Attendance rows ── */
         $attendances = Attendance::whereBetween('date', [$start, $end])
             ->get()
             ->groupBy(fn($item) => $item->emplyee_id . '_' . $item->date);
 
-       
-    
 
         $period = CarbonPeriod::create($start, $end);
 
@@ -185,19 +191,19 @@ class AttendanceLogController extends Controller
 
                 /* ── Friday = Holiday ── */
                 if ($isFriday) {
-                    $result[] = $this->buildRow($emp, $dateStr, null, 'Holiday', $color, $initials, $officeStart);
+                    $result[] = $this->buildRow($emp, $dateStr, $row, 'Holiday', $color, $initials, $officeStart);
                     continue;
                 }
 
                 /* ── Custom Holiday ── */
                 if ($isHoliday) {
-                    $result[] = $this->buildRow($emp, $dateStr, null, 'Holiday', $color, $initials, $officeStart);
+                    $result[] = $this->buildRow($emp, $dateStr, $row, 'Holiday', $color, $initials, $officeStart);
                     continue;
                 }
 
                 /* ── Leave ── */
                 if ($isLeave) {
-                    $result[] = $this->buildRow($emp, $dateStr, null, 'Leave', $color, $initials, $officeStart);
+                    $result[] = $this->buildRow($emp, $dateStr, $row, 'Leave', $color, $initials, $officeStart);
                     continue;
                 }
 
@@ -231,7 +237,7 @@ class AttendanceLogController extends Controller
                     }
                 }
 
-               
+
 
                 $result[] = [
                     'id'       => $row->id,
@@ -264,7 +270,7 @@ class AttendanceLogController extends Controller
                 return $dateB <=> $dateA;
             }
 
-            //  same date হলে id_card asc
+            //  same date  id_card asc
             return (int) filter_var($a['empId'], FILTER_SANITIZE_NUMBER_INT)
                 <=> (int) filter_var($b['empId'], FILTER_SANITIZE_NUMBER_INT);
         });
@@ -281,31 +287,42 @@ class AttendanceLogController extends Controller
         ]);
     }
 
-    /* ══════════════════════════════════════════════════════════
-     | Helper: build a simple row (Holiday / Leave / Absent)
-     ══════════════════════════════════════════════════════════ */
+
     private function buildRow(Employee $emp, string $dateStr, $row, string $status, string $color, string $initials, Carbon $officeStart): array
     {
-        
+        $checkInTime  = ($row && $row->sign_in)  ? Carbon::parse($row->sign_in)  : null;
+        $checkOutTime = ($row && $row->sign_out) ? Carbon::parse($row->sign_out) : null;
+
+        $hours    = '0h 0m';
+        $overtime = '0h 0m';
+
+        if ($checkInTime && $checkOutTime && $checkOutTime->gt($checkInTime)) {
+            $diffMin  = $checkInTime->diffInMinutes($checkOutTime);
+            $hours    = floor($diffMin / 60) . 'h ' . ($diffMin % 60) . 'm';
+
+            if ($diffMin > 480) {
+                $ot       = $diffMin - 480;
+                $overtime = floor($ot / 60) . 'h ' . ($ot % 60) . 'm';
+            }
+        }
+
         return [
-            'id'       => $row ? $row->id : null,
-            'empId'    => 'EMP :' . $emp->id_card ?? null,
-            'name'     => $emp->name,
-            'email'    => $emp->email,
-            'dept'     => $emp->department,
+            'id'        => $row ? $row->id : null,
+            'empId'     => 'EMP :' . $emp->id_card ?? null,
+            'name'      => $emp->name,
+            'email'     => $emp->email,
+            'dept'      => $emp->department,
             'offictime' => $officeStart->format('h:i A'),
-            'date'     => $dateStr,
-            'checkIn'  => '—',
-            'checkOut' => '—',
-            'hours'    => '0h 0m',
-            'overtime' => '0h 0m',
-            'status'   => $status,
-            'color'    => $status === 'Absent'  ? '#ef4444'
+            'date'      => $dateStr,
+            'checkIn'   => $checkInTime  ? $checkInTime->format('h:i A')  : '—',
+            'checkOut'  => $checkOutTime ? $checkOutTime->format('h:i A') : '—',
+            'hours'     => $hours,
+            'overtime'  => $overtime,
+            'status'    => $status,
+            'color'     => $status === 'Absent'  ? '#ef4444'
                 : ($status === 'Holiday' ? '#7c3aed'
                     : ($status === 'Leave'   ? '#ea580c' : $color)),
-            'initials' => $initials,
+            'initials'  => $initials,
         ];
     }
-
-    
 }

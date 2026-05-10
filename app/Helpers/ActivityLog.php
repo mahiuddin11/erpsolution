@@ -117,6 +117,7 @@ if (!function_exists('_log_resolve_module')) {
             'stock_adjustments'              => ['Inventory',  'Stock Adjustment'],
             'stock_adjustment_details'       => ['Inventory',  'Stock Adjustment Details'],
             'stock_summaries'                => ['Inventory',  'Stock Summary'],
+            'stock_transfer'                 => ['Inventory',  'Stock Transfer'],
             'stocks'                         => ['Inventory',  'Stock Ledger'],
             'products'                       => ['Inventory',  'Product'],
             'product_categories'             => ['Inventory',  'Category'],

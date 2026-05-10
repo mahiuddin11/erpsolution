@@ -196,6 +196,7 @@ class StockTransferController extends Controller
 
     public function approval_store(Request $request)
     {
+
         if ($request->approvalstatus == 'Approved') {
             session()->flash('error', ' Already Approved!!');
             return redirect()->route('inventorySetup.transfer.index');
