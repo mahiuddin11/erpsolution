@@ -1474,6 +1474,17 @@ $parent_menu = array(
             ),
 
             (object) array(
+                'label' => 'Cheque Register',
+                'route' => null,
+                'uniqueName' => 'CheckRegister',
+                'icon' => 'fa fa-money-check-alt',
+                'parent_id' => null,
+                'childMenu' => (object) array(
+                    (object) array('label' => 'Cheque Register ', 'route' => 'report.check_register.index', 'icon' => 'fa fa-money-check-alt', 'navigate_status' => 1),
+                )
+            ),
+
+            (object) array(
                 'label' => 'Ledger Group Amount',
                 'route' => null,
                 'uniqueName' => "ledgerGroupReport",

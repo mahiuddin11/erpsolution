@@ -52,6 +52,7 @@ class ProductOpeningStockRepositories
      * @param $request
      * @return mixed
      */
+
     public function getList($request)
     {
         $columns = array(

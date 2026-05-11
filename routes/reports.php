@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Backend\Reports\CheckRegisterController;
 use App\Http\Controllers\Backend\Reports\ReportController;
 use Illuminate\Support\Facades\Route;
 
@@ -60,5 +61,10 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::any('/report-expense-book', [ReportController::class, 'newexpense'])->name('report.expense');
         Route::any('/report-voucher-report', [ReportController::class, 'voucher'])->name('report.voucher.report');
         Route::any('/report-income-trans-details', [ReportController::class, 'incomeDetails'])->name('report.incomestatement.details');
+
+
+        // Check Register Report Route
+        Route::get('check-register-list', [CheckRegisterController::class, 'index'])->name('report.check_register.index');
+        Route::get('/check-register-dataProcess', [CheckRegisterController::class, 'dataProcess'])->name('reports.check_register.dataprocess');
     });
 });
