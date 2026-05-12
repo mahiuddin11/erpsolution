@@ -64,7 +64,8 @@
                                     <th width="50">SL</th>
                                     <th width="100">Date</th>
                                     <th width="120">Cheque No</th>
-                                    <th>Account Name</th>
+                                    <th>From Account </th>
+                                    <th>To Account </th>
                                     <th> Description</th>
                                     <th class="text-right">Debit</th>
                                     <th class="text-right">Credit</th>
@@ -82,7 +83,8 @@
                                     <th>SL</th>
                                     <th>Date</th>
                                     <th>Cheque No</th>
-                                    <th>Account Name</th>
+                                    <th>From Account </th>
+                                    <th>To Account </th>
                                     <th> Description</th>
                                     <th class="text-right">Debit</th>
                                     <th class="text-right">Credit</th>
@@ -135,10 +137,18 @@
                     "orderable": true,
                     "class": "text-center font-weight-bold"
                 }, // Cheque No
+
                 {
-                    "data": "account_name",
-                    "orderable": true
-                }, // Account Name
+                    "data": "from_account",
+                    "orderable": true,
+                    "class": "text-center font-weight-bold"
+                }, // ← From Account
+
+                {
+                    "data": "to_account",
+                    "orderable": true,
+                    "class": "text-center font-weight-bold"
+                },
                 {
                     "data": "description",
                     "orderable": true

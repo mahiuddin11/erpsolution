@@ -15,48 +15,66 @@ class CheckRegisterController extends Controller
         return view('backend.pages.report.checkRegister', get_defined_vars());
     }
 
+
+
     public function dataProcess(Request $request)
     {
-
-
         $columns = array(
-            0 => 'at.created_at',
-            1 => 'coa.account_name',
-            2 => 'at.remark',
-            3 => 'at.debit',
-            4 => 'at.credit',
-            5 => 'running_balance',
+            0 => 'at.created_at',           // Date
+            1 => 'at.payment_invoice',      // Cheque No (safe fallback)
+            2 => 'coa.account_name',        // Account Name
+            3 => 'at.remark',               // Description
+            4 => 'at.debit',
+            5 => 'at.credit',
         );
 
         $limit = $request->input('length');
         $start = $request->input('start');
-        $order = $columns[$request->input('order.0.column')];
-        $dir   = $request->input('order.0.dir');
+        $orderIndex = $request->input('order.0.column');
+        $order = $columns[$orderIndex] ?? 'at.created_at';
+        $dir   = $request->input('order.0.dir', 'desc');
 
-        // Default Filter
         $bankAccountId = $request->bank_account_id;
         $fromDate      = $request->from_date ?? date('Y-m-d', strtotime('-30 days'));
         $toDate        = $request->to_date   ?? date('Y-m-d');
-        $status        = $request->status;
 
-        // Main Query
+
         $query = DB::table('account_transactions as at')
-            ->join('chart_of_accounts as coa', 'coa.id', '=', 'at.account_id')
-            ->where('coa.parent_id', 8)
+            ->join('chart_of_accounts as bank', 'bank.id', '=', 'at.account_id')
+
+
+            ->leftJoin('account_transactions as opp_trans', function ($join) {
+                $join->on('opp_trans.invoice', '=', 'at.invoice')
+                    ->whereColumn('opp_trans.id', '!=', 'at.id');
+            })
+            ->leftJoin('chart_of_accounts as from_account', 'from_account.id', '=', 'opp_trans.account_id')
+            ->leftJoin('suppliers as s', 's.id', '=', 'at.supplier_id')
+            ->leftJoin('customers as c', 'c.id', '=', 'at.customer_id')
+
+            ->where('bank.parent_id', 8)
             ->whereBetween(DB::raw('DATE(at.created_at)'), [$fromDate, $toDate])
             ->select(
                 'at.id',
                 'at.created_at as transaction_date',
+
                 'at.payment_invoice',
-                'coa.account_name',
+                'bank.account_name as bank_account',
                 'at.remark',
-                'at.type',
                 'at.debit',
                 'at.credit',
-                'at.invoice'
+                'at.invoice',
+                // From Account & To Account
+                DB::raw("CASE 
+                        WHEN at.debit > 0 THEN bank.account_name 
+                        ELSE COALESCE(from_account.account_name, s.name, c.name, 'N/A') 
+                     END as from_account"),
+
+                DB::raw("CASE 
+                        WHEN at.credit > 0 THEN bank.account_name 
+                        ELSE COALESCE(from_account.account_name, s.name, c.name, 'N/A') 
+                     END as to_account")
             );
 
-        // Bank Account Filter
         if (!empty($bankAccountId)) {
             $query->where('at.account_id', $bankAccountId);
         }
@@ -67,10 +85,12 @@ class CheckRegisterController extends Controller
         if (!empty($request->input('search.value'))) {
             $search = $request->input('search.value');
             $query->where(function ($q) use ($search) {
-                $q->Where('at.payment_invoice', 'like', "%{$search}%")
+                $q->where('at.payment_invoice', 'like', "%{$search}%")
+
                     ->orWhere('coa.account_name', 'like', "%{$search}%")
                     ->orWhere('at.remark', 'like', "%{$search}%")
-                    ->orWhere('at.invoice', 'like', "%{$search}%");
+                    ->orWhere('s.name', 'like', "%{$search}%")
+                    ->orWhere('c.name', 'like', "%{$search}%");
             });
         }
 
@@ -83,7 +103,7 @@ class CheckRegisterController extends Controller
 
         $transactions = $query->get();
 
-        // Running Balance Calculation + Formatting for DataTable
+        // Data Formatting
         $data = [];
 
 
@@ -94,8 +114,10 @@ class CheckRegisterController extends Controller
             $nestedData['transaction_date'] = $row->transaction_date
                 ? \Carbon\Carbon::parse($row->transaction_date)->format('d-m-Y')
                 : '';
-            $nestedData['cheque_no'] = $this->cheque_no($row->remark) ??  'N/A';
-            $nestedData['account_name']     = $row->account_name;
+            $nestedData['cheque_no']        = $this->cheque_no($row->remark) ?? '';
+            // $nestedData['account_name']     = $row->opposite_account;
+            $nestedData['from_account']     = $row->from_account;     // ← From
+            $nestedData['to_account']       = $row->to_account;       // ← To
             $nestedData['description']      = $row->remark ?: $row->type;
             $nestedData['debit']            = $row->debit ? number_format($row->debit, 2) : '';
             $nestedData['credit']           = $row->credit ? number_format($row->credit, 2) : '';
@@ -106,14 +128,12 @@ class CheckRegisterController extends Controller
             $data[] = $nestedData;
         }
 
-        $json_data = array(
+        return [
             "draw"            => intval($request->input('draw')),
             "recordsTotal"    => intval($totalData),
             "recordsFiltered" => intval($totalFiltered),
             "data"            => $data
-        );
-
-        return $json_data;
+        ];
     }
 
     public function getBankAccounts()
