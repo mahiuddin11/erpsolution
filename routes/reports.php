@@ -64,7 +64,11 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
 
 
         // Check Register Report Route
-        Route::get('check-register-list', [CheckRegisterController::class, 'index'])->name('report.check_register.index');
+        // Route::get('check-register-list', [CheckRegisterController::class, 'index'])->name('report.check_register.index');
+        // Route::get('/check-register-dataProcess', [CheckRegisterController::class, 'dataProcess'])->name('reports.check_register.dataprocess');
+        Route::get('check-register-list',        [CheckRegisterController::class, 'index'])->name('report.check_register.index');
         Route::get('/check-register-dataProcess', [CheckRegisterController::class, 'dataProcess'])->name('reports.check_register.dataprocess');
+        Route::get('/check-register/{id}',       [CheckRegisterController::class, 'show'])->name('reports.check_register.show');
+        Route::get('/check-register-banks',      [CheckRegisterController::class, 'getBankAccounts'])->name('reports.check_register.banks');
     });
 });
