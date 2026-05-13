@@ -114,7 +114,7 @@
                                     <th class="text-right">Credit</th>
                                     <th width="100">Status</th>
                                     <th width="100">Reference</th>
-                                    <th width="80">Action</th>
+                                    {{-- <th width="80">Action</th> --}}
                                 </tr>
                             </thead>
                             <tbody>
@@ -132,7 +132,7 @@
                                     <th class="text-right">Credit</th>
                                     <th>Status</th>
                                     <th>Reference</th>
-                                    <th>Action</th>
+                                    {{-- <th>Action</th> --}}
                                 </tr>
                             </tfoot>
                         </table>
@@ -224,11 +224,7 @@
                     orderable: true,
                     className: 'text-center'
                 },
-                {
-                    data: 'action',
-                    orderable: false,
-                    className: 'text-center text-nowrap'
-                },
+
             ],
             order: [
                 [1, 'desc']

@@ -33,19 +33,13 @@ class DabitVoucherRepositories
         //});
     }
 
-    /**
-     * @param $request
-     * @return mixed
-     */
+
     public function getAllOpening()
     {
         return  $this->dabitVoucher::get();
     }
 
-    /**
-     * @param $request
-     * @return mixed
-     */
+
     public function getList($request)
     {
         $columns = array(
@@ -86,7 +80,7 @@ class DabitVoucherRepositories
             $totalFiltered = $this->dabitVoucher::count();
         }
 
-        $data = array(); 
+        $data = array();
         if ($dabitvoucher) {
             foreach ($dabitvoucher as $key => $item) {
                 $nestedData['id'] = $key + 1;
@@ -118,7 +112,7 @@ class DabitVoucherRepositories
                         $approve_data = '<a href="' . route('settings.dabit.voucher.approve', $item->id) . '" onclick="return confirm(`Are You Sure!`)" class="btn btn-xs btn-default"><i class="fa fa-check" aria-hidden="true"></i></a>';
                     else
                         $approve_data = '';
-                    
+
                     $nestedData['action'] = $edit_data . ' ' . $view_data . ' ' . $delete_data . ' ' . $approve_data;
                 else :
                     $nestedData['action'] = '';
@@ -149,9 +143,6 @@ class DabitVoucherRepositories
 
     public function store($request)
     {
-
-    
-
         try {
             DB::beginTransaction();
 
@@ -180,9 +171,9 @@ class DabitVoucherRepositories
                 $dabitvoucherdetails->payment_invoice = $request->payment_invoice[$i] ?? "";
                 $dabitvoucherdetails->dabit_voucher_id = $dabitvoucher->id;
 
-                if($request->cost_center_type[$i] == "project"){
+                if ($request->cost_center_type[$i] == "project") {
                     $dabitvoucherdetails->project_id = $request->project_id[$i];
-                }elseif($request->cost_center_type[$i] == "branch"){
+                } elseif ($request->cost_center_type[$i] == "branch") {
                     $dabitvoucherdetails->branch_id = $request->branch_id[$i];
                 }
 
@@ -197,12 +188,13 @@ class DabitVoucherRepositories
             DB::commit();
         } catch (\Throwable $th) {
             DB::rollBack();
-            dd($th->getMessage(),$th->getFile(),$th->getLine() );
+            dd($th->getMessage(), $th->getFile(), $th->getLine());
             return $th->getMessage();
         }
 
         return $dabitvoucher;
     }
+
 
     public function update($request, $id)
     {
@@ -223,9 +215,9 @@ class DabitVoucherRepositories
                 $dabitvoucherdetails->payment_invoice = $request->payment_invoice[$i] ?? "";
                 $dabitvoucherdetails->dabit_voucher_id = $dabitvoucher->id;
 
-                if($request->cost_center_type[$i] == "project"){
+                if ($request->cost_center_type[$i] == "project") {
                     $dabitvoucherdetails->project_id = $request->project_id[$i];
-                }elseif($request->cost_center_type[$i] == "branch"){
+                } elseif ($request->cost_center_type[$i] == "branch") {
                     $dabitvoucherdetails->branch_id = $request->branch_id[$i];
                 }
 
@@ -317,7 +309,6 @@ class DabitVoucherRepositories
             dd($th->getMessage());
             return $th->getMessage();
         }
-
 
         return true;
     }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Backend\Project\ProjectController;
+use App\Http\Controllers\Backend\Project\ProjectTransferController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -14,10 +15,10 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/dataProcessingProject', [ProjectController::class, 'dataProcessingProject'])->name('project.project.dataProcessingProject');
         Route::get('/project-project-create', [ProjectController::class, 'create'])->name('project.project.create');
         Route::post('/project-project-store', [ProjectController::class, 'store'])->name('project.project.store');
-        Route::get('/project-project-edit/{id}', [ProjectController::class,'edit'])->name('project.project.edit');
-        Route::get('/project-project-show/{id}', [ProjectController::class,'show'])->name('project.project.show');
+        Route::get('/project-project-edit/{id}', [ProjectController::class, 'edit'])->name('project.project.edit');
+        Route::get('/project-project-show/{id}', [ProjectController::class, 'show'])->name('project.project.show');
 
-        
+
         Route::get('/project-project-loadmanager', [ProjectController::class, 'loadmanager'])->name('project.project.loadmanager');
         Route::post('/project-project-complete', [ProjectController::class, 'complete'])->name('project.project.complete');
         Route::post('/project-project-update/{id}', [ProjectController::class, 'update'])->name('project.project.update');
@@ -62,16 +63,16 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //project requisition crud operation end
 
         //transferproject  crud operation start
-        Route::get('/project-transferproject-list', 'ProjectTransferController@index')->name('project.transferproject.index');
-        Route::get('/dataProcessingtransferproject', 'ProjectTransferController@dataProcessing')->name('project.transferproject.dataProcessing');
-        Route::post('/project-transferproject-store', 'ProjectTransferController@store')->name('project.transferproject.store');
-        Route::get('/project-transferproject-searchpr', 'ProjectTransferController@searchpr')->name('project.transferproject.searchpr');
-        Route::get('/project-transferproject-create', 'ProjectTransferController@create')->name('project.transferproject.create');
-        Route::get('/project-transferproject-edit/{id}', 'ProjectTransferController@edit')->name('project.transferproject.edit');
-        Route::post('/project-transferproject-update/{id}', 'ProjectTransferController@update')->name('project.transferproject.update');
-        Route::get('/project-transferproject-delete/{id}', 'ProjectTransferController@destroy')->name('project.transferproject.destroy');
-        Route::get('/project-transferproject-filterproduct', 'ProjectTransferController@filterproduct')->name('project.transferproject.filterproduct');
-        Route::get('/project-transferproject-invoice/{id}', 'ProjectTransferController@invoice')->name('project.transferproject.invoice');
+        Route::get('/project-transferproject-list', [ProjectTransferController::class, 'index'])->name('project.transferproject.index');
+        Route::get('/dataProcessingtransferproject', [ProjectTransferController::class, 'dataProcessing'])->name('project.transferproject.dataProcessing');
+        Route::post('/project-transferproject-store', [ProjectTransferController::class, 'store'])->name('project.transferproject.store');
+        Route::get('/project-transferproject-searchpr', [ProjectTransferController::class, 'searchpr'])->name('project.transferproject.searchpr');
+        Route::get('/project-transferproject-create', [ProjectTransferController::class, 'create'])->name('project.transferproject.create');
+        Route::get('/project-transferproject-edit/{id}', [ProjectTransferController::class, 'edit'])->name('project.transferproject.edit');
+        Route::post('/project-transferproject-update/{id}', [ProjectTransferController::class, 'update'])->name('project.transferproject.update');
+        Route::get('/project-transferproject-delete/{id}', [ProjectTransferController::class, 'destroy'])->name('project.transferproject.destroy');
+        Route::get('/project-transferproject-filterproduct', [ProjectTransferController::class, 'filterproduct'])->name('project.transferproject.filterproduct');
+        Route::get('/project-transferproject-invoice/{id}', [ProjectTransferController::class, 'invoice'])->name('project.transferproject.invoice');
         //transferproject  crud operation end
 
         //project requisition approve crud operation start

@@ -63,9 +63,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::any('/report-income-trans-details', [ReportController::class, 'incomeDetails'])->name('report.incomestatement.details');
 
 
-        // Check Register Report Route
-        // Route::get('check-register-list', [CheckRegisterController::class, 'index'])->name('report.check_register.index');
-        // Route::get('/check-register-dataProcess', [CheckRegisterController::class, 'dataProcess'])->name('reports.check_register.dataprocess');
+        // cheque register 
         Route::get('check-register-list',        [CheckRegisterController::class, 'index'])->name('report.check_register.index');
         Route::get('/check-register-dataProcess', [CheckRegisterController::class, 'dataProcess'])->name('reports.check_register.dataprocess');
         Route::get('/check-register/{id}',       [CheckRegisterController::class, 'show'])->name('reports.check_register.show');
