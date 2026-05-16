@@ -9,6 +9,13 @@ class StockSummary extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+        'product_id',
+        'branch_id',
+        'type',
+        'quantity',
+    ];
+
     public function products()
     {
         return $this->belongsTo(Product::class, 'product_id', 'id');

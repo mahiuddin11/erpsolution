@@ -124,6 +124,7 @@ class StockAdjustmentService
 
     public function storeapproval($request, $id)
     {
+
         return $this->systemRepositories->storeapproval($request, $id);
     }
 

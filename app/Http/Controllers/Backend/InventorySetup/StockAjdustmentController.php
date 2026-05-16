@@ -130,9 +130,7 @@ class StockAjdustmentController extends Controller
     public function show(Request $request, $id)
     {
         $title = 'Purchase Invoice';
-
         $invoice = StockAjdustment::with(['details.product.category', 'branch'])->findOrFail($id);
-
         $companyInfo = Company::latest('id')->first();
 
         return view('backend.pages.inventories.stockAdjustment.invoice', get_defined_vars());
@@ -144,7 +142,7 @@ class StockAjdustmentController extends Controller
      */
     public function store(Request $request)
     {
-        // dd($request->all());
+
         try {
             $this->validate($request, $this->systemService->storeValidation($request));
         } catch (ValidationException $e) {
@@ -232,6 +230,7 @@ class StockAjdustmentController extends Controller
      */
     public function storeapproval(Request $request, $id)
     {
+
         if (!is_numeric($id)) {
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
@@ -248,6 +247,8 @@ class StockAjdustmentController extends Controller
             // dd($e->getMessage(), $e->getFile(), $e->getLine());
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
+
+
         $this->systemService->storeapproval($request, $id);
         session()->flash('success', 'Data successfully updated!!');
         return redirect()->route('inventorySetup.stockAdjustment.index');

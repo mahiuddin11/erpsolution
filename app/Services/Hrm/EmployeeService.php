@@ -7,9 +7,7 @@ use App\Repositories\Hrm\EmployeeRepositories;
 class EmployeeService
 {
 
-    /**
-     * @var EmployeeRepositories
-     */
+
     private $employeeRepositories;
 
 
@@ -135,7 +133,6 @@ class EmployeeService
      */
     public function store($request)
     {
-        // dd('services', $request->all());
         return $this->employeeRepositories->store($request);
     }
 

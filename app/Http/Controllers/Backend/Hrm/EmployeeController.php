@@ -20,21 +20,13 @@ use Illuminate\Validation\ValidationException;
 class EmployeeController extends Controller
 {
 
-    /**
-     * @var EmployeeService
-     */
+
     private $systemService;
-    /**
-     * @var Transformer
-     */
+
     private $systemTransformer;
 
     protected $userRoleService;
-    /**
-     * CategoryController constructor.
-     * @param EmployeeService $systemService
-     * @param Transformer $systemTransformer
-     */
+
 
     public function __construct(UserRoleService $userRoleService, EmployeeService $employeeService, Transformers $transformers)
     {
@@ -43,9 +35,7 @@ class EmployeeController extends Controller
         $this->systemTransformer = $transformers;
     }
 
-    /**
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
-     */
+
     public function index(Request $request)
     {
         $title = 'Employee List';

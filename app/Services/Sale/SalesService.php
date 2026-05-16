@@ -133,10 +133,7 @@ class SalesService
         return $this->systemRepositories->store($request);
     }
 
-    /**
-     * @param $request
-     * @return \App\Models\Currency
-     */
+
     public function details($id)
     {
 

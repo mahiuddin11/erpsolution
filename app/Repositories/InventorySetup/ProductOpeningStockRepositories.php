@@ -518,6 +518,7 @@ class ProductOpeningStockRepositories
 
     public function destroy($id)
     {
+
         DB::beginTransaction();
         try {
             $purchase = $this->productOpeningStock::find($id);
@@ -526,9 +527,21 @@ class ProductOpeningStockRepositories
                 DB::commit();
                 return false;
             } else {
+
+                $oldData = $purchase->toArray();
+
                 $purchase->forceDelete();
                 AccountTransaction::where('table_id', $id)->where('type', "opening_stock")->delete();
                 $purchasedetails =  ProductOpeningStockDetails::where('product_opening_stock_id', $id)->get();
+
+                // Activity Log (Delete)
+                activity_log(
+                    'delete',
+                    'product_opening_stocks',
+                    [],
+                    $oldData,
+                    "Opening Stock deleted successfully (Invoice: {$purchase->invoice_no})"
+                );
 
                 foreach ($purchasedetails as $item) {
                     $mywhereCondition = array(

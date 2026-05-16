@@ -136,6 +136,11 @@ if (!function_exists('_log_resolve_module')) {
             'attendances'                    => ['HR',         'Attendance'],
             'payrolls'                       => ['HR',         'Payroll'],
 
+
+            // ── Project ──
+            'projects'                        => ['Project',         'Project'],
+
+
             // ── Accounts ──
             'invoices'                       => ['Accounts',   'Invoice'],
             'payments'                       => ['Accounts',   'Payment'],

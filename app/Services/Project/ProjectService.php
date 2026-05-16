@@ -65,7 +65,7 @@ class ProjectService
     public function storeValidation($request)
     {
 
-// dd('validation' , $request->all());
+        // dd('validation' , $request->all());
         return [
             'projectCode' => 'required',
             'name' => 'required',
@@ -111,7 +111,7 @@ class ProjectService
             'name' => 'required|string',
             'manager_id' => 'required|integer',
             'budget' => 'required|numeric',
-            'branch_id' => 'nullable|integer',          
+            'branch_id' => 'nullable|integer',
             'ledger_id' => 'nullable|integer',
             'customer_id' => 'nullable|integer',
             'start_date' => 'required|date',
@@ -127,7 +127,6 @@ class ProjectService
      */
     public function store($request)
     {
-        // dd('services',$request->all());
         return $this->systemRepositories->store($request);
     }
 

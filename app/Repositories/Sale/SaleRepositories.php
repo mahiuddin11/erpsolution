@@ -254,6 +254,7 @@ class SaleRepositories
                 $stock->unit_price = $subtotal[$i];
                 $stock->total_price = $grand_total[$i];
                 $stock->general_id = $Sale_id;
+                $stock->invoice_no = $request->invoice_no;
                 $stock->date = $request->date;
                 $stock->status = 'Sale';
                 $stock->save();

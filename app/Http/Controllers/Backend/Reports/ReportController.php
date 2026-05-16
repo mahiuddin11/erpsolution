@@ -1757,6 +1757,7 @@ class ReportController extends Controller
                     'Manual Purchase',
                     'Production',
                     'Gain',
+                    'Loss',
                     'Transfer In',
                     'Project In',
                     'Return',

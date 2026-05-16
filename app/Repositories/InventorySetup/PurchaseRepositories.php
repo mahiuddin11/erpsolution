@@ -537,6 +537,7 @@ class PurchaseRepositories
     public function store($request)
     {
 
+
         DB::beginTransaction();
         try {
 
@@ -581,9 +582,7 @@ class PurchaseRepositories
                 $purchase->net_total = $request->input_net_total;
             }
             $purchase->save();
-
             $purchases_id = $purchase->id;
-
             $supplierName = ChartOfAccount::find($request->ledger_id)?->account_name ?? 'N/A';
 
 
@@ -625,6 +624,7 @@ class PurchaseRepositories
                 $stock->general_id = $purchases_id;
                 $stock->date = $request->date;
                 $stock->status = 'Purchase';
+                $stock->invoice_no = $request->invoice_no;
                 $stock->created_by = Auth::user()->id;
                 $stock->save();
 

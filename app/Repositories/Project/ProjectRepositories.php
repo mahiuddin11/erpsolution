@@ -52,7 +52,7 @@ class ProjectRepositories
      */
     public function getList($request)
     {
-        
+
         $columns = array(
             0 => 'id',
             1 => 'projectCode',
@@ -107,7 +107,7 @@ class ProjectRepositories
         $data = array();
         if ($project) {
 
-        
+
             foreach ($project as $key => $eproject) {
                 $nestedData['id'] = $key + 1;
                 $nestedData['name'] = $eproject->name;
@@ -183,7 +183,7 @@ class ProjectRepositories
 
     public function store($request)
     {
-        
+
         $eproject = new $this->project();
         $eproject->projectCode = $request->projectCode;
         $eproject->name = $request->name;
@@ -198,13 +198,19 @@ class ProjectRepositories
         $eproject->created_by = Auth::user()->id;
         $eproject->save();
 
-        return $eproject;
+        activity_log(
+            'create',
+            'projects',
+            $eproject->toArray(),
+            [],
+            "Project Created By :" . Auth::user()->name .  "Project Name : {$eproject->name} ({$eproject->projectCode}) "
+        );
 
+        return $eproject;
     }
 
     public function completestore($request)
     {
-
 
         $eproject = $this->project::find($request->projectid);
         $allReturnData = ProjectReturn::where('project_id', $request->projectid)
@@ -243,6 +249,7 @@ class ProjectRepositories
     public function update($request, $id)
     {
         $eproject = Project::find($id);
+        $oldData = $eproject->toArray();
 
         $eproject->name = $request->name;
 
@@ -263,6 +270,14 @@ class ProjectRepositories
         $eproject->estimate_profit = $request->estimate_profit;
         $eproject->updated_by = Auth::id();
 
+        activity_log(
+            'update',
+            'projects',
+            $eproject->toArray(),
+            $oldData,
+            "Project Name: {$eproject->name} ({$eproject->projectCode}) Project Updated by " . Auth::user()->name
+        );
+
         $eproject->save();
 
         return $eproject;
@@ -279,8 +294,21 @@ class ProjectRepositories
     public function destroy($id)
     {
         $eproject = $this->project::find($id);
+        if (!$eproject) {
+            return false;
+        }
+        $oldData = $eproject->toArray();
+
         if ($eproject->condition == "One Going") {
             $eproject->forceDelete();
+
+            activity_log(
+                'delete',
+                'projects',
+                [],
+                $oldData,
+                "Project Deleted: {$oldData['name']} ({$oldData['projectCode']}) by " . Auth::user()->name
+            );
             return true;
         } else {
             return false;
