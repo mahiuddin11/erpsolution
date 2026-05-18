@@ -108,10 +108,10 @@
         </div>
 
         <!-- 🔥 Loan Schedule (unchanged) -->
-       
+
 
         @if ($lone->status == 'approved')
-             <div class="col-lg-6 col-md-12 mt-3 mt-lg-0">
+            <div class="col-lg-6 col-md-12 mt-3 mt-lg-0">
                 <div class="card shadow-sm">
                     <div class="card-header bg-info text-white text-center">
                         <h5 class="mb-0">Loan Adjustment Schedule</h5>
@@ -158,8 +158,8 @@
 
                         <div class="row text-center">
 
-                             <div class="col-12 border-bottom">
-                                    <h6 class=" mb-2 font-weight-bold">Total Amount : {{ number_format($total, 0) }} </h6>
+                            <div class="col-12 border-bottom">
+                                <h6 class=" mb-2 font-weight-bold">Total Amount : {{ number_format($total, 0) }} </h6>
                             </div>
 
                             <div class="col-6 border-right">
@@ -196,9 +196,9 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                        <tr class="text-center">
-                                            <td colspan="4">{{ 'Loan Status Panding ... Schedule empty'  }}</td>
-                                        </tr>
+                                    <tr class="text-center">
+                                        <td colspan="4">{{ 'Loan Status Panding ... Schedule empty' }}</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -214,8 +214,8 @@
 
                         <div class="row text-center">
 
-                             <div class="col-12 border-bottom">
-                                    <h6 class=" mb-2 font-weight-bold">Total Amount : {{ number_format($total, 0) }} </h6>
+                            <div class="col-12 border-bottom">
+                                <h6 class=" mb-2 font-weight-bold">Total Amount : {{ number_format($total, 0) }} </h6>
                             </div>
 
                             <div class="col-6 border-right">

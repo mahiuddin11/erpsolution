@@ -131,11 +131,12 @@ function GET_PAID_LEAVES($employee_id, $month)
 //     return $ATTENDANCE;
 // }
 
+
 function EMPLOYEE_PRESENCE_DAY($employee_id, $month = null)
 {
-    $month = $month ?? date('Y-m');
 
     $date = \Carbon\Carbon::parse($month);
+    $month = $month ?? date('Y-m');
 
     $start = $date->copy()->startOfMonth();
     $end   = $date->copy()->endOfMonth();
@@ -169,6 +170,8 @@ function EMPLOYEE_PRESENCE_DAY($employee_id, $month = null)
 
     return $present;
 }
+
+
 
 
 
@@ -243,14 +246,15 @@ function TOTALPAYABLEDAYS($employee_id, $month = null)
     $presentday = EMPLOYEE_PRESENCE_DAY($employee_id, $month);
     $paidLeaves = count(GET_PAID_LEAVES($employee_id, $month));
     $holidays = count(GET_HOLIDAYS($month));
+
     $employee = Employee::find($employee_id);
-    $lateCoutDay = floor(LATE_DAYS($employee) / 3);
+    $lateCoutDay = floor(LATE_DAYS($employee, $month) / 3);
     $payable_day = ($presentday +  $paidLeaves +  $holidays) -  $lateCoutDay;
 
-    if($presentday == 0){
+    if ($presentday == 0) {
         return 0;
     }
-   
+
     return min($payable_day, 30);
 }
 
@@ -339,6 +343,7 @@ function LATE_DAYS($EMPLOYEE, $month = null)
         ->addMinutes(15)
         ->format("H:i:s");
 
+
     $LATE = DB::table('attendances')
         ->where('emplyee_id', $EMPLOYEE->id)
         ->whereBetween('date', [
@@ -347,6 +352,7 @@ function LATE_DAYS($EMPLOYEE, $month = null)
         ])
         ->whereTime('sign_in', ">", $EMPLOYEE_LAST_IN_TIME)
         ->count();
+
 
     return $LATE;
 }
@@ -398,9 +404,10 @@ function EMPLOYEE_UNPAID_LEAVE_SALARY($EMPLOYEE)
 //     return round($PAYABLE_SALARY);
 // }
 
-function loadAdjustment($employee_id , $month){
+function loadAdjustment($employee_id, $month)
+{
 
-    $loanAdjustment = App\Models\LoanDetail::where( 'employee_id', $employee_id )
+    $loanAdjustment = App\Models\LoanDetail::where('employee_id', $employee_id)
         ->whereMonth('month', \Carbon\Carbon::parse($month)->month)
         ->whereYear('month', \Carbon\Carbon::parse($month)->year)
         ->first();
@@ -410,11 +417,13 @@ function loadAdjustment($employee_id , $month){
 
 function EMPLOYEE_PAYABLE_SALARY($EMPLOYEE, $month)
 {
-   $payable_day =  TOTALPAYABLEDAYS($EMPLOYEE->id , $month);
-   $oneDaySalary = (float) str_replace(',', '', Daily_Rate($EMPLOYEE->salary));
-   $adblance = loadAdjustment($EMPLOYEE->id, $month);
-   $payable_salary = ($payable_day *  $oneDaySalary ) - $adblance;
-   return round($payable_salary);
+
+    $payable_day =  TOTALPAYABLEDAYS($EMPLOYEE->id, $month);
+    $oneDaySalary = (float) str_replace(',', '', Daily_Rate($EMPLOYEE->salary));
+    $adblance = loadAdjustment($EMPLOYEE->id, $month);
+    $payable_salary = ($payable_day *  $oneDaySalary) - $adblance;
+
+    return round($payable_salary);
 }
 
 function PAID_LEAVE_COUNT($EMPLOYEE, $month)

@@ -135,13 +135,12 @@
                         </div>
 
                         @if ($model->status != 'approved')
-                            
-                        <button class="btn btn-info" type="submit"><i class="fa fa-save"></i> &nbsp;Save</button>
+                            <button class="btn btn-info" type="submit"><i class="fa fa-save"></i> &nbsp;Save</button>
                         @else
-                            <span class="btn btn-success" ><i class="fa fa-save"></i> &nbsp; Already Approved</span>
+                            <span class="btn btn-success"><i class="fa fa-save"></i> &nbsp; Already Approved</span>
                         @endif
 
-                        
+
 
                     </form>
                 </div>

@@ -28,11 +28,10 @@ class LoneApplicationController extends Controller
      */
     private $systemTransformer;
 
-    
+
     public function __construct(LoneApplicationService $LoneApplicationService, Transformers $transformers)
     {
         $this->LoneApplicationService = $LoneApplicationService;
-
         $this->systemTransformer = $transformers;
     }
 
@@ -65,6 +64,7 @@ class LoneApplicationController extends Controller
         $branches = Branch::get();
         return view('backend.pages.hrm.lone_application.create', get_defined_vars());
     }
+
     /**
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -102,7 +102,7 @@ class LoneApplicationController extends Controller
         $branches = Branch::all();
         $model = Lone::findOrFail($id);
 
- 
+
         return view('backend.pages.hrm.lone_application.edit', get_defined_vars());
     }
 
@@ -116,7 +116,7 @@ class LoneApplicationController extends Controller
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
         }
-        
+
         $this->LoneApplicationService->update($request, $id);
         session()->flash('success', 'Data successfully updated!!');
         return redirect()->route('hrm.lone.index');
@@ -125,9 +125,7 @@ class LoneApplicationController extends Controller
 
     public function show(Lone $lone)
     {
-
         $title = 'Lone application Details';
-        
         $loanDetails = $lone->loanDetails()->orderBy('month')->get();
         return view('backend.pages.hrm.lone_application.details', get_defined_vars());
     }

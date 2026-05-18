@@ -144,7 +144,7 @@
 
                                 <!-- Check Number -->
                                 <div class="col-md-6 mb-3">
-                                    <label>Check Number</label>
+                                    <label>Cheque Number</label>
                                     <input type="text" name="check_number" class="form-control form-control-lg"
                                         value="{{ $lone->check_number }}">
                                 </div>

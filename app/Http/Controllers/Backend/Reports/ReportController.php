@@ -929,25 +929,378 @@ class ReportController extends Controller
     // }
 
 
+    // public function ledger(Request $request)
+    // {
+    //     $title = 'Ledger Report';
+    //     $accounts = ChartOfAccount::where("parent_id", 0)->get();
+    //     $companyInfo = Company::latest('id')->first();
+
+    //     $selectedAccountId = $request->input('account_id');
+    //     $startDate = $request->input('start_date');
+    //     $endDate = $request->input('end_date');
+
+    //     $ledgerEntries = [];
+    //     $openingBalance = 0;
+    //     $runningBalance = 0;
+    //     $account = null;
+
+    //     if ($selectedAccountId) {
+    //         $account = ChartOfAccount::findOrFail($selectedAccountId);
+
+    //         // Opening Balance Calculation (আগের কোড ঠিক আছে)
+    //         $debitSumBeforeStartDate = AccountTransaction::where('account_id', $selectedAccountId)
+    //             ->whereDate('created_at', '<', $startDate)
+    //             ->sum('debit');
+
+    //         $creditSumBeforeStartDate = AccountTransaction::where('account_id', $selectedAccountId)
+    //             ->whereDate('created_at', '<', $startDate)
+    //             ->sum('credit');
+
+    //         if ($account->balance_type === 'debit') {
+    //             $openingBalance = $account->opening_balance + $debitSumBeforeStartDate - $creditSumBeforeStartDate;
+    //         } else {
+    //             $openingBalance = $account->opening_balance + $creditSumBeforeStartDate - $debitSumBeforeStartDate;
+    //         }
+
+    //         $runningBalance = $openingBalance;
+    //         $totalDebit = 0;
+    //         $totalCredit = 0;
+
+    //         $transactions = AccountTransaction::with(['supplier', 'customer', 'account'])
+    //             ->where('account_id', $selectedAccountId)
+    //             ->when($startDate, fn($q) => $q->whereDate('created_at', '>=', $startDate))
+    //             ->when($endDate, fn($q) => $q->whereDate('created_at', '<=', $endDate))
+    //             ->orderBy('created_at')
+    //             ->get();
+
+    //         foreach ($transactions as $transaction) {
+
+
+    //             $oppositeName = 'N/A';
+
+    //             if ($transaction->supplier_id && $transaction->supplier) {
+    //                 $oppositeName = $transaction->supplier->name;
+    //             } elseif ($transaction->customer_id && $transaction->customer) {
+    //                 $oppositeName = $transaction->customer->name;
+    //             } elseif ($transaction->remark) {
+    //                 $oppositeName = $transaction->remark;
+    //             }
+
+    //             $debit = $transaction->debit ?? 0;
+    //             $credit = $transaction->credit ?? 0;
+
+    //             $totalDebit += $debit;
+    //             $totalCredit += $credit;
+
+    //             if ($account->balance_type == "debit") {
+    //                 $runningBalance += $debit - $credit;
+    //             } else {
+    //                 $runningBalance += $credit - $debit;
+    //             }
+
+    //             $ledgerEntries[] = [
+    //                 'date'          => $transaction->created_at,
+    //                 'invoice'       => $transaction->invoice ?? $transaction->payment_invoice,
+    //                 'description'   => $transaction->remark ?? 'Purchase Voucher',
+    //                 'debit'         => $debit,
+    //                 'credit'        => $credit,
+    //                 'balance'       => $runningBalance,
+    //                 'account_name'  => $oppositeName,           // 
+    //             ];
+    //         }
+
+    //         $ledgerSummary = [
+    //             'opening_balance' => $openingBalance,
+    //             'total_debit'     => $totalDebit,
+    //             'total_credit'    => $totalCredit,
+    //             'closing_balance' => $runningBalance,
+    //         ];
+    //     }
+
+    //     return view('backend.pages.reports.ledger', get_defined_vars());
+    // }
+
+    // public function ledger(Request $request)
+    // {
+    //     $title = 'Ledger Report';
+    //     $accounts = ChartOfAccount::where("parent_id", 0)->get();
+    //     $companyInfo = Company::latest('id')->first();
+
+    //     $selectedAccountId = $request->input('account_id');
+    //     $startDate = $request->input('start_date');
+    //     $endDate = $request->input('end_date');
+
+    //     $ledgerEntries = [];
+    //     $openingBalance = 0;
+    //     $runningBalance = 0;
+    //     $account = null;
+
+    //     if ($selectedAccountId) {
+    //         $account = ChartOfAccount::findOrFail($selectedAccountId);
+
+    //         // Opening Balance Calculation 
+    //         $debitSumBeforeStartDate = AccountTransaction::where('account_id', $selectedAccountId)
+    //             ->whereDate('created_at', '<', $startDate)
+    //             ->sum('debit');
+
+    //         $creditSumBeforeStartDate = AccountTransaction::where('account_id', $selectedAccountId)
+    //             ->whereDate('created_at', '<', $startDate)
+    //             ->sum('credit');
+
+    //         if ($account->balance_type === 'debit') {
+    //             $openingBalance = $account->opening_balance + $debitSumBeforeStartDate - $creditSumBeforeStartDate;
+    //         } else {
+    //             $openingBalance = $account->opening_balance + $creditSumBeforeStartDate - $debitSumBeforeStartDate;
+    //         }
+
+    //         $runningBalance = $openingBalance;
+    //         $totalDebit = 0;
+    //         $totalCredit = 0;
+
+    //         $transactions = AccountTransaction::with(['supplier', 'customer', 'account'])
+    //             ->where('account_id', $selectedAccountId)
+    //             ->when($startDate, fn($q) => $q->whereDate('created_at', '>=', $startDate))
+    //             ->when($endDate, fn($q) => $q->whereDate('created_at', '<=', $endDate))
+    //             ->orderBy('created_at')
+    //             ->get();
+
+    //         $allInvoices = $transactions->pluck('invoice')->filter()->unique()->values()->toArray();
+
+    //         $invoiceTransactions = AccountTransaction::with('account')
+    //             ->whereIn('invoice', $allInvoices)
+    //             ->get()
+    //             ->groupBy('invoice');
+
+    //         foreach ($transactions as $transaction) {
+
+    //             $oppositeName = 'N/A';
+
+    //             if ($transaction->supplier_id && $transaction->supplier) {
+    //                 $oppositeName = $transaction->supplier->name;
+    //             } elseif ($transaction->customer_id && $transaction->customer) {
+    //                 $oppositeName = $transaction->customer->name;
+    //             } elseif ($transaction->invoice && isset($invoiceTransactions[$transaction->invoice])) {
+
+    //                 $sameInvoiceGroup = $invoiceTransactions[$transaction->invoice];
+
+    //                 $isDebit  = $transaction->debit > 0;
+    //                 $amount   = $isDebit ? $transaction->debit : $transaction->credit;
+
+    //                 $opposite = $sameInvoiceGroup
+    //                     ->where('id', '!=', $transaction->id)
+    //                     ->where('account_id', '!=', $transaction->account_id)
+    //                     ->when($isDebit, function ($col) use ($amount) {
+    //                         return $col->where('credit', $amount);
+    //                     }, function ($col) use ($amount) {
+    //                         return $col->where('debit', $amount);
+    //                     })
+    //                     ->first();
+
+    //                 if ($opposite && $opposite->account) {
+    //                     $oppositeName = $opposite->account->account_name;
+    //                 }
+    //             } elseif ($transaction->remark) {
+    //                 $oppositeName = explode(' - ', $transaction->remark)[0] ?? $transaction->remark;
+    //             }
+
+    //             $debit  = (float) ($transaction->debit  ?? 0);
+    //             $credit = (float) ($transaction->credit ?? 0);
+
+    //             $totalDebit  += $debit;
+    //             $totalCredit += $credit;
+
+    //             $runningBalance += $account->balance_type === 'debit'
+    //                 ? ($debit - $credit)
+    //                 : ($credit - $debit);
+
+    //             $ledgerEntries[] = [
+    //                 'date'         => $transaction->created_at,
+    //                 'invoice'      => $transaction->invoice ?? $transaction->payment_invoice ?? 'N/A',
+    //                 'account_name' => $oppositeName,
+    //                 'description'  => $transaction->remark ?? 'N/A',
+    //                 'debit'        => $debit,
+    //                 'credit'       => $credit,
+    //                 'balance'      => $runningBalance,
+    //             ];
+    //         }
+
+    //         $ledgerSummary = [
+    //             'opening_balance' => $openingBalance,
+    //             'total_debit'     => $totalDebit,
+    //             'total_credit'    => $totalCredit,
+    //             'closing_balance' => $runningBalance,
+    //         ];
+    //     }
+
+    //     return view('backend.pages.reports.ledger', get_defined_vars());
+    // }
+
+    // public function ledger(Request $request)
+    // {
+    //     $title       = 'Ledger Report';
+    //     $accounts    = ChartOfAccount::where("parent_id", 0)->get();
+    //     $companyInfo = Company::latest('id')->first();
+
+    //     $selectedAccountId = $request->input('account_id');
+    //     $startDate         = $request->input('start_date');
+    //     $endDate           = $request->input('end_date');
+
+    //     $ledgerEntries  = [];
+    //     $openingBalance = 0;
+    //     $runningBalance = 0;
+    //     $account        = null;
+    //     $ledgerSummary  = [];
+
+    //     if ($selectedAccountId) {
+    //         $account = ChartOfAccount::findOrFail($selectedAccountId);
+
+    //         // ── Opening Balance ──
+    //         $debitSumBeforeStartDate = AccountTransaction::where('account_id', $selectedAccountId)
+    //             ->whereDate('created_at', '<', $startDate)
+    //             ->sum('debit');
+
+    //         $creditSumBeforeStartDate = AccountTransaction::where('account_id', $selectedAccountId)
+    //             ->whereDate('created_at', '<', $startDate)
+    //             ->sum('credit');
+
+    //         if ($account->balance_type === 'debit') {
+    //             $openingBalance = $account->opening_balance + $debitSumBeforeStartDate - $creditSumBeforeStartDate;
+    //         } else {
+    //             $openingBalance = $account->opening_balance + $creditSumBeforeStartDate - $debitSumBeforeStartDate;
+    //         }
+
+    //         $runningBalance = $openingBalance;
+    //         $totalDebit     = 0;
+    //         $totalCredit    = 0;
+
+    //         $transactions = AccountTransaction::with(['supplier', 'customer', 'account'])
+    //             ->where('account_id', $selectedAccountId)
+    //             ->when($startDate, fn($q) => $q->whereDate('created_at', '>=', $startDate))
+    //             ->when($endDate,   fn($q) => $q->whereDate('created_at', '<=', $endDate))
+    //             ->orderBy('created_at')
+    //             ->get();
+
+    //         // ── Same invoice এর সব transaction load ──
+    //         $allInvoices = $transactions->pluck('invoice')->filter()->unique()->values()->toArray();
+
+    //         $invoiceTransactions = AccountTransaction::with('account')
+    //             ->whereIn('invoice', $allInvoices)
+    //             ->get()
+    //             ->groupBy('invoice');
+
+    //         foreach ($transactions as $transaction) {
+
+    //             $oppositeName = 'N/A';
+
+    //             if ($transaction->invoice && isset($invoiceTransactions[$transaction->invoice])) {
+
+    //                 $sameInvoiceGroup = $invoiceTransactions[$transaction->invoice];
+
+    //                 $isDebit = (float)$transaction->debit > 0;
+    //                 $amount  = $isDebit ? (float)$transaction->debit : (float)$transaction->credit;
+
+    //                 // ✅ Current debit → same invoice + same amount এর credit record খুঁজো
+    //                 // ✅ Current credit → same invoice + same amount এর debit record খুঁজো
+    //                 $opposite = $sameInvoiceGroup
+    //                     ->where('id', '!=', $transaction->id)
+    //                     ->where('account_id', '!=', $transaction->account_id)
+    //                     ->first(function ($item) use ($isDebit, $amount) {
+    //                         if ($isDebit) {
+    //                             // debit transaction → opposite এ credit হবে same amount
+    //                             return (float)$item->credit == $amount && (float)$item->debit == 0;
+    //                         } else {
+    //                             // credit transaction → opposite এ debit হবে same amount
+    //                             return (float)$item->debit == $amount && (float)$item->credit == 0;
+    //                         }
+    //                     });
+
+    //                 if ($opposite && $opposite->account) {
+    //                     // ✅ Opposite record এর account_id এর account_name
+    //                     $oppositeName = $opposite->account->account_name;
+    //                 }
+    //             }
+
+    //             // ── Opposite পাওয়া না গেলে supplier/customer/remark fallback ──
+    //             if ($oppositeName === 'N/A') {
+    //                 if (
+    //                     $transaction->party_type === 'supplier' &&
+    //                     (int)$transaction->supplier_id > 0 &&
+    //                     $transaction->supplier
+    //                 ) {
+    //                     $oppositeName = $transaction->supplier->name;
+    //                 } elseif (
+    //                     $transaction->party_type === 'customer' &&
+    //                     (int)$transaction->customer_id > 0
+    //                 ) {
+    //                     $oppositeName = $transaction->customer?->name
+    //                         ?? \App\Models\Customer::find($transaction->customer_id)?->name
+    //                         ?? 'N/A';
+    //                 } elseif (
+    //                     (int)$transaction->supplier_id > 0 &&
+    //                     $transaction->supplier
+    //                 ) {
+    //                     $oppositeName = $transaction->supplier->name;
+    //                 } elseif ((int)$transaction->customer_id > 0) {
+    //                     $oppositeName = $transaction->customer?->name
+    //                         ?? \App\Models\Customer::find($transaction->customer_id)?->name
+    //                         ?? 'N/A';
+    //                 } elseif ($transaction->remark) {
+    //                     $oppositeName = explode(' - ', $transaction->remark)[0] ?? $transaction->remark;
+    //                 }
+    //             }
+
+    //             $debit  = (float) ($transaction->debit  ?? 0);
+    //             $credit = (float) ($transaction->credit ?? 0);
+
+    //             $totalDebit  += $debit;
+    //             $totalCredit += $credit;
+
+    //             $runningBalance += $account->balance_type === 'debit'
+    //                 ? ($debit - $credit)
+    //                 : ($credit - $debit);
+
+    //             $ledgerEntries[] = [
+    //                 'date'         => $transaction->created_at,
+    //                 'invoice'      => $transaction->invoice ?? $transaction->payment_invoice ?? 'N/A',
+    //                 'account_name' => $oppositeName,
+    //                 'description'  => $transaction->remark ?? 'N/A',
+    //                 'debit'        => $debit,
+    //                 'credit'       => $credit,
+    //                 'balance'      => $runningBalance,
+    //             ];
+    //         }
+
+    //         $ledgerSummary = [
+    //             'opening_balance' => $openingBalance,
+    //             'total_debit'     => $totalDebit,
+    //             'total_credit'    => $totalCredit,
+    //             'closing_balance' => $runningBalance,
+    //         ];
+    //     }
+
+    //     return view('backend.pages.reports.ledger', get_defined_vars());
+    // }
+
     public function ledger(Request $request)
     {
-        $title = 'Ledger Report';
-        $accounts = ChartOfAccount::where("parent_id", 0)->get();
+        $title       = 'Ledger Report';
+        $accounts    = ChartOfAccount::where("parent_id", 0)->get();
         $companyInfo = Company::latest('id')->first();
 
         $selectedAccountId = $request->input('account_id');
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
+        $startDate         = $request->input('start_date');
+        $endDate           = $request->input('end_date');
 
-        $ledgerEntries = [];
+        $ledgerEntries  = [];
         $openingBalance = 0;
         $runningBalance = 0;
-        $account = null;
+        $account        = null;
+        $ledgerSummary  = [];
 
         if ($selectedAccountId) {
             $account = ChartOfAccount::findOrFail($selectedAccountId);
 
-            // Opening Balance Calculation (আগের কোড ঠিক আছে)
+            // ── Opening Balance ──
             $debitSumBeforeStartDate = AccountTransaction::where('account_id', $selectedAccountId)
                 ->whereDate('created_at', '<', $startDate)
                 ->sum('debit');
@@ -963,49 +1316,104 @@ class ReportController extends Controller
             }
 
             $runningBalance = $openingBalance;
-            $totalDebit = 0;
-            $totalCredit = 0;
+            $totalDebit     = 0;
+            $totalCredit    = 0;
 
             $transactions = AccountTransaction::with(['supplier', 'customer', 'account'])
                 ->where('account_id', $selectedAccountId)
                 ->when($startDate, fn($q) => $q->whereDate('created_at', '>=', $startDate))
-                ->when($endDate, fn($q) => $q->whereDate('created_at', '<=', $endDate))
+                ->when($endDate,   fn($q) => $q->whereDate('created_at', '<=', $endDate))
                 ->orderBy('created_at')
                 ->get();
 
-            foreach ($transactions as $transaction) {
+            // ── Same invoice এর সব transaction load ──
+            $allInvoices = $transactions->pluck('invoice')->filter()->unique()->values()->toArray();
 
+            $invoiceTransactions = AccountTransaction::with('account')
+                ->whereIn('invoice', $allInvoices)
+                ->get()
+                ->groupBy('invoice');
+
+            foreach ($transactions as $transaction) {
 
                 $oppositeName = 'N/A';
 
-                if ($transaction->supplier_id && $transaction->supplier) {
-                    $oppositeName = $transaction->supplier->name;
-                } elseif ($transaction->customer_id && $transaction->customer) {
-                    $oppositeName = $transaction->customer->name;
-                } elseif ($transaction->remark) {
-                    $oppositeName = $transaction->remark;
+                if ($transaction->invoice && isset($invoiceTransactions[$transaction->invoice])) {
+
+                    $sameInvoiceGroup = $invoiceTransactions[$transaction->invoice];
+
+                    $isDebit = (float)$transaction->debit > 0;
+                    $amount  = $isDebit ? (float)$transaction->debit : (float)$transaction->credit;
+
+                    $opposite = $sameInvoiceGroup
+                        ->where('id', '!=', $transaction->id)
+                        ->where('account_id', '!=', $transaction->account_id)
+                        // ✅ same date filter
+                        ->filter(function ($item) use ($transaction) {
+                            return $item->created_at->toDateString() === $transaction->created_at->toDateString();
+                        })
+                        // ✅ same amount + correct debit/credit side
+                        ->first(function ($item) use ($isDebit, $amount) {
+                            if ($isDebit) {
+                                return (float)$item->credit == $amount && (float)$item->debit == 0;
+                            } else {
+                                return (float)$item->debit == $amount && (float)$item->credit == 0;
+                            }
+                        });
+
+                    if ($opposite && $opposite->account) {
+                        $oppositeName = $opposite->account->account_name;
+                    }
                 }
 
-                $debit = $transaction->debit ?? 0;
-                $credit = $transaction->credit ?? 0;
+                // ── Opposite পাওয়া না গেলে fallback ──
+                if ($oppositeName === 'N/A') {
 
-                $totalDebit += $debit;
+                    if (
+                        $transaction->party_type === 'supplier' &&
+                        (int)$transaction->supplier_id > 0 &&
+                        $transaction->supplier
+                    ) {
+                        $oppositeName = $transaction->supplier->name;
+                    } elseif (
+                        $transaction->party_type === 'customer' &&
+                        (int)$transaction->customer_id > 0
+                    ) {
+                        $oppositeName = $transaction->customer?->name
+                            ?? \App\Models\Customer::find($transaction->customer_id)?->name
+                            ?? 'N/A';
+                    } elseif (
+                        (int)$transaction->supplier_id > 0 &&
+                        $transaction->supplier
+                    ) {
+                        $oppositeName = $transaction->supplier->name;
+                    } elseif ((int)$transaction->customer_id > 0) {
+                        $oppositeName = $transaction->customer?->name
+                            ?? \App\Models\Customer::find($transaction->customer_id)?->name
+                            ?? 'N/A';
+                    } elseif ($transaction->remark) {
+                        $oppositeName = explode(' - ', $transaction->remark)[0] ?? $transaction->remark;
+                    }
+                }
+
+                $debit  = (float) ($transaction->debit  ?? 0);
+                $credit = (float) ($transaction->credit ?? 0);
+
+                $totalDebit  += $debit;
                 $totalCredit += $credit;
 
-                if ($account->balance_type == "debit") {
-                    $runningBalance += $debit - $credit;
-                } else {
-                    $runningBalance += $credit - $debit;
-                }
+                $runningBalance += $account->balance_type === 'debit'
+                    ? ($debit - $credit)
+                    : ($credit - $debit);
 
                 $ledgerEntries[] = [
-                    'date'          => $transaction->created_at,
-                    'invoice'       => $transaction->invoice ?? $transaction->payment_invoice,
-                    'description'   => $transaction->remark ?? 'Purchase Voucher',
-                    'debit'         => $debit,
-                    'credit'        => $credit,
-                    'balance'       => $runningBalance,
-                    'account_name'  => $oppositeName,           // 
+                    'date'         => $transaction->created_at,
+                    'invoice'      => $transaction->invoice ?? $transaction->payment_invoice ?? 'N/A',
+                    'account_name' => $oppositeName,
+                    'description'  => $transaction->remark ?? 'N/A',
+                    'debit'        => $debit,
+                    'credit'       => $credit,
+                    'balance'      => $runningBalance,
                 ];
             }
 
@@ -1019,8 +1427,6 @@ class ReportController extends Controller
 
         return view('backend.pages.reports.ledger', get_defined_vars());
     }
-
-
 
     public function groupledgerList(Request $request)
     {

@@ -15,6 +15,7 @@ use App\Services\InventorySetup\AdjustService;
 use App\Transformers\Transformers;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 
@@ -22,10 +23,10 @@ class ApproveLoneApplicationController extends Controller
 {
 
     private $systemService;
-   
+
     private $systemTransformer;
 
-   
+
     public function __construct(ApproveLoneApplicationService $ApproveLoneApplicationService, Transformers $transformers)
     {
         $this->systemService = $ApproveLoneApplicationService;
@@ -153,6 +154,7 @@ class ApproveLoneApplicationController extends Controller
 
     public function approve(Request $request, Lone $lone)
     {
+
         if (in_array($lone->status, ['approved', 'completed'])) {
             return back()->with('error', 'This loan is already approved!');
         }
@@ -175,12 +177,10 @@ class ApproveLoneApplicationController extends Controller
             $amount = (float) $request->amount;
             $installment = (float) $request->lone_adjustment;
             $startDate = Carbon::parse($request->adjustment_start);
-
             $months = ceil($amount / $installment);
-
             $remaining = $amount;
-            
-        //    dd($amount, $installment, $startDate,  $months );
+
+            //    dd($amount, $installment, $startDate,  $months );
 
             //  EMI Generate
             for ($i = 0; $i < $months; $i++) {
@@ -207,7 +207,7 @@ class ApproveLoneApplicationController extends Controller
                 'invoice'       => $invoice,
                 'table_id'      => $lone->id,
                 'branch_id'     => $lone->branch_id,
-                'account_id'    => 1349,
+                'account_id'    => 1384,   // employee loan
                 'type'          => 'employee_loan',
                 'debit'         => $amount,
                 'credit'        => 0,
@@ -238,7 +238,7 @@ class ApproveLoneApplicationController extends Controller
         } catch (\Throwable $th) {
 
             DB::rollBack();
-            \Log::error('Loan Approve Error: ' . $th->getMessage());
+            Log::error('Loan Approve Error: ' . $th->getMessage());
 
             return back()->with('error', 'Something went wrong!');
         }
@@ -246,7 +246,7 @@ class ApproveLoneApplicationController extends Controller
 
     public function cancel(Lone $lone)
     {
-        
+
         $lone->status = 'cancel';
         $lone->save();
         session()->flash('success', ' Lone Application successfully Cancelled!!');
@@ -283,18 +283,10 @@ class ApproveLoneApplicationController extends Controller
     public function show(Lone $lone)
     {
         $title = 'Approve Loan Application Details';
-   
         return view('backend.pages.hrm.lone_approve.details', get_defined_vars());
     }
 
 
-
-
-
-    /**
-     * @param $slug
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
-     */
     public function statusUpdate($id, $status)
     {
         if (!is_numeric($id)) {
@@ -310,11 +302,6 @@ class ApproveLoneApplicationController extends Controller
         }
     }
 
-
-    /**
-     * @param $slug
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
-     */
     public function destroy($id)
     {
         if (!is_numeric($id)) {

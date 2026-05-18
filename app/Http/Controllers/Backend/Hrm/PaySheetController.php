@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Accounts;
 use App\Models\AccountTransaction;
 use App\Models\Attendance;
+use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\Employee;
 use App\Models\EmpPayBonus;
@@ -18,6 +19,7 @@ use App\Models\MonthlyPayableSalary;
 use App\Models\Transection;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use PhpParser\Node\Scalar\Float_;
 
 class PaySheetController extends Controller
@@ -44,8 +46,8 @@ class PaySheetController extends Controller
             $alreadyExists = MonthlyPayableSalary::whereYear('date', Carbon::parse($month)->year)->whereMonth('date', Carbon::parse($month)->month)->exists();
 
             if ($alreadyExists) {
-                session()->flash( 'warning', Carbon::parse($month)->format('F Y') . ' monthly report is already genareted.' );
-                return redirect()->route( 'hrm.paysheet.index', [ 'month' => $month, 'employee_id' => $request->employee_id ]);
+                session()->flash('warning', Carbon::parse($month)->format('F Y') . ' monthly report is already genareted.');
+                return redirect()->route('hrm.paysheet.index', ['month' => $month, 'employee_id' => $request->employee_id]);
             }
 
             $takeEmployee = Employee::where('employee_status', 'present');
@@ -70,7 +72,7 @@ class PaySheetController extends Controller
                     'absence_deduction'      => ABSENCE_DEDUCTION($emp->id, $month, $emp->salary),
                     'employee_late'          => LATE_DAYS($emp, $month),
                     'employee_deducton'      => LATE_DAYS_SALARY_DEDUCT($emp, $month),
-                    'employee_paid_leave'    => PAID_LEAVE_COUNT($emp , $month),
+                    'employee_paid_leave'    => PAID_LEAVE_COUNT($emp, $month),
                     'holiday'                => count(GET_HOLIDAYS($month)),
                     'totalPayableDays'       => TOTALPAYABLEDAYS($emp->id, $month),
                     'overtime_houre'         => OVERTIME_HOURE($emp),
@@ -85,8 +87,9 @@ class PaySheetController extends Controller
 
             MonthlyPayableSalary::insert($data);
 
-            session()->flash('success',  Carbon::parse($month)->format('F Y') .'Month Salary Payable Genareted');
-            return redirect()->route('hrm.paysheet.index',['month' => $month, 'employee_id' => $request->employee_id ?? 'all']);        } else {
+            session()->flash('success',  Carbon::parse($month)->format('F Y') . 'Month Salary Payable Genareted');
+            return redirect()->route('hrm.paysheet.index', ['month' => $month, 'employee_id' => $request->employee_id ?? 'all']);
+        } else {
 
             if ($request->method() == "GET") {
 
@@ -119,7 +122,7 @@ class PaySheetController extends Controller
                             "absence_deduction" =>  ABSENCE_DEDUCTION($employee->id, $request->month  ?? now()->format('Y-m'), $employee->salary),
                             "employee_late" => LATE_DAYS($employee, $request->month  ?? now()->format('Y-m')),
                             "employee_deducton" => LATE_DAYS_SALARY_DEDUCT($employee, $request->month  ?? now()->format('Y-m')),
-                            "employee_paid_leave" => PAID_LEAVE_COUNT($employee , $request->month  ?? now()->format('Y-m')),
+                            "employee_paid_leave" => PAID_LEAVE_COUNT($employee, $request->month  ?? now()->format('Y-m')),
                             "holiday" => count(GET_HOLIDAYS($request->month  ?? now()->format('Y-m'))),
                             // "employee_unpaid_leave" => UNPAID_LEAVE_COUNT($employee),
                             'totalPayableDays' => TOTALPAYABLEDAYS($employee->id, $request->month  ?? now()->format('Y-m')),
@@ -147,7 +150,7 @@ class PaySheetController extends Controller
 
     public function show(Employee $pay)
     {
-       
+
         $title = 'Pay Sheet details';
         return view('backend.pages.hrm.attendance.paysheet.details', get_defined_vars());
     }
@@ -157,12 +160,11 @@ class PaySheetController extends Controller
         $title = 'Salary Review';
         $MonthlyPaySheet = MonthlyPayableSalary::find($id);
 
-        // dd($MonthlyPaySheet);
-
         return view('backend.pages.hrm.attendance.paysheet.salaryreview', get_defined_vars());
     }
 
-    public function payslip(Request $request, $id){
+    public function payslip(Request $request, $id)
+    {
 
         $title = 'Salary Pay Slip';
         $payslip = MonthlyPayableSalary::find($id);
@@ -182,162 +184,333 @@ class PaySheetController extends Controller
                 });
         })->get();
 
-  
-        return view('backend.pages.hrm.attendance.paysheet.payslip',get_defined_vars());
+
+        return view('backend.pages.hrm.attendance.paysheet.payslip', get_defined_vars());
     }
 
+
+    // public function salaryPayment(Request $request, $id)
+    // {
+
+    //     DB::beginTransaction();
+
+    //     try {
+
+    //         $totalPaid = 0;
+    //         $payslip = MonthlyPayableSalary::findOrFail($id);
+    //         $invoice = 'PAY-' . str_pad($payslip->id, 4, '0', STR_PAD_LEFT);
+    //         $date = \Carbon\Carbon::parse($payslip->date);
+    //         $payablesalary   = $payslip->employee_payable_salary;
+
+    //         $lone_amount = (float) $payslip->loan_adjustment;
+    //         $loan = LoanDetail::where('employee_id', $payslip->employee_id)
+    //             ->whereMonth('month', $date->month)
+    //             ->whereYear('month', $date->year)
+    //             ->first();
+
+
+    //         foreach ($request->payments as $payment) {
+
+    //             $employeeName                                = $payslip->employee->name ?? 'Unknown Employee';
+    //             $accountInfo                                 = $payment['account_info'] ?? 'Cash/Bank';
+
+    //             $account                                     = Accounts::findOrFail($payment['account_id']);
+    //             $amount                                      = $payment['amount'];
+    //             $transaction                                 = new AccountTransaction();
+    //             $transaction->invoice                        = $invoice;
+    //             $transaction->table_id                       = $payslip->id;
+    //             $transaction->table_name                     = 'monthly_payable_salaries';
+    //             $transaction->branch_id                      = auth()->user()->branch_id ?? 0;
+    //             $transaction->account_id                     = $account->id;
+    //             $transaction->type                           = 'credit_voucher';
+    //             $transaction->debit                          = 0;
+    //             $transaction->credit                         = $amount;
+    //             $transaction->remark                         = "Reference: {$accountInfo} - {$employeeName} Salary Paid";
+    //             $transaction->employee_id                    = $payslip->employee_id;
+    //             $transaction->created_by                     = auth()->id();
+    //             $transaction->payment_invoice                = $invoice;
+    //             $transaction->save();
+
+    //             $totalPaid += $amount;
+    //         }
+
+    //         // =====================================
+    //         // 2. SALARY & ALLOWANCE ENTRY (DEBIT)
+    //         // =====================================
+    //         $salaryTransaction = new AccountTransaction();
+    //         $salaryTransaction->invoice      = $invoice;
+    //         $salaryTransaction->table_id     = $payslip->id;
+    //         $salaryTransaction->table_name   = 'monthly_payable_salaries';
+    //         $salaryTransaction->branch_id    = auth()->user()->branch_id ?? null;
+    //         $salaryTransaction->account_id   = 46; // salary and allownce id 
+    //         $salaryTransaction->type         = 'debit_voucher';
+    //         $salaryTransaction->debit        =  $totalPaid;
+    //         $salaryTransaction->credit       = 0;
+    //         $salaryTransaction->remark       = $employeeName  . ' Salary Paid ';
+    //         $salaryTransaction->employee_id  = $payslip->employee_id;
+    //         $salaryTransaction->created_by   = auth()->id();
+    //         $salaryTransaction->payment_invoice = $invoice;
+    //         $salaryTransaction->save();
+
+
+    //         // dd($salaryTransaction->debit ,  $totalPaid);
+
+    //         // =====================================
+    //         // 3. LOAN ADJUSTMENT ENTRY (CREDIT)
+    //         // =====================================
+    //         // dd('send amount :'.$amount , 'lone amount :' . $lone_amount);
+
+    //         if ($lone_amount > 0) {
+    //             $loanTransaction = new AccountTransaction();
+    //             $loanTransaction->invoice      = 'LA-' . str_pad($payslip->id, 4, '0', STR_PAD_LEFT);
+    //             $loanTransaction->table_id     = $loan->id;
+    //             $loanTransaction->table_name   = '';
+    //             $loanTransaction->branch_id    = auth()->user()->branch_id ?? 0;
+    //             $loanTransaction->account_id   = 1349;  // employee loan account
+    //             $loanTransaction->type         = 'credit';
+    //             $loanTransaction->debit        = 0;
+    //             $loanTransaction->credit       =  $lone_amount;
+    //             $loanTransaction->employee_id  = $payslip->employee_id;
+    //             $loanTransaction->remark       = 'Loan adjustment from salary : ' . $employeeName;
+    //             $loanTransaction->created_by   = auth()->id();
+    //             $loanTransaction->payment_invoice = 'LA-' . str_pad($payslip->id, 4, '0', STR_PAD_LEFT);
+    //             $loanTransaction->save();
+
+    //             if (!empty($loan)) {
+    //                 $loan->update([
+    //                     'status' => 'paid'
+    //                 ]);
+    //             }
+    //         }
+
+    //         // bonus pay
+    //         $totalBonus = 0;
+    //         if ($request->filled('bonus')) {
+
+
+    //             foreach ($request->bonus as $bonus) {
+
+    //                 if (empty($bonus['type']) || !isset($bonus['amount'])) {
+    //                     continue;
+    //                 }
+
+    //                 $empBonus = new EmpPayBonus();
+    //                 $empBonus->employee_id = $payslip->employee_id;
+    //                 $empBonus->monthly_payable_salaries_id = $payslip->id;
+    //                 $empBonus->bonus_type = $bonus['type'];
+    //                 $empBonus->bonus_amount = (float) $bonus['amount'];
+    //                 $empBonus->remarks = $bonus['type'] . '  payment';
+    //                 $empBonus->save();
+
+    //                 $totalBonus += (float) $bonus['amount'];
+    //             }
+    //         }
+
+    //         $empPay = new EmpPayDetails();
+    //         $empPay->pay_sheet_id   = $payslip->id;
+    //         $empPay->branch_id      = auth()->user()->branch_id ?? 0;
+    //         $empPay->employee_id    = $payslip->employee_id;
+    //         $empPay->payble_salary  = $payablesalary;
+    //         $empPay->amount         = $totalPaid;
+    //         $empPay->lone           = $lone_amount ?? 0;
+    //         $empPay->bonus_id       = $empBonus->id ?? null;
+    //         $empPay->total_bonus    = $totalBonus ?? 0;
+    //         // $empPay->duo            = $payablesalary - $totalPaid ;
+    //         $empPay->save();
+
+    //         $empBonus->emp_pay_details_id =  $empPay->id;
+    //         $empBonus->save();
+
+    //         $payslip->status = ($payslip->due_amount <= 0) ? 'paid' : 'partial';
+    //         $payslip->employee_payable_salary = $totalPaid ?? $payablesalary + $totalBonus;
+    //         $payslip->festival_bonus =  $totalBonus ?? 0;
+    //         $payslip->save();
+
+    //         DB::commit();
+
+    //         return redirect()->route('hrm.paysheet.paidslip.check', $payslip->id);
+    //     } catch (\Exception $e) {
+
+    //         DB::rollback();
+    //         dd($e->getMessage(), $e->getLine(), $e->getFile());
+    //     }
+    // }
 
     public function salaryPayment(Request $request, $id)
     {
 
+
         DB::beginTransaction();
 
         try {
-
             $totalPaid = 0;
+            $totalBonus = 0;
+
             $payslip = MonthlyPayableSalary::findOrFail($id);
             $invoice = 'PAY-' . str_pad($payslip->id, 4, '0', STR_PAD_LEFT);
             $date = \Carbon\Carbon::parse($payslip->date);
-            $payablesalary   = $payslip->employee_payable_salary;
 
-            $lone_amount = (float) $payslip->loan_adjustment;
+            $payableSalary = $payslip->employee_payable_salary;
+            $loanAmount    = (float) ($payslip->loan_adjustment ?? 0);
+
+
+            $employeeName = $payslip->employee->name ?? 'Unknown Employee';
+
+
             $loan = LoanDetail::where('employee_id', $payslip->employee_id)
                 ->whereMonth('month', $date->month)
                 ->whereYear('month', $date->year)
                 ->first();
+            $payments = array_values($request->payments ?? []);
 
-            
-            foreach ($request->payments as $payment) {
+            foreach ($payments as $payment) {
 
-                $account = Accounts::findOrFail($payment['account_id']);
-                $amount = $payment['amount'];
+                $accountInfo = $payment['account_info'] ?? 'Cash/Bank';
+                $amount      = (float) $payment['amount'];
+                $account     = ChartOfAccount::findOrFail($payment['account_id']);
+                $accountName = $account->account_name;
+
+                // ── CREDIT Entry ──
                 $transaction = new AccountTransaction();
-                $transaction->invoice      = $invoice;
-                $transaction->table_id     = $payslip->id;
-                $transaction->table_name   = 'monthly_payable_salaries';
-                $transaction->branch_id    = auth()->user()->branch_id ?? 0;
-                $transaction->account_id   = $account->id;
-                $transaction->type         = 'credit_voucher';
-                $transaction->debit        = 0;
-                $transaction->credit       = $amount;
-                $transaction->remark       = 'Reference : ' . $payment['account_info'] . '#_' . ' ($payslip->employee->name) '. ' Salary Paid ';
-                $transaction->employee_id  = $payslip->employee_id;
-                $transaction->created_by   = auth()->id();
+                $transaction->invoice         = $invoice;
+                $transaction->table_id        = $payslip->id;
+                $transaction->branch_id       = auth()->user()->branch_id ?? 0;
+                $transaction->account_id      = $account->id;
+                $transaction->type            = 'credit_voucher';
+                $transaction->debit           = 0;
+                $transaction->credit          = $amount;
+                $transaction->remark          = "Salary & Allowance - {$employeeName} Salary Paid";
+                $transaction->employee_id     = $payslip->employee_id;
+                $transaction->created_by      = auth()->id();
                 $transaction->payment_invoice = $invoice;
                 $transaction->save();
+
+                // ── DEBIT Entry ──
+                $salaryTransaction = new AccountTransaction();
+                $salaryTransaction->invoice         = $invoice;
+                $salaryTransaction->table_id        = $payslip->id;
+                $salaryTransaction->branch_id       = auth()->user()->branch_id ?? 0;
+                $salaryTransaction->account_id      = 46;  //Salary & Allowance
+                $salaryTransaction->type            = 'debit_voucher';
+                $salaryTransaction->debit           = $amount;
+                $salaryTransaction->credit          = 0;
+                $salaryTransaction->remark          = "{$accountName} - {$employeeName} Salary Paid .  {$accountInfo}";
+                $salaryTransaction->employee_id     = $payslip->employee_id;
+                $salaryTransaction->created_by      = auth()->id();
+                $salaryTransaction->payment_invoice = $invoice;
+                $salaryTransaction->save();
 
                 $totalPaid += $amount;
             }
 
             // =====================================
-            // 2. SALARY & ALLOWANCE ENTRY (DEBIT)
+            // 2. SALARY & ALLOWANCE 
             // =====================================
-            $salaryTransaction = new AccountTransaction();
-            $salaryTransaction->invoice      = $invoice;
-            $salaryTransaction->table_id     = $payslip->id;
-            $salaryTransaction->table_name   = 'monthly_payable_salaries';
-            $salaryTransaction->branch_id    = auth()->user()->branch_id ?? null;
-            $salaryTransaction->account_id   = 46; // salary and allownce id 
-            $salaryTransaction->type         = 'debit_voucher';
-            $salaryTransaction->debit        =  $totalPaid;
-            $salaryTransaction->credit       = 0;
-            $salaryTransaction->remark       = ($payslip->employee->name) . ' Salary Paid ';
-            $salaryTransaction->employee_id  = $payslip->employee_id;
-            $salaryTransaction->created_by   = auth()->id();
-            $salaryTransaction->payment_invoice = $invoice;
-            $salaryTransaction->save();
-            
-           
-            // dd($salaryTransaction->debit ,  $totalPaid);
-            
-            // =====================================
-            // 3. LOAN ADJUSTMENT ENTRY (CREDIT)
-            // =====================================
-            // dd('send amount :'.$amount , 'lone amount :' . $lone_amount);
+            // $salaryTransaction = new AccountTransaction();
+            // $salaryTransaction->invoice          = $invoice;
+            // $salaryTransaction->table_id         = $payslip->id;
+            // $salaryTransaction->branch_id        = auth()->user()->branch_id ?? 0;
+            // $salaryTransaction->account_id       = 46; // Salary & Allowance Account
+            // $salaryTransaction->type             = 'debit_voucher';
+            // $salaryTransaction->debit            = $totalPaid;
+            // $salaryTransaction->credit           = 0;
+            // $salaryTransaction->remark           = "{$employeeName} Salary Paid";
+            // $salaryTransaction->employee_id      = $payslip->employee_id;
+            // $salaryTransaction->created_by       = auth()->id();
+            // $salaryTransaction->payment_invoice  = $invoice;
+            // $salaryTransaction->save();
 
-            if ($lone_amount > 0) {
+            // =====================================
+            // 3. LOAN ADJUSTMENT 
+            // =====================================
+            if ($loanAmount > 0 && $loan) {
+                $loanInvoice = 'LA-' . str_pad($payslip->id, 4, '0', STR_PAD_LEFT);
                 $loanTransaction = new AccountTransaction();
-                $loanTransaction->invoice      = 'LA-' . str_pad($payslip->id, 4, '0', STR_PAD_LEFT);
-                $loanTransaction->table_id     = $loan->id;
-                $loanTransaction->table_name   = '';
-                $loanTransaction->branch_id    = auth()->user()->branch_id ?? 0;
-                $loanTransaction->account_id   = 1349 ;  // employee loan account
-                $loanTransaction->type         = 'credit';
-                $loanTransaction->debit        = 0;
-                $loanTransaction->credit       =  $lone_amount;
-                $loanTransaction->employee_id  = $payslip->employee_id;
-                $loanTransaction->remark       = 'Loan adjustment from salary : ' . ($payslip->employee->name ?? '');
-                $loanTransaction->created_by   = auth()->id();
-                $loanTransaction->payment_invoice = 'LA-' . str_pad($payslip->id, 4, '0', STR_PAD_LEFT);
+                $loanTransaction->invoice          = $loanInvoice;
+                $loanTransaction->table_id         = $loan->id;
+                $loanTransaction->branch_id        = auth()->user()->branch_id ?? 0;
+                $loanTransaction->account_id       = 1372;  // employee load
+                $loanTransaction->type             = 'credit';
+                $loanTransaction->debit            = 0;
+                $loanTransaction->credit           = $loanAmount;
+                $loanTransaction->employee_id      = $payslip->employee_id;
+                $loanTransaction->remark           = "Loan adjustment from salary - {$employeeName}";
+                $loanTransaction->created_by       = auth()->id();
+                $loanTransaction->payment_invoice  = $loanInvoice;
                 $loanTransaction->save();
 
-                if (!empty($loan)) {
-                    $loan->update([
-                        'status' => 'paid'
-                    ]);
-                }
+                $loan->update(['status' => 'paid']);
             }
 
-            // bonus pay
-            $totalBonus = 0;
+            // =====================================
+            // 4. Bonus Handling 
+            // =====================================
+            $bonusRecords = [];
             if ($request->filled('bonus')) {
-
-           
                 foreach ($request->bonus as $bonus) {
-
-                    if (empty($bonus['type']) || !isset($bonus['amount'])) {
+                    if (empty($bonus['type']) || !isset($bonus['amount']) || (float)$bonus['amount'] <= 0) {
                         continue;
                     }
 
                     $empBonus = new EmpPayBonus();
-                    $empBonus->employee_id = $payslip->employee_id;
+                    $empBonus->employee_id                 = $payslip->employee_id;
                     $empBonus->monthly_payable_salaries_id = $payslip->id;
-                    $empBonus->bonus_type = $bonus['type'];
-                    $empBonus->bonus_amount = (float) $bonus['amount'];
-                    $empBonus->remarks = $bonus['type'] . '  payment';
+                    $empBonus->bonus_type                  = $bonus['type'];
+                    $empBonus->bonus_amount                = (float) $bonus['amount'];
+                    $empBonus->remarks                     = $bonus['type'] . ' payment';
                     $empBonus->save();
 
+                    $bonusRecords[] = $empBonus;
                     $totalBonus += (float) $bonus['amount'];
                 }
             }
 
+            // =====================================
+            // 5. EmpPayDetails
+            // =====================================
             $empPay = new EmpPayDetails();
             $empPay->pay_sheet_id   = $payslip->id;
             $empPay->branch_id      = auth()->user()->branch_id ?? 0;
             $empPay->employee_id    = $payslip->employee_id;
-            $empPay->payble_salary  = $payablesalary;
+            $empPay->payble_salary  = $payableSalary;
             $empPay->amount         = $totalPaid;
-            $empPay->lone           = $lone_amount ?? 0;
-            $empPay->bonus_id       = $empBonus->id ?? null;
-            $empPay->total_bonus    = $totalBonus ?? 0;
-            // $empPay->duo            = $payablesalary - $totalPaid ;
+            $empPay->lone           = $loanAmount;
+            $empPay->total_bonus    = $totalBonus;
             $empPay->save();
 
-            $empBonus->emp_pay_details_id =  $empPay->id;
-            $empBonus->save();
+            // Bonus 
+            foreach ($bonusRecords as $bonusRecord) {
+                $bonusRecord->emp_pay_details_id = $empPay->id;
+                $bonusRecord->save();
+            }
 
-            $payslip->status = ($payslip->due_amount <= 0) ? 'paid' : 'partial';
-            $payslip->employee_payable_salary = $totalPaid ?? $payablesalary + $totalBonus ;
-            $payslip->festival_bonus =  $totalBonus ?? 0;
+            // =====================================
+            // 6. Payslip আপডেট
+            // =====================================
+            $payslip->status = ($totalPaid >= $payslip->due_amount) ? 'paid' : 'partial';
+            $payslip->employee_payable_salary = $totalPaid;
+            $payslip->festival_bonus          = $totalBonus;
             $payslip->save();
 
             DB::commit();
 
-            return redirect()->route('hrm.paysheet.paidslip.check' , $payslip->id);
-            
+            return redirect()->route('hrm.paysheet.paidslip.check', $payslip->id)
+                ->with('success', 'Salary paid successfully');
         } catch (\Exception $e) {
-
             DB::rollback();
-            dd($e->getMessage(), $e->getLine(), $e->getFile());
+            Log::error($e->getMessage());
+            dd($e->getMessage(), $e->getLine(), $e->getFile()); // ডেভেলপমেন্টের জন্য
         }
     }
 
-    public function paidslipcheked($id){
+    public function paidslipcheked($id)
+    {
 
         $title = 'Salary Pay Slip';
         $payslip = MonthlyPayableSalary::find($id);
-        $empBonus = EmpPayBonus::where('monthly_payable_salaries_id' , $payslip->id)->get(); 
-        $transactions = AccountTransaction::where('table_id', $payslip->id)->where('employee_id', $payslip->employee_id)->where('table_name', 'monthly_payable_salaries')->where('type', 'credit_voucher')->get();
+        $empBonus = EmpPayBonus::where('monthly_payable_salaries_id', $payslip->id)->get();
+        // $transactions = AccountTransaction::where('table_id', $payslip->id)->where('employee_id', $payslip->employee_id)->where('table_name', 'monthly_payable_salaries')->where('type', 'credit_voucher')->get();
+        $transactions = AccountTransaction::where('table_id', $payslip->id)->where('employee_id', $payslip->employee_id)->where('type', 'credit_voucher')->get();
         return view('backend.pages.hrm.attendance.paysheet.paidslip', get_defined_vars());
     }
 
@@ -368,7 +541,7 @@ class PaySheetController extends Controller
 
         $MonthlyPayableSalary->update($data);
 
-        return redirect()->route('hrm.paysheet.review' , $id)->with('success', 'Updated successfully');
+        return redirect()->route('hrm.paysheet.review', $id)->with('success', 'Updated successfully');
     }
 
 
@@ -419,7 +592,6 @@ class PaySheetController extends Controller
                     $transection2['amount'] = $request->amount;
                     $transection2['credit'] = $request->amount;
                     Transection::create($transection2);
-
                 } elseif ($loanBalance > $loanAdjustment) {
 
                     $transection1['date'] = now();
@@ -447,7 +619,6 @@ class PaySheetController extends Controller
                     $transection3['amount'] = ($request->amount -  $loanAdjustment);
                     $transection3['credit'] = ($request->amount -  $loanAdjustment);
                     Transection::create($transection3);
-
                 } else {
 
                     $transection1['date'] = now();
@@ -477,7 +648,6 @@ class PaySheetController extends Controller
                     Transection::create($transection3);
                     Lone::where('employee_id', $monthlyPayableSalary->employee_id)->where('status', 'approved')->latest()->update(['status' => 'completed']);
                 }
-
             } else {
                 if ($request->amount < $monthlyPayableSalary->employee_payable_salary) {
                     $transection7['date'] = now();

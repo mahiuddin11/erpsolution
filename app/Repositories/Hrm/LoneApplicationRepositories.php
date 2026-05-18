@@ -13,9 +13,9 @@ use Illuminate\Support\Facades\Storage;
 
 class LoneApplicationRepositories
 {
-    
+
     private $model;
-    
+
     public function __construct(Lone $Lone)
     {
         $this->model = $Lone;
@@ -27,7 +27,7 @@ class LoneApplicationRepositories
      */
     public function getAllList()
     {
-     
+
         $result = $this->model::latest()->get();
         return $result;
     }
@@ -219,7 +219,7 @@ class LoneApplicationRepositories
      */
     public function details($id)
     {
-        
+
         $result = $this->model::find($id);
         return $result;
     }
@@ -249,13 +249,12 @@ class LoneApplicationRepositories
         }
         $lone->file = $fileName;
         $lone->save();
-        
+
         return $lone;
     }
 
     public function update($request, $id)
     {
-
         $lone = $this->model::find($id);
         $lone->employee_id = $request->employee_id;
         $lone->branch_id = $request->branch_id;

@@ -34,12 +34,12 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/hrm-employe-list/{id?}', [EmployeeController::class, 'index'])->name('hrm.employee.index');
         Route::get('/hrm-left-employe-list', [EmployeeController::class, 'index2'])->name('hrm.employee.index2');
         Route::get('/dataProcessingemployee', [EmployeeController::class, 'dataProcessingEmployee'])->name('hrm.employee.dataProcessingEmployee');
-        Route::get('/hrm-employe-create', [EmployeeController::class,'create'])->name('hrm.employee.create');
-        Route::post('/hrm-employe-store', [EmployeeController::class,'store'])->name('hrm.employee.store');
+        Route::get('/hrm-employe-create', [EmployeeController::class, 'create'])->name('hrm.employee.create');
+        Route::post('/hrm-employe-store', [EmployeeController::class, 'store'])->name('hrm.employee.store');
 
 
         Route::get('/hrm-employe-edit/{id}', [EmployeeController::class, 'edit'])->name('hrm.employee.edit');
-        Route::get('/hrm-employe-show/{employee:id}', [EmployeeController::class,'show'])->name('hrm.employee.show');
+        Route::get('/hrm-employe-show/{employee:id}', [EmployeeController::class, 'show'])->name('hrm.employee.show');
         Route::post('/hrm-employe-update/{id}', [EmployeeController::class, 'update'])->name('hrm.employee.update');
         Route::get('/hrm-employe-delete/{id}', [EmployeeController::class, 'destroy'])->name('hrm.employee.destroy');
         Route::get('/hrm-employe-status/{id}/{status}', [EmployeeController::class, 'statusUpdate'])->name('hrm.employee.status');
@@ -47,8 +47,8 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
 
         //Salary Pay crud operation start
         Route::any('/hrm-salary-pay-sheet-list', [PaySheetController::class, "index"])->name('hrm.paysheet.index');
-        Route::get('/hrm-salary-pay-sheet-show/{pay:id}', [PaySheetController::class,'show'])->name('hrm.paysheet.show');
-        Route::post('/hrm-salary-pay-details-store/{monthlyPayableSalary:id}', [PaySheetController::class,'empPayDetailsStore'])->name('hrm.paysheet.empPayDetailsStore');
+        Route::get('/hrm-salary-pay-sheet-show/{pay:id}', [PaySheetController::class, 'show'])->name('hrm.paysheet.show');
+        Route::post('/hrm-salary-pay-details-store/{monthlyPayableSalary:id}', [PaySheetController::class, 'empPayDetailsStore'])->name('hrm.paysheet.empPayDetailsStore');
         Route::get('/hrm-salary-pay-review/{monthlyPayableSalary:id}', [PaySheetController::class, 'review'])->name('hrm.paysheet.review');
         Route::get('/hrm-salary-pay-slip/{monthlyPayableSalary:id}', [PaySheetController::class, 'payslip'])->name('hrm.paysheet.payslip');
         Route::post('/hrm-salary-pay-update/{monthlyPayableSalary:id}', [PaySheetController::class, 'update'])->name('hrm.paysheet.update');
@@ -57,7 +57,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //Salary Pay crud operation end
 
         //Leave Application crud operation start
-        
+
         Route::get('/hrm-leave-applicaitn-list', [LeaveApplicationController::class, 'index'])->name('hrm.leave.index');
         Route::get('/dataProcessingLeaveApplication', [LeaveApplicationController::class, 'dataProcessingLeaveApplication'])->name('hrm.leave.dataProcessingLeaveApplication');
         Route::get('/hrm-leave-applicaitn-create', [LeaveApplicationController::class, 'create'])->name('hrm.leave.create');
@@ -71,7 +71,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
 
         // Leave Approve  start
         Route::get('/hrm-leave-approve-applicaitn-lists', [ApproveLeaveApplicationController::class, 'index'])->name('hrm.leaveapprove.index');
-        Route::get('/dataProcessingApproveLeaveApplication',[ApproveLeaveApplicationController::class ,'dataProcessingApproveLeaveApplication'])->name('hrm.leaveapprove.dataProcessingApproveLeaveApplication');
+        Route::get('/dataProcessingApproveLeaveApplication', [ApproveLeaveApplicationController::class, 'dataProcessingApproveLeaveApplication'])->name('hrm.leaveapprove.dataProcessingApproveLeaveApplication');
         Route::get('/hrm-leave-approve-applicaitn-update/{leave:id}', [ApproveLeaveApplicationController::class, 'edit'])->name('hrm.leaveapprove.approve');
         Route::get('/hrm-leave-approve-applicaitn-show/{leave:id}', [ApproveLeaveApplicationController::class, 'show'])->name('hrm.leaveapprove.show');
         Route::get('/hrm-leave-approve-applicaitn-cancel/{leave:id}', [ApproveLeaveApplicationController::class, 'cancel'])->name('hrm.leaveapprove.cancel');
@@ -102,15 +102,13 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //Cash Application crud operation end
 
         // Cash Approve start
-       
-      
         Route::get('/hrm-cash-req-approve-applicaitn-lists', [ApproveCashReqApplicationController::class, 'index'])->name('hrm.cash-req.index');
         Route::get('/cash-req-dataProcessing', [ApproveCashReqApplicationController::class, 'dataProcessing'])->name('hrm.cash-req.dataProcessingApprove');
         Route::get('/hrm-cash-req-approve-applicaitn-update/{cash_reque:id}', [ApproveCashReqApplicationController::class, 'approve'])->name('hrm.cash-req.approve');
         Route::get('/hrm-cash-req-approve-applicaitn-show/{lone:id}', [ApproveCashReqApplicationController::class, 'show'])->name('hrm.cash-req.show');
         Route::get('/hrm-cash-req-approve-applicaitn-cancel/{lone:id}', [ApproveCashReqApplicationController::class, 'cancel'])->name('hrm.cash-req.cancel');
         Route::post('/hrm-account-leager-create', [ApproveCashReqApplicationController::class, 'ac_lager_create'])->name('hrm.account.leger.create');
-       
+
         // Cash Approve End
         // Lone Approve start
         Route::get('/hrm-lone-approve-applicaitn-lists', [ApproveLoneApplicationController::class, 'index'])->name('hrm.loneapprove.index');
@@ -145,7 +143,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //Award crud operation end
 
         //Salary attendance crud operation start
-        
+
         Route::get('/hrm-attendance-index', [AttendanceController::class, 'index'])->name('hrm.attendance.index');
         Route::get('/dataProcessingattendance', [AttendanceController::class, 'dataProcessingattendance'])->name('hrm.attendance.dataProcessingattendance');
         Route::get('/hrm-attendance-create', [AttendanceController::class, 'create'])->name('hrm.attendance.create');
@@ -161,23 +159,22 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
 
         //Salary attendance crud operation start
         Route::any('/hrm-attendance-log-create', [AttendanceLogController::class, 'index'])->name('hrm.attendancelog.index');
-        Route::any('/hrm-attendance-absent', [AttendanceLogController::class,'absent'])->name('hrm.attendancelog.absent');
+        Route::any('/hrm-attendance-absent', [AttendanceLogController::class, 'absent'])->name('hrm.attendancelog.absent');
         //Salary attendance crud operation end
         Route::any('/hrm-attendance-newemployee', [AttendanceLogController::class, 'newemployee'])->name('hrm.employee.newemployee');
-        Route::any('hrm-attendance-log-data',[AttendanceLogController::class, 'attandanceLog'])->name('hrm.attendancelog.log');
-      
+        Route::any('hrm-attendance-log-data', [AttendanceLogController::class, 'attandanceLog'])->name('hrm.attendancelog.log');
     });
 
     //Holiday Setup
-    Route::group(['middleware' =>['web','auth'], 'namespace'=> 'Hrm'] , function(){
-        Route::get('hrm-holiday-list', [HolidayController::class,'index'])->name('hrm.holiday.index');
-        Route::get('hrm-holiday-create', [HolidayController::class,'create'])->name('hrm.holiday.create');
-        Route::post('hrm-holiday-store', [HolidayController::class,'store'])->name('hrm.holiday.store');
-        Route::get('hrm-holiday-edit/{id}', [HolidayController::class,'edit'])->name('hrm.holiday.edit');
-        Route::post('hrm-holiday-update/{id}', [HolidayController::class,'update'])->name('hrm.holiday.update');
-        Route::get('hrm-holiday-show/{id}', [HolidayController::class,'show'])->name('hrm.holiday.show');
-        Route::delete('hrm-holiday-destroy/{id}', [HolidayController::class,'destroy'])->name('hrm.holiday.destroy');
-        
+    Route::group(['middleware' => ['web', 'auth'], 'namespace' => 'Hrm'], function () {
+        Route::get('hrm-holiday-list', [HolidayController::class, 'index'])->name('hrm.holiday.index');
+        Route::get('hrm-holiday-create', [HolidayController::class, 'create'])->name('hrm.holiday.create');
+        Route::post('hrm-holiday-store', [HolidayController::class, 'store'])->name('hrm.holiday.store');
+        Route::get('hrm-holiday-edit/{id}', [HolidayController::class, 'edit'])->name('hrm.holiday.edit');
+        Route::post('hrm-holiday-update/{id}', [HolidayController::class, 'update'])->name('hrm.holiday.update');
+        Route::get('hrm-holiday-show/{id}', [HolidayController::class, 'show'])->name('hrm.holiday.show');
+        Route::delete('hrm-holiday-destroy/{id}', [HolidayController::class, 'destroy'])->name('hrm.holiday.destroy');
+
         Route::get('hrm-holiday-month', [HolidayController::class, 'getMonthHolidays'])->name('hrm.holiday.month');
         Route::post('hrm-holiday-save', [HolidayController::class, 'save'])->name('hrm.holiday.save');
     });

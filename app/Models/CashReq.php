@@ -24,7 +24,6 @@ class CashReq extends Model
     }
     public function approveby()
     {
-        return $this->belongsTo(User::class, 'approve_by',"id");
+        return $this->belongsTo(User::class, 'approve_by', "id");
     }
-
 }
