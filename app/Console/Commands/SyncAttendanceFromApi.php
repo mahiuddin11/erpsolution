@@ -20,7 +20,7 @@ class SyncAttendanceFromApi extends Command
     public function handle()
     {
         try {
-            $token = zktecoGetToken(); 
+            $token = zktecoGetToken();
 
             if (!$token) {
                 Log::error('Attendance Sync Failed: Token not retrieved.');
@@ -43,9 +43,9 @@ class SyncAttendanceFromApi extends Command
             $response = Http::withHeaders([
                 'Authorization' => "Token $token",
                 'Content-Type'  => 'application/json',
-                ])->get($url);
+            ])->get($url);
 
-        
+
             if ($response->successful()) {
                 $data = $response->json();
 
@@ -64,7 +64,7 @@ class SyncAttendanceFromApi extends Command
 
                         // ==================== CROSS MIDNIGHT  ====================
                         $date =  getEffectiveDate($punch['punch_time']);
-                        
+
                         $time = date('H:i:s', strtotime($punch['punch_time']));
                         $groupedPunches[$employeeId][$date][] = $time;
 
@@ -77,7 +77,6 @@ class SyncAttendanceFromApi extends Command
                         }
                     }
                 }
-                
             } else {
                 Log::error('Attendance API fetch failed: ' . $response->status() . ' - ' . $response->body());
             }
@@ -86,35 +85,93 @@ class SyncAttendanceFromApi extends Command
         }
     }
 
+    // private function saveAttendance($employeeId, $date, $times)
+    // {
+
+    //     sort($times); // Sort times ascending
+
+    //     $signIn = $times[0]; // first punch
+    //     $signOut = count($times) > 1 ? end($times) : null; // last punch if multiple
+
+    //     $attendance = Attendance::where('emplyee_id', $employeeId)
+    //         ->whereDate('date', $date)
+    //         ->first();
+
+    //     if (!$attendance) {
+    //         $attendance = new Attendance();
+    //         $attendance->emplyee_id = $employeeId;
+    //         $attendance->branch_id = Branch::first()->id;
+    //         $attendance->date = $date;
+    //         $attendance->sign_in = $signIn;
+
+    //         if($signIn){
+    //             $attendance->latitude = config("officeLocation.latitude");  
+    //             $attendance->longitude = config("officeLocation.longitude") ; 
+    //         }
+    //     }
+
+    //     $attendance->sign_out = $signOut;
+    //     if($signOut){
+    //         $attendance->latitude_out =  config("officeLocation.latitude");;
+    //         $attendance->longitude_out = config("officeLocation.longitude");
+    //     }
+
+    //     $attendance->save();
+    // }
+
     private function saveAttendance($employeeId, $date, $times)
     {
+        sort($times);
 
-        sort($times); // Sort times ascending
-
-        $signIn = $times[0]; // first punch
-        $signOut = count($times) > 1 ? end($times) : null; // last punch if multiple
+        $deviceSignIn  = $times[0];
+        $deviceSignOut = count($times) > 1 ? end($times) : null;
 
         $attendance = Attendance::where('emplyee_id', $employeeId)
             ->whereDate('date', $date)
             ->first();
 
         if (!$attendance) {
+            // ── new record ──
             $attendance = new Attendance();
             $attendance->emplyee_id = $employeeId;
-            $attendance->branch_id = Branch::first()->id;
-            $attendance->date = $date;
-            $attendance->sign_in = $signIn;
+            $attendance->branch_id  = Branch::first()->id;
+            $attendance->date       = $date;
+            $attendance->sign_in    = $deviceSignIn;
+            $attendance->latitude   = config("officeLocation.latitude");
+            $attendance->longitude  = config("officeLocation.longitude");
 
-            if($signIn){
-                $attendance->latitude = config("officeLocation.latitude");  
-                $attendance->longitude = config("officeLocation.longitude") ; 
+            if ($deviceSignOut) {
+                $attendance->sign_out      = $deviceSignOut;
+                $attendance->latitude_out  = config("officeLocation.latitude");
+                $attendance->longitude_out = config("officeLocation.longitude");
             }
-        }
-        
-        $attendance->sign_out = $signOut;
-        if($signOut){
-            $attendance->latitude_out =  config("officeLocation.latitude");;
-            $attendance->longitude_out = config("officeLocation.longitude");
+        } else {
+            if (empty($attendance->sign_in)) {
+                $attendance->sign_in   = $deviceSignIn;
+                $attendance->latitude  = config("officeLocation.latitude");
+                $attendance->longitude = config("officeLocation.longitude");
+            } else {
+                if (strtotime($deviceSignIn) < strtotime($attendance->sign_in)) {
+                    $attendance->sign_in   = $deviceSignIn;
+                    $attendance->latitude  = config("officeLocation.latitude");
+                    $attendance->longitude = config("officeLocation.longitude");
+                }
+            }
+
+
+            if ($deviceSignOut) {
+                if (empty($attendance->sign_out)) {
+                    $attendance->sign_out      = $deviceSignOut;
+                    $attendance->latitude_out  = config("officeLocation.latitude");
+                    $attendance->longitude_out = config("officeLocation.longitude");
+                } else {
+                    if (strtotime($deviceSignOut) > strtotime($attendance->sign_out)) {
+                        $attendance->sign_out      = $deviceSignOut;
+                        $attendance->latitude_out  = config("officeLocation.latitude");
+                        $attendance->longitude_out = config("officeLocation.longitude");
+                    }
+                }
+            }
         }
 
         $attendance->save();
