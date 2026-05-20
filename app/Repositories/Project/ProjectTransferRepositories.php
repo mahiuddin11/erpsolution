@@ -51,8 +51,10 @@ class ProjectTransferRepositories
      * @return mixed
      */
 
-    public function getList($request)
+    /*     public function getList($request)
     {
+
+
         $columns = array(
             0 => 'id',
             1 => 'order_date',
@@ -72,26 +74,26 @@ class ProjectTransferRepositories
         $order = $columns[$request->input('order.0.column')];
         $dir = $request->input('order.0.dir');
         $auth = Auth::user();
+
+
         if (empty($request->input('search.value'))) {
+
+            $purchaseorders = $this->projectTransfer::get();
             $purchaseorders = $this->projectTransfer::offset($start);
             if ($auth->branch_id !== null) {
                 $purchaseorders = $purchaseorders->where('branch_id', $auth->branch_id);
             }
-            $purchaseorders = $purchaseorders->limit($limit)
-                ->orderBy($order, $dir)
-                ->get();
+            $purchaseorders = $purchaseorders->limit($limit)->orderBy($order, $dir)->get();
             $totalFiltered = $this->projectTransfer::count();
         } else {
+
             $search = $request->input('search.value');
             $purchaseorders = $this->projectTransfer::where('invoice_no', 'like', "%{$search}%");
             if ($auth->branch_id !== null) {
                 $purchaseorders = $purchaseorders->where('branch_id', $auth->branch_id);
             }
-            $purchaseorders = $purchaseorders->offset($start)
-                ->limit($limit)
-                ->orderBy($order, $dir)
-                // ->orderBy('status', 'desc')
-                ->get();
+            $purchaseorders = $purchaseorders->offset($start)->limit($limit)->orderBy($order, $dir)->get();
+
             $totalFiltered = $this->projectTransfer::where('invoice_no', 'like', "%{$search}%")->count();
         }
 
@@ -147,7 +149,91 @@ class ProjectTransferRepositories
         );
 
         return $json_data;
+    } */
+
+    public function getList($request)
+    {
+        $columns = array(
+            0 => 'id',
+            1 => 'order_date',
+            2 => 'invoice_no',
+        );
+
+        $edit = Helper::roleAccess('project.transferproject.edit')  ? 1 : 0;
+        $delete = Helper::roleAccess('project.transferproject.destroy') ? 1 : 0;
+        $invoice = Helper::roleAccess('project.transferproject.invoice') ? 1 : 0;
+        $ced = $edit + $delete + $invoice;
+
+        $auth = Auth::user();
+        $baseQuery = $this->projectTransfer::query();
+
+        if ($auth->type !== 'Admin') {
+            $baseQuery->where('created_by', $auth->id);
+        }
+
+        $totalData = (clone $baseQuery)->count(); // filtered base  count
+
+        $limit = $request->input('length');
+        $start = $request->input('start');
+        $order = $columns[$request->input('order.0.column')];
+        $dir = $request->input('order.0.dir');
+
+        if (empty($request->input('search.value'))) {
+
+            $purchaseorders = (clone $baseQuery)->offset($start)->limit($limit)->orderBy($order, $dir)->get();
+            $totalFiltered = $totalData;
+        } else {
+
+            $search = $request->input('search.value');
+
+            $purchaseorders = (clone $baseQuery)->where('invoice_no', 'like', "%{$search}%")->offset($start)->limit($limit)
+                ->orderBy($order, $dir)
+                ->get();
+
+            $totalFiltered = (clone $baseQuery)->where('invoice_no', 'like', "%{$search}%")->count();
+        }
+
+        $data = array();
+        if ($purchaseorders) {
+            foreach ($purchaseorders as $key => $value) {
+                $nestedData['id'] = $key + 1;
+                $nestedData['order_date'] = $value->order_date;
+                $nestedData['invoice_no'] = $value->invoice_no;
+                $nestedData['purchase_requisition_id'] = $value->purchaseRequisition->invoice_no;
+                $nestedData['project_id'] = $value->project->name ?? '';
+
+                if ($ced != 0) :
+                    $edit_data = $edit != 0
+                        ? '<a href="' . route('project.transferproject.edit', $value->id) . '" class="btn btn-xs btn-default"><i class="fa fa-edit"></i></a>'
+                        : '';
+
+                    $invoice_data = $invoice != 0
+                        ? '<a href="' . route('project.transferproject.invoice', $value->id) . '" class="btn btn-xs btn-default"><i class="fas fa-eye"></i></a>'
+                        : '';
+
+                    $delete_data = $delete != 0
+                        ? '<a delete_route="' . route('project.transferproject.destroy', $value->id) . '" delete_id="' . $value->id . '" title="Delete" class="btn btn-xs btn-default delete_row uniqueid' . $value->id . '"><i class="fa fa-times"></i></a>'
+                        : '';
+
+                    $nestedData['action'] = $edit_data . ' ' . $invoice_data . ' ' . $delete_data;
+                else :
+                    $nestedData['action'] = '';
+                endif;
+
+                $data[] = $nestedData;
+            }
+        }
+
+        $json_data = array(
+            "draw"            => intval($request->input('draw')),
+            "recordsTotal"    => intval($totalData),
+            "recordsFiltered" => intval($totalFiltered),
+            "data"            => $data,
+        );
+
+        return $json_data;
     }
+
     /**
      * @param $request
      * @return mixed
@@ -156,7 +242,10 @@ class ProjectTransferRepositories
     public function store($request)
     {
 
+
         DB::beginTransaction();
+
+        $user = Auth::user();
         try {
             $purchaseorder = new $this->projectTransfer();
             $purchaseorder->order_date = $request->date;
@@ -167,6 +256,7 @@ class ProjectTransferRepositories
             $purchaseorder->project_id = $request->project_id;
             // $purchaseorder->total_bill = array_sum($request->total);
             $purchaseorder->note = $request->note;
+            $purchaseorder->create_by = $user->id ?? auth()->user()->id;
             $purchaseorder->save();
             $purchaseOr_id = $purchaseorder->id;
 

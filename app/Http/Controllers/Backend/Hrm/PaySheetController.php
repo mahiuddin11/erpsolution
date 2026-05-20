@@ -429,8 +429,8 @@ class PaySheetController extends Controller
                 $loanTransaction->invoice          = $loanInvoice;
                 $loanTransaction->table_id         = $loan->id;
                 $loanTransaction->branch_id        = auth()->user()->branch_id ?? 0;
-                $loanTransaction->account_id       = 1372;  // employee load
-                $loanTransaction->type             = 'credit';
+                $loanTransaction->account_id       = 1384;  // employee load
+                $loanTransaction->type             = 'credit_voucher';
                 $loanTransaction->debit            = 0;
                 $loanTransaction->credit           = $loanAmount;
                 $loanTransaction->employee_id      = $payslip->employee_id;
