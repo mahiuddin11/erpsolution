@@ -8,6 +8,7 @@ use App\Http\Controllers\Backend\Settings\ContraVoucherController;
 use App\Http\Controllers\Backend\Settings\CreditVoucherController;
 use App\Http\Controllers\Backend\Settings\DabitVoucherController;
 use App\Http\Controllers\Backend\Settings\JournalVoucherController;
+use App\Http\Controllers\OpeningController;
 use App\Models\Accounts;
 use App\Models\Customer;
 use App\Models\Employee;
@@ -378,16 +379,16 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //Expance crud operation end
 
         //opening balance crud operation start
-        Route::get('/settings-openingbalance-list', 'OpeningController@index')->name('settings.openingbalance.index');
-        Route::get('/dataProcessingOpeningBalance', 'OpeningController@dataProcessingOpeningBalance')->name('settings.openingbalance.dataProcessingOpeningBalance');
-        Route::get('/settings-openingbalance-create', 'OpeningController@create')->name('settings.openingbalance.create');
-        Route::post('/settings-openingbalance-store', 'OpeningController@store')->name('settings.openingbalance.store');
-        Route::get('/settings-openingbalance-edit/{id}', 'OpeningController@edit')->name('settings.openingbalance.edit');
-        Route::get('/settings-openingbalance-show/{id}', 'OpeningController@show')->name('settings.openingbalance.show');
-        Route::post('/settings-openingbalance-update/{id}', 'OpeningController@update')->name('settings.openingbalance.update');
-        Route::get('/settings-openingbalance-delete/{id}', 'OpeningController@destroy')->name('settings.openingbalance.destroy');
-        Route::get('/settings-openingbalance-status/{id}/{status}', 'OpeningController@statusUpdate')->name('settings.openingbalance.status');
-        Route::get('/getAllAccountHead', 'OpeningController@getAllAccountHead')->name('settings.openingbalance.getAllAccountHead');
+        Route::get('/settings-openingbalance-list', [OpeningController::class, 'index'])->name('settings.openingbalance.index');
+        Route::get('/dataProcessingOpeningBalance', [OpeningController::class, 'dataProcessingOpeningBalance'])->name('settings.openingbalance.dataProcessingOpeningBalance');
+        Route::get('/settings-openingbalance-create', [OpeningController::class, 'create'])->name('settings.openingbalance.create');
+        Route::post('/settings-openingbalance-store', [OpeningController::class, 'store'])->name('settings.openingbalance.store');
+        Route::get('/settings-openingbalance-edit/{id}', [OpeningController::class, 'edit'])->name('settings.openingbalance.edit');
+        Route::get('/settings-openingbalance-show/{id}', [OpeningController::class, 'show'])->name('settings.openingbalance.show');
+        Route::post('/settings-openingbalance-update/{id}', [OpeningController::class, 'update'])->name('settings.openingbalance.update');
+        Route::get('/settings-openingbalance-delete/{id}', [OpeningController::class, 'destroy'])->name('settings.openingbalance.destroy');
+        Route::get('/settings-openingbalance-status/{id}/{status}', [OpeningController::class, 'statusUpdate'])->name('settings.openingbalance.status');
+        Route::get('/getAllAccountHead', [OpeningController::class, 'getAllAccountHead'])->name('settings.openingbalance.getAllAccountHead');
         //opening balance crud operation end
 
         //customer opening balance crud operation start
