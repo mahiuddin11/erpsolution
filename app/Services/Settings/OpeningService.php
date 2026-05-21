@@ -9,49 +9,29 @@ use Illuminate\Support\Facades\Validator;
 class OpeningService
 {
 
+    private $OpeningRepositories;
 
-    /**
-     * @var branchRepositories
-     */
-    private $systemRepositories;
-    /**
-     * AdminCourseService constructor.
-     * @param branchRepositories $branchRepositories
-     */
-    public function __construct(OpeningRepositories $systemRepositories)
+    public function __construct(OpeningRepositories $OpeningRepositories)
     {
-        $this->systemRepositories = $systemRepositories;
+        $this->OpeningRepositories = $OpeningRepositories;
     }
 
-    /**
-     * @param $request
-     * @return mixed
-     */
+
     public function getAllOpening()
     {
-        return $this->systemRepositories->getAllOpening();
+        return $this->OpeningRepositories->getAllOpening();
     }
 
 
-    /**
-     * @param $request
-     * @return mixed
-     */
     public function getList($request)
     {
-        return $this->systemRepositories->getList($request);
+        return $this->OpeningRepositories->getList($request);
     }
 
 
-
-
-    /**
-     * @param $request
-     * @return mixed
-     */
     public function statusUpdate($request, $id)
     {
-        return $this->systemRepositories->statusUpdate($request, $id);
+        return $this->OpeningRepositories->statusUpdate($request, $id);
     }
 
     public function statusValidation($request)
@@ -81,8 +61,8 @@ class OpeningService
     {
         return [
             'date'               => 'required',
-            'to_account_id'               => 'required',
-            'amount'               => 'required',
+            'to_account_id'      => 'required',
+            'amount'             => 'required',
             'status'             => 'nullable',
         ];
     }
@@ -93,7 +73,7 @@ class OpeningService
      */
     public function store($request)
     {
-        return $this->systemRepositories->store($request);
+        return $this->OpeningRepositories->store($request);
     }
 
     /**
@@ -103,7 +83,7 @@ class OpeningService
     public function details($id)
     {
 
-        return $this->systemRepositories->details($id);
+        return $this->OpeningRepositories->details($id);
     }
 
 
@@ -113,7 +93,7 @@ class OpeningService
      */
     public function update($request, $id)
     {
-        return $this->systemRepositories->update($request, $id);
+        return $this->OpeningRepositories->update($request, $id);
     }
 
 

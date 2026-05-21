@@ -52,7 +52,7 @@ class PurchaseOrderRepositories
     public function getList($request)
     {
 
-    // dd($request->all());
+        // dd($request->all());
 
         $columns = array(
             0 => 'id',
@@ -332,10 +332,26 @@ class PurchaseOrderRepositories
 
         try {
 
+            $invoice_no = $request->orderCode;
+
+            $exists = PurchaseOrder::where('invoice_no', $invoice_no)->select('invoice_no')->exists();
+
+            if ($exists) {
+
+                $lastPurchaseOrder = PurchaseOrder::latest('id')->first();
+                if ($lastPurchaseOrder) {
+                    $nextCode = $lastPurchaseOrder->id + 1;
+                } else {
+                    $nextCode = 1;
+                }
+                $invoice_no = 'PO' . str_pad($nextCode, 5, "0", STR_PAD_LEFT);
+            }
+
+
             // Create Purchase Order
             $purchaseorder = new $this->purchaseorder();
             $purchaseorder->order_date = $request->date;
-            $purchaseorder->invoice_no = $request->orderCode;
+            $purchaseorder->invoice_no = $invoice_no ?? $request->orderCode;
             $purchaseorder->supplier_id = $request->subblier_id ?? 0;
             $purchaseorder->purchase_requisition_id = $request->purchase_requisition;
             $purchaseorder->project_id = $request->project_id;
@@ -543,7 +559,6 @@ class PurchaseOrderRepositories
     {
 
         return  $this->purchaseorder::find($id);
-
     }
 
     public function getprList($request)
@@ -564,7 +579,7 @@ class PurchaseOrderRepositories
         <td class="text-right">' . $value->purchasetype . '<input type="hidden" name="purchasetype[]" value="' . $value->purchasetype . '"></td>
         <td class="text-right">' . ' <input class="ttlqty qnty form-control" type="number"  name="qty[]" value="' . $value->qty . '"></td>
         </td>
-        <td class="text-right"><button class="btn btn-info supplierButton" type="button" btn-id="'.$value->product_id.'"> <i class="fa fa-plus"></i> </button></td>
+        <td class="text-right"><button class="btn btn-info supplierButton" type="button" btn-id="' . $value->product_id . '"> <i class="fa fa-plus"></i> </button></td>
         <td>
            <a del_id="' . $value->product_id . '" class="delete_item btn form-control btn-danger" href="javascript:;" title="">
                <i class="fa fa-times"></i>

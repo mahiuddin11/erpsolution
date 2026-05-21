@@ -31,11 +31,7 @@ class OpeningController extends Controller
      */
     private $systemTransformer;
 
-    /**
-     * CategoryController constructor.
-     * @param OpeningService $systemService
-     * @param OpeningTransformer $systemTransformer
-     */
+
     public function __construct(OpeningService $openingService, OpeningTransformer $openingTransformer)
     {
         $this->systemService = $openingService;
@@ -48,6 +44,7 @@ class OpeningController extends Controller
     public function index(Request $request)
     {
         $title = 'Opening List';
+
         return view('backend.pages.settings.opening.index', get_defined_vars());
     }
 
@@ -65,8 +62,7 @@ class OpeningController extends Controller
     {
 
         $title = 'Add New Opening';
-        $accounts = ChartOfAccount::whereIn('id',[1,9])->get();
-
+        $accounts = ChartOfAccount::whereIn('id', [1, 9])->get();
         return view('backend.pages.settings.opening.create', get_defined_vars());
     }
     /**

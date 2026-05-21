@@ -153,7 +153,22 @@ class GrnRepositories
 
     public function store($request)
     {
-        
+
+        $invoice_no = $request->grnCode;
+
+        $exists = Grn::where('invoice_no', $invoice_no)->select('invoice_no')->exists();
+
+        if ($exists) {
+
+            $lastGrn = Grn::latest('id')->first();
+            if ($lastGrn) {
+                $nextCode = $$lastGrn->id + 1;
+            } else {
+                $nextCode = 1;
+            }
+            $invoice_no = 'GRN' . str_pad($nextCode, 5, "0", STR_PAD_LEFT);
+        }
+
         DB::beginTransaction();
         try {
             $remainingtt = $request->remaining;
@@ -161,7 +176,7 @@ class GrnRepositories
             $statuscheck = array_sum($remainingtt) + array_sum($approve_qtyt);
             $goodrcvnote = new Grn();
             $goodrcvnote->date = $request->date;
-            $goodrcvnote->invoice_no = $request->grnCode;
+            $goodrcvnote->invoice_no = $invoice_no;
             $goodrcvnote->supplier_id = $request->subblier_id ?? 0;
             $goodrcvnote->purchase_voucher_id = $request->purchase_voucher;
             $goodrcvnote->project_id = $request->project_id;
@@ -186,7 +201,7 @@ class GrnRepositories
             PurchasesDetails::where('purchases_id', $request->purchase_voucher)->update($purchaseDetails);
 
             //grn supplyer_id update
-            
+
             $category = $request->category_nm;
             $product = $request->product_nm;
             $qty = $request->qty;

@@ -12,37 +12,23 @@ use Illuminate\Support\Facades\Auth;
 
 class OpeningRepositories
 {
-    /**
-     * @var user_id
-     */
+
     private $user_id;
-    /**
-     * @var Opening
-     */
     private $openingbalance;
-    /**
-     * CourseRepository constructor.
-     * @param opening $opening
-     */
+
     public function __construct(OpeningBalance $OpeningBalance)
     {
         $this->openingbalance = $OpeningBalance;
         $this->user_id = 1;
     }
 
-    /**
-     * @param $request
-     * @return mixed
-     */
+
     public function getAllOpening()
     {
         return $this->openingbalance::get();
     }
 
-    /**
-     * @param $request
-     * @return mixed
-     */
+
     public function getList($request)
     {
         $columns = array(
@@ -133,16 +119,42 @@ class OpeningRepositories
         return $result;
     }
 
+    // public function store($request)
+    // {
+    //     foreach ($request->accounts as $id => $data) {
+    //         $account = ChartOfAccount::find($id);
+    //         $account->opening_balance = empty($data['debit']) ? $data['credit'] : $data['debit'];
+    //         $account->balance_type =  empty($data['debit']) ? "credit" : "debit";
+    //         $account->save();
+    //     }
+
+    //     return $account;
+    // }
+
     public function store($request)
     {
         foreach ($request->accounts as $id => $data) {
-            $account = ChartOfAccount::find($id);
-            $account->opening_balance = empty($data['debit']) ? $data['credit']:$data['debit'];
-            $account->balance_type =  empty($data['debit']) ? "credit":"debit";
+            $account = ChartOfAccount::findOrFail($id);   // FindOrFail 
+
+            //   debit and credit 
+            $debit  = isset($data['debit'])  ? (float)$data['debit']  : 0;
+            $credit = isset($data['credit']) ? (float)$data['credit'] : 0;
+
+            if ($debit > 0) {
+                $account->opening_balance = $debit;
+                $account->balance_type = "debit";
+            } elseif ($credit > 0) {
+                $account->opening_balance = $credit;
+                $account->balance_type = "credit";
+            } else {
+                $account->opening_balance = 0;
+                $account->balance_type = "debit"; // 
+            }
+
             $account->save();
         }
 
-        return $account;
+        return true;
     }
 
     public function update($request, $id)

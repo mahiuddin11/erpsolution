@@ -1142,10 +1142,24 @@ class PurchaseRepositories
     public function prstore($request)
     {
 
-
         DB::beginTransaction();
 
         try {
+
+            $invoice_no = $request->invoice_no;
+
+            $exists = Purchases::where('invoice_no', $invoice_no)->select('invoice_no')->exists();
+
+            if ($exists) {
+
+                $lastPurchaseOrder = PurchaseOrder::latest('id')->first();
+                if ($lastPurchaseOrder) {
+                    $nextCode = $lastPurchaseOrder->id + 1;
+                } else {
+                    $nextCode = 1;
+                }
+                $invoice_no = 'PV' . str_pad($nextCode, 5, "0", STR_PAD_LEFT);
+            }
 
             $request->branch_id = $request->sub_warehouse_id ?? $request->branch_id;
 
@@ -1153,7 +1167,7 @@ class PurchaseRepositories
             // 1. PURCHASE HEADER
             // =========================
             $purchase = new $this->purchases();
-            $purchase->invoice_no       = $request->invoice_no;
+            $purchase->invoice_no       = $invoice_no;
             $purchase->date             = $request->date;
             $purchase->purchase_order_id = $request->purchase_order_id;
             $purchase->type             = 'Project';
@@ -1232,7 +1246,7 @@ class PurchaseRepositories
                 $purchaseDetail->ledger_id     = !empty($ledgerId)   ? $ledgerId   : 0;
 
 
-                // purchasetype থাকলে সেট করুন (old system)
+                // purchasetype  (old system)
                 if (isset($request->purchasetype[$i])) {
                     $purchaseDetail->purchasetype = $request->purchasetype[$i];
                 }
@@ -1241,7 +1255,7 @@ class PurchaseRepositories
 
                 if (!empty($supplierId)) {
 
-                    // Supplier থেকে purchase
+                    // Supplier purchase
                     $supplier  = Supplier::find($supplierId);
                     $accountId = $supplier->account_id ?? ($supplier->account->id ?? 0);
 
@@ -1261,7 +1275,7 @@ class PurchaseRepositories
                     }
                 } elseif (!empty($ledgerId)) {
 
-                    // ledger_id সরাসরি chart_of_account id হিসেবে ব্যবহার হচ্ছে
+                    // ledger_id chart_of_account id 
                     $key = 'ledger_' . $ledgerId;
 
                     if (isset($partyTotals[$key])) {
@@ -1402,7 +1416,7 @@ class PurchaseRepositories
                 $cusId = null;
                 $partyType = null;
 
-                // Party Type Detection (পুরনো + নতুন উভয় সাপোর্ট)
+                // Party Type Detection 
                 if (!empty($party['supplier_id'])) {
                     $supId = $party['supplier_id'];
                     $partyType = 'supplier';
@@ -1415,11 +1429,11 @@ class PurchaseRepositories
                 }
 
                 // $invoice = (new AccountTransaction())->accountInvoice();
-                $invoice = $request->invoice_no;
+                $invoice = $invoice_no;
                 // ---- DEBIT: Purchase A/C ----
                 AccountTransaction::updateOrCreate(
                     [
-                        'payment_invoice' => $request->invoice_no,
+                        'payment_invoice' => $invoice_no,
                         'invoice'         => $invoice,
                         'table_id'        => $purchaseId,
                         'account_id'      => getAccountByUniqueID(22)->id, // Purchase Account
@@ -1430,7 +1444,7 @@ class PurchaseRepositories
                     [
                         'type'        => 1,
                         'branch_id'   => $request->branch_id ?? 0,
-                        'debit'       => $party['amount'],           // ← এখানে পুরো অ্যামাউন্ট Debit
+                        'debit'       => $party['amount'],           //  Debit
                         'remark'      => $request->narration,
                         'created_at'  => $request->date,
                         'created_by'  => Auth::id(),
@@ -1441,7 +1455,7 @@ class PurchaseRepositories
                 // ---- CREDIT: Party A/C (Supplier or Customer) ----
                 AccountTransaction::updateOrCreate(
                     [
-                        'payment_invoice' => $request->invoice_no,
+                        'payment_invoice' => $invoice_no,
                         'invoice'         => $invoice,
                         'table_id'        => $purchaseId,
                         'account_id'      => $party['account_id'],
@@ -1452,11 +1466,11 @@ class PurchaseRepositories
                     [
                         'type'        => 1,
                         'branch_id'   => $request->branch_id ?? 0,
-                        'credit'      => $party['amount'],           // ← এখানে পুরো অ্যামাউন্ট Credit
+                        'credit'      => $party['amount'],           // Credit
                         'remark'      => $request->narration,
                         'created_at'  => $request->date,
                         'created_by'  => Auth::id(),
-                        'party_type'  => $partyType,                 // নতুন
+                        'party_type'  => $partyType,                 // 
                     ]
                 );
             }

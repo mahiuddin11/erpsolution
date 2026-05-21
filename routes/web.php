@@ -8,7 +8,7 @@ use App\Http\Controllers\Backend\Settings\ContraVoucherController;
 use App\Http\Controllers\Backend\Settings\CreditVoucherController;
 use App\Http\Controllers\Backend\Settings\DabitVoucherController;
 use App\Http\Controllers\Backend\Settings\JournalVoucherController;
-use App\Http\Controllers\OpeningController;
+use App\Http\Controllers\Backend\Settings\OpeningController;
 use App\Models\Accounts;
 use App\Models\Customer;
 use App\Models\Employee;

@@ -139,6 +139,7 @@ if (!function_exists('_log_resolve_module')) {
 
             // ── Project ──
             'projects'                        => ['Project',         'Project'],
+            'purchase_requisitions'           => ['Project',         'Purchase Requisitions'],
 
 
             // ── Accounts ──

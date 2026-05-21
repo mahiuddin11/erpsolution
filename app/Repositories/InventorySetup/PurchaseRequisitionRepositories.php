@@ -128,7 +128,7 @@ class PurchaseRequisitionRepositories
                         $delete_data = '';
                     }
 
-                    $nestedData['action'] = $edit_data . ' ' .$approve_data . '  ' . $invoice_data . ' ' . $delete_data;
+                    $nestedData['action'] = $edit_data . ' ' . $approve_data . '  ' . $invoice_data . ' ' . $delete_data;
                 else :
                     $nestedData['action'] = '';
                 endif;
@@ -157,12 +157,25 @@ class PurchaseRequisitionRepositories
 
     public function store($request)
     {
-        
         DB::beginTransaction();
         try {
-            
+
+            $invoice_no = $request->requisitionCode;
+            $exists = PurchaseRequisition::where('invoice_no', $invoice_no)->select('invoice_no')->exists();
+            if ($exists) {
+
+                $lastRequisition = PurchaseRequisition::latest('id')->first();
+                if ($lastRequisition) {
+                    $nextCode = $lastRequisition->id + 1;
+                } else {
+                    $nextCode = 1;
+                }
+
+                $invoice_no = 'PVR' . str_pad($nextCode, 5, "0", STR_PAD_LEFT);
+            }
+
             $purchaserequisition = new PurchaseRequisition();
-            $purchaserequisition->invoice_no = $request->requisitionCode;
+            $purchaserequisition->invoice_no =   $invoice_no;
             $purchaserequisition->project_id = $request->project_id;
             $purchaserequisition->branch_id = Auth::user()->branch_id ?? '';
             $purchaserequisition->date = $request->date;
@@ -172,13 +185,15 @@ class PurchaseRequisitionRepositories
             $purchaserequisition->note = $request->note;
             $purchaserequisition->save();
             $pr_id = $purchaserequisition->id;
-            
+
+            activity_log('create', 'purchase_requisitions', $purchaserequisition->toArray());
+
             $category = $request->category_nm;
             $product = $request->product_nm;
             $qty = $request->qty;
             $unitprice = $request->unitprice;
             $total = $request->total;
-            
+
             for ($i = 0; $i < count($category); $i++) {
                 $purchasedetails = new PrDetails();
                 $purchasedetails->pr_id = $pr_id;
@@ -188,9 +203,8 @@ class PurchaseRequisitionRepositories
                 $purchasedetails->qty = $qty[$i];
                 $purchasedetails->project_id = $request->project_id;
                 $purchasedetails->save();
-
-  
             }
+
 
             DB::commit();
         } catch (\Exception $e) {
@@ -203,10 +217,12 @@ class PurchaseRequisitionRepositories
 
     public function update($request, $id)
     {
-        // dd($request->all());
+
         DB::beginTransaction();
         try {
             $purchaserequisition = PurchaseRequisition::find($id);
+
+            $oldData = $purchaserequisition->toArray();
             $purchaserequisition->project_id = $request->project_id;
             $purchaserequisition->date = $request->date;
             $purchaserequisition->update_by = Auth::user()->id;
@@ -232,6 +248,15 @@ class PurchaseRequisitionRepositories
                 $purchasedetails->status = 'Pending';
                 $purchasedetails->save();
             }
+
+            activity_log(
+                'update',
+                'purchase_requisitions',
+                $purchaserequisition->toArray(),
+                $oldData,
+                "Purchase Requisition Updated by " . Auth::user()->name . " (Invoice_no: {$purchaserequisition->invoice_no}) }"
+            );
+
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
@@ -242,10 +267,11 @@ class PurchaseRequisitionRepositories
 
     public function approvepr($request, $id)
     {
-        
+
         DB::beginTransaction();
         try {
             $purchaserequisition = PurchaseRequisition::find($id);
+            $oldData = $purchaserequisition->toArray();
             $purchaserequisition->approve_by = Auth::user()->id;
             $purchaserequisition->approve_at = date('Y-m-d');
             $purchaserequisition->status = 'Accepted';
@@ -266,6 +292,15 @@ class PurchaseRequisitionRepositories
                 $purchasedetails->status = 'Accepted';
                 $purchasedetails->save();
             }
+
+            activity_log(
+                'approve',
+                'purchase_requisitions',
+                $purchaserequisition->toArray(),
+                $oldData,
+                "Purchase Requisition Approved by " . Auth::user()->name . " (Invoice No: {$purchaserequisition->invoice_no}) — Status: Pending → approved"
+            );
+
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
@@ -277,20 +312,39 @@ class PurchaseRequisitionRepositories
     public function statusUpdate($id, $status)
     {
         $prchaserequisition = $this->prchaserequisition::find($id);
+        $oldData = $prchaserequisition->toArray();
         $prchaserequisition->status = $status;
         $prchaserequisition->save();
+
+        activity_log(
+            'status_update',
+            'purchase_requisitions',
+            $prchaserequisition->toArray(),
+            $oldData,
+            "Purchase Requisition Status Changed by " . Auth::user()->name .
+                " (Invoice No: {$prchaserequisition->invoice_no}) — {$oldData['status']} → {$status}"
+        );
         return $prchaserequisition;
     }
 
     public function destroy($id)
     {
         $purchaserequ = $this->prchaserequisition::find($id);
+        $oldData = $purchaserequ->toArray();
         if ($purchaserequ->status == "Accepted") {
             session()->flash('error', "Sorry, you couldn't delete!!");
             return false;
         } else {
             $purchaserequ->delete();
             PrDetails::where('pr_id', $id)->delete();
+
+            activity_log(
+                'delete',
+                'purchase_requisitions',
+                [],
+                $oldData,
+                "Purchase Requisition Deleted (Invoice no: {$purchaserequ->invoice_no}) — Previous Status: {$oldData['status']}"
+            );
             return true;
         }
     }
