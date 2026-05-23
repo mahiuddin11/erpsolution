@@ -199,8 +199,6 @@ class StockTransferRepositories
 
     public function store($request)
     {
-
-
         DB::beginTransaction();
         try {
             $transfer = new $this->transfer();
@@ -262,7 +260,6 @@ class StockTransferRepositories
     public function approval($request)
     {
 
-
         DB::beginTransaction();
         try {
             $transferId = $request->transferId;
@@ -310,8 +307,6 @@ class StockTransferRepositories
                 endif;
             }
 
-
-
             $category_id = $request->catName;
             $proName = $request->proName;
             $subtotal = $request->unitprice;
@@ -320,6 +315,7 @@ class StockTransferRepositories
             for ($i = 0; $i < count($category_id); $i++) {
                 $stock = new Stock();
                 $stock->date = $request->date;
+                $stock->invoice_no = $transfer->voucher_code;
                 $stock->general_id = $transferId;
                 $stock->branch_id = $request->from_branch_id;
                 $stock->product_id = $proName[$i];
@@ -332,6 +328,7 @@ class StockTransferRepositories
 
                 $stock = new Stock();
                 $stock->date = $request->date;
+                $stock->invoice_no = $transfer->voucher_code;
                 $stock->general_id = $transferId;
                 $stock->branch_id = $request->to_branch_id;
                 $stock->product_id = $proName[$i];
@@ -344,10 +341,10 @@ class StockTransferRepositories
             }
 
             activity_log(
-                'approve',                                   // action
-                'stock_transfer',                             // table/model
-                $transfer->toArray(),                        // new data
-                $oldData,                                    // old data
+                'approve',
+                'stock_transfer',
+                $transfer->toArray(),
+                $oldData,
                 "Transfer approved successfully (Transfer ID: {$transfer->voucher_code}) — Status: Pending → Approved"
             );
 
@@ -458,10 +455,6 @@ class StockTransferRepositories
                     $updatestock->save();
                 endif;
             }
-
-
-
-
 
             DB::commit();
         } catch (\Exception $e) {
