@@ -104,12 +104,23 @@ class PurchaseOrderController extends Controller
         ]));
         try {
 
-
+            $oldData = PurchaseOrder::find($request->purchase_order)?->toArray() ?? [];
             $purchaseorder['approved_by'] = Auth::user()->id;
             $purchaseorder['approved_at'] = date('Y-m-d');
             $purchaseorder['status'] = 'Accepted';
             PurchaseOrder::where('id', $request->purchase_order)->update($purchaseorder);
             $suppliersPrices =   SupplierSelectPrice::whereIn('id', $request->suplirePrice)->update(['status' => 1]);
+
+            $invoiceNo = $oldData['invoice_no'] ?? 'N/A';
+
+
+            activity_log(
+                'aprove',
+                'purchase_order_aprove',
+                array_merge($purchaseorder, ['id' => $request->purchase_order]),
+                $oldData,
+                "Purchase Order approved (Invoice: {$invoiceNo}) — Status: {$oldData['status']} → Accepted"
+            );
         } catch (Exception $e) {
             session()->flash('error', 'Something was wrong!!');
             return redirect()->back();
@@ -125,8 +136,6 @@ class PurchaseOrderController extends Controller
      */
     public function store(Request $request)
     {
-
-
         try {
             $this->validate($request, $this->purchaseService->storeValidation($request));
         } catch (ValidationException $e) {
@@ -193,7 +202,7 @@ class PurchaseOrderController extends Controller
      */
     public function update(Request $request, $id)
     {
-        
+
         if (!is_numeric($id)) {
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
@@ -203,9 +212,9 @@ class PurchaseOrderController extends Controller
             session()->flash('error', 'Edit info is invalid!!');
             return redirect()->back();
         }
-    
+
         try {
-            
+
             $this->validate($request, $this->purchaseService->updateValidation($request, $id));
         } catch (ValidationException $e) {
             session()->flash('error', 'Validation error !!');
@@ -213,7 +222,7 @@ class PurchaseOrderController extends Controller
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
 
-        
+
         $this->purchaseService->update($request, $id);
         session()->flash('success', 'Data successfully updated!!');
         return redirect()->route('inventorySetup.purchaseorder.index');

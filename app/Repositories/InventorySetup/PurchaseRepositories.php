@@ -1151,7 +1151,6 @@ class PurchaseRepositories
             $exists = Purchases::where('invoice_no', $invoice_no)->select('invoice_no')->exists();
 
             if ($exists) {
-
                 $lastPurchaseOrder = PurchaseOrder::latest('id')->first();
                 if ($lastPurchaseOrder) {
                     $nextCode = $lastPurchaseOrder->id + 1;
@@ -1208,6 +1207,14 @@ class PurchaseRepositories
 
             $purchase->save();
             $purchaseId = $purchase->id;
+
+            activity_log(
+                'create',
+                'menual_purchase',
+                $purchase->toArray(),
+                [],
+                "Menual Purchase created (Invoice: {$request->invoice_no}) — Total: {$purchase->grand_total}, Payment: {$request->payment_type} , "
+            );
 
             // =========================
             // 2. PURCHASE DETAILS + PARTY GROUPING

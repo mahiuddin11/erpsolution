@@ -360,6 +360,16 @@ class PurchaseOrderRepositories
 
             $purchaseOrderId = $purchaseorder->id;
 
+
+            // Purchase Order CREATE log
+            activity_log(
+                'create',
+                'purchase_orders',
+                $purchaseorder->toArray(),
+                [],
+                "Purchase Order created (Invoice: {$purchaseorder->invoice_no})"
+            );
+
             //  Request arrays
             $category = $request->category_nm;
             $product = $request->product_nm;
@@ -454,10 +464,14 @@ class PurchaseOrderRepositories
 
     public function update($request, $id)
     {
-        // dd('purchase order repo-hello',$request->all(), $id); 
+        // dd('purchase order repo-hello', $request->all(), $id);
         DB::beginTransaction();
         try {
             $purchaseorder = $this->purchaseorder::find($id);
+
+            $oldData = $purchaseorder->toArray();
+
+
             $purchaseorder->order_date = $request->date;
             $purchaseorder->supplier_id = $request->subblier_id ?? 0;
             // $purchaseorder->account_id = $request->account_id ?? 0;
@@ -467,6 +481,14 @@ class PurchaseOrderRepositories
             // $purchaseorder->total_bill = array_sum($request->total);
             $purchaseorder->note = $request->note;
             $purchaseorder->save();
+
+            activity_log(
+                'update',
+                'purchase_orders_update',
+                $purchaseorder->toArray(),
+                $oldData,
+                "Purchase Order updated (Invoice: {$purchaseorder->invoice_no})"
+            );
 
             $orderDetailId = PurchaseOrderDetail::where('purchase_order_id', $id)->pluck('id')->toArray();
             SupplierSelectPrice::whereIn('purchase_order_id', $orderDetailId)->delete();

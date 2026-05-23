@@ -22,10 +22,10 @@ class PurchaseRequisitionController extends Controller
 
 
     private $purchaseRequisitionService;
-   
+
     private $systemTransformer;
 
-  
+
     public function __construct(PurchaseRequisitionService $purchaseRequisitionService, PurchaseRequisitionTransformer $prTransformer)
     {
         $this->purchaseRequisitionService = $purchaseRequisitionService;
@@ -36,7 +36,7 @@ class PurchaseRequisitionController extends Controller
     /**
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
-    
+
     public function index(Request $request)
     {
         $title = 'Purchase Requisition List';
@@ -116,7 +116,8 @@ class PurchaseRequisitionController extends Controller
 
     public function approve($id)
     {
-        
+
+
         if (!is_numeric($id)) {
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
@@ -132,7 +133,7 @@ class PurchaseRequisitionController extends Controller
         $category_info  = Category::where('status', 'Active')->get();
         $requisition = PurchaseRequisition::find($id);
         $requisitionDetails = PrDetails::where('pr_id', $id)->get();
-        
+
         return view('backend.pages.inventories.pr.approve', get_defined_vars());
     }
 
@@ -160,20 +161,35 @@ class PurchaseRequisitionController extends Controller
      */
     public function approveUpdate(Request $request, $id)
     {
+
+
         if (!is_numeric($id)) {
             session()->flash('error', 'Approve id must be numeric!!');
             return redirect()->back();
         }
         $editInfo = $this->purchaseRequisitionService->details($id);
+
+
         if (!$editInfo) {
             session()->flash('error', 'Approve info is invalid!!');
             return redirect()->back();
         }
+
+        $oldData = $editInfo->toArray();
         // $this->purchaseRequisitionService->approvepr($request, $id);
         $purchasereq['approve_by'] = Auth::user()->id;
         $purchasereq['approve_at'] = date('Y-m-d');
         $purchasereq['status'] = 'Accepted';
         PurchaseRequisition::where('id', $id)->update($purchasereq);
+
+        activity_log(
+            'aprove',
+            'purchase_requisitions',
+            array_merge($purchasereq, ['id' => $id, 'invoice_no' => $editInfo->invoice_no ?? null]),
+            $oldData,
+            "Purchase Requisition approved (Invoice: {$editInfo->invoice_no}) — Status: {$oldData['status']} → Accepted"
+        );
+
         session()->flash('success', 'Data successfully updated!!');
         return redirect()->route('inventorySetup.purchaserequisition.index');
     }

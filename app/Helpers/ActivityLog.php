@@ -122,11 +122,17 @@ if (!function_exists('_log_resolve_module')) {
             'products'                       => ['Inventory',  'Product'],
             'product_categories'             => ['Inventory',  'Category'],
             'warehouses'                     => ['Inventory',  'Warehouse'],
-            'purchase_orders'                => ['Inventory',  'Purchase Order'],
+
+            'purchase_orders'                => ['Project',  'Purchase Order'],
+            'purchase_orders_update'         => ['Project',  'Purchase Order update'],
+            'purchase_order_aprove'          => ['Project',  'Purchase Order Aprove'],
             'purchase_order_details'         => ['Inventory',  'Purchase Order Details'],
 
+            'grns'                           => ['Project',  'GRN'],
+
             //Direct_purchase
-            'derect_purchase'                       => ['Direct Purchase',  'Direct Purchase'],
+            'derect_purchase'                => ['Direct Purchase',  'Direct Purchase'],
+            'menual_purchase'                => ['Menual Purchase',  'Menual Purchase'],
 
             // ── HR ──
             'employees'                      => ['HR',         'Employee'],
