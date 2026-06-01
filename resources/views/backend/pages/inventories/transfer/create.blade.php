@@ -56,7 +56,7 @@
                                 <input type="hidden" name="invoice_no" value="{{ $invoice_no }}">
                             </div>
 
-                            {{-- ✅ FIX: Date format Y-m-d ব্যবহার করা হয়েছে (আগে 'YYYY-mm-dd' ছিল যা PHP এ কাজ করে না) --}}
+
                             <div class="col-md-3 mb-3">
                                 <label>Date:</label>
                                 <div class="input-group date" id="reservationdate" data-target-input="nearest">
@@ -179,6 +179,7 @@
                                                                     <td>
 
                                                                         <small class="text-muted">Available</small>
+
                                                                         <input type="text" readonly
                                                                             class="form-control mb-1"
                                                                             style="height:16px; background:#f0f4ff; font-weight:bold; color:#1a56db;"
@@ -276,7 +277,7 @@
                                                                             <strong>Net Total</strong>
                                                                         </td>
                                                                         <td align="right">
-                                                                            {{-- ✅ FIX: grandtotal class সরানো হয়েছে, loop conflict ছিল --}}
+                                                                            {{-- FIX: grandtotal class , loop conflict  --}}
                                                                             <strong id="ntotal"></strong>
                                                                         </td>
                                                                     </tr>
@@ -385,7 +386,7 @@
                     return false;
                 }
 
-                // ✅ Duplicate product check — data-proid attribute দিয়ে
+                // Duplicate product check — data-proid attribute দিয়ে
                 if ($('#show_item tbody tr.item-row[data-proid="' + proId + '"]').length > 0) {
                     alertMessage.error(
                         'This product is already added. Remove it first to change quantity.');
@@ -393,7 +394,7 @@
                 }
 
                 /*
-                 * ✅ FIX: Added row এ আলাদা class ব্যবহার:
+                 *  FIX: Added row এ আলাদা class ব্যবহার:
                  *   - tr.item-row          → calculation loop এর জন্য
                  *   - data-proid           → duplicate check এর জন্য
                  *   - input.row-qty        → qty loop
@@ -401,6 +402,7 @@
                  *   - input.row-total      → grand total loop
                  * input row এর id গুলোর (qty, unitpice, total) সাথে কোনো conflict নেই।
                  */
+
                 $('#show_item tbody').append(
                     '<tr class="item-row" data-proid="' + proId + '">' +
                     '<td style="padding-left:12px;">' + catName +
@@ -424,8 +426,7 @@
                     '</tr>'
                 );
 
-                // ✅ Input row reset — id দিয়ে সরাসরি target, class conflict নেই
-                $('#qty').val('');
+                // Input row reset — id  target, class conflict 
                 $('#total').val('');
                 $('#unitpice').val('');
                 $('#currentStock').val('');
@@ -440,7 +441,7 @@
             });
 
             // =====================================================
-            // ✅ Delete item — data-proid দিয়ে সঠিক row remove
+            // ✅ Delete item — data-proid  row remove
             // =====================================================
             $(document).on('click', '.delete_item', function() {
                 var $this = $(this);
@@ -551,7 +552,8 @@
                 cache: false,
                 data: {
                     "_token": "{{ csrf_token() }}",
-                    productId: productId
+                    productId: productId,
+                    branch_id: from_branch_id
                 },
                 success: function(data) {
                     var parsed = (typeof data === 'string') ? JSON.parse(data) : data;

@@ -2559,8 +2559,95 @@ class ReportController extends Controller
         ) as current_stock
     '),
 
-                DB::raw('AVG(stocks.unit_price) as avg_unit_price'),
-                DB::raw('SUM(stocks.total_price) as total_value')
+
+                // DB::raw('AVG(CASE WHEN stocks.status IN ("Purchase", "Opening", "Manual Purchase") THEN stocks.unit_price END) as avg_unit_price'),
+                DB::raw('
+ROUND(
+    SUM(
+        CASE
+            WHEN stocks.status IN ("Opening","Purchase","Manual Purchase")
+            THEN stocks.unit_price * stocks.quantity
+            ELSE 0
+        END
+    )
+    /
+    NULLIF(
+        SUM(
+            CASE
+                WHEN stocks.status IN ("Opening","Purchase","Manual Purchase")
+                THEN stocks.quantity
+                ELSE 0
+            END
+        ),
+        0
+    ),
+2) as avg_unit_price
+'),
+
+                DB::raw('
+ROUND(
+(
+    SUM(
+        CASE
+            WHEN stocks.status = "Opening" THEN stocks.quantity
+            WHEN stocks.status IN (
+                "Purchase",
+                "Manual Purchase",
+                "Production",
+                "Gain",
+                "Transfer In",
+                "Project In",
+                "Return",
+                "Purchase Return"
+            ) THEN stocks.quantity
+
+            WHEN stocks.status IN (
+                "Production Sale",
+                "Production Out",
+                "Sale",
+                "Damage",
+                "Lost",
+                "Transfer Out",
+                "Project Out",
+                "Project Use",
+                "Sale Return"
+            ) THEN -stocks.quantity
+
+            ELSE 0
+        END
+    )
+)
+*
+(
+    SUM(
+        CASE
+            WHEN stocks.status IN (
+                "Opening",
+                "Purchase",
+                "Manual Purchase"
+            )
+            THEN stocks.unit_price * stocks.quantity
+            ELSE 0
+        END
+    )
+    /
+    NULLIF(
+        SUM(
+            CASE
+                WHEN stocks.status IN (
+                    "Opening",
+                    "Purchase",
+                    "Manual Purchase"
+                )
+                THEN stocks.quantity
+                ELSE 0
+            END
+        ),
+        0
+    )
+),
+2) as total_value
+')
             )
                 ->join('products', 'products.id', '=', 'stocks.product_id')
                 ->join('categories', 'categories.id', '=', 'products.category_id')

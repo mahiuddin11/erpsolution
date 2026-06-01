@@ -108,7 +108,7 @@ Route::match(['get', 'post'], '/cleare-data', function () {
                 // Single Table Truncate
                 if (!in_array($single_table, ['users', 'password_resets', 'migrations', 'failed_jobs', 'personal_access_tokens'])) {
                     DB::table($single_table)->truncate();
-                    return back()->with('success', "✅ টেবিল <b>{$single_table}</b> সফলভাবে Truncate করা হয়েছে!");
+                    return back()->with('success', " টেবিল <b>{$single_table}</b> সফলভাবে Truncate করা হয়েছে!");
                 }
             } else {
                 // Multiple Tables Truncate
@@ -121,7 +121,7 @@ Route::match(['get', 'post'], '/cleare-data', function () {
                         DB::table($table)->truncate();
                     }
                 }
-                return back()->with('success', '✅ নির্বাচিত টেবিলগুলো সফলভাবে Truncate করা হয়েছে!');
+                return back()->with('success', ' নির্বাচিত টেবিলগুলো সফলভাবে Truncate করা হয়েছে!');
             }
 
             DB::statement('SET FOREIGN_KEY_CHECKS=1;');

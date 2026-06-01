@@ -405,6 +405,7 @@ class StockTransferRepositories
         }
         return $transfer;
     }
+
     public function stotransferStore($request)
     {
         DB::beginTransaction();
@@ -472,10 +473,45 @@ class StockTransferRepositories
         return $purchase;
     }
 
+    // public function destroy($id)
+    // {
+    //     $purchase = $this->transfer::find($id);
+    //     $purchase->delete();
+    //     return true;
+    // }
+
     public function destroy($id)
     {
         $purchase = $this->transfer::find($id);
-        $purchase->delete();
-        return true;
+
+
+        if (!$purchase) {
+            return false;
+        }
+
+        $oldData = $purchase->toArray();
+
+        if ($purchase->status != 'Approved') {
+            $purchase->delete();
+
+            // DELETE log
+            activity_log(
+                'delete',
+                'stock_transfers',
+                [],
+                $oldData,
+                "Stock Transfer deleted (Invoice: {$oldData['voucher_code']})"
+            );
+
+            return true;
+        }
+        activity_log(
+            'Faild',
+            'stock_transfers',
+            [],
+            $oldData,
+            "Stock Transfer delete faild . Aproved Transfer can't Deleted(Invoice: {$oldData['voucher_code']})"
+        );
+        return false;
     }
 }

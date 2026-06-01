@@ -294,6 +294,8 @@
                                             </tr>
                                         </thead>
                                         <tbody>
+
+
                                             @foreach ($StocksumDetails as $key => $item)
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>

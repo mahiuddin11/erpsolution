@@ -385,15 +385,13 @@ class StockTransferController extends Controller
     public function unitPiceForSale(Request $request)
     {
         $proid = $request->productId;
-        $productPrice = Product::get()->where('id', $proid)->first();
-
+        $productPrice = Product::where('id', $proid)->first();
         echo json_encode(array('purchases_price' => $productPrice->purchases_price, 'sale_price' => $productPrice->sale_price));
     }
 
     function getProductStock(Request $request)
     {
-        $product_id = $request->productId;
-        $productStock = StockSummary::get()->where('product_id', $product_id)->first();
+        $productStock = StockSummary::where('product_id',  $request->productId)->where('branch_id', $request->branch_id)->first();
         if (!empty($productStock->quantity) && $productStock->quantity > 0) :
             echo $productStock->quantity;
         endif;

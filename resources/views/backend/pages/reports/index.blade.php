@@ -85,8 +85,8 @@
                                         @php
                                             $i = 1;
                                             $totalQty = 0;
-                                            $totalPrice = 0; 
-                                            $totalUnitPrice = 0; 
+                                            $totalPrice = 0;
+                                            $totalUnitPrice = 0;
                                         @endphp
 
                                         @foreach ($currentSrock as $item)
@@ -123,7 +123,7 @@
                                                     </td>
                                                     <td align="right">{{ $item->purchasetype ?? '-' }}</td>
                                                     <td align="right">{{ optional($item->branch)->name ?? 'N/A' }}</td>
-                                                    
+
                                                     <td align="right">{{ $item->stock_qty }}</td>
 
                                                     @if (auth()->user()->type == 'Admin')
@@ -142,8 +142,8 @@
                                             <th style="text-align: right">{{ $totalQty }}</th>
 
                                             @if (auth()->user()->type == 'Admin')
-                                                <th style="text-align: right">{{ number_format($totalUnitPrice,0)}}</th>
-                                                
+                                                <th style="text-align: right">{{ number_format($totalUnitPrice, 0) }}</th>
+
                                                 <th style="text-align: right">{{ number_format($totalPrice, 0) }}</th>
                                             @endif
                                         </tr>
