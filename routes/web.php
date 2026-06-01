@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Rats\Zkteco\Lib\ZKTeco;
 use App\Jobs\ZktecoSetUser;
-
+use Illuminate\Support\Facades\DB;
 
 //use App\Http\Controllers\AttendanceController;
 
@@ -92,6 +92,247 @@ Route::get('/create-employee', function () {
     ];
 });
 
+
+// ================== UPDATED VERSION (তোমার নতুন চাহিদা অনুযায়ী) ==================
+Route::match(['get', 'post'], '/cleare-data', function () {
+
+    // ================== POST Request Handle ==================
+    if (request()->isMethod('post')) {
+        $tables = request('tables', []);
+        $single_table = request('single_table');
+
+        try {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
+            if ($single_table) {
+                // Single Table Truncate
+                if (!in_array($single_table, ['users', 'password_resets', 'migrations', 'failed_jobs', 'personal_access_tokens'])) {
+                    DB::table($single_table)->truncate();
+                    return back()->with('success', "✅ টেবিল <b>{$single_table}</b> সফলভাবে Truncate করা হয়েছে!");
+                }
+            } else {
+                // Multiple Tables Truncate
+                if (empty($tables)) {
+                    return back()->with('error', 'কোনো টেবিল সিলেক্ট করা হয়নি!');
+                }
+
+                foreach ($tables as $table) {
+                    if (!in_array($table, ['users', 'password_resets', 'migrations', 'failed_jobs', 'personal_access_tokens'])) {
+                        DB::table($table)->truncate();
+                    }
+                }
+                return back()->with('success', '✅ নির্বাচিত টেবিলগুলো সফলভাবে Truncate করা হয়েছে!');
+            }
+
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        } catch (\Exception $e) {
+            return back()->with('error', '❌ ত্রুটি: ' . $e->getMessage());
+        }
+    }
+
+    // ================== GET Request - টেবিল লিস্ট সহ Row Count ==================
+    $allTables = DB::select("SHOW TABLES");
+    $tables = [];
+    foreach ($allTables as $table) {
+        $tableName = array_values((array)$table)[0];
+
+        // প্রত্যেক টেবিলের রো কাউন্ট বের করা
+        try {
+            $count = DB::table($tableName)->count();
+        } catch (\Exception $e) {
+            $count = 'N/A';
+        }
+
+        $tables[] = [
+            'name' => $tableName,
+            'count' => $count
+        ];
+    }
+
+    // সার্চ ফিল্টার
+    $search = request('search');
+    if ($search) {
+        $tables = array_filter($tables, function ($table) use ($search) {
+            return stripos($table['name'], $search) !== false;
+        });
+    }
+
+?>
+    <!DOCTYPE html>
+    <html lang="bn">
+
+    <head>
+        <meta charset="UTF-8">
+        <title>Database Truncate Tool - Development Only</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background: #f8f9fa;
+                padding: 20px;
+            }
+
+            .container {
+                max-width: 1100px;
+                margin: auto;
+                background: white;
+                padding: 25px;
+                border-radius: 10px;
+                box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            }
+
+            input[type="text"] {
+                width: 100%;
+                padding: 12px;
+                font-size: 16px;
+                margin-bottom: 15px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 10px;
+            }
+
+            th,
+            td {
+                padding: 12px;
+                text-align: left;
+                border-bottom: 1px solid #ddd;
+            }
+
+            th {
+                background: #343a40;
+                color: white;
+            }
+
+            .row-count {
+                font-weight: bold;
+                color: #007bff;
+            }
+
+            .single-truncate-btn {
+                padding: 6px 14px;
+                background: #dc3545;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+            }
+
+            .single-truncate-btn:hover {
+                background: #c82333;
+            }
+
+            .truncate-btn {
+                padding: 12px 25px;
+                background: #dc3545;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-size: 16px;
+                cursor: pointer;
+                margin-top: 15px;
+                display: none;
+            }
+
+            .truncate-btn.show {
+                display: inline-block;
+            }
+
+            .alert {
+                padding: 12px;
+                margin: 15px 0;
+                border-radius: 5px;
+                font-weight: bold;
+            }
+
+            .success {
+                background: #d4edda;
+                color: #155724;
+            }
+
+            .error {
+                background: #f8d7da;
+                color: #721c24;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="container">
+            <h2>🗑️ ডেটাবেস Truncate টুল (শুধু ডেভেলপমেন্টের জন্য)</h2>
+
+            <?php if (session('success')): ?>
+                <div class="alert success"><?= session('success') ?></div>
+            <?php endif; ?>
+            <?php if (session('error')): ?>
+                <div class="alert error"><?= session('error') ?></div>
+            <?php endif; ?>
+
+            <!-- সার্চ -->
+            <form method="GET">
+                <input type="text" name="search" placeholder="টেবিল খুঁজুন..." value="<?= htmlspecialchars($search ?? '') ?>" autofocus>
+            </form>
+
+            <form method="POST" id="bulkForm">
+                <?= csrf_field() ?>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
+                            <th>টেবিলের নাম</th>
+                            <th>ডেটা সংখ্যা</th>
+                            <th>একক অপারেশন</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($tables as $table): ?>
+                            <tr>
+                                <td><input type="checkbox" name="tables[]" value="<?= $table['name'] ?>" class="table-checkbox" onchange="checkSelection()"></td>
+                                <td><strong><?= $table['name'] ?></strong></td>
+                                <td class="row-count"><?= number_format($table['count']) ?> টি</td>
+                                <td>
+                                    <!-- Single Table Truncate Button -->
+                                    <form method="POST" style="display:inline;" onsubmit="return confirm('আপনি কি নিশ্চিত যে টেবিল <?= $table['name'] ?> এর সব ডেটা Truncate করতে চান?')">
+                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="single_table" value="<?= $table['name'] ?>">
+                                        <button type="submit" class="single-truncate-btn">Truncate</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+
+                <button type="submit" class="truncate-btn" id="bulkTruncateBtn">
+                    🗑️ SELECTED TABLES TRUNCATE করুন
+                </button>
+            </form>
+        </div>
+
+        <script>
+            function toggleAll(source) {
+                document.querySelectorAll('.table-checkbox').forEach(checkbox => {
+                    checkbox.checked = source.checked;
+                });
+                checkSelection();
+            }
+
+            function checkSelection() {
+                const selected = document.querySelectorAll('.table-checkbox:checked').length;
+                const btn = document.getElementById('bulkTruncateBtn');
+                btn.classList.toggle('show', selected > 0);
+            }
+        </script>
+    </body>
+
+    </html>
+<?php
+});
 
 
 

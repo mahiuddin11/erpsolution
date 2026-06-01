@@ -155,6 +155,7 @@ class SalesService
      */
     public function destroy($id)
     {
+
         return $this->systemRepositories->destroy($id);
     }
 }

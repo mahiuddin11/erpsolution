@@ -9,31 +9,20 @@ use Illuminate\Support\Facades\Validator;
 class StockTransferService
 {
 
-    /**
-     * @var StockTransferRepositories
-     */
+
     private $systemRepositories;
-    /**
-     * AdminCourseService constructor.
-     * @param StockTransferRepositories $branchRepositories
-     */
+
     public function __construct(StockTransferRepositories $systemRepositories)
     {
         $this->systemRepositories = $systemRepositories;
     }
 
-    /**
-     * @param $request
-     * @return mixed
-     */
+
     public function getList($request)
     {
         return $this->systemRepositories->getList($request);
     }
-    /**
-     * @param $request
-     * @return mixed
-     */
+
     public function getAllList()
     {
         return $this->systemRepositories->getAllList();

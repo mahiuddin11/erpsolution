@@ -537,14 +537,26 @@ class PurchaseRepositories
     public function store($request)
     {
 
-
         DB::beginTransaction();
         try {
+
+            $invoice_no = $request->invoice_no;
+
+            $exists = Purchases::where('invoice_no', $invoice_no)->select('invoice_no')->exists();
+            if ($exists) {
+                $lastPurchase = Purchases::latest('id')->first();
+                if ($lastPurchase) {
+                    $nextCode = $lastPurchase->id + 1;
+                } else {
+                    $nextCode = 1;
+                }
+                $invoice_no = 'PV' . str_pad($nextCode, 5, "0", STR_PAD_LEFT);
+            }
 
             $branch_id = $request->branch_id;
             $request->branch_id = $request->sub_warehouse_id ?? $request->branch_id;
             $purchase = new $this->purchases();
-            $purchase->invoice_no = $request->invoice_no;
+            $purchase->invoice_no =  $invoice_no ?? $request->invoice_no;
             $purchase->custom_invoice = $request->custom_invoice;
             $purchase->date = $request->date;
             $purchase->ledger_id = $request->ledger_id ?? 0;

@@ -183,15 +183,30 @@ class SaleRepositories
 
     public function store($request)
     {
-        // dd($request->all());
         DB::beginTransaction();
         try {
+
+            $invoice_no = $request->invoice_no;
+
+            $exists = Sale::where('invoice_no', $invoice_no)->select('invoice_no')->exists();
+
+
+            if ($exists) {
+                $lastSales = Sale::latest('id')->first();
+                if ($lastSales) {
+                    $nextCode = $lastSales->id + 1;
+                } else {
+                    $nextCode = 1;
+                }
+                $invoice_no = 'SV' . str_pad($nextCode, 5, "0", STR_PAD_LEFT);
+            }
+
             $finalprice = (array_sum($request->total) + $request->carrying_cost + $request->labor_bill) - $request->discount;
             $accountbranch = $request->branch_id ?? 0;
             $request->branch_id = $request->sub_warehouse_id ?? $request->branch_id;
 
             $esale = new $this->Sale();
-            $esale->invoice_no = $request->invoice_no;
+            $esale->invoice_no = $invoice_no ?? $request->invoice_no;
             $esale->date = $request->date;
             $esale->po_invoice = $request->po_invoice;
             $esale->po_date = $request->po_date;
@@ -435,31 +450,107 @@ class SaleRepositories
         return $esale;
     }
 
+    // public function destroy($id)
+    // {
+
+
+    //     try {
+    //         DB::beginTransaction();
+    //         $esale = $this->Sale::find($id);
+    //         $slDetails = sales_Details::where('sale_id', $id)->get();
+    //         foreach ($slDetails as $slDetail) {
+    //             $quantitys =  StockSummary::where('product_id', $slDetail->product_id)->where('type', "Branch")->where('branch_id', $slDetail->branch_id)->where('purchasetype', $slDetail->purchasetype)->pluck('quantity')->first();
+    //             $stocksum['quantity'] = abs($quantitys + $slDetail->qty);
+    //             StockSummary::where('product_id', $slDetail->product_id)->where('type', "Branch")->where('branch_id', $slDetail->branch_id)->where('purchasetype', $slDetail->purchasetype)->update($stocksum);
+    //         }
+    //         Stock::where('general_id', $id)->where('status', 'Sale')->forceDelete();
+    //         sales_Details::where('sale_id', $id)->delete();
+
+    //         customerLedger::where('sale_id', $id)->delete();
+    //         AccountTransaction::where('table_id', $id)->where('type', 2)->delete();
+
+    //         $esale->delete();
+    //         DB::commit();
+    //     } catch (\Throwable $th) {
+    //         DB::rollBack();
+    //     }
+
+    //     return true;
+    // }
+
     public function destroy($id)
     {
         try {
             DB::beginTransaction();
-            $esale = $this->Sale::find($id);
+
+            //Sale Record
+            $esale = $this->Sale::findOrFail($id);
+            $oldData = $esale->toArray();
+
+
             $slDetails = sales_Details::where('sale_id', $id)->get();
+
+
+            // ==================== Stock Summary Recover  ====================
             foreach ($slDetails as $slDetail) {
-                $quantitys =  StockSummary::where('product_id', $slDetail->product_id)->where('type', "Branch")->where('branch_id', $slDetail->branch_id)->where('purchasetype', $slDetail->purchasetype)->pluck('quantity')->first();
-                $stocksum['quantity'] = abs($quantitys + $slDetail->qty);
-                StockSummary::where('product_id', $slDetail->product_id)->where('type', "Branch")->where('branch_id', $slDetail->branch_id)->where('purchasetype', $slDetail->purchasetype)->update($stocksum);
+
+                $currentQuantity = StockSummary::where('product_id', $slDetail->product_id)
+                    ->where('type', "Branch")
+                    ->where('branch_id', $slDetail->branch_id)
+                    ->where('purchasetype', $slDetail->purchasetype)
+                    ->pluck('quantity')
+                    ->first();
+
+                $newQuantity = ($currentQuantity ?? 0) + $slDetail->qty;
+
+                StockSummary::where('product_id', $slDetail->product_id)
+                    ->where('type', "Branch")
+                    ->where('branch_id', $slDetail->branch_id)
+                    ->where('purchasetype', $slDetail->purchasetype)
+                    ->update(['quantity' => $newQuantity]);
             }
-            Stock::where('general_id', $id)->Where('status', 'Sale')->forceDelete();
+
+            // ==================== Related Data Delete ====================
+            // Stock Transaction Delete
+            Stock::where('general_id', $id)
+                ->where('status', 'Sale')
+                ->forceDelete();
+
+            // Sale Details Delete
             sales_Details::where('sale_id', $id)->delete();
 
+            // Customer Ledger Delete
             customerLedger::where('sale_id', $id)->delete();
-            AccountTransaction::where('table_id', $id)->where('type', 2)->delete();
 
+            // Account Transaction Delete
+            AccountTransaction::where('table_id', $id)
+                ->where('type', 2)
+                ->delete();
+
+            // Main Sale Delete
             $esale->delete();
+
+            //  Activity Log 
+            activity_log(
+                'delete',
+                'Sales',
+                [],
+                $oldData,
+                "Sale Deleted by " . Auth::user()->name .
+                    " (Invoice: {$esale->invoice_no}) — Grand Total: {$esale->grand_total}"
+            );
+
             DB::commit();
+            return true;
         } catch (\Throwable $th) {
             DB::rollBack();
-        }
 
-        return true;
+            session()->flash('error', 'Sale Delete Failed: ' . $th->getMessage());
+            return false;
+        }
     }
+
+
     public function calculateCommission($saleId)
     {
         $sale = Sale::findOrFail($saleId);
