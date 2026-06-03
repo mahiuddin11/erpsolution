@@ -8,17 +8,9 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::table('stocks', function (Blueprint $table) {
-
-            // যদি status কলাম থাকে তাহলে Drop করো
-            if (Schema::hasColumn('stocks', 'status')) {
-                $table->dropColumn('status');
-            }
-        });
-
-        Schema::table('stocks', function (Blueprint $table) {
-
-            $table->enum('status', [
+        DB::statement("
+            ALTER TABLE `stocks`
+            MODIFY COLUMN `status` ENUM(
                 'Opening',
                 'Purchase',
                 'Manual Purchase',
@@ -39,21 +31,23 @@ return new class extends Migration
                 'Return',
                 'Sale Return',
                 'Purchase Return'
-            ])->default('Purchase');
-        });
+            ) NOT NULL DEFAULT 'Purchase'
+        ");
     }
 
+    /**
+     * Rollback — নতুন যোগ করা values সরিয়ে আগের enum এ ফেরত।
+     * 'Sale Return' বা 'Purchase Return' যদি কোনো row তে থাকে
+     * তাহলে rollback fail করবে — তাই নিচে warning দেওয়া আছে।
+     */
     public function down()
     {
-        Schema::table('stocks', function (Blueprint $table) {
-
-            if (Schema::hasColumn('stocks', 'status')) {
-                $table->dropColumn('status');
-            }
-        });
-
-        Schema::table('stocks', function (Blueprint $table) {
-            $table->enum('status', [
+        // ⚠️ rollback এর আগে নিশ্চিত করুন কোনো row তে
+        // 'Sale Return' বা 'Purchase Return' নেই।
+        DB::statement("
+            ALTER TABLE `stocks`
+            MODIFY COLUMN `status` ENUM(
+                'Opening',
                 'Purchase',
                 'Manual Purchase',
                 'Production Sale',
@@ -71,7 +65,7 @@ return new class extends Migration
                 'Project Out',
                 'Project Use',
                 'Return'
-            ])->default('Purchase');
-        });
+            ) NOT NULL DEFAULT 'Purchase'
+        ");
     }
 };

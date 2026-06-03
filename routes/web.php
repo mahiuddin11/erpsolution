@@ -4,6 +4,7 @@
 
 use App\Http\Controllers\Backend\ActivityLogs\ActivityLogsController;
 use App\Http\Controllers\Backend\Hrm\AttendanceController;
+use App\Http\Controllers\Backend\InventorySetup\StockReportController;
 use App\Http\Controllers\Backend\Settings\ContraVoucherController;
 use App\Http\Controllers\Backend\Settings\CreditVoucherController;
 use App\Http\Controllers\Backend\Settings\DabitVoucherController;
@@ -92,8 +93,13 @@ Route::get('/create-employee', function () {
     ];
 });
 
+// Route::match(['get', 'post'], '/product-report', [StockreportController::class, 'productSummarayDemo']);
 
-// ================== UPDATED VERSION (তোমার নতুন চাহিদা অনুযায়ী) ==================
+Route::match(['get', 'post'], '/product-stock-matching', [StockreportController::class, 'stockMatchingEngine']);
+Route::post('/product-stock-matching/bulk-update', [StockreportController::class, 'bulkUpdateStockStatus']);
+
+
+// ================== UPDATED VERSION  ==================
 Route::match(['get', 'post'], '/cleare-data', function () {
 
     // ================== POST Request Handle ==================

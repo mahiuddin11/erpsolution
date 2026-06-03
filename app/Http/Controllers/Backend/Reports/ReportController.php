@@ -2856,30 +2856,61 @@ ROUND(
         return view('backend.pages.reports.production', get_defined_vars());
     }
 
+    // public function productledger(Request $request)
+    // {
+
+    //     $title = 'Product Ledger';
+    //     $branch_id = '';
+    //     $product_id = '';
+    //     $datas = [];
+    //     $from_date = null;
+    //     $to_date = null;
+
+    //     if ($request->isMethod('POST')) {
+    //         $dates = explode('-', $request->dateRange);
+    //         $from_date = date('Y-m-d');
+    //         $to_date = date('Y-m-d');
+
+    //         $branch_id = $request->branch_id;
+    //         $product_id = $request->product_id;
+
+    //         // Fetch the product ledger data
+    //         $datas = $this->getProductLedgerData($product_id, $branch_id, $from_date, $to_date);
+    //     }
+    //     $products = Product::where('status', 'Active')->get();
+    //     $companyInfo = Company::latest('id')->first();
+    //     $branches = Branch::where('status', 'Active')->get();
+
+    //     return view('backend.pages.reports.productledger', compact(
+    //         'title',
+    //         'branch_id',
+    //         'product_id',
+    //         'datas',
+    //         'from_date',
+    //         'request',
+    //         'to_date',
+    //         'products',
+    //         'companyInfo',
+    //         'branches'
+    //     ));
+    // }
+
     public function productledger(Request $request)
     {
+        $title      = 'Product Ledger';
+        $branch_id  = $request->branch_id ?? 'all';
+        $product_id = $request->product_id ?? null;
+        $from_date  = $request->from_date ?? date('Y-01-01');
+        $to_date    = $request->to_date   ?? date('Y-m-d');
+        $datas      = [];
 
-        $title = 'Product Ledger';
-        $branch_id = '';
-        $product_id = '';
-        $datas = [];
-        $from_date = null;
-        $to_date = null;
-
-        if ($request->isMethod('POST')) {
-            $dates = explode('-', $request->dateRange);
-            $from_date = date('Y-m-d');
-            $to_date = date('Y-m-d');
-
-            $branch_id = $request->branch_id;
-            $product_id = $request->product_id;
-
-            // Fetch the product ledger data
+        if ($request->isMethod('POST') && $product_id) {
             $datas = $this->getProductLedgerData($product_id, $branch_id, $from_date, $to_date);
         }
-        $products = Product::where('status', 'Active')->get();
+
+        $products    = Product::where('status', 'Active')->orderBy('name')->get(['id', 'productCode', 'name']);
         $companyInfo = Company::latest('id')->first();
-        $branches = Branch::where('status', 'Active')->get();
+        $branches    = Branch::where('status', 'Active')->orderBy('name')->get(['id', 'branchCode', 'name']);
 
         return view('backend.pages.reports.productledger', compact(
             'title',
@@ -2887,11 +2918,11 @@ ROUND(
             'product_id',
             'datas',
             'from_date',
-            'request',
             'to_date',
             'products',
             'companyInfo',
-            'branches'
+            'branches',
+            'request'
         ));
     }
 
@@ -2922,82 +2953,258 @@ ROUND(
         return redirect()->back();
     }
 
-    private function getProductLedgerData($product_id, $branch_id, $from_date, $to_date)
+    // private function getProductLedgerData($product_id, $branch_id, $from_date, $to_date)
+    // {
+    //     $ledgerData = [];
+
+    //     // Fetch stock-in details (Opening Stock + Purchases)
+    //     $stockIn = ProductOpeningStockDetails::where('product_id', $product_id)
+    //         ->when($branch_id !== 'all', function ($query) use ($branch_id) {
+    //             return $query->where('branch_id', $branch_id);
+    //         })
+    //         ->get()
+    //         ->map(function ($item) {
+    //             $item->type = 'Opening Stock'; // Add dynamic type
+    //             $item->invoice = $item->ProductOpeningStock->invoice_no ?? ""; // Add dynamic type
+    //             return $item;
+    //         })
+    //         ->merge(
+    //             PurchasesDetails::where('product_id', $product_id)
+    //                 ->when($branch_id !== 'all', function ($query) use ($branch_id) {
+    //                     return $query->where('branch_id', $branch_id);
+    //                 })
+    //                 ->get()
+    //                 ->map(function ($item) {
+    //                     $item->type = 'Purchase'; // Add dynamic type
+    //                     $item->invoice = $item->purchase->invoice_no ?? ""; // Add dynamic type
+    //                     return $item;
+    //                 })
+    //         );
+
+    //     // Fetch stock-out details (Sales + Project Transfers)
+    //     $stockOut = sales_Details::where('product_id', $product_id)
+    //         ->when($branch_id !== 'all', function ($query) use ($branch_id) {
+    //             return $query->where('branch_id', $branch_id);
+    //         })
+    //         ->get()
+    //         ->map(function ($item) {
+    //             $item->type = 'Sales'; // Add dynamic type
+    //             $item->quantity = $item->qty; // Add dynamic type
+    //             $item->invoice = $item->sales->invoice_no ?? ""; // Add dynamic type
+    //             return $item;
+    //         })
+    //         ->merge(
+    //             ProjectTransferDetails::where('product_id', $product_id)
+    //                 ->when($branch_id !== 'all', function ($query) use ($branch_id) {
+    //                     return $query->where('branch_id', $branch_id);
+    //                 })
+    //                 ->get()
+    //                 ->map(function ($item) {
+    //                     $item->type = 'Project Transfer'; // Add dynamic type
+    //                     $item->invoice = $item->project_transfer->invoice_no ?? ""; // Add dynamic type
+    //                     return $item;
+    //                 })
+    //         );
+
+    //     // Combine and sort data
+    //     $allData = $stockIn->merge($stockOut)->sortBy('date');
+    //     $remainingStock = 0;
+    //     $ledgerData = [];
+    //     foreach ($allData as $key => $entry) {
+    //         $in = in_array($entry->type, ['Opening Stock', 'Purchase']) ? $entry->quantity : 0;
+    //         $out = in_array($entry->type, ['Sales', 'Project Transfer']) ? $entry->quantity : 0;
+    //         $remainingStock += ($in - $out);
+
+    //         $ledgerData[] = [
+    //             'sl' => $key + 1,
+    //             'date' => $entry->date,
+    //             'invoice' => $entry->invoice ?? "",
+    //             'branch' => $entry->branch->name ?? 'N/A',
+    //             'product' => $entry->product->name ?? 'N/A',
+    //             'status' => $entry->type,
+    //             'in' => $in,
+    //             'out' => $out,
+    //             'remaining' => $remainingStock,
+    //         ];
+    //     }
+    //     return $ledgerData;
+    // }
+
+    private function getProductLedgerData($product_id, $branch_id, $from_date, $to_date): array
     {
-        $ledgerData = [];
+        $isAllBranch = ($branch_id === 'all' || empty($branch_id));
 
-        // Fetch stock-in details (Opening Stock + Purchases)
-        $stockIn = ProductOpeningStockDetails::where('product_id', $product_id)
-            ->when($branch_id !== 'all', function ($query) use ($branch_id) {
-                return $query->where('branch_id', $branch_id);
-            })
+        // ── 1. Opening Stock ──────────────────────────────────────────────
+        // Date filter নেই — opening stock date-independent (সবসময় দেখাবে)
+        $openingRows = ProductOpeningStockDetails::with(['branch:id,name', 'product:id,name', 'ProductOpeningStock:id,invoice_no'])
+            ->where('product_id', $product_id)
+            ->when(!$isAllBranch, fn($q) => $q->where('branch_id', $branch_id))
+            ->whereNull('deleted_at')
+            ->get()
+            ->map(fn($item) => [
+                'date'     => $item->date ?? '0000-00-00',
+                'invoice'  => $item->ProductOpeningStock->invoice_no ?? '—',
+                'branch'   => $item->branch->name ?? 'N/A',
+                'product'  => $item->product->name ?? 'N/A',
+                'type'     => 'Opening Stock',
+                'quantity' => (int) $item->quantity,
+                'in'       => (int) $item->quantity,
+                'out'      => 0,
+                'sort_key' => '0',
+            ]);
+
+        // ── 2. Purchases ──────────────────────────────────────────────────
+        $purchaseRows = PurchasesDetails::with(['branch:id,name', 'product:id,name', 'purchase:id,invoice_no'])
+            ->where('product_id', $product_id)
+            ->when(!$isAllBranch, fn($q) => $q->where('branch_id', $branch_id))
+            ->whereBetween('date', [$from_date, $to_date])
+            ->get()
+            ->map(fn($item) => [
+                'date'     => $item->date,
+                'invoice'  => $item->purchase->invoice_no ?? '—',
+                'branch'   => $item->branch->name ?? 'N/A',
+                'product'  => $item->product->name ?? 'N/A',
+                'type'     => 'Purchase (' . ucfirst($item->purchasetype) . ')',
+                'quantity' => (int) $item->quantity,
+                'in'       => (int) $item->quantity,
+                'out'      => 0,
+                'sort_key' => '1',
+            ]);
+
+        // ── 3. Stock Adjustments ──────────────────────────────────────────
+        // adjustment_type: Gain → IN (+), Loss/Damage/Others → OUT (-)
+        $adjustRows = DB::table('stock_ajdustment_detailsts as sad')
+            ->join('stock_ajdustments as sa', 'sa.id', '=', 'sad.purchases_id')
+            ->leftJoin('branches as b', 'b.id', '=', 'sad.branch_id')
+            ->leftJoin('products as p', 'p.id', '=', 'sad.product_id')
+            ->where('sad.product_id', $product_id)
+            ->when(!$isAllBranch, fn($q) => $q->where('sad.branch_id', $branch_id))
+            ->whereNotNull('sad.date')
+            ->where('sad.date', '>=', $from_date)
+            ->where('sad.date', '<=', $to_date)
+            ->select(
+                'sad.id',
+                'sad.date',
+                'sad.quantity',
+                'sad.purchases_id',
+                'sad.status',
+                'sa.invoice_no',
+                'sa.adjustment_type',
+                'sa.note',
+                'b.name as branch_name',
+                'p.name as product_name'
+            )
+            ->orderBy('sad.date')
             ->get()
             ->map(function ($item) {
-                $item->type = 'Opening Stock'; // Add dynamic type
-                $item->invoice = $item->ProductOpeningStock->invoice_no ?? ""; // Add dynamic type
-                return $item;
-            })
-            ->merge(
-                PurchasesDetails::where('product_id', $product_id)
-                    ->when($branch_id !== 'all', function ($query) use ($branch_id) {
-                        return $query->where('branch_id', $branch_id);
-                    })
-                    ->get()
-                    ->map(function ($item) {
-                        $item->type = 'Purchase'; // Add dynamic type
-                        $item->invoice = $item->purchase->invoice_no ?? ""; // Add dynamic type
-                        return $item;
-                    })
-            );
+                $isGain = $item->adjustment_type === 'Gain';
+                $qty    = abs((int) $item->quantity);
+                $label  = match ($item->adjustment_type) {
+                    'Gain'   => 'Adjustment (Gain)',
+                    'Loss'   => 'Adjustment (Loss)',
+                    'Damage' => 'Adjustment (Damage)',
+                    'Others' => 'Adjustment (Others)',
+                    default  => 'Adjustment',
+                };
+                return [
+                    'date'     => $item->date,
+                    'invoice'  => $item->invoice_no ?? ('ADJ-' . $item->purchases_id),
+                    'branch'   => $item->branch_name  ?? 'N/A',
+                    'product'  => $item->product_name ?? 'N/A',
+                    'type'     => $label,
+                    'quantity' => $qty,
+                    'in'       => $isGain ? $qty : 0,
+                    'out'      => $isGain ? 0 : $qty,
+                    'sort_key' => '2',
+                ];
+            });
 
-        // Fetch stock-out details (Sales + Project Transfers)
-        $stockOut = sales_Details::where('product_id', $product_id)
-            ->when($branch_id !== 'all', function ($query) use ($branch_id) {
-                return $query->where('branch_id', $branch_id);
-            })
+        // ── 4. Transfer In ────────────────────────────────────────────────
+        $transferInRows = DB::table('transfer_details as td')
+            ->leftJoin('branches as b', 'b.id', '=', 'td.to_branch_id')
+            ->leftJoin('products as p', 'p.id', '=', 'td.product_id')
+            ->where('td.product_id', $product_id)
+            ->where('td.status', 'Approved')
+            ->when(!$isAllBranch, fn($q) => $q->where('td.to_branch_id', $branch_id))
+            ->whereNull('td.deleted_at')
+            ->whereBetween('td.date', [$from_date, $to_date])
+            ->select('td.date', 'td.approve_qty', 'td.transfer_id', 'b.name as branch_name', 'p.name as product_name')
             ->get()
-            ->map(function ($item) {
-                $item->type = 'Sales'; // Add dynamic type
-                $item->quantity = $item->qty; // Add dynamic type
-                $item->invoice = $item->sales->invoice_no ?? ""; // Add dynamic type
-                return $item;
-            })
-            ->merge(
-                ProjectTransferDetails::where('product_id', $product_id)
-                    ->when($branch_id !== 'all', function ($query) use ($branch_id) {
-                        return $query->where('branch_id', $branch_id);
-                    })
-                    ->get()
-                    ->map(function ($item) {
-                        $item->type = 'Project Transfer'; // Add dynamic type
-                        $item->invoice = $item->project_transfer->invoice_no ?? ""; // Add dynamic type
-                        return $item;
-                    })
-            );
+            ->map(fn($item) => [
+                'date'     => $item->date,
+                'invoice'  => 'TR-' . $item->transfer_id,
+                'branch'   => $item->branch_name ?? 'N/A',
+                'product'  => $item->product_name ?? 'N/A',
+                'type'     => 'Transfer In',
+                'quantity' => (int) $item->approve_qty,
+                'in'       => (int) $item->approve_qty,
+                'out'      => 0,
+                'sort_key' => '3',
+            ]);
 
-        // Combine and sort data
-        $allData = $stockIn->merge($stockOut)->sortBy('date');
-        $remainingStock = 0;
-        $ledgerData = [];
-        foreach ($allData as $key => $entry) {
-            $in = in_array($entry->type, ['Opening Stock', 'Purchase']) ? $entry->quantity : 0;
-            $out = in_array($entry->type, ['Sales', 'Project Transfer']) ? $entry->quantity : 0;
-            $remainingStock += ($in - $out);
+        // ── 5. Transfer Out ───────────────────────────────────────────────
+        $transferOutRows = DB::table('transfer_details as td')
+            ->leftJoin('branches as b', 'b.id', '=', 'td.from_branch_id')
+            ->leftJoin('products as p', 'p.id', '=', 'td.product_id')
+            ->where('td.product_id', $product_id)
+            ->where('td.status', 'Approved')
+            ->when(!$isAllBranch, fn($q) => $q->where('td.from_branch_id', $branch_id))
+            ->whereNull('td.deleted_at')
+            ->whereBetween('td.date', [$from_date, $to_date])
+            ->select('td.date', 'td.approve_qty', 'td.transfer_id', 'b.name as branch_name', 'p.name as product_name')
+            ->get()
+            ->map(fn($item) => [
+                'date'     => $item->date,
+                'invoice'  => 'TR-' . $item->transfer_id,
+                'branch'   => $item->branch_name ?? 'N/A',
+                'product'  => $item->product_name ?? 'N/A',
+                'type'     => 'Transfer Out',
+                'quantity' => (int) $item->approve_qty,
+                'in'       => 0,
+                'out'      => (int) $item->approve_qty,
+                'sort_key' => '4',
+            ]);
 
-            $ledgerData[] = [
-                'sl' => $key + 1,
-                'date' => $entry->date,
-                'invoice' => $entry->invoice ?? "",
-                'branch' => $entry->branch->name ?? 'N/A',
-                'product' => $entry->product->name ?? 'N/A',
-                'status' => $entry->type,
-                'in' => $in,
-                'out' => $out,
-                'remaining' => $remainingStock,
-            ];
-        }
-        return $ledgerData;
+        // ── 6. Sales ──────────────────────────────────────────────────────
+        $salesRows = sales_Details::with(['branch:id,name', 'product:id,name', 'sales:id,invoice_no'])
+            ->where('product_id', $product_id)
+            ->when(!$isAllBranch, fn($q) => $q->where('branch_id', $branch_id))
+            ->whereBetween('date', [$from_date, $to_date])
+            ->get()
+            ->map(fn($item) => [
+                'date'     => $item->date,
+                'invoice'  => $item->sales->invoice_no ?? '—',
+                'branch'   => $item->branch->name ?? 'N/A',
+                'product'  => $item->product->name ?? 'N/A',
+                'type'     => 'Sale',
+                'quantity' => (int) $item->qty,
+                'in'       => 0,
+                'out'      => (int) $item->qty,
+                'sort_key' => '5',
+            ]);
+
+        // ── Merge + Sort ──────────────────────────────────────────────────
+        $allRows = collect()
+            ->merge($openingRows)
+            ->merge($purchaseRows)
+            ->merge($adjustRows)
+            ->merge($transferInRows)
+            ->merge($transferOutRows)
+            ->merge($salesRows)
+            ->sortBy([['date', 'asc'], ['sort_key', 'asc']])
+            ->values();
+
+        // ── Running balance ───────────────────────────────────────────────
+        $remaining = 0;
+        return $allRows->map(function ($row, $index) use (&$remaining) {
+            $remaining += ($row['in'] - $row['out']);
+            return array_merge($row, [
+                'sl'        => $index + 1,
+                'remaining' => $remaining,
+            ]);
+        })->toArray();
     }
+
 
     public function lowstocks(Request $request)
     {
