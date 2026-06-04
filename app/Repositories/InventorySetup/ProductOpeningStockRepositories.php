@@ -241,9 +241,6 @@ class ProductOpeningStockRepositories
                 $stock->save();
             }
 
-
-
-
             // CREATE log — header save 
             activity_log(
                 'create',
@@ -516,56 +513,131 @@ class ProductOpeningStockRepositories
         return $purchase;
     }
 
+    // public function destroy($id)
+    // {
+
+    //     DB::beginTransaction();
+    //     try {
+    //         $OpeningStock = $this->productOpeningStock::find($id);
+
+    //         if ($OpeningStock->status == "Accepted") {
+    //             session()->flash('error', "Sorry, you couldn't delete!!");
+    //             DB::commit();
+    //             return false;
+    //         } else {
+
+    //             $oldData = $OpeningStock->toArray();
+
+    //             $OpeningStock->forceDelete();
+    //             AccountTransaction::where('table_id', $id)->where('type', "opening_stock")->delete();
+    //             $purchasedetails =  ProductOpeningStockDetails::where('product_opening_stock_id', $id)->get();
+
+    //             // Activity Log (Delete)
+    //             activity_log(
+    //                 'delete',
+    //                 'product_opening_stocks',
+    //                 [],
+    //                 $oldData,
+    //                 "Opening Stock deleted successfully (Invoice: {$OpeningStock->invoice_no})"
+    //             );
+
+    //             foreach ($purchasedetails as $item) {
+    //                 $mywhereCondition = array(
+    //                     'branch_id' => $item->branch_id == 0 ?  $item->project_id : $item->branch_id,
+    //                     'product_id' => $item->product_id,
+    //                     'type' => $item->branch_id == 0 ? 'Project' : 'Branch',
+    //                 );
+
+    //                 $oldstockupdate = StockSummary::where($mywhereCondition)->first();
+    //                 DB::table('stock_summaries')
+    //                     ->where($mywhereCondition)
+    //                     ->update(
+    //                         ['quantity' => $oldstockupdate->quantity - $item->quantity],
+    //                     );
+
+    //                 $item->forceDelete();
+    //             }
+    //             DB::commit();
+    //             return true;
+    //         }
+    //     } catch (\Throwable $e) {
+    //         DB::rollBack();
+    //         redirect('inventory-purchase-create')->with('error', 'Something Wrong Please try again' . $e->getMessage());
+    //     }
+    //     return true;
+    // }
+
     public function destroy($id)
     {
-
         DB::beginTransaction();
         try {
-            $purchase = $this->productOpeningStock::find($id);
-            if ($purchase->status == "Accepted") {
-                session()->flash('error', "Sorry, you couldn't delete!!");
-                DB::commit();
+            $OpeningStock = $this->productOpeningStock::find($id);
+
+            if (!$OpeningStock) {
+                session()->flash('error', "Opening Stock not found!");
                 return false;
-            } else {
-
-                $oldData = $purchase->toArray();
-
-                $purchase->forceDelete();
-                AccountTransaction::where('table_id', $id)->where('type', "opening_stock")->delete();
-                $purchasedetails =  ProductOpeningStockDetails::where('product_opening_stock_id', $id)->get();
-
-                // Activity Log (Delete)
-                activity_log(
-                    'delete',
-                    'product_opening_stocks',
-                    [],
-                    $oldData,
-                    "Opening Stock deleted successfully (Invoice: {$purchase->invoice_no})"
-                );
-
-                foreach ($purchasedetails as $item) {
-                    $mywhereCondition = array(
-                        'branch_id' => $item->branch_id == 0 ?  $item->project_id : $item->branch_id,
-                        'product_id' => $item->product_id,
-                        'type' => $item->branch_id == 0 ? 'Project' : 'Branch',
-                    );
-
-                    $oldstockupdate = StockSummary::where($mywhereCondition)->first();
-                    DB::table('stock_summaries')
-                        ->where($mywhereCondition)
-                        ->update(
-                            ['quantity' => $oldstockupdate->quantity - $item->quantity],
-                        );
-
-                    $item->forceDelete();
-                }
-                DB::commit();
-                return true;
             }
+
+            $oldData = $OpeningStock->toArray();
+            //  Step 1: Detail 
+            $purchasedetails = ProductOpeningStockDetails::where('product_opening_stock_id', $id)->get();
+
+
+            //  Step 2: Stock Summary  Quantity Minus 
+            foreach ($purchasedetails as $item) {
+                $mywhereCondition = [
+                    'branch_id'  => $item->branch_id == 0 ? $item->project_id : $item->branch_id,
+                    'product_id' => $item->product_id,
+                    'type'       => $item->branch_id == 0 ? 'Project' : 'Branch',
+                ];
+
+                // purchasetype  condition এ (store এ purchasetype  save )
+                $mywhereCondition['purchasetype'] = $item->purchasetype;
+                $oldStockUpdate = StockSummary::where($mywhereCondition)->first();
+
+                if ($oldStockUpdate) {
+                    $newQty = $oldStockUpdate->quantity - $item->quantity;
+
+                    if ($newQty <= 0) {
+                        StockSummary::where($mywhereCondition)->delete();
+                    } else {
+                        StockSummary::where($mywhereCondition)->update(['quantity' => $newQty]);
+                    }
+                }
+
+                //  Step 3: Stocks (Ledger) Table  Delete
+                Stock::where('invoice_no', $OpeningStock->invoice_no)
+                    ->where('product_id', $item->product_id)
+                    ->where('status', 'Opening')
+                    ->delete();
+
+                //  Step 4: Detail Delete 
+                $item->forceDelete();
+            }
+
+            //  Step 5: Account Transaction Delete 
+            AccountTransaction::where('table_id', $id)
+                ->where('type', 'opening_stock')
+                ->delete();
+
+            //  Step 6: Header Delete 
+            $OpeningStock->forceDelete();
+
+            //  Step 7: Activity Log
+            activity_log(
+                'delete',
+                'product_opening_stocks',
+                [],
+                $oldData,
+                "Opening Stock deleted successfully (Invoice: {$oldData['invoice_no']})"
+            );
+
+            DB::commit();
+            return true;
         } catch (\Throwable $e) {
             DB::rollBack();
-            redirect('inventory-purchase-create')->with('error', 'Something Wrong Please try again' . $e->getMessage());
+            session()->flash('error', 'Something went wrong: ' . $e->getMessage());
+            return false;
         }
-        return true;
     }
 }

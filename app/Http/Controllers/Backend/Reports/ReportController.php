@@ -3035,7 +3035,6 @@ ROUND(
         $isAllBranch = ($branch_id === 'all' || empty($branch_id));
 
         // ── 1. Opening Stock ──────────────────────────────────────────────
-        // Date filter নেই — opening stock date-independent (সবসময় দেখাবে)
         $openingRows = ProductOpeningStockDetails::with(['branch:id,name', 'product:id,name', 'ProductOpeningStock:id,invoice_no'])
             ->where('product_id', $product_id)
             ->when(!$isAllBranch, fn($q) => $q->where('branch_id', $branch_id))

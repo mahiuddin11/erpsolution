@@ -528,21 +528,92 @@ class StockAdjustmentRepositories
         return $purchase;
     }
 
+    // public function destroy($id)
+    // {
+    //     $purchase = $this->StockAjdustment::find($id);
+    //     $oldData = $purchase->toArray();
+
+    //     $purchase->delete();
+
+    //     activity_log(
+    //         'delete',
+    //         'stock_adjustments',
+    //         [],
+    //         $oldData,
+    //         "Stock Adjustment deleted (Invoice: {$oldData['invoice_no']}) — Type: {$oldData['adjustment_type']}"
+    //     );
+
+    //     return true;
+    // }
+
     public function destroy($id)
     {
-        $purchase = $this->StockAjdustment::find($id);
-        $oldData = $purchase->toArray();
+        DB::beginTransaction();
+        try {
+            $purchase = $this->StockAjdustment::find($id);
 
-        $purchase->delete();
+            dd($purchase);
+            if (!$purchase) {
+                session()->flash('error', 'Stock Adjustment not found!');
+                return false;
+            }
 
-        activity_log(
-            'delete',
-            'stock_adjustments',
-            [],
-            $oldData,
-            "Stock Adjustment deleted (Invoice: {$oldData['invoice_no']}) — Type: {$oldData['adjustment_type']}"
-        );
+            $oldData = $purchase->toArray();
+            $isApproved = $purchase->status == 'Active';
+            $details = StockAjdustmentDetailst::where('purchases_id', $id)->get();
 
-        return true;
+            if ($isApproved) {
+                foreach ($details as $item) {
+                    $adjustmentType = $oldData['adjustment_type'];
+                    if ($adjustmentType == 'Lost') {
+                        $adjustmentType = 'Loss';
+                    }
+
+                    $summary = StockSummary::where([
+                        'product_id' => $item->product_id,
+                        'branch_id'  => $item->branch_id,
+                        'type'       => 'Branch',
+                    ])->first();
+
+                    if ($summary) {
+                        if ($adjustmentType == 'Gain') {
+                            $newQty = $summary->quantity - $item->quantity;
+                        } elseif (in_array($adjustmentType, ['Loss', 'Damage'])) {
+                            $newQty = $summary->quantity + $item->quantity;
+                        }
+
+                        if ($newQty <= 0) {
+                            $summary->delete();
+                        } else {
+                            $summary->quantity = $newQty;
+                            $summary->save();
+                        }
+                    }
+                    Stock::where('invoice_no', $purchase->invoice_no)
+                        ->where('product_id', $item->product_id)
+                        ->where('general_id', $id)
+                        ->delete();
+                }
+            }
+
+
+            StockAjdustmentDetailst::where('purchases_id', $id)->delete();
+            $purchase->forceDelete();
+
+            activity_log(
+                'delete',
+                'stock_adjustments',
+                [],
+                $oldData,
+                "Stock Adjustment deleted (Invoice: {$oldData['invoice_no']}) — Type: {$oldData['adjustment_type']}"
+            );
+
+            DB::commit();
+            return true;
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            session()->flash('error', 'Something went wrong: ' . $e->getMessage());
+            return false;
+        }
     }
 }
