@@ -266,13 +266,13 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/inventory-purchase-show/{id}', [PurchaseController::class, 'show'])->name('inventorySetup.purchase.show');
 
 
-        Route::post('/inventory-purchase-update/{id}', 'PurchaseController@update')->name('inventorySetup.purchase.update');
-        Route::get('/inventory-purchase-delete/{id}', 'PurchaseController@destroy')->name('inventorySetup.purchase.destroy');
-        Route::get('/inventory-purchase-status/{id}/{status}', 'PurchaseController@statusUpdate')->name('inventorySetup.purchase.status');
-        Route::get('/getProductList', 'PurchaseController@getProductList')->name('inventorySetup.purchase.getProductList');
-        Route::get('/unitPrice', 'PurchaseController@unitPrice')->name('inventorySetup.purchase.unitPice');
-        Route::get('/accounts', 'PurchaseController@getAccounts')->name('inventorySetup.purchase.accounts');
-        Route::post('/inventory-purchase-invoisupplierCreate', 'PurchaseController@supplierCreate')->name('inventorySetup.purchase.supplierCreate');
+        Route::post('/inventory-purchase-update/{id}', [PurchaseController::class, 'update'])->name('inventorySetup.purchase.update');
+        Route::get('/inventory-purchase-delete/{id}', [PurchaseController::class, 'destroy'])->name('inventorySetup.purchase.destroy');
+        Route::get('/inventory-purchase-status/{id}/{status}', [PurchaseController::class, 'statusUpdate'])->name('inventorySetup.purchase.status');
+        Route::get('/getProductList', [PurchaseController::class, 'getProductList'])->name('inventorySetup.purchase.getProductList');
+        Route::get('/unitPrice', [PurchaseController::class, 'unitPrice'])->name('inventorySetup.purchase.unitPice');
+        Route::get('/accounts', [PurchaseController::class, 'getAccounts'])->name('inventorySetup.purchase.accounts');
+        Route::post('/inventory-purchase-invoisupplierCreate', [PurchaseController::class, 'supplierCreate'])->name('inventorySetup.purchase.supplierCreate');
         //purchase crud operation end
 
         //stock adjustment crud operation start

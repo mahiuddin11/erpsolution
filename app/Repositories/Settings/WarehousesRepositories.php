@@ -13,14 +13,9 @@ class WarehousesRepositories
      * @var user_id
      */
     private $user_id;
-    /**
-     * @var warehouses
-     */
+
     private $warehouses;
-    /**
-     * CourseRepository constructor.
-     * @param warehouses $branch
-     */
+
     public function __construct(Branch $branch)
     {
         $this->warehouses = $branch;
@@ -39,10 +34,7 @@ class WarehousesRepositories
         return  $this->warehouses::get();
     }
 
-    /**
-     * @param $request
-     * @return mixed
-     */
+
     public function getList($request)
     {
         $columns = array(
@@ -68,7 +60,7 @@ class WarehousesRepositories
         if (empty($request->input('search.value'))) {
             $warehouses = $this->warehouses::offset($start)
                 ->limit($limit)
-                ->where("parent_id", "!=" ,0)
+                ->where("parent_id", "!=", 0)
                 ->orderBy($order, $dir)
                 //->orderBy('status', 'desc')
                 ->get();
@@ -78,7 +70,7 @@ class WarehousesRepositories
             $warehouses = $this->warehouses::where('name', 'like', "%{$search}%")->orWhere('branchCode', 'like', "%{$search}%")->orWhere('phone', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%")
                 ->offset($start)
                 ->limit($limit)
-                ->where("parent_id", "!=",0)
+                ->where("parent_id", "!=", 0)
                 ->orderBy($order, $dir)
                 // ->orderBy('status', 'desc')
                 ->get();

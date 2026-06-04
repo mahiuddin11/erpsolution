@@ -13,10 +13,7 @@ class WarehousesService
      * @var WarehousesRepositories
      */
     private $systemRepositories;
-    /**
-     * AdminCourseService constructor.
-     * @param WarehousesRepositories $branchRepositories
-     */
+
     public function __construct(WarehousesRepositories $systemRepositories)
     {
         $this->systemRepositories = $systemRepositories;
@@ -32,7 +29,7 @@ class WarehousesService
     }
 
 
-  /**
+    /**
      * @param $request
      * @return mixed
      */

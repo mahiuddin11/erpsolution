@@ -6,6 +6,7 @@ use App\Http\Controllers\Backend\ActivityLogs\ActivityLogsController;
 use App\Http\Controllers\Backend\Hrm\AttendanceController;
 use App\Http\Controllers\Backend\InventorySetup\StockReportController;
 use App\Http\Controllers\Backend\Settings\ContraVoucherController;
+use App\Http\Controllers\Backend\Settings\WarehousesController;
 use App\Http\Controllers\Backend\Settings\CreditVoucherController;
 use App\Http\Controllers\Backend\Settings\DabitVoucherController;
 use App\Http\Controllers\Backend\Settings\JournalVoucherController;
@@ -411,15 +412,15 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //branch crud operation end
 
         //Warehouses crud operation start
-        Route::get('/settings-warehouses-list', 'WarehousesController@index')->name('settings.warehouses.index');
-        Route::get('/dataProcessingWarehouses', 'WarehousesController@dataProcessingBranch')->name('settings.warehouses.dataProcessingWarehouses');
-        Route::get('/settings-warehouses-create', 'WarehousesController@create')->name('settings.warehouses.create');
-        Route::post('/settings-warehouses-store', 'WarehousesController@store')->name('settings.warehouses.store');
-        Route::get('/settings-warehouses-edit/{id}', 'WarehousesController@edit')->name('settings.warehouses.edit');
-        Route::get('/settings-warehouses-show/{id}', 'WarehousesController@show')->name('settings.warehouses.show');
-        Route::post('/settings-warehouses-update/{id}', 'WarehousesController@update')->name('settings.warehouses.update');
-        Route::get('/settings-warehouses-delete/{id}', 'WarehousesController@destroy')->name('settings.warehouses.destroy');
-        Route::get('/settings-warehouses-status/{id}/{status}', 'WarehousesController@statusUpdate')->name('settings.warehouses.status');
+        Route::get('/settings-warehouses-list', [WarehousesController::class, 'index'])->name('settings.warehouses.index');
+        Route::get('/dataProcessingWarehouses', [WarehousesController::class, 'dataProcessingBranch'])->name('settings.warehouses.dataProcessingWarehouses');
+        Route::get('/settings-warehouses-create', [WarehousesController::class, 'create'])->name('settings.warehouses.create');
+        Route::post('/settings-warehouses-store', [WarehousesController::class, 'store'])->name('settings.warehouses.store');
+        Route::get('/settings-warehouses-edit/{id}', [WarehousesController::class, 'edit'])->name('settings.warehouses.edit');
+        Route::get('/settings-warehouses-show/{id}', [WarehousesController::class, 'show'])->name('settings.warehouses.show');
+        Route::post('/settings-warehouses-update/{id}', [WarehousesController::class, 'update'])->name('settings.warehouses.update');
+        Route::get('/settings-warehouses-delete/{id}', [WarehousesController::class, 'destroy'])->name('settings.warehouses.destroy');
+        Route::get('/settings-warehouses-status/{id}/{status}', [WarehousesController::class, 'statusUpdate'])->name('settings.warehouses.status');
         //Warehouses crud operation end
 
         //store crud operation start

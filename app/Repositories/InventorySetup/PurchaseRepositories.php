@@ -1706,9 +1706,11 @@ class PurchaseRepositories
 
     public function update($request, $id)
     {
+
         DB::beginTransaction();
         try {
             $purchase = $this->purchases::findOrFail($id);
+
             $purchase->date = $request->date;
             $purchase->branch_id = $request->branch_id;
             $purchase->ledger_id = $request->ledger_id;
@@ -1722,6 +1724,7 @@ class PurchaseRepositories
             $purchase->due_amount = $request->cart_due;
             $purchase->created_by = Auth::user()->id;
             $purchase->narration = $request->narration;
+
 
             if ($request->has('chart_of_account_id')) {
                 $purchase->chart_of_account_id = $request->chart_of_account_id;
@@ -1741,6 +1744,8 @@ class PurchaseRepositories
             if ($request->has('input_net_total')) {
                 $purchase->net_total = $request->input_net_total;
             }
+
+
             $purchase->save();
             $purchases_id = $purchase->id;
 
@@ -1762,7 +1767,7 @@ class PurchaseRepositories
                 );
 
                 $oldstockupdate = StockSummary::where($mywhereCondition)->first();
-                dd($oldstockupdate);
+                // dd($oldstockupdate);
 
                 DB::table('stock_summaries')
                     ->where($mywhereCondition)
