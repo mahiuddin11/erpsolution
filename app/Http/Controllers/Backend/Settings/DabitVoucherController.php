@@ -91,7 +91,7 @@ class DabitVoucherController extends Controller
      */
     public function store(Request $request)
     {
-        
+
         try {
             $this->validate($request, $this->systemService->storeValidation($request));
         } catch (ValidationException $e) {
@@ -345,7 +345,7 @@ class DabitVoucherController extends Controller
 
         $approved =  $this->systemService->approve($id);
 
-       
+
 
         if ($approved) {
             session()->flash('success', 'This vourcher approve successfully.');
@@ -368,8 +368,8 @@ class DabitVoucherController extends Controller
         $companyInfo = Company::latest('id')->first();
         return view('backend.pages.settings.dabit_voucher.debit_voucher_show', get_defined_vars());
     }
-    /* 
-    public function checkBillByBill(Request $request)
+
+    /*     public function checkBillByBill(Request $request)
     {
         $accountId = $request->input('account_id');
         $account = ChartOfAccount::find($accountId);
@@ -390,7 +390,7 @@ class DabitVoucherController extends Controller
                 if ($type) {
                     $paymentInvoices = $paymentInvoices->whereNotNull($type);
                 }
-                $paymentInvoices = $paymentInvoices->get(['id', 'invoice','created_at',$type]);
+                $paymentInvoices = $paymentInvoices->get(['id', 'invoice', 'created_at', $type]);
             }
 
             foreach ($paymentInvoices as $item) {
@@ -403,7 +403,7 @@ class DabitVoucherController extends Controller
                 if ($item->$type > $trans) {
                     $paymentInvoicesDetails[] = [
                         "invoice" => $item->invoice,
-                        "date" => date("Y-m-d",strtotime($item->created_at)),
+                        "date" => date("Y-m-d", strtotime($item->created_at)),
                         "amount" => $item->$type - $trans,
                     ];
                 }
@@ -417,8 +417,8 @@ class DabitVoucherController extends Controller
 
         return response()->json(['bill_by_bill' => false, 'payment_invoices' => []]);
     }
+ */
 
-     */
 
 
     /*   public function checkBillByBill(Request $request)
@@ -531,5 +531,4 @@ class DabitVoucherController extends Controller
             'payment_invoices' => $details
         ]);
     }
-   
 }

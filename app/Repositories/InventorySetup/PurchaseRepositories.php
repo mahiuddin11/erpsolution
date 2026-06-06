@@ -1869,52 +1869,137 @@ class PurchaseRepositories
         return $purchase;
     }
 
+    // public function destroy($id)
+    // {
+    //     DB::beginTransaction();
+    //     try {
+    //         $purchase = $this->purchases::find($id);
+
+    //         dd($purchase);
+    //         if ($purchase->status == "Accepted") {
+    //             session()->flash('error', "Sorry, you couldn't delete!!");
+    //             DB::commit();
+    //             return false;
+    //         } else {
+
+    //             $purchase->forceDelete();
+    //             AccountTransaction::where('table_id', $id)->where('type', 1)->delete();
+    //             $purchasedetails =  PurchasesDetails::where('purchases_id', $id)->get();
+
+    //             foreach ($purchasedetails as  $val) {
+    //                 $mywhereCondition = array(
+    //                     'branch_id' => $val->branch_id,
+    //                     'product_id' => $val->product_id,
+    //                     'type' => 'Branch',
+    //                 );
+
+    //                 // $oldstockupdate = StockSummary::where($mywhereCondition)->first();
+
+    //                 // DB::table('stock_summaries')
+    //                 //     ->where($mywhereCondition)
+    //                 //     ->update(
+    //                 //         ['quantity' => $oldstockupdate->quantity ? - $val->quantity],
+    //                 //     );
+
+    //                 $val->forceDelete();
+    //             }
+
+    //             SupplierLedger::where('purchase_id', $id)->delete();
+    //             Transection::where('payment_id', $id)->where('type', 11)->forceDelete();
+    //             Stock::where('general_id', $purchase->id)->where('status', 'Purchase')->forceDelete();
+    //             $purchaseorder['status'] = "Pending";
+    //             PurchaseOrder::where('id', $purchase->purchase_order_id)->update($purchaseorder);
+    //             DB::commit();
+    //             return true;
+    //         }
+    //     } catch (\Throwable $e) {
+    //         DB::rollBack();
+
+    //         redirect('inventory-purchase-create')->with('error', 'Something Wrong Please try again' . $e->getMessage());
+    //     }
+    //     return true;
+    // }
+
     public function destroy($id)
     {
         DB::beginTransaction();
         try {
             $purchase = $this->purchases::find($id);
+
+            if (!$purchase) {
+                session()->flash('error', 'Purchase not found!');
+                return false;
+            }
+
             if ($purchase->status == "Accepted") {
                 session()->flash('error', "Sorry, you couldn't delete!!");
                 DB::commit();
                 return false;
-            } else {
+            }
 
-                $purchase->forceDelete();
-                AccountTransaction::where('table_id', $id)->where('type', 1)->delete();
-                $purchasedetails =  PurchasesDetails::where('purchases_id', $id)->get();
+            $oldData = $purchase->toArray();
 
-                foreach ($purchasedetails as  $val) {
-                    $mywhereCondition = array(
-                        'branch_id' => $val->branch_id,
-                        'product_id' => $val->product_id,
-                        'type' => 'Branch',
-                    );
+            // Step 1: Detail 
+            $purchasedetails = PurchasesDetails::where('purchases_id', $id)->get();
 
-                    // $oldstockupdate = StockSummary::where($mywhereCondition)->first();
+            foreach ($purchasedetails as $val) {
 
-                    // DB::table('stock_summaries')
-                    //     ->where($mywhereCondition)
-                    //     ->update(
-                    //         ['quantity' => $oldstockupdate->quantity ? - $val->quantity],
-                    //     );
+                //  Step 2: Stock Summary Reverse 
+                $mywhereCondition = [
+                    'branch_id'    => $val->branch_id,
+                    'product_id'   => $val->product_id,
+                    'purchasetype' => $val->purchasetype,
+                    'type'         => 'Branch',
+                ];
 
-                    $val->forceDelete();
+                $oldStockSummary = StockSummary::where($mywhereCondition)->first();
+
+                if ($oldStockSummary) {
+                    $newQty = $oldStockSummary->quantity - $val->quantity;
+
+                    if ($newQty <= 0) {
+                        // Quantity 0 
+                        StockSummary::where($mywhereCondition)->update(['quantity' => 0]);
+                    } else {
+                        StockSummary::where($mywhereCondition)->update(['quantity' => $newQty]);
+                    }
                 }
 
-                SupplierLedger::where('purchase_id', $id)->delete();
-                Transection::where('payment_id', $id)->where('type', 11)->forceDelete();
-                Stock::where('general_id', $purchase->id)->where('status', 'Purchase')->forceDelete();
-                $purchaseorder['status'] = "Pending";
-                PurchaseOrder::where('id', $purchase->purchase_order_id)->update($purchaseorder);
-                DB::commit();
-                return true;
+
+                $val->forceDelete();
             }
+
+
+            AccountTransaction::where('table_id', $id)->where('type', 1)->delete();
+
+
+            Stock::where('general_id', $purchase->id)
+                ->where('status', 'Purchase')
+                ->forceDelete();
+
+
+            SupplierLedger::where('purchase_id', $id)->delete();
+            Transection::where('payment_id', $id)->where('type', 11)->forceDelete();
+            PurchaseOrder::where('id', $purchase->purchase_order_id)
+                ->update(['status' => 'Pending']);
+
+            $purchase->forceDelete();
+
+            // Step 10: Activity Log
+            activity_log(
+                'delete',
+                'direct_purchase',
+                [],
+                $oldData,
+                "Direct Purchase deleted (Invoice: {$oldData['invoice_no']})"
+            );
+
+            DB::commit();
+            return true;
         } catch (\Throwable $e) {
             DB::rollBack();
-
-            redirect('inventory-purchase-create')->with('error', 'Something Wrong Please try again' . $e->getMessage());
+            session()->flash('error', 'Something went wrong: ' . $e->getMessage());
+            return false;
         }
-        return true;
     }
 }

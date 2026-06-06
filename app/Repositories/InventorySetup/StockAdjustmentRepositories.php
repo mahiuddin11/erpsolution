@@ -550,25 +550,33 @@ class StockAdjustmentRepositories
     {
         DB::beginTransaction();
         try {
-            $purchase = $this->StockAjdustment::find($id);
 
-            dd($purchase);
-            if (!$purchase) {
+            $StockAdustment = $this->StockAjdustment::find($id);
+
+            if (!$StockAdustment) {
                 session()->flash('error', 'Stock Adjustment not found!');
+                DB::rollBack();
                 return false;
             }
 
-            $oldData = $purchase->toArray();
-            $isApproved = $purchase->status == 'Active';
-            $details = StockAjdustmentDetailst::where('purchases_id', $id)->get();
+            $oldData       = $StockAdustment->toArray();
+            $adjustmentType = $StockAdustment->adjustment_type;
+            $isApproved    = $StockAdustment->status == 'Active';
+
+
+            $stockDetails = DB::table('stock_ajdustment_detailsts')
+                ->where('purchases_id', $StockAdustment->id)
+                ->get();
+
 
             if ($isApproved) {
-                foreach ($details as $item) {
-                    $adjustmentType = $oldData['adjustment_type'];
-                    if ($adjustmentType == 'Lost') {
-                        $adjustmentType = 'Loss';
-                    }
 
+                if ($adjustmentType == 'Lost') {
+                    $adjustmentType = 'Loss';
+                }
+
+                foreach ($stockDetails as $item) {
+                    // Stock Summary Reverse
                     $summary = StockSummary::where([
                         'product_id' => $item->product_id,
                         'branch_id'  => $item->branch_id,
@@ -580,26 +588,34 @@ class StockAdjustmentRepositories
                             $newQty = $summary->quantity - $item->quantity;
                         } elseif (in_array($adjustmentType, ['Loss', 'Damage'])) {
                             $newQty = $summary->quantity + $item->quantity;
+                        } else {
+                            $newQty = $summary->quantity;
                         }
 
                         if ($newQty <= 0) {
-                            $summary->delete();
+                            $summary->quantity = $newQty;
+                            $summary->save();
                         } else {
                             $summary->quantity = $newQty;
                             $summary->save();
                         }
                     }
-                    Stock::where('invoice_no', $purchase->invoice_no)
+
+                    // Stocks Ledger Delete
+                    Stock::where('invoice_no', $StockAdustment->invoice_no)
                         ->where('product_id', $item->product_id)
                         ->where('general_id', $id)
                         ->delete();
                 }
             }
 
+            // Details Delete
+            DB::table('stock_ajdustment_detailsts')->where('purchases_id', $id)->delete();
 
-            StockAjdustmentDetailst::where('purchases_id', $id)->delete();
-            $purchase->forceDelete();
 
+            $StockAdustment->forceDelete();
+
+            // Activity Log
             activity_log(
                 'delete',
                 'stock_adjustments',
