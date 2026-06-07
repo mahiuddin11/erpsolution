@@ -7,7 +7,7 @@ use App\Repositories\InventorySetup\PurchaseRequisitionRepositories;
 class PurchaseRequisitionService
 {
 
-    
+
     private $purchaseRequisitionRepositories;
 
     /**
@@ -60,11 +60,12 @@ class PurchaseRequisitionService
      */
     public function storeValidation($request)
     {
-        
+
         return [
             'requisitionCode' => 'required',
             'date' => 'required',
             'project_id' => 'required',
+
             // 'unitprice' => 'required',
             // 'total' => 'required',
             'category_nm' => 'required',

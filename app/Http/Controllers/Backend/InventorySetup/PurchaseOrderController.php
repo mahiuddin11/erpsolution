@@ -192,7 +192,9 @@ class PurchaseOrderController extends Controller
 
     public function searchpr(Request $request)
     {
+
         $purchase = $this->purchaseService->getprList($request);
+
         echo json_encode($purchase);
     }
 

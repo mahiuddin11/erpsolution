@@ -151,9 +151,9 @@
                                 </tr>
                                 <tr>
                                     <td width="50%"><strong>Account Name </strong></td>
-                                    <td width="10%" ><strong>Invoice</strong></td>
-                                    <td width="15%" ><strong>Credit</strong></td>
-                                    <td width="15%" ><strong>Debit</strong></td>
+                                    <td width="10%"><strong>Invoice</strong></td>
+                                    <td width="15%"><strong>Credit</strong></td>
+                                    <td width="15%"><strong>Debit</strong></td>
                                     <td width="10%"><strong>Action</strong></td>
                                 </tr>
                             </thead>
@@ -413,7 +413,8 @@
             let account_id = $('#account_id option:selected').val();
             let credit = $('#credit').val();
             let debit = $('#debit').val();
-            let payment_invoice = $('#payment_invoice option:selected').val() == undefined ? "":$('#payment_invoice option:selected').val();
+            let payment_invoice = $('#payment_invoice option:selected').val() == undefined ? "" : $(
+                '#payment_invoice option:selected').val();
 
             (!account_id ? $('#account_id').closest('td').find('.error').text(`Account Can't Empty`) : $(
                 '#account_id').closest('td').find('.error').text(''));
@@ -448,7 +449,7 @@
   <div class="d-none">
     <select name="branch_id[]" class="form-control select2 form-control-sm branch-section " style="min-width: 150px;">
       <option value="">Select Branch</option>
-      @foreach($branches as $branch)
+      @foreach ($branches as $branch)
         <option value="{{ $branch->id }}">{{ $branch->name }}</option>
       @endforeach
     </select>
@@ -457,7 +458,7 @@
   <div class="d-none">
     <select name="project_id[]" class="form-control select2 form-control-sm project-section " style="min-width: 150px;">
       <option value="">Select Project</option>
-      @foreach($projects as $project)
+      @foreach ($projects as $project)
         <option value="{{ $project->id }}">{{ $project->name }}</option>
       @endforeach
     </select>
@@ -483,9 +484,9 @@
 </tr>`;
             $('#main-table').append(html);
             $('.select2').select2({
-    theme: 'bootstrap4', // Optional, depends on your theme
-    width: '100%'
-});
+                theme: 'bootstrap4', // Optional, depends on your theme
+                width: '100%'
+            });
             $('#account_id').select2().val(null);
             $('#credit').val('');
             $('#debit').val('');
@@ -501,20 +502,20 @@
         })
 
 
-        $('#main-table').on('change', '.cost_center_type', function () {
-    let type = $(this).val();
-    let row = $(this).closest('td');
+        $('#main-table').on('change', '.cost_center_type', function() {
+            let type = $(this).val();
+            let row = $(this).closest('td');
 
-    if (type === 'branch') {
-        row.find('.branch-section').closest("div").removeClass('d-none').prop('disabled', false);
-        row.find('.project-section').closest("div").addClass('d-none').prop('disabled', true);
-    } else if (type === 'project') {
-        row.find('.project-section').closest("div").removeClass('d-none').prop('disabled', false);
-        row.find('.branch-section').closest("div").addClass('d-none').prop('disabled', true);
-    } else {
-        row.find('.branch-section, .project-section').addClass('d-none').prop('disabled', true);
-    }
-});
+            if (type === 'branch') {
+                row.find('.branch-section').closest("div").removeClass('d-none').prop('disabled', false);
+                row.find('.project-section').closest("div").addClass('d-none').prop('disabled', true);
+            } else if (type === 'project') {
+                row.find('.project-section').closest("div").removeClass('d-none').prop('disabled', false);
+                row.find('.branch-section').closest("div").addClass('d-none').prop('disabled', true);
+            } else {
+                row.find('.branch-section, .project-section').addClass('d-none').prop('disabled', true);
+            }
+        });
 
 
 
@@ -587,9 +588,8 @@
         $(document).ready(function() {
             $('#account_id').change(function() {
                 var accountId = $(this).val(); // Get the selected account ID
-
-                // Clear previous payment options
                 $('#payment-options-container').empty();
+
 
                 if (accountId) {
                     $.ajax({
@@ -607,7 +607,7 @@
                             ${response.payment_invoices.map(invoice => `<option value="${invoice.invoice}">${invoice.invoice} (${invoice.amount}) ${invoice.date}</option>`).join('')}
                             </select>
                         `);
-                            }else{
+                            } else {
                                 $('#payment-options-container').html("")
                             }
                         },

@@ -588,8 +588,10 @@ class PurchaseOrderRepositories
         $data = '';
         $prDetails = PrDetails::where('pr_id', $request->id);
 
+
         $purchaserequi = PurchaseRequisition::find($request->id);
         $project = '<option selected value="' . $purchaserequi->project_id  . '"> ' . $purchaserequi->project->projectCode . ' - ' .  $purchaserequi->project->name . '</option>';
+
 
         foreach ($prDetails->get() as $value) {
             $data .= '<tr class="delrow new_item' . $value->product_id . '">
@@ -612,4 +614,48 @@ class PurchaseOrderRepositories
 
         return ['prdetails' => $data, 'project' => $project];
     }
+
+    // public function getprList($request)
+    // {
+    //     $data = '';
+    //     $prDetails = PrDetails::where('pr_id', $request->id)->with(['category', 'product']);
+
+    //     $purchaserequi = PurchaseRequisition::find($request->id);
+
+    //     // Null check for purchaserequi and its project
+    //     $project = '';
+    //     if ($purchaserequi && $purchaserequi->project) {
+    //         $project = '<option selected value="' . $purchaserequi->project_id . '"> '
+    //             . $purchaserequi->project->projectCode . ' - '
+    //             . $purchaserequi->project->name . '</option>';
+    //     }
+
+    //     foreach ($prDetails->get() as $value) {
+    //         // Null safe checks
+    //         $categoryName = $value->category ? $value->category->name : 'N/A';
+    //         $categoryId   = $value->category_id ?? '';
+    //         $productName  = $value->product ? $value->product->name : 'N/A';
+    //         $productId    = $value->product_id ?? '';
+    //         $purchasetype = $value->purchasetype ?? '';
+    //         $qty          = $value->qty ?? 0;
+
+    //         $data .= '<tr class="delrow new_item' . $productId . '">
+    //     <td>
+    //        ' . $categoryName . '
+    //         <input type="hidden" name="category_nm[]" value="' . $categoryId . '">
+    //     </td>
+    //     <td class="text-right">' . $productName . '<input type="hidden" name="product_nm[]" value="' . $productId . '"></td>
+    //     <td class="text-right">' . $purchasetype . '<input type="hidden" name="purchasetype[]" value="' . $purchasetype . '"></td>
+    //     <td class="text-right"> <input class="ttlqty qnty form-control" type="number" name="qty[]" value="' . $qty . '"></td>
+    //     <td class="text-right"><button class="btn btn-info supplierButton" type="button" btn-id="' . $productId . '"> <i class="fa fa-plus"></i> </button></td>
+    //     <td>
+    //        <a del_id="' . $productId . '" class="delete_item btn form-control btn-danger" href="javascript:;" title="">
+    //            <i class="fa fa-times"></i>
+    //        </a>
+    //     </td>
+    // </tr>';
+    //     }
+
+    //     return ['prdetails' => $data, 'project' => $project];
+    // }
 }

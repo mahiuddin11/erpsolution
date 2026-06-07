@@ -133,9 +133,9 @@
                                     <td>
                                         <select class="select2 form-control purchasetype" id="purchasetype"
                                             data-placeholder="Search Product">
-                                           @foreach (config('purchaseType') as $key => $value)
-                                           <option value="{{ $key }}">{{$value}}</option>
-                                           @endforeach
+                                            @foreach (config('purchaseType') as $key => $value)
+                                                <option value="{{ $key }}">{{ $value }}</option>
+                                            @endforeach
                                         </select>
                                         <span class="text-success purchasetypeerror"></span>
                                     </td>
@@ -332,8 +332,8 @@
                     var total = qty * unitprice;
                     const row = `
                     <tr class="new_item${proId}">
-                        <td style="padding-left:15px;">${catName}<input type="hidden" name="category_nm[]" value="${catId}"></td>
-                        <td class="text-right">${proName}<input type="hidden" class="add_quantity" name="product_nm[]" value="${proId}"></td>
+                        <td style="padding-left:15px;">${catName}<input type="hidden" name="category_nm[]" value="${catId}" ></td>
+                        <td class="text-right">${proName}<input type="hidden" class="add_quantity" name="product_nm[]"  value="${proId}" ></td>
                         <td class="text-right">${purchasetypetext}<input type="hidden" name="purchasetype[]" value="${purchasetypeval}"></td>
                         <td class="text-right"><input type="number" class="ttlqty qty form-control" name="qty[]" value="${qty}"></td>
                     

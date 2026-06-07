@@ -185,7 +185,7 @@ class PurchaseRepositories
 
 
         $query = $this->purchases::with(['branch', 'supplier', 'ledger'])
-            ->whereIn('purchase_type', ['Direct', 'Manual']);
+            ->whereIn('purchase_type', ['Direct']); //->whereIn('purchase_type', ['Direct', 'Manual']);
 
         // Date Filter
         if ($request->date) {

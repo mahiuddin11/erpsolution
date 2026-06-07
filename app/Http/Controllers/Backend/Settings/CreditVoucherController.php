@@ -55,7 +55,7 @@ class CreditVoucherController extends Controller
      */
     public function index(Request $request)
     {
-        
+
         $title = 'Receive Voucher List';
         return view('backend.pages.settings.credit_voucher.index', get_defined_vars());
     }
@@ -93,10 +93,8 @@ class CreditVoucherController extends Controller
 
         return view('backend.pages.settings.credit_voucher.create', get_defined_vars());
     }
-    /**
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
+
+
     public function store(Request $request)
     {
         // dd($request->all());
