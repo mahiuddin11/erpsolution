@@ -229,7 +229,11 @@ class SaleRepositories
             $Sale_id = $esale->id;
 
 
-            $customerName = ChartOfAccount::find($request->ledger_id)?->account_name ?? 'N/A';
+            // $customerName = ChartOfAccount::find($request->ledger_id)?->account_name ?? 'N/A';
+
+            $account = ChartOfAccount::find($request->ledger_id);
+            $customerName = $account ? $account->account_name : 'N/A';
+
             activity_log(
                 'create',
                 'Sales',

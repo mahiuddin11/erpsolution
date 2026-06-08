@@ -192,7 +192,6 @@ class PurchaseRepositories
             $query->whereDate('date', $request->date);
         }
 
-
         if (!empty($request->input('search.value'))) {
 
             $search = $request->input('search.value');
@@ -595,7 +594,11 @@ class PurchaseRepositories
             }
             $purchase->save();
             $purchases_id = $purchase->id;
-            $supplierName = ChartOfAccount::find($request->ledger_id)?->account_name ?? 'N/A';
+
+            // $supplierName = ChartOfAccount::find($request->ledger_id)?->account_name ?? 'N/A';
+
+            $account = ChartOfAccount::find($request->ledger_id);
+            $supplierName = $account ? $account->account_name : 'N/A';
 
 
             activity_log(

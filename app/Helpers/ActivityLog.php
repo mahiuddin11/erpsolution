@@ -254,16 +254,23 @@ if (!function_exists('_log_description')) {
             $project  = Project::find($data['project_id'])->name;
         }
 
-        return match ($action) {
-            'create' => "New {$recordType} created{$refStr}",
-            'update' => "{$recordType} updated{$refStr}"
-                . (!empty($changedFields) ? ' — changed: ' . implode(', ', $changedFields) : ''),
-            'delete' => "{$recordType} deleted{$refStr}",
-            'login'  => "User logged in successfully",
-            'logout' => "User logged out",
-            'failed' => "Failed login attempt",
-            default  => strtoupper($action) . " performed on {$recordType}{$refStr}",
-        };
+        switch ($action) {
+            case 'create':
+                return "New {$recordType} created{$refStr}";
+            case 'update':
+                return "{$recordType} updated{$refStr}"
+                    . (!empty($changedFields) ? ' — changed: ' . implode(', ', $changedFields) : '');
+            case 'delete':
+                return "{$recordType} deleted{$refStr}";
+            case 'login':
+                return "User logged in successfully";
+            case 'logout':
+                return "User logged out";
+            case 'failed':
+                return "Failed login attempt";
+            default:
+                return strtoupper($action) . " performed on {$recordType}{$refStr}";
+        }
     }
 }
 

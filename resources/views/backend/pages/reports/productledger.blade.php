@@ -344,8 +344,8 @@
                     @else
                         <div class="alert alert-info text-center py-5">
                             <i class="fas fa-info-circle fa-2x mb-3 d-block"></i>
-                            <h5>Product select করে Search করুন</h5>
-                            <small class="text-muted">Branch optional — না দিলে সব branch দেখাবে</small>
+                            <h5>Product select Search</h5>
+                            <small class="text-muted">Branch optional </small>
                         </div>
                     @endif
 
