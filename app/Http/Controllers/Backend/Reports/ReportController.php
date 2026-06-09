@@ -3075,7 +3075,7 @@ ROUND(
                 optional($item->purchase)->purchase_type === 'Manual'
             );
 
-            // Stock IN — সবসময়
+            // Stock IN — 
             $purchaseRows->push([
                 'date'       => $item->date,
                 'invoice'    => $item->purchase->invoice_no ?? '—',
@@ -3091,7 +3091,7 @@ ROUND(
                 'created_at' => $item->created_at,
             ]);
 
-            // Stock OUT — শুধু Project + Manual হলে
+            // Stock OUT — 
             if ($isProjectManual) {
                 $purchaseRows->push([
                     'date'       => $item->date,
