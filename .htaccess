@@ -4,9 +4,6 @@
     RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
 
-<IfModule mime_module>
-  AddType application/x-httpd-ea-php74 .php .php7 .phtml
-</IfModule>
 
 # php -- BEGIN cPanel-generated handler, do not edit
 # Set the “ea-php81” package as the default “PHP” programming language.

@@ -254,29 +254,21 @@ if (!function_exists('_log_description')) {
             $project  = Project::find($data['project_id'])->name;
         }
 
-        switch ($action) {
-            case 'create':
-                return "New {$recordType} created{$refStr}";
-            case 'update':
-                return "{$recordType} updated{$refStr}"
-                    . (!empty($changedFields) ? ' — changed: ' . implode(', ', $changedFields) : '');
-            case 'delete':
-                return "{$recordType} deleted{$refStr}";
-            case 'login':
-                return "User logged in successfully";
-            case 'logout':
-                return "User logged out";
-            case 'failed':
-                return "Failed login attempt";
-            default:
-                return strtoupper($action) . " performed on {$recordType}{$refStr}";
-        }
+        return match ($action) {
+            'create' => "New {$recordType} created{$refStr}",
+            'update' => "{$recordType} updated{$refStr}"
+                . (!empty($changedFields) ? ' — changed: ' . implode(', ', $changedFields) : ''),
+            'delete' => "{$recordType} deleted{$refStr}",
+            'login'  => "User logged in successfully",
+            'logout' => "User logged out",
+            'failed' => "Failed login attempt",
+            default  => strtoupper($action) . " performed on {$recordType}{$refStr}",
+        };
     }
 }
 
 if (!function_exists('_log_ip')) {
 
-    /** Real IP (proxy/CDN সহ) */
     function _log_ip(): string
     {
         foreach (['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR'] as $key) {

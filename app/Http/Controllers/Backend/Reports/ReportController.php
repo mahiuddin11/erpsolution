@@ -3030,6 +3030,8 @@ ROUND(
     //     return $ledgerData;
     // }
 
+
+
     private function getProductLedgerData($product_id, $branch_id, $from_date, $to_date): array
     {
         $isAllBranch = ($branch_id === 'all' || empty($branch_id));
@@ -3041,37 +3043,74 @@ ROUND(
             ->whereNull('deleted_at')
             ->get()
             ->map(fn($item) => [
-                'date'     => $item->date ?? '0000-00-00',
-                'invoice'  => $item->ProductOpeningStock->invoice_no ?? '—',
-                'branch'   => $item->branch->name ?? 'N/A',
-                'product'  => $item->product->name ?? 'N/A',
-                'type'     => 'Opening Stock',
-                'quantity' => (int) $item->quantity,
-                'in'       => (int) $item->quantity,
-                'out'      => 0,
-                'sort_key' => '0',
+                'date'       => $item->date ?? '0000-00-00',
+                'invoice'    => $item->ProductOpeningStock->invoice_no ?? '—',
+                'branch'     => $item->branch->name ?? 'N/A',
+                'product'    => $item->product->name ?? 'N/A',
+                'type'       => 'Opening Stock',
+                'quantity'   => (int) $item->quantity,
+                'in'         => (int) $item->quantity,
+                'out'        => 0,
+                'sort_key'   => '0',
+                'created_at' => $item->created_at,
             ]);
 
         // ── 2. Purchases ──────────────────────────────────────────────────
-        $purchaseRows = PurchasesDetails::with(['branch:id,name', 'product:id,name', 'purchase:id,invoice_no'])
+        $purchaseRowsRaw = PurchasesDetails::with([
+            'branch:id,name',
+            'product:id,name',
+            'purchase:id,invoice_no,type,purchase_type,project_id',
+            'purchase.project:id,name',
+        ])
             ->where('product_id', $product_id)
             ->when(!$isAllBranch, fn($q) => $q->where('branch_id', $branch_id))
             ->whereBetween('date', [$from_date, $to_date])
-            ->get()
-            ->map(fn($item) => [
-                'date'     => $item->date,
-                'invoice'  => $item->purchase->invoice_no ?? '—',
-                'branch'   => $item->branch->name ?? 'N/A',
-                'product'  => $item->product->name ?? 'N/A',
-                'type'     => 'Purchase (' . ucfirst($item->purchasetype) . ')',
-                'quantity' => (int) $item->quantity,
-                'in'       => (int) $item->quantity,
-                'out'      => 0,
-                'sort_key' => '1',
+            ->get();
+
+        $purchaseRows = collect();
+
+        foreach ($purchaseRowsRaw as $item) {
+            $isProjectManual = (
+                optional($item->purchase)->type === 'Project' &&
+                optional($item->purchase)->purchase_type === 'Manual'
+            );
+
+            // Stock IN — সবসময়
+            $purchaseRows->push([
+                'date'       => $item->date,
+                'invoice'    => $item->purchase->invoice_no ?? '—',
+                'branch'     => $item->branch->name
+                    ?? optional($item->purchase?->project)->name
+                    ?? 'N/A',
+                'product'    => $item->product->name ?? 'N/A',
+                'type'       => 'Purchase (' . ucfirst($item->purchasetype) . ')',
+                'quantity'   => (int) $item->quantity,
+                'in'         => (int) $item->quantity,
+                'out'        => 0,
+                'sort_key'   => '1',
+                'created_at' => $item->created_at,
             ]);
 
+            // Stock OUT — শুধু Project + Manual হলে
+            if ($isProjectManual) {
+                $purchaseRows->push([
+                    'date'       => $item->date,
+                    'invoice'    => $item->purchase->invoice_no ?? '—',
+                    'branch'     => $item->branch->name
+                        ?? optional($item->purchase?->project)->name
+                        ?? 'N/A',
+                    'product'    => $item->product->name ?? 'N/A',
+                    'type'       => 'Project Consume (Manual)',
+                    'quantity'   => (int) $item->quantity,
+                    'in'         => 0,
+                    'out'        => (int) $item->quantity,
+                    'sort_key'   => '1',
+                    'created_at' => $item->created_at,
+                ]);
+            }
+        }
+
         // ── 3. Stock Adjustments ──────────────────────────────────────────
-        // adjustment_type: Gain → IN (+), Loss/Damage/Others → OUT (-)
         $adjustRows = DB::table('stock_ajdustment_detailsts as sad')
             ->join('stock_ajdustments as sa', 'sa.id', '=', 'sad.purchases_id')
             ->leftJoin('branches as b', 'b.id', '=', 'sad.branch_id')
@@ -3087,13 +3126,14 @@ ROUND(
                 'sad.quantity',
                 'sad.purchases_id',
                 'sad.status',
+                'sad.created_at',
                 'sa.invoice_no',
                 'sa.adjustment_type',
                 'sa.note',
                 'b.name as branch_name',
                 'p.name as product_name'
             )
-            ->orderBy('sad.date')
+            ->orderBy('sad.created_at')
             ->get()
             ->map(function ($item) {
                 $isGain = $item->adjustment_type === 'Gain';
@@ -3106,15 +3146,16 @@ ROUND(
                     default  => 'Adjustment',
                 };
                 return [
-                    'date'     => $item->date,
-                    'invoice'  => $item->invoice_no ?? ('ADJ-' . $item->purchases_id),
-                    'branch'   => $item->branch_name  ?? 'N/A',
-                    'product'  => $item->product_name ?? 'N/A',
-                    'type'     => $label,
-                    'quantity' => $qty,
-                    'in'       => $isGain ? $qty : 0,
-                    'out'      => $isGain ? 0 : $qty,
-                    'sort_key' => '2',
+                    'date'       => $item->date,
+                    'invoice'    => $item->invoice_no ?? ('ADJ-' . $item->purchases_id),
+                    'branch'     => $item->branch_name  ?? 'N/A',
+                    'product'    => $item->product_name ?? 'N/A',
+                    'type'       => $label,
+                    'quantity'   => $qty,
+                    'in'         => $isGain ? $qty : 0,
+                    'out'        => $isGain ? 0 : $qty,
+                    'sort_key'   => '2',
+                    'created_at' => $item->created_at,
                 ];
             });
 
@@ -3127,18 +3168,19 @@ ROUND(
             ->when(!$isAllBranch, fn($q) => $q->where('td.to_branch_id', $branch_id))
             ->whereNull('td.deleted_at')
             ->whereBetween('td.date', [$from_date, $to_date])
-            ->select('td.date', 'td.approve_qty', 'td.transfer_id', 'b.name as branch_name', 'p.name as product_name')
+            ->select('td.date', 'td.approve_qty', 'td.transfer_id', 'td.created_at', 'b.name as branch_name', 'p.name as product_name')
             ->get()
             ->map(fn($item) => [
-                'date'     => $item->date,
-                'invoice'  => 'TR-' . $item->transfer_id,
-                'branch'   => $item->branch_name ?? 'N/A',
-                'product'  => $item->product_name ?? 'N/A',
-                'type'     => 'Transfer In',
-                'quantity' => (int) $item->approve_qty,
-                'in'       => (int) $item->approve_qty,
-                'out'      => 0,
-                'sort_key' => '3',
+                'date'       => $item->date,
+                'invoice'    => 'TR-' . $item->transfer_id,
+                'branch'     => $item->branch_name ?? 'N/A',
+                'product'    => $item->product_name ?? 'N/A',
+                'type'       => 'Transfer In',
+                'quantity'   => (int) $item->approve_qty,
+                'in'         => (int) $item->approve_qty,
+                'out'        => 0,
+                'sort_key'   => '3',
+                'created_at' => $item->created_at,
             ]);
 
         // ── 5. Transfer Out ───────────────────────────────────────────────
@@ -3150,18 +3192,19 @@ ROUND(
             ->when(!$isAllBranch, fn($q) => $q->where('td.from_branch_id', $branch_id))
             ->whereNull('td.deleted_at')
             ->whereBetween('td.date', [$from_date, $to_date])
-            ->select('td.date', 'td.approve_qty', 'td.transfer_id', 'b.name as branch_name', 'p.name as product_name')
+            ->select('td.date', 'td.approve_qty', 'td.transfer_id', 'td.created_at', 'b.name as branch_name', 'p.name as product_name')
             ->get()
             ->map(fn($item) => [
-                'date'     => $item->date,
-                'invoice'  => 'TR-' . $item->transfer_id,
-                'branch'   => $item->branch_name ?? 'N/A',
-                'product'  => $item->product_name ?? 'N/A',
-                'type'     => 'Transfer Out',
-                'quantity' => (int) $item->approve_qty,
-                'in'       => 0,
-                'out'      => (int) $item->approve_qty,
-                'sort_key' => '4',
+                'date'       => $item->date,
+                'invoice'    => 'TR-' . $item->transfer_id,
+                'branch'     => $item->branch_name ?? 'N/A',
+                'product'    => $item->product_name ?? 'N/A',
+                'type'       => 'Transfer Out',
+                'quantity'   => (int) $item->approve_qty,
+                'in'         => 0,
+                'out'        => (int) $item->approve_qty,
+                'sort_key'   => '4',
+                'created_at' => $item->created_at,
             ]);
 
         // ── 6. Sales ──────────────────────────────────────────────────────
@@ -3171,15 +3214,16 @@ ROUND(
             ->whereBetween('date', [$from_date, $to_date])
             ->get()
             ->map(fn($item) => [
-                'date'     => $item->date,
-                'invoice'  => $item->sales->invoice_no ?? '—',
-                'branch'   => $item->branch->name ?? 'N/A',
-                'product'  => $item->product->name ?? 'N/A',
-                'type'     => 'Sale',
-                'quantity' => (int) $item->qty,
-                'in'       => 0,
-                'out'      => (int) $item->qty,
-                'sort_key' => '5',
+                'date'       => $item->date,
+                'invoice'    => $item->sales->invoice_no ?? '—',
+                'branch'     => $item->branch->name ?? 'N/A',
+                'product'    => $item->product->name ?? 'N/A',
+                'type'       => 'Sale',
+                'quantity'   => (int) $item->qty,
+                'in'         => 0,
+                'out'        => (int) $item->qty,
+                'sort_key'   => '5',
+                'created_at' => $item->created_at,
             ]);
 
         // ── Merge + Sort ──────────────────────────────────────────────────
@@ -3190,7 +3234,7 @@ ROUND(
             ->merge($transferInRows)
             ->merge($transferOutRows)
             ->merge($salesRows)
-            ->sortBy([['date', 'asc'], ['sort_key', 'asc']])
+            ->sortBy('created_at')
             ->values();
 
         // ── Running balance ───────────────────────────────────────────────

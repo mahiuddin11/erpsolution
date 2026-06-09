@@ -258,7 +258,7 @@
                                         <th>SL</th>
                                         <th>Date</th>
                                         <th>Invoice</th>
-                                        <th>Branch</th>
+                                        <th>Branch/Project</th>
                                         <th>Product</th>
                                         <th>Type</th>
                                         <th class="text-right">In</th>
