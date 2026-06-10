@@ -1166,7 +1166,7 @@ class PurchaseRepositories
             $exists = Purchases::where('invoice_no', $invoice_no)->select('invoice_no')->exists();
 
             if ($exists) {
-                $lastPurchaseOrder = PurchaseOrder::latest('id')->first();
+                $lastPurchaseOrder = Purchases::latest('id')->first();
                 if ($lastPurchaseOrder) {
                     $nextCode = $lastPurchaseOrder->id + 1;
                 } else {

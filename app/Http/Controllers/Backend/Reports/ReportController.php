@@ -1583,6 +1583,7 @@ class ReportController extends Controller
     //     return view('backend.pages.reports.ledger', get_defined_vars());
     // }
 
+
     public function ledger(Request $request)
     {
         $title       = 'Ledger Report';
