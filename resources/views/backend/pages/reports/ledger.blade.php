@@ -16,7 +16,7 @@
             <div class="row mb-2">
                 <div class="col-sm-6">
                     <h1 class="m-0">
-                        Ledger  Report </h1>
+                        Ledger Report </h1>
                 </div><!-- /.col -->
             </div><!-- /.row -->
         </div><!-- /.container-fluid -->
@@ -35,7 +35,7 @@
                                 <div class="form-group">
                                     <label for="account_id">Account</label>
                                     <select name="account_id" id="account_id" class="form-control select2">
-                                        <x-account :setAccounts="$accounts" :selectVal="$selectedAccountId"/>
+                                        <x-account :setAccounts="$accounts" :selectVal="$selectedAccountId" />
                                     </select>
                                 </div>
                             </div>
@@ -43,7 +43,7 @@
                                 <div class="form-group">
                                     <label for="start_date">Start Date</label>
                                     <input type="date" name="start_date" id="start_date" class="form-control"
-                                        value="{{ request('start_date') ?? date("Y-m-d") }}">
+                                        value="{{ request('start_date') ?? date('Y-m-d') }}">
                                 </div>
                             </div>
 
@@ -51,7 +51,7 @@
                                 <div class="form-group">
                                     <label for="end_date">End Date</label>
                                     <input type="date" name="end_date" id="end_date" class="form-control"
-                                        value="{{ request('end_date') ?? date("Y-m-d") }}">
+                                        value="{{ request('end_date') ?? date('Y-m-d') }}">
                                 </div>
                             </div>
                             <div class="col-md-3">
@@ -92,7 +92,7 @@
                                                 @endif
                                             </td>
 
-                                         
+
 
                                             <td width="70%" style="text-align: center">
                                                 <h3>{{ $account->account_name ?? '' }}</h3>
@@ -117,25 +117,72 @@
                                         <tbody>
                                             <tr>
                                                 <td colspan="6"><strong>Opening Balance</strong></td>
-                                                <td>{{ number_format($openingBalance, 2) }}</td>
+                                                {{-- Opening Balance row --}}
+                                                @php
+                                                    $ob = $openingBalance;
+                                                    $obAbs = number_format(abs($ob), 2);
+                                                    $obLabel =
+                                                        $account->balance_type === 'debit'
+                                                            ? ($ob >= 0
+                                                                ? 'Dr'
+                                                                : 'Cr')
+                                                            : ($ob >= 0
+                                                                ? 'Cr'
+                                                                : 'Dr');
+                                                @endphp
+
+
+                                                <td>{{ $obAbs }} {{ $obLabel }}</td>
+
+                                                {{-- <td>{{ number_format($openingBalance, 2) }}</td> --}}
                                             </tr>
-                                         
+
                                             @foreach ($ledgerEntries as $entry)
                                                 <tr>
                                                     <td>{{ $entry['date']->format('Y-m-d') }}</td>
                                                     <td>{{ $entry['invoice'] }}</td>
-                                                    <td>{{ $entry['account_name'] }}</td>                                                                                                        
+                                                    <td>{{ $entry['account_name'] }}</td>
                                                     <td>{{ $entry['description'] }}</td>
                                                     <td>{{ number_format($entry['debit'], 2) }}</td>
                                                     <td>{{ number_format($entry['credit'], 2) }}</td>
-                                                    <td>{{ number_format($entry['balance'], 2) }}</td>
+                                                    @php
+                                                        $bal = $entry['balance'];
+                                                        $balAbs = number_format(abs($bal), 2);
+                                                        if ($account->balance_type === 'debit') {
+                                                            $balLabel = $bal >= 0 ? 'Dr' : 'Cr';
+                                                        } else {
+                                                            $balLabel = $bal >= 0 ? 'Cr' : 'Dr';
+                                                        }
+                                                    @endphp
+                                                    <td>{{ $balAbs }} {{ $balLabel }}</td>
+                                                    {{-- <td>{{ number_format($entry['balance'], 2) }}</td> --}}
                                                 </tr>
                                             @endforeach
                                             <tr>
                                                 <td colspan="4"><strong>Closing Balance</strong></td>
-                                                <td >{{$ledgerSummary['total_debit'] ?? 0}}</td>
-                                                <td >{{$ledgerSummary['total_credit'] ?? 0}}</td>
-                                                <td>{{ number_format($runningBalance, 2) }}</td>
+
+                                                {{-- Closing Balance row --}}
+                                                @php
+                                                    $cb = $runningBalance;
+                                                    $cbAbs = number_format(abs($cb), 2);
+                                                    $cbLabel =
+                                                        $account->balance_type === 'debit'
+                                                            ? ($cb >= 0
+                                                                ? 'Dr'
+                                                                : 'Cr')
+                                                            : ($cb >= 0
+                                                                ? 'Cr'
+                                                                : 'Dr');
+                                                @endphp
+
+
+                                                <td>{{ $ledgerSummary['total_debit'] ?? 0 }}</td>
+                                                <td>{{ $ledgerSummary['total_credit'] ?? 0 }}</td>
+                                                <td>{{ $cbAbs }} {{ $cbLabel }}</td>
+                                            </tr>
+                                            {{-- <td>{{ $ledgerSummary['total_debit'] ?? 0 }}</td>
+                                            <td>{{ $ledgerSummary['total_credit'] ?? 0 }}</td> --}}
+                                            {{-- <td>{{ number_format($runningBalance, 2) }}</td> --}}
                                             </tr>
                                         </tbody>
                                     </table>
