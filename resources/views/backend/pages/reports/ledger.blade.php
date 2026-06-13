@@ -179,10 +179,10 @@
                                                 <td>{{ $ledgerSummary['total_debit'] ?? 0 }}</td>
                                                 <td>{{ $ledgerSummary['total_credit'] ?? 0 }}</td>
                                                 <td>{{ $cbAbs }} {{ $cbLabel }}</td>
-                                            </tr>
-                                            {{-- <td>{{ $ledgerSummary['total_debit'] ?? 0 }}</td>
-                                            <td>{{ $ledgerSummary['total_credit'] ?? 0 }}</td> --}}
-                                            {{-- <td>{{ number_format($runningBalance, 2) }}</td> --}}
+
+                                                {{-- <td>{{ $ledgerSummary['total_debit'] ?? 0 }}</td>
+                                               <td>{{ $ledgerSummary['total_credit'] ?? 0 }}</td> --}}
+                                                {{-- <td>{{ number_format($runningBalance, 2) }}</td> --}}
                                             </tr>
                                         </tbody>
                                     </table>

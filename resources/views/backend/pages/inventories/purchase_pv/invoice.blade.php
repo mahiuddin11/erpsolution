@@ -130,10 +130,33 @@
                                                 $totalUp += $detail->unit_price;
                                                 $totalPrice += $detail->total_price;
 
+                                                $supplyerNames = [];
+
+                                                if (!empty($detail->supplier_id)) {
+                                                    $supplyerNames[] = $detail->supplier->name;
+                                                } elseif (!empty($detail->ledger_id)) {
+                                                    $supplyerNames[] = $detail->ledger->account_name;
+                                                }
+
+                                                $supplyerNames = array_unique($supplyerNames);
+                                                $supplierHtml = '';
+
+                                                if (count($supplyerNames) > 1) {
+                                                    foreach ($supplyerNames as $name) {
+                                                        $supplierHtml .=
+                                                            '<span class="badge badge-success mr-1">' .
+                                                            $name .
+                                                            '</span>';
+                                                    }
+                                                } else {
+                                                    $supplierHtml = implode(', ', $supplyerNames);
+                                                }
+
                                             @endphp
+
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
-                                                <th>{{ $detail->supplier->name ?? '' }}</th>
+                                                <th>{{ $supplierHtml ?: 'N/A' }}</th>
                                                 <td>{{ $detail->product->productCode ?? 'N/A' }} -
                                                     {{ $detail->product->name ?? 'N/A' }}
                                                 </td>
@@ -231,11 +254,12 @@
                                                 </b>
                                             </td>
                                         </tr>
-                                        
+
                                         <tr>
 
                                             <th colspan="7">
-                                               <b>In Words :</b> {{ numberToWords((int) str_replace(',', '',$ttlAmountafterdiscount)) }}
+                                                <b>In Words :</b>
+                                                {{ numberToWords((int) str_replace(',', '', $ttlAmountafterdiscount)) }}
                                             </th>
                                         </tr>
                                         <tr>
