@@ -662,8 +662,8 @@ class PurchaseRepositories
             // $invoice = AccountTransaction::accountInvoice();
 
             $invoice = (new AccountTransaction())->accountInvoice();
-            $transactionPay['payment_invoice'] = $request->invoice_no;
-            $transactionPay['invoice'] = $request->invoice_no;
+            // $transactionPay['payment_invoice'] = $request->invoice_no;
+            $transactionPay['invoice'] = $invoice_no ?? $request->invoice_no;
             $transactionPay['table_id'] = $purchases_id;
             $transactionPay['account_id'] = getAccountByUniqueID(22)->id; // ->purchase
             $transactionPay['type'] = 1;
@@ -675,7 +675,7 @@ class PurchaseRepositories
             $transactionPay['created_at'] = $request->date;
             AccountTransaction::create($transactionPay);
 
-            $transaction['payment_invoice'] = $request->invoice_no;
+            // $transaction['payment_invoice'] = $request->invoice_no;
             $transaction['invoice'] = $request->invoice_no;
             $transaction['table_id'] = $purchases_id;
             $transaction['account_id'] = $request->ledger_id; // account payable

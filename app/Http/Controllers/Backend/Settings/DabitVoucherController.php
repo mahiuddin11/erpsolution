@@ -534,6 +534,63 @@ class DabitVoucherController extends Controller
         ]);
     } */
 
+    // public function checkBillByBill(Request $request)
+    // {
+    //     $accountId = $request->input('account_id');
+    //     $account   = ChartOfAccount::find($accountId);
+
+    //     if (!$account || !$account->bill_by_bill) {
+    //         return response()->json(['bill_by_bill' => false, 'payment_invoices' => []]);
+    //     }
+
+    //     $details = [];
+
+    //     // ঐ account এর সব invoice আনো — credit অথবা debit যেকোনোটায়
+    //     $invoices = AccountTransaction::where('account_id', $accountId)
+    //         ->whereNotNull('invoice')
+    //         ->where('invoice', '!=', '')
+    //         ->selectRaw('
+    //         invoice,
+    //         MIN(created_at) as created_at,
+    //         SUM(COALESCE(credit, 0)) as total_credit,
+    //         SUM(COALESCE(debit, 0))  as total_debit
+    //     ')
+    //         ->groupBy('invoice')
+    //         ->get();
+
+
+    //     foreach ($invoices as $inv) {
+
+    //         $netOriginal = $inv->total_credit - $inv->total_debit;
+
+
+    //         $settled = AccountTransaction::where('payment_invoice', $inv->invoice)
+    //             ->where('account_id', $accountId)
+    //             ->where('invoice', '!=', $inv->invoice) //  line add 
+    //             ->selectRaw('
+    //         SUM(COALESCE(credit, 0)) as paid_credit,
+    //         SUM(COALESCE(debit, 0))  as paid_debit
+    //     ')
+    //             ->first();
+
+    //         $settledNet = ($settled->paid_credit ?? 0) - ($settled->paid_debit ?? 0);
+    //         $due        = $netOriginal + $settledNet;
+
+    //         if (abs($due) > 0.01) {
+    //             $details[] = [
+    //                 'invoice' => $inv->invoice,
+    //                 'date'    => date('Y-m-d', strtotime($inv->created_at)),
+    //                 'amount'  => round(abs($due), 2),
+    //             ];
+    //         }
+    //     }
+
+    //     return response()->json([
+    //         'bill_by_bill'     => true,
+    //         'payment_invoices' => $details,
+    //     ]);
+    // }
+
     public function checkBillByBill(Request $request)
     {
         $accountId = $request->input('account_id');
@@ -545,16 +602,16 @@ class DabitVoucherController extends Controller
 
         $details = [];
 
-        // ঐ account এর সব invoice আনো — credit অথবা debit যেকোনোটায়
         $invoices = AccountTransaction::where('account_id', $accountId)
             ->whereNotNull('invoice')
             ->where('invoice', '!=', '')
+            ->whereNull('payment_invoice')
             ->selectRaw('
-            invoice,
-            MIN(created_at) as created_at,
-            SUM(COALESCE(credit, 0)) as total_credit,
-            SUM(COALESCE(debit, 0))  as total_debit
-        ')
+        invoice,
+        MIN(created_at) as created_at,
+        SUM(COALESCE(credit, 0)) as total_credit,
+        SUM(COALESCE(debit, 0))  as total_debit
+    ')
             ->groupBy('invoice')
             ->get();
 
@@ -562,14 +619,12 @@ class DabitVoucherController extends Controller
 
             $netOriginal = $inv->total_credit - $inv->total_debit;
 
-
             $settled = AccountTransaction::where('payment_invoice', $inv->invoice)
                 ->where('account_id', $accountId)
-                ->where('invoice', '!=', $inv->invoice) //  line add 
                 ->selectRaw('
-            SUM(COALESCE(credit, 0)) as paid_credit,
-            SUM(COALESCE(debit, 0))  as paid_debit
-        ')
+                SUM(COALESCE(credit, 0)) as paid_credit,
+                SUM(COALESCE(debit, 0))  as paid_debit
+            ')
                 ->first();
 
             $settledNet = ($settled->paid_credit ?? 0) - ($settled->paid_debit ?? 0);

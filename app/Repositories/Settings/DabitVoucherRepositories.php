@@ -143,6 +143,7 @@ class DabitVoucherRepositories
 
     public function store($request)
     {
+
         try {
             DB::beginTransaction();
 
