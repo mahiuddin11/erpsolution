@@ -1455,7 +1455,7 @@ class PurchaseRepositories
                 // ---- DEBIT: Purchase A/C ----
                 AccountTransaction::updateOrCreate(
                     [
-                        'payment_invoice' => $invoice_no,
+                        // 'payment_invoice' => $invoice_no,
                         'invoice'         => $invoice,
                         'table_id'        => $purchaseId,
                         'account_id'      => getAccountByUniqueID(22)->id, // Purchase Account
@@ -1470,14 +1470,14 @@ class PurchaseRepositories
                         'remark'      => $request->narration,
                         'created_at'  => $request->date,
                         'created_by'  => Auth::id(),
-                        'party_type'  => $partyType,                 // নতুন
+                        'party_type'  => $partyType,
                     ]
                 );
 
                 // ---- CREDIT: Party A/C (Supplier or Customer) ----
                 AccountTransaction::updateOrCreate(
                     [
-                        'payment_invoice' => $invoice_no,
+                        // 'payment_invoice' => $invoice_no,
                         'invoice'         => $invoice,
                         'table_id'        => $purchaseId,
                         'account_id'      => $party['account_id'],
@@ -1492,7 +1492,7 @@ class PurchaseRepositories
                         'remark'      => $request->narration,
                         'created_at'  => $request->date,
                         'created_by'  => Auth::id(),
-                        'party_type'  => $partyType,                 // 
+                        'party_type'  => $partyType,
                     ]
                 );
             }

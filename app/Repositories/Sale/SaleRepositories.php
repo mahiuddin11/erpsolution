@@ -286,7 +286,7 @@ class SaleRepositories
             }
 
 
-            $transaction['payment_invoice'] = $request->invoice_no;
+            // $transaction['payment_invoice'] = $request->invoice_no;
             $transaction['invoice'] = $request->invoice_no;
             $transaction['table_id'] = $Sale_id;
             $transaction['account_id'] = getAccountByUniqueID(18)->id; // sale
@@ -298,7 +298,7 @@ class SaleRepositories
             $transaction['created_at'] = $request->date;
             AccountTransaction::create($transaction);
 
-            $transactionPay['payment_invoice'] = $request->invoice_no;
+            // $transactionPay['payment_invoice'] = $request->invoice_no;
             $transactionPay['invoice'] = $request->invoice_no;
             $transactionPay['table_id'] = $Sale_id;
             $transactionPay['account_id'] = $request->ledger_id; // Account Receivable;
