@@ -369,7 +369,7 @@ class DabitVoucherController extends Controller
         return view('backend.pages.settings.dabit_voucher.debit_voucher_show', get_defined_vars());
     }
 
-    /*   public function checkBillByBill(Request $request)
+    public function checkBillByBill(Request $request)
     {
         $accountId = $request->input('account_id');
         $account = ChartOfAccount::find($accountId);
@@ -417,7 +417,7 @@ class DabitVoucherController extends Controller
 
         return response()->json(['bill_by_bill' => false, 'payment_invoices' => []]);
     }
- */
+
 
 
 
@@ -591,7 +591,7 @@ class DabitVoucherController extends Controller
     //     ]);
     // }
 
-    public function checkBillByBill(Request $request)
+    /*  public function checkBillByBill(Request $request)
     {
         $accountId = $request->input('account_id');
         $account   = ChartOfAccount::find($accountId);
@@ -643,5 +643,5 @@ class DabitVoucherController extends Controller
             'bill_by_bill'     => true,
             'payment_invoices' => $details,
         ]);
-    }
+    } */
 }
