@@ -1731,7 +1731,7 @@ class ReportController extends Controller
 
                 $ledgerEntries[] = [
                     'date'         => $transaction->created_at,
-                    'invoice'      => $transaction->invoice ?? $transaction->payment_invoice ?? 'N/A',
+                    'invoice'      => $transaction->invoice ?? 'N/A',
                     'account_name' => $oppositeName,
                     'description'  => $transaction->remark ?? 'N/A',
                     'debit'        => $debit,

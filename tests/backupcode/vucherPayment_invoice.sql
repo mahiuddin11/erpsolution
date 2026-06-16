@@ -5,6 +5,10 @@ SET payment_invoice = NULL
 WHERE payment_invoice = invoice
   AND type IN ('purchase', 'sale');
 
+UPDATE account_transactions
+SET payment_invoice = NULL
+WHERE payment_invoice = '';
+
 
 SELECT 
     at.id                          as at_id,
