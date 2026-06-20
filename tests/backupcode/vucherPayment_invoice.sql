@@ -144,3 +144,219 @@ UNION ALL
 SELECT 'credit_voucher_details',       COUNT(*) FROM credit_voucher_details       WHERE payment_invoice REGEXP '^[0-9]+$'
 UNION ALL
 SELECT 'journal_voucher_details',      COUNT(*) FROM journal_voucher_details      WHERE payment_invoice REGEXP '^[0-9]+$';
+
+
+
+
+-- stock priview opening to stock --
+SELECT
+    posd.date,
+    posd.project_id,
+    posd.product_opening_stock_id AS general_id,
+    posd.branch_id,
+    posd.product_id,
+    posd.unit_price,
+    posd.total_price,
+    posd.quantity,
+    'Opening' AS status,
+    posd.updated_by,
+    posd.created_by,
+    posd.deleted_by,
+    posd.deleted_at,
+    posd.created_at,
+    posd.updated_at,
+    pos.invoice_no
+FROM product_opening_stock_details posd
+JOIN product_opening_stocks pos ON pos.id = posd.product_opening_stock_id
+WHERE posd.product_id = 1235
+AND NOT EXISTS (
+    SELECT 1
+    FROM stocks s
+    WHERE s.general_id   = posd.product_opening_stock_id
+      AND s.product_id   = posd.product_id
+      AND s.branch_id    = posd.branch_id
+      AND s.project_id   = posd.project_id
+      AND s.date         = posd.date
+      AND s.quantity      = posd.quantity
+);
+
+-- final update opening to stock  --
+INSERT INTO stocks (
+    date,
+    project_id,
+    general_id,
+    branch_id,
+    product_id,
+    unit_price,
+    total_price,
+    quantity,
+    status,
+    updated_by,
+    created_by,
+    deleted_by,
+    deleted_at,
+    created_at,
+    updated_at,
+    invoice_no
+)
+SELECT
+    posd.date,
+    posd.project_id,
+    posd.product_opening_stock_id AS general_id,
+    posd.branch_id,
+    posd.product_id,
+    posd.unit_price,
+    posd.total_price,
+    posd.quantity,
+    'Opening' AS status,
+    posd.updated_by,
+    posd.created_by,
+    posd.deleted_by,
+    posd.deleted_at,
+    posd.created_at,
+    posd.updated_at,
+    pos.invoice_no
+FROM product_opening_stock_details posd
+JOIN product_opening_stocks pos ON pos.id = posd.product_opening_stock_id
+WHERE posd.product_id = 1233
+AND NOT EXISTS (
+    SELECT 1
+    FROM stocks s
+    WHERE s.general_id   = posd.product_opening_stock_id
+      AND s.product_id   = posd.product_id
+      AND s.branch_id    = posd.branch_id
+      AND s.project_id   = posd.project_id
+      AND s.date         = posd.date
+      AND s.quantity      = posd.quantity
+);
+
+
+
+-- purchase table to stock table check 
+SELECT
+    pd.date,
+    pd.project_id,
+    pd.purchases_id AS general_id,
+    pd.branch_id,
+    pd.product_id,
+    pd.unit_price,
+    pd.total_price,
+    pd.quantity,
+    CASE
+        WHEN p.purchase_type = 'Direct' THEN 'Purchase'
+        WHEN p.purchase_type = 'Manual' THEN 'Manual Purchase'
+        ELSE 'Purchase'
+    END AS status,
+    pd.updated_by,
+    pd.created_by,
+    pd.deleted_by,
+    pd.deleted_at,
+    pd.created_at,
+    pd.updated_at,
+    p.invoice_no
+FROM purchases_details pd
+JOIN purchases p ON p.id = pd.purchases_id
+WHERE pd.status = 'Active'
+AND NOT EXISTS (
+    SELECT 1
+    FROM stocks s
+    WHERE s.general_id = pd.purchases_id
+      AND s.product_id = pd.product_id
+      AND s.branch_id  = pd.branch_id
+      AND s.project_id = pd.project_id
+      AND s.date       = pd.date
+      AND s.quantity    = pd.quantity
+);
+
+-- terget product purchase to stok check 
+SELECT
+    pd.date,
+    pd.project_id,
+    pd.purchases_id AS general_id,
+    pd.branch_id,
+    pd.product_id,
+    pd.unit_price,
+    pd.total_price,
+    pd.quantity,
+    CASE
+        WHEN p.purchase_type = 'Direct' THEN 'Purchase'
+        WHEN p.purchase_type = 'Manual' THEN 'Manual Purchase'
+        ELSE 'Purchase'
+    END AS status,
+    pd.updated_by,
+    pd.created_by,
+    pd.deleted_by,
+    pd.deleted_at,
+    pd.created_at,
+    pd.updated_at,
+    p.invoice_no
+FROM purchases_details pd
+JOIN purchases p ON p.id = pd.purchases_id
+WHERE pd.status = 'Active'
+  AND pd.product_id = 1237
+AND NOT EXISTS (
+    SELECT 1
+    FROM stocks s
+    WHERE s.general_id = pd.purchases_id
+      AND s.product_id = pd.product_id
+      AND s.branch_id  = pd.branch_id
+      AND s.project_id = pd.project_id
+      AND s.date       = pd.date
+      AND s.quantity    = pd.quantity
+);
+
+
+
+-- update purchase to stock
+INSERT INTO stocks (
+    date,
+    project_id,
+    general_id,
+    branch_id,
+    product_id,
+    unit_price,
+    total_price,
+    quantity,
+    status,
+    updated_by,
+    created_by,
+    deleted_by,
+    deleted_at,
+    created_at,
+    updated_at,
+    invoice_no
+)
+SELECT
+    pd.date,
+    pd.project_id,
+    pd.purchases_id AS general_id,
+    pd.branch_id,
+    pd.product_id,
+    pd.unit_price,
+    pd.total_price,
+    pd.quantity,
+    CASE
+        WHEN p.purchase_type = 'Direct' THEN 'Purchase'
+        WHEN p.purchase_type = 'Manual' THEN 'Manual Purchase'
+        ELSE 'Purchase'
+    END AS status,
+    pd.updated_by,
+    pd.created_by,
+    pd.deleted_by,
+    pd.deleted_at,
+    pd.created_at,
+    pd.updated_at,
+    p.invoice_no
+FROM purchases_details pd
+JOIN purchases p ON p.id = pd.purchases_id
+WHERE pd.product_id = 1237
+AND NOT EXISTS (
+    SELECT 1
+    FROM stocks s
+    WHERE s.general_id  = pd.purchases_id
+      AND s.product_id  = pd.product_id
+      AND s.branch_id   = pd.branch_id
+      AND s.project_id <=> pd.project_id
+      AND s.date        = pd.date
+      AND s.quantity     = pd.quantity
+);

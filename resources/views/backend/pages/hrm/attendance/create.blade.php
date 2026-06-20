@@ -123,7 +123,7 @@
                                     <div class="col-md-4 mb-1">
                                         <div id="gps-status-checkin" class="gps-status-box mb-2"
                                             style="padding:10px; border-radius:6px; font-weight:bold; text-align:center; background:#fff3cd; color:#856404;">
-                                            📍 GPS লোড হচ্ছে...
+                                            📍 GPS Loading...
                                         </div>
                                         <div id="map-checkin" style="height: 200px; width: 100%; display:none;"></div>
                                         <input type="hidden" id="latitude" name="latitude">
@@ -203,7 +203,7 @@
                                     <div class="col-md-4 mb-1">
                                         <div id="gps-status-checkout" class="gps-status-box mb-2"
                                             style="padding:10px; border-radius:6px; font-weight:bold; text-align:center; background:#fff3cd; color:#856404;">
-                                            📍 GPS লোড হচ্ছে...
+                                            📍 GPS Loading...
                                         </div>
                                         <div id="map-checkout" style="height: 200px; width: 100%; display:none;"></div>
                                         <input type="hidden" id="latitude2" name="latitude">
@@ -238,6 +238,7 @@
         <!-- /.col-->
     </div>
 @endsection
+
 @section('scripts')
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
 
@@ -604,8 +605,7 @@
                     }).then(function(result) {
                         if (result.state === 'denied') {
                             alert(
-                                '⚙️ Please allow Location from browser settings.\nChrome: Settings → Privacy → Site Settings → Location\n\nThen click Reload Location again.'
-                            );
+                                '⚙️ Please allow Location from browser settings.\nChrome: Settings → Privacy → Site Settings → Location\n\nThen click Reload Location again.');
                             // permission change হলে auto detect করো
                             result.onchange = function() {
                                 if (result.state === 'granted') tryGetLocationNow();
@@ -679,3 +679,869 @@
         });
     </script>
 @endsection
+
+
+
+<!--@section('scripts')
+    -->
+    <!--    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>-->
+
+    <!--    <script>
+        -- >
+        <
+        !--$(document).ready(function() {
+            -- >
+            // ─── Tab Toggle ───────────────────────────────────────────
+            <
+            !--
+            if ("{{ session()->get('sign') }}" == "0") {
+                -- >
+                <
+                !--$('#check_in').addClass('active show');
+                -- >
+                <
+                !--$('#check_out').removeClass('active show');
+                -- >
+                <
+                !--$('.check_out').css('background', '#8fbc8f');
+                -- >
+                <
+                !--$('.check_in').css('background', 'green');
+                -- >
+                <
+                !--
+            } else if ("{{ session()->get('sign') }}" == "1") {
+                -- >
+                <
+                !--$('#check_out').addClass('active show');
+                -- >
+                <
+                !--$('#check_in').removeClass('active show');
+                -- >
+                <
+                !--$('.check_in').css('background', '#8fbc8f');
+                -- >
+                <
+                !--$('.check_out').css('background', 'green');
+                -- >
+                <
+                !--
+            } else {
+                -- >
+                <
+                !--$('.check_out').css('background', '#8fbc8f');
+                -- >
+                <
+                !--$('.check_in').css('background', 'green');
+                -- >
+                <
+                !--
+            }-- >
+
+            <
+            !--$('.check_in').on('click', function() {
+                -- >
+                <
+                !--$('#check_in').addClass('active show');
+                -- >
+                <
+                !--$('#check_out').removeClass('active show');
+                -- >
+                <
+                !--$('.check_out').css('background', '#8fbc8f');
+                -- >
+                <
+                !--$('.check_in').css('background', 'green');
+                -- >
+                <
+                !--
+            });
+            -- >
+
+            <
+            !--$('.check_out').on('click', function() {
+                -- >
+                <
+                !--$('#check_out').addClass('active show');
+                -- >
+                <
+                !--$('#check_in').removeClass('active show');
+                -- >
+                <
+                !--$('.check_in').css('background', '#8fbc8f');
+                -- >
+                <
+                !--$('.check_out').css('background', 'green');
+                -- >
+                <
+                !--
+            });
+            -- >
+            <
+            !--
+        });
+        -- >
+
+        // ─── GPS Status Helper ─────────────────────────────────────────
+        <
+        !-- function setGpsStatus(boxId, msg, type) {
+            -- >
+            <
+            !--
+            const el = document.getElementById(boxId);
+            -- >
+            <
+            !--
+            if (!el) return;
+            -- >
+
+            <
+            !--
+            const styles = {
+                -- >
+                <
+                !--loading: {
+                    -- >
+                    <
+                    !--bg: '#fff3cd',
+                    -- >
+                    <
+                    !--color: '#856404'-- >
+                        <
+                        !--
+                },
+                -- >
+                <
+                !--success: {
+                    -- >
+                    <
+                    !--bg: '#d4edda',
+                    -- >
+                    <
+                    !--color: '#155724'-- >
+                        <
+                        !--
+                },
+                -- >
+                <
+                !--error: {
+                    -- >
+                    <
+                    !--bg: '#f8d7da',
+                    -- >
+                    <
+                    !--color: '#721c24'-- >
+                        <
+                        !--
+                },
+                -- >
+                <
+                !--
+            };
+            -- >
+            <
+            !--
+            const s = styles[type] || styles.loading;
+            -- >
+            <
+            !--el.style.background = s.bg;
+            -- >
+            <
+            !--el.style.color = s.color;
+            -- >
+            <
+            !--el.innerHTML = msg;
+            -- >
+            <
+            !--
+        }-- >
+
+        // ─── Leaflet Map ───────────────────────────────────────────────
+        <
+        !--
+        var mapCheckin = null;
+        -- >
+        <
+        !--
+        var mapCheckout = null;
+        -- >
+
+        <
+        !-- function initMap(mapId, lat, lng) {
+            -- >
+            <
+            !--
+            const container = document.getElementById(mapId);
+            -- >
+            <
+            !--
+            if (!container) return;
+            -- >
+
+            <
+            !--container.style.display = 'block';
+            -- >
+            <
+            !--container.innerHTML = '';
+            -- >
+
+            <
+            !--
+            if (mapId === 'map-checkin' && mapCheckin) {
+                -- >
+                <
+                !--mapCheckin.remove();
+                -- >
+                <
+                !--mapCheckin = null;
+                -- >
+                <
+                !--
+            }-- >
+            <
+            !--
+            if (mapId === 'map-checkout' && mapCheckout) {
+                -- >
+                <
+                !--mapCheckout.remove();
+                -- >
+                <
+                !--mapCheckout = null;
+                -- >
+                <
+                !--
+            }-- >
+
+            <
+            !--
+            const map = L.map(mapId).setView([lat, lng], 17);
+            -- >
+            <
+            !--L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                -- >
+                <
+                !--attribution: '&copy; OpenStreetMap contributors'-- >
+                    <
+                    !--
+            }).addTo(map);
+            -- >
+
+            <
+            !--L.marker([lat, lng]).addTo(map) -- >
+                <
+                !--.bindPopup('Your Current Location') -- >
+                <
+                !--.openPopup();
+            -- >
+
+            <
+            !--
+            if (mapId === 'map-checkin') mapCheckin = map;
+            -- >
+            <
+            !--
+            if (mapId === 'map-checkout') mapCheckout = map;
+            -- >
+            <
+            !--
+        }-- >
+
+        // ─── GPS → Map → Submit enable ────────────────────────────────
+        <
+        !--async function forceLocationOnLoad() {
+                -- >
+
+                <
+                !--document.getElementById('submit-checkin').disabled = true;
+                -- >
+                <
+                !--document.getElementById('submit-checkout').disabled = true;
+                -- >
+
+                <
+                !--setGpsStatus('gps-status-checkin', '📍 Turning on GPS... Please wait', 'loading');
+                -- >
+                <
+                !--setGpsStatus('gps-status-checkout', '📍 Turning on GPS... Please wait', 'loading');
+                -- >
+
+                <
+                !--
+                try {
+                    -- >
+                    <
+                    !--
+                    if (typeof median !== 'undefined') {
+                        -- >
+                        <
+                        !--
+                        if (median.android && median.android.geoLocation) {
+                            -- >
+                            <
+                            !--
+                            try {
+                                -- >
+                                <
+                                !--await median.android.geoLocation.promptLocationServices();
+                                -- >
+                                <
+                                !--
+                            } catch (e) {}-- >
+                            <
+                            !--
+                        }-- >
+                        <
+                        !--
+                    }-- >
+
+                    <
+                    !--navigator.geolocation.getCurrentPosition(-- >
+                        <
+                        !-- function(position) {
+                            -- >
+                            <
+                            !--
+                            const lat = position.coords.latitude.toFixed(6);
+                            -- >
+                            <
+                            !--
+                            const lng = position.coords.longitude.toFixed(6);
+                            -- >
+                            <
+                            !--
+                            const acc = Math.round(position.coords.accuracy);
+                            -- >
+
+                            <
+                            !--document.getElementById('latitude').value = lat;
+                            -- >
+                            <
+                            !--document.getElementById('longitude').value = lng;
+                            -- >
+                            <
+                            !--document.getElementById('latitude2').value = lat;
+                            -- >
+                            <
+                            !--document.getElementById('longitude2').value = lng;
+                            -- >
+
+                            <
+                            !--
+                            try {
+                                -- >
+                                <
+                                !--initMap('map-checkin', lat, lng);
+                                -- >
+                                <
+                                !--
+                            } catch (e) {
+                                -- >
+                                <
+                                !--console.error('map-checkin error:', e);
+                                -- >
+                                <
+                                !--
+                            }-- >
+                            <
+                            !--
+                            try {
+                                -- >
+                                <
+                                !--initMap('map-checkout', lat, lng);
+                                -- >
+                                <
+                                !--
+                            } catch (e) {
+                                -- >
+                                <
+                                !--console.error('map-checkout error:', e);
+                                -- >
+                                <
+                                !--
+                            }-- >
+
+                            <
+                            !--
+                            const successMsg = `Location acquired. Accuracy: ${acc}m`;
+                            -- >
+                            <
+                            !--setGpsStatus('gps-status-checkin', successMsg, 'success');
+                            -- >
+                            <
+                            !--setGpsStatus('gps-status-checkout', successMsg, 'success');
+                            -- >
+
+                            <
+                            !--document.getElementById('submit-checkin').disabled = false;
+                            -- >
+                            <
+                            !--document.getElementById('submit-checkout').disabled = false;
+                            -- >
+                            <
+                            !--
+                        }, -- >
+
+                        <
+                        !-- function(error) {
+                            -- >
+                            <
+                            !--
+                            let msg = '';
+                            -- >
+                            <
+                            !--
+                            switch (error.code) {
+                                -- >
+                                <
+                                !--
+                                case 1:
+                                    -- >
+                                    <
+                                    !--msg = -- >
+                                        <
+                                        !--
+                                        '❌ Location permission denied. Please allow permission from browser/app settings and refresh the page.';
+                                    -- >
+                                    <
+                                    !--
+                                    break;
+                                    -- >
+                                    <
+                                    !--
+                                case 2:
+                                    -- >
+                                    <
+                                    !--msg =
+                                        '❌ Unable to get GPS signal. Please go outside or check if GPS is turned on.';
+                                    -- >
+                                    <
+                                    !--
+                                    break;
+                                    -- >
+                                    <
+                                    !--
+                                case 3:
+                                    -- >
+                                    <
+                                    !--msg = '❌ GPS request timed out. Please refresh the page and try again.';
+                                    -- >
+                                    <
+                                    !--
+                                    break;
+                                    -- >
+                                    <
+                                    !--
+                                default:
+                                    -- >
+                                    <
+                                    !--msg = '❌ Unknown GPS error. Please refresh the page.';
+                                    -- >
+                                    <
+                                    !--
+                            }-- >
+                            <
+                            !--setGpsStatus('gps-status-checkin', msg, 'error');
+                            -- >
+                            <
+                            !--setGpsStatus('gps-status-checkout', msg, 'error');
+                            -- >
+
+                            <
+                            !--document.getElementById('submit-checkin').disabled = true;
+                            -- >
+                            <
+                            !--document.getElementById('submit-checkout').disabled = true;
+                            -- >
+                            <
+                            !--
+                        }, -- >
+
+                        <
+                        !--{
+                            -- >
+                            <
+                            !--enableHighAccuracy: true,
+                            -- >
+                            <
+                            !--timeout: 30000,
+                            -- >
+                            <
+                            !--maximumAge: 0-- >
+                                <
+                                !--
+                        }-- >
+                        <
+                        !--);
+                    -- >
+
+                    <
+                    !--
+                } catch (e) {
+                    -- >
+                    <
+                    !--console.error('forceLocationOnLoad error:', e);
+                    -- >
+                    <
+                    !--
+                    const errMsg = 'Something went wrong. Please refresh the page.';
+                    -- >
+                    <
+                    !--setGpsStatus('gps-status-checkin', errMsg, 'error');
+                    -- >
+                    <
+                    !--setGpsStatus('gps-status-checkout', errMsg, 'error');
+                    -- >
+                    <
+                    !--
+                }-- >
+                <
+                !--
+            }-- >
+
+
+            // ─── Reload Location Button ────────────────────────────────
+            <
+            !-- function reloadWithLocationPrompt() {
+                -- >
+                <
+                !--
+                try {
+                    -- >
+                    // ── Median Android ──
+                    <
+                    !--
+                    if (typeof median !== 'undefined' && median.android && median.android.geoLocation) {
+                        -- >
+
+                        // Settings খোলার আগে visibilitychange listener লাগাও
+                        <
+                        !--document.addEventListener('visibilitychange', function handler() {
+                            -- >
+                            <
+                            !--
+                            if (document.visibilityState === 'visible') {
+                                -- >
+                                <
+                                !--document.removeEventListener('visibilitychange', handler);
+                                -- >
+                                <
+                                !--location.reload();
+                                -- >
+                                <
+                                !--
+                            }-- >
+                            <
+                            !--
+                        });
+                        -- >
+
+                        // GPS Settings prompt করো
+                        <
+                        !--
+                        try {
+                            -- >
+                            <
+                            !--median.android.geoLocation.promptLocationServices();
+                            -- >
+                            <
+                            !--
+                        } catch (e) {
+                            -- >
+                            <
+                            !--console.log('promptLocationServices error:', e);
+                            -- >
+                            <
+                            !--
+                        }-- >
+                        <
+                        !--
+                        return;
+                        -- >
+                        <
+                        !--
+                    }-- >
+
+                    // ── Median iOS ──
+                    <
+                    !--
+                    if (typeof median !== 'undefined' && median.ios && median.ios.geoLocation) {
+                        -- >
+
+                        <
+                        !--document.addEventListener('visibilitychange', function handler() {
+                            -- >
+                            <
+                            !--
+                            if (document.visibilityState === 'visible') {
+                                -- >
+                                <
+                                !--document.removeEventListener('visibilitychange', handler);
+                                -- >
+                                <
+                                !--location.reload();
+                                -- >
+                                <
+                                !--
+                            }-- >
+                            <
+                            !--
+                        });
+                        -- >
+
+                        <
+                        !--
+                        try {
+                            -- >
+                            <
+                            !--median.ios.geoLocation.openSettings();
+                            -- >
+                            <
+                            !--
+                        } catch (e) {
+                            -- >
+                            <
+                            !--console.log('openSettings error:', e);
+                            -- >
+                            <
+                            !--
+                        }-- >
+                        <
+                        !--
+                        return;
+                        -- >
+                        <
+                        !--
+                    }-- >
+
+                    // ── Browser fallback ──
+                    <
+                    !--
+                    if (navigator.permissions) {
+                        -- >
+                        <
+                        !--navigator.permissions.query({
+                            -- >
+                            <
+                            !--name: 'geolocation'-- >
+                                <
+                                !--
+                        }).then(function(result) {
+                            -- >
+                            <
+                            !--
+                            if (result.state === 'denied') {
+                                -- >
+                                <
+                                !--alert(-- >
+                                    <
+                                    !--
+                                    'Please enable Location permission from browser settings.\nChrome: Settings → Privacy → Site Settings → Location\n\nAfter granting permission, press OK.'--
+                                    >
+                                    <
+                                    !--);
+                                -- >
+                                <
+                                !--
+                            }-- >
+                            <
+                            !--location.reload();
+                            -- >
+                            <
+                            !--
+                        });
+                        -- >
+                        <
+                        !--
+                    } else {
+                        -- >
+                        <
+                        !--location.reload();
+                        -- >
+                        <
+                        !--
+                    }-- >
+
+                    <
+                    !--
+                } catch (e) {
+                    -- >
+                    <
+                    !--console.error('reloadWithLocationPrompt error:', e);
+                    -- >
+                    <
+                    !--location.reload();
+                    -- >
+                    <
+                    !--
+                }-- >
+                <
+                !--
+            }-- >
+
+            <
+            !--document.getElementById('reload-checkin').addEventListener('click', function() {
+                -- >
+                <
+                !--reloadWithLocationPrompt();
+                -- >
+                <
+                !--
+            });
+        -- >
+
+        <
+        !--document.getElementById('reload-checkout').addEventListener('click', function() {
+            -- >
+            <
+            !--reloadWithLocationPrompt();
+            -- >
+            <
+            !--
+        });
+        -- >
+
+
+        // ─── Page Load ────────────────────────────────────────────────
+        <
+        !--window.addEventListener('load', function() {
+            -- >
+            <
+            !--
+            const now = new Date();
+            -- >
+            <
+            !--
+            const currentDate = now.toISOString().slice(0, 10);
+            -- >
+            <
+            !--
+            const currentTime = now.toLocaleTimeString('en-GB', {
+                -- >
+                <
+                !--hour: '2-digit',
+                -- >
+                <
+                !--minute: '2-digit'-- >
+                    <
+                    !--
+            });
+            -- >
+
+            <
+            !--document.getElementById('current-date').value = currentDate;
+            -- >
+            <
+            !--document.getElementById('current-date2').value = currentDate;
+            -- >
+            <
+            !--document.getElementById('current-time').value = currentTime;
+            -- >
+            <
+            !--document.getElementById('current-time2').value = currentTime;
+            -- >
+
+            <
+            !--setTimeout(forceLocationOnLoad, 800);
+            -- >
+            <
+            !--
+        });
+        -- >
+
+        // ─── Submit Button Click Guard ─────────────────────────────────
+        <
+        !--document.getElementById('submit-checkin').addEventListener('click', function(e) {
+            -- >
+            <
+            !--
+            const lat = document.getElementById('latitude').value;
+            -- >
+            <
+            !--
+            const lng = document.getElementById('longitude').value;
+            -- >
+            <
+            !--
+            const mapVisible = document.getElementById('map-checkin').style.display !== 'none';
+            -- >
+
+            <
+            !--
+            if (!lat || !lng || !mapVisible) {
+                -- >
+                <
+                !--e.preventDefault();
+                -- >
+
+                <
+                !--alert('📍 Location has not been determined yet.\nPlease turn on GPS.\nRefreshing the page...');
+                -- >
+
+                <
+                !--setTimeout(function() {
+                    -- >
+                    <
+                    !--location.reload();
+                    -- >
+                    <
+                    !--
+                }, 2000);
+                -- >
+                <
+                !--
+            }-- >
+            <
+            !--
+        });
+        -- >
+
+        <
+        !--document.getElementById('submit-checkout').addEventListener('click', function(e) {
+            -- >
+            <
+            !--
+            const lat = document.getElementById('latitude2').value;
+            -- >
+            <
+            !--
+            const lng = document.getElementById('longitude2').value;
+            -- >
+            <
+            !--
+            const mapVisible = document.getElementById('map-checkout').style.display !== 'none';
+            -- >
+
+            <
+            !--
+            if (!lat || !lng || !mapVisible) {
+                -- >
+                <
+                !--e.preventDefault();
+                -- >
+
+                <
+                !--alert('📍 Location has not been determined yet.\nPlease turn on GPS.\nRefreshing the page...');
+                -- >
+
+                <
+                !--setTimeout(function() {
+                    -- >
+                    <
+                    !--location.reload();
+                    -- >
+                    <
+                    !--
+                }, 2000);
+                -- >
+                <
+                !--
+            }-- >
+            <
+            !--
+        });
+        -- >
+        <
+        !--
+    </script>-->
+    <!--
+@endsection-->

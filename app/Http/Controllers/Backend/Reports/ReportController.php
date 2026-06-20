@@ -2302,7 +2302,7 @@ class ReportController extends Controller
         return view('backend/pages/reports/transaction-details', get_defined_vars());
     }
 
-    public function balancesheet(Request $request)
+    /* public function balancesheet(Request $request)
     {
         $title = 'Balance Sheet Report';
         $startDate = $request->from_date ?? date('Y-01-01');
@@ -2366,7 +2366,180 @@ class ReportController extends Controller
         $companyInfo = Company::latest('id')->first();
 
         return view('backend.pages.reports.balancesheet', get_defined_vars());
+    } */
+
+    private $categoryAnchors = [
+        1  => 'asset',     // ASSETS (root)
+        10 => 'equity',     // Equity
+        14 => 'liability',  // Long Term Liabilities
+        15 => 'liability',  // Current Liabilities
+        17 => 'income',     // INCOME (root)
+        21 => 'expense',    // EXPENSES (root)
+    ];
+
+    /**
+     * parent_id ধরে root পর্যন্ত walk করে account category বের করে।
+     */
+    private function resolveAccountType($accountId, $accountsById)
+    {
+        $currentId = $accountId;
+        $visited = [];
+
+        while (isset($accountsById[$currentId])) {
+            if (isset($this->categoryAnchors[$currentId])) {
+                return $this->categoryAnchors[$currentId];
+            }
+
+            if (in_array($currentId, $visited)) {
+                break; // circular reference guard
+            }
+            $visited[] = $currentId;
+
+            $parentId = $accountsById[$currentId]->parent_id;
+            if (!$parentId) {
+                break;
+            }
+            $currentId = $parentId;
+        }
+
+        return null; // resolve করা গেলো না — manual review লাগবে
     }
+
+    /**
+     * Assets = Liabilities + Equity হচ্ছে কিনা যাচাই করে, mismatch থাকলে log করে।
+     */
+    private function verifyBalanceSheet($balanceSheet, $unresolvedAccounts = [])
+    {
+        $difference = round($balanceSheet['total_assets'] - $balanceSheet['total_liabilities_and_equity'], 2);
+        $isBalanced = abs($difference) < 0.01;
+
+        $result = [
+            'is_balanced'         => $isBalanced,
+            'difference'          => $difference,
+            'unresolved_accounts' => $unresolvedAccounts,
+        ];
+
+        if (!$isBalanced || !empty($unresolvedAccounts)) {
+            $result['message'] = !$isBalanced
+                ? 'Balance Sheet does NOT balance. Difference: ' . number_format($difference, 2)
+                : 'Balance হচ্ছে, কিন্তু কিছু account category resolve হয়নি — চেক করো।';
+
+            \Log::warning('Balance Sheet correction check', $result);
+        } else {
+            $result['message'] = 'Balance Sheet is balanced.';
+        }
+
+        return $result;
+    }
+
+    public function balancesheet(Request $request)
+    {
+        $title     = 'Balance Sheet Report';
+        $startDate = $request->from_date ?? date('Y-01-01');
+        $endDate   = $request->to_date ?? date('Y-m-d');
+
+        $accounts     = DB::table('chart_of_accounts')->get();
+        $accountsById = $accounts->keyBy('id');
+
+        // Asset/Liability/Equity: cumulative — database তেই SUM/GROUP BY করানো, raw row লোড করা হচ্ছে না
+        $balanceSheetTotals = DB::table('account_transactions')
+            ->where('created_at', '<=', $endDate . ' 23:59:59')
+            ->select('account_id', DB::raw('SUM(debit) as total_debit'), DB::raw('SUM(credit) as total_credit'))
+            ->groupBy('account_id')
+            ->get()
+            ->keyBy('account_id');
+
+        // Income/Expense: period অনুযায়ী — Current Year Profit এর জন্য, এটাও database তেই aggregate
+        $periodTotals = DB::table('account_transactions')
+            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->select('account_id', DB::raw('SUM(debit) as total_debit'), DB::raw('SUM(credit) as total_credit'))
+            ->groupBy('account_id')
+            ->get()
+            ->keyBy('account_id');
+
+        $balanceSheet = [
+            'assets' => [],
+            'liabilities' => [],
+            'equity' => [],
+            'total_assets' => 0,
+            'total_liabilities' => 0,
+            'total_equity' => 0,
+        ];
+
+        $currentYearProfit  = 0;
+        $unresolvedAccounts = [];
+
+        foreach ($accounts as $account) {
+            $accountType = $this->resolveAccountType($account->id, $accountsById);
+
+            if ($accountType === null) {
+                $unresolvedAccounts[] = $account->account_name . ' (id: ' . $account->id . ')';
+                continue;
+            }
+
+            if (in_array($accountType, ['asset', 'liability', 'equity'])) {
+                $totals      = $balanceSheetTotals->get($account->id);
+                $totalDebit  = $totals->total_debit ?? 0;
+                $totalCredit = $totals->total_credit ?? 0;
+
+                $signedOpening = $account->balance_type === 'debit'
+                    ? $account->opening_balance
+                    : -$account->opening_balance;
+
+                $runningBalance = $signedOpening + ($totalDebit - $totalCredit);
+                $balance        = $accountType === 'asset' ? $runningBalance : -$runningBalance;
+
+                $row = ['name' => $account->account_name, 'balance' => $balance];
+
+                if ($accountType === 'asset') {
+                    $balanceSheet['assets'][] = $row;
+                    $balanceSheet['total_assets'] += $balance;
+                } elseif ($accountType === 'liability') {
+                    $balanceSheet['liabilities'][] = $row;
+                    $balanceSheet['total_liabilities'] += $balance;
+                } else {
+                    $balanceSheet['equity'][] = $row;
+                    $balanceSheet['total_equity'] += $balance;
+                }
+            } elseif (in_array($accountType, ['income', 'expense'])) {
+                $totals      = $periodTotals->get($account->id);
+                $totalDebit  = $totals->total_debit ?? 0;
+                $totalCredit = $totals->total_credit ?? 0;
+
+                if ($accountType === 'income') {
+                    $currentYearProfit += ($totalCredit - $totalDebit);
+                } else {
+                    $currentYearProfit -= ($totalDebit - $totalCredit);
+                }
+            }
+        }
+
+        $balanceSheet['equity'][] = [
+            'name'    => 'Current Year Profit / (Loss)',
+            'balance' => $currentYearProfit,
+        ];
+        $balanceSheet['total_equity'] += $currentYearProfit;
+
+        $balanceSheet['total_liabilities_and_equity'] =
+            $balanceSheet['total_liabilities'] + $balanceSheet['total_equity'];
+
+        $balanceCheck = $this->verifyBalanceSheet($balanceSheet, $unresolvedAccounts);
+
+        $companyInfo = Company::latest('id')->first();
+
+        return view('backend.pages.reports.balancesheet', compact(
+            'title',
+            'startDate',
+            'endDate',
+            'balanceSheet',
+            'companyInfo',
+            'balanceCheck'
+        ));
+    }
+
+
+
+
 
     // public function stock(Request $request)
     // {
@@ -2754,69 +2927,69 @@ ROUND(
 '),
 
                 DB::raw('
-ROUND(
-(
-    SUM(
-        CASE
-            WHEN stocks.status = "Opening" THEN stocks.quantity
-            WHEN stocks.status IN (
-                "Purchase",
-                "Manual Purchase",
-                "Production",
-                "Gain",
-                "Transfer In",
-                "Project In",
-                "Return",
-                "Purchase Return"
-            ) THEN stocks.quantity
+                ROUND(
+                (
+                    SUM(
+                        CASE
+                            WHEN stocks.status = "Opening" THEN stocks.quantity
+                            WHEN stocks.status IN (
+                                "Purchase",
+                                "Manual Purchase",
+                                "Production",
+                                "Gain",
+                                "Transfer In",
+                                "Project In",
+                                "Return",
+                                "Purchase Return"
+                            ) THEN stocks.quantity
 
-            WHEN stocks.status IN (
-                "Production Sale",
-                "Production Out",
-                "Sale",
-                "Damage",
-                "Lost",
-                "Transfer Out",
-                "Project Out",
-                "Project Use",
-                "Sale Return"
-            ) THEN -stocks.quantity
+                            WHEN stocks.status IN (
+                                "Production Sale",
+                                "Production Out",
+                                "Sale",
+                                "Damage",
+                                "Lost",
+                                "Transfer Out",
+                                "Project Out",
+                                "Project Use",
+                                "Sale Return"
+                            ) THEN -stocks.quantity
 
-            ELSE 0
-        END
-    )
-)
-*
-(
-    SUM(
-        CASE
-            WHEN stocks.status IN (
-                "Opening",
-                "Purchase",
-                "Manual Purchase"
-            )
-            THEN stocks.unit_price * stocks.quantity
-            ELSE 0
-        END
-    )
-    /
-    NULLIF(
-        SUM(
-            CASE
-                WHEN stocks.status IN (
-                    "Opening",
-                    "Purchase",
-                    "Manual Purchase"
+                            ELSE 0
+                        END
+                    )
                 )
-                THEN stocks.quantity
-                ELSE 0
-            END
-        ),
-        0
-    )
-),
-2) as total_value
-')
+                *
+                (
+                    SUM(
+                        CASE
+                            WHEN stocks.status IN (
+                                "Opening",
+                                "Purchase",
+                                "Manual Purchase"
+                            )
+                            THEN stocks.unit_price * stocks.quantity
+                            ELSE 0
+                        END
+                    )
+                    /
+                    NULLIF(
+                        SUM(
+                            CASE
+                                WHEN stocks.status IN (
+                                    "Opening",
+                                    "Purchase",
+                                    "Manual Purchase"
+                                )
+                                THEN stocks.quantity
+                                ELSE 0
+                            END
+                        ),
+                        0
+                    )
+                ),
+                2) as total_value
+            ')
             )
                 ->join('products', 'products.id', '=', 'stocks.product_id')
                 ->join('categories', 'categories.id', '=', 'products.category_id')

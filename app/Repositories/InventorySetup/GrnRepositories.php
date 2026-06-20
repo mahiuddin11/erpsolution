@@ -270,6 +270,7 @@ class GrnRepositories
 
     public function store($request)
     {
+
         $invoice_no = $request->grnCode;
         $exists = Grn::where('invoice_no', $invoice_no)->select('invoice_no')->exists();
 
@@ -318,6 +319,8 @@ class GrnRepositories
             $purchase->status = array_sum($request->qty) > abs($statuscheck) ? 'Close' : 'Active';
             $purchase->save();
 
+
+
             //  Purchase status change log
             activity_log(
                 'update',
@@ -354,12 +357,14 @@ class GrnRepositories
                 $grnDetails->total_price      = $total[$i];
                 $grnDetails->save();
 
+
                 // ── Stock IN  ─────────────────────────────────
                 $stockIn              = new Stock();
                 $stockIn->invoice_no  = $invoice_no;
                 $stockIn->product_id  = $product[$i];
                 $stockIn->quantity    = $qty[$i];
-                $stockIn->branch_id   = $request->branch_id ?? 0;
+                $stockIn->project_id  = $request->project_id;
+                $stockIn->branch_id   =  $request->project_id ?? 0;
                 $stockIn->unit_price  = $unitprice[$i];
                 $stockIn->total_price = $total[$i];
                 $stockIn->general_id  = $request->purchase_voucher;
@@ -376,7 +381,8 @@ class GrnRepositories
                     $stockOut->invoice_no  = $invoice_no;
                     $stockOut->product_id  = $product[$i];
                     $stockOut->quantity    = $qty[$i];
-                    $stockOut->branch_id   = $request->branch_id ?? 0;
+                    $stockOut->project_id  = $request->project_id;
+                    $stockOut->branch_id   =  $request->project_id ?? 0;
                     $stockOut->unit_price  = $unitprice[$i];
                     $stockOut->total_price = $total[$i];
                     $stockOut->general_id  = $request->purchase_voucher;
