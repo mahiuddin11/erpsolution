@@ -171,13 +171,13 @@ class JournalVoucherRepositories
 
             foreach ($accountIds as $i => $accountId) {
                 $journalVoucherDetails = new JournalVoucherDetails();
-                $journalVoucherDetails->payment_invoice = $paymentInvoices[$i] ?? "";
+                $journalVoucherDetails->payment_invoice = $paymentInvoices[$i] ?? null;
                 $journalVoucherDetails->journal_voucher_id = $journalVoucher->id;
                 $journalVoucherDetails->account_id = $accountId;
 
-                if($request->cost_center_type[$i] == "project"){
+                if ($request->cost_center_type[$i] == "project") {
                     $journalVoucherDetails->project_id = $request->project_id[$i];
-                }elseif($request->cost_center_type[$i] == "branch"){
+                } elseif ($request->cost_center_type[$i] == "branch") {
                     $journalVoucherDetails->branch_id = $request->branch_id[$i];
                 }
 
@@ -187,7 +187,7 @@ class JournalVoucherRepositories
                 $journalVoucherDetails->save();
 
                 $transaction = [
-                    'payment_invoice' => $journalVoucherDetails->payment_invoice ?? "",
+                    'payment_invoice' => $journalVoucherDetails->payment_invoice ?? null,
                     'branch_id' => 0,
                     'invoice' => $journalVoucher->voucher_no,
                     'table_id' => $journalVoucherDetails->id,
@@ -214,7 +214,7 @@ class JournalVoucherRepositories
             return $transaction;
         } catch (\Throwable $th) {
             DB::rollBack();
-            dd($th->getMessage(),$th->getFile());
+            dd($th->getMessage(), $th->getFile());
             return $th->getMessage();
         }
     }
@@ -252,9 +252,9 @@ class JournalVoucherRepositories
                 $journalVoucherDetails->journal_voucher_id = $journalVoucher->id;
                 $journalVoucherDetails->account_id = $accountId;
 
-                if($request->cost_center_type[$i] == "project"){
+                if ($request->cost_center_type[$i] == "project") {
                     $journalVoucherDetails->project_id = $request->project_id[$i];
-                }elseif($request->cost_center_type[$i] == "branch"){
+                } elseif ($request->cost_center_type[$i] == "branch") {
                     $journalVoucherDetails->branch_id = $request->branch_id[$i];
                 }
 

@@ -169,14 +169,17 @@ class CreditVoucherRepositories
             $creditVoucher->created_by = Auth::user()->id;
             $creditVoucher->save();
 
+
+
             for ($i = 0; $i < count($request->account_id); $i++) {
                 $creditVoucherdetails = new CreditVoucherDetails();
-                $creditVoucherdetails->payment_invoice = $request->payment_invoice[$i] ?? "";
+                $creditVoucherdetails->payment_invoice = $request->payment_invoice[$i] ?? null;
                 $creditVoucherdetails->credit_voucher_id = $creditVoucher->id;
 
-                if($request->cost_center_type[$i] == "project"){
+
+                if ($request->cost_center_type[$i] == "project") {
                     $creditVoucherdetails->project_id = $request->project_id[$i];
-                }elseif($request->cost_center_type[$i] == "branch"){
+                } elseif ($request->cost_center_type[$i] == "branch") {
                     $creditVoucherdetails->branch_id = $request->branch_id[$i];
                 }
 
@@ -220,11 +223,11 @@ class CreditVoucherRepositories
                     $creditvoucherdetails->credit_voucher_id = $creditvoucher->id;
 
 
-                if($request->cost_center_type[$i] == "project"){
-                    $creditvoucherdetails->project_id = $request->project_id[$i];
-                }elseif($request->cost_center_type[$i] == "branch"){
-                    $creditvoucherdetails->branch_id = $request->branch_id[$i];
-                }
+                    if ($request->cost_center_type[$i] == "project") {
+                        $creditvoucherdetails->project_id = $request->project_id[$i];
+                    } elseif ($request->cost_center_type[$i] == "branch") {
+                        $creditvoucherdetails->branch_id = $request->branch_id[$i];
+                    }
 
                     $creditvoucherdetails->account_id = $request->account_id[$i];
                     $creditvoucherdetails->debit = $request->debit[$i];
@@ -277,7 +280,7 @@ class CreditVoucherRepositories
             $creditVoucherDetails = CreditVoucherDetails::where('credit_voucher_id', $id)->get();
 
             foreach ($creditVoucherDetails as  $creditVoucherDetail) {
-                $transaction['payment_invoice'] = $creditVoucherDetail->payment_invoice;
+                $transaction['payment_invoice'] = $creditVoucherDetail->payment_invoice ?? null;
                 $transaction['branch_id'] = $creditVoucherDetail->branch_id ?? 0;
                 $transaction['invoice'] = $creditVoucher->voucher_no;
                 $transaction['table_id'] = $creditVoucher->id;

@@ -167,9 +167,10 @@ class DabitVoucherRepositories
             $dabitvoucher->created_by = Auth::user()->id;
             $dabitvoucher->save();
 
+
             for ($i = 0; $i < count($request->account_id); $i++) {
                 $dabitvoucherdetails = new DabitVoucherDetails();
-                $dabitvoucherdetails->payment_invoice = $request->payment_invoice[$i] ?? "";
+                $dabitvoucherdetails->payment_invoice = $request->payment_invoice[$i] ?? null;
                 $dabitvoucherdetails->dabit_voucher_id = $dabitvoucher->id;
 
                 if ($request->cost_center_type[$i] == "project") {
@@ -186,6 +187,8 @@ class DabitVoucherRepositories
                 $dabitvoucherdetails->amount = $request->debit[$i] ?? $request->credit[$i];
                 $dabitvoucherdetails->save();
             }
+
+
             DB::commit();
         } catch (\Throwable $th) {
             DB::rollBack();
@@ -266,8 +269,8 @@ class DabitVoucherRepositories
             $debitVoucher = DabitVoucher::findOrFail($id);
             $debitVoucherDetails = DabitVoucherDetails::where('dabit_voucher_id', $id)->get();
 
-            foreach ($debitVoucherDetails as  $debitVoucherDetail) {
 
+            foreach ($debitVoucherDetails as  $debitVoucherDetail) {
                 $transaction['branch_id'] = $debitVoucherDetail->branch_id;
                 $transaction['payment_invoice'] = $debitVoucherDetail->payment_invoice;
                 $transaction['invoice'] = $debitVoucher->voucher_no;
