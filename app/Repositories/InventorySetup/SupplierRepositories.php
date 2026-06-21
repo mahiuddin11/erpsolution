@@ -149,7 +149,7 @@ class SupplierRepositories
 
     public function store($request)
     {
-        // dd($request->all());
+
         $supplier = new $this->supplier();
         $supplier->name = $request->name;
         $supplier->email = $request->email;
@@ -164,6 +164,7 @@ class SupplierRepositories
 
         $Accounts = new Accounts();
         $Accounts->account_name = $request->name;
+        $Accounts->accountCode = $request->supplierCode;
         $Accounts->parent_id = 16;
         $Accounts->accountable_id = $supplier->id;
         $Accounts->accountable_type = "App\Models\Supplier";
@@ -218,6 +219,3 @@ class SupplierRepositories
         return true;
     }
 }
-
-
-

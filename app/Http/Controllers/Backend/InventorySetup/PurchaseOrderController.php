@@ -72,8 +72,6 @@ class PurchaseOrderController extends Controller
             ->where('status', 'Active')
             ->get();
 
-        // dd($leadgers);
-
         return view('backend.pages.inventories.po.create', get_defined_vars());
     }
 

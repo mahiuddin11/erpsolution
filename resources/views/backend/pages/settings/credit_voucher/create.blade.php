@@ -607,6 +607,12 @@
                             ${response.payment_invoices.map(invoice => `<option value="${invoice.invoice}">${invoice.invoice} (${invoice.amount}) ${invoice.date}</option>`).join('')}
                             </select>
                         `);
+
+                                $('#payment_invoice').select2({
+                                    theme: 'bootstrap4',
+                                    width: '100%'
+                                });
+
                             } else {
                                 $('#payment-options-container').html("")
                             }

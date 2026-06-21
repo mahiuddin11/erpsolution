@@ -252,6 +252,29 @@
 
 @section('scripts')
     <script type="text/javascript">
+        function accountMatcher(params, data) {
+            if ($.trim(params.term) === '') {
+                return data;
+            }
+            if (typeof data.text === 'undefined') {
+                return null;
+            }
+            var term = params.term.toLowerCase();
+            var text = data.text.toLowerCase();
+            var idStr = (data.id !== undefined && data.id !== null) ? data.id.toString().toLowerCase() : '';
+
+            var accountCode = '';
+            if (data.element) {
+                accountCode = ($(data.element).attr('data-accounCode') || '').toString().toLowerCase();
+
+            }
+            if (text.indexOf(term) > -1 || idStr.indexOf(term) > -1 || (accountCode !== '' && accountCode.indexOf(
+                    term) > -1)) {
+                return $.extend({}, data, true);
+            }
+            return null;
+        }
+        // ===== End Added: 2026-06-21 =====
         $(document).ready(function() {
 
             $('#submit-btn').on('click', function() {
@@ -342,14 +365,15 @@
                                  <div class="col-md-5">
                                      <label for="validationCustom01">Supplier * :</label>
                                       
-                                      <select class="form-control accounts select2" name="account_${id}[]">
-                                          <option selected disabled value="">--Select--</option>
-                                          @foreach ($accounts as $key => $value)
-                                          <option value="{{ $value->id }}">
-                                              {{ $value->accountCode . ' - ' . $value->account_name }}
-                                          </option>
-                                          @endforeach
-                                      </select>
+                                  
+                                    <select class="form-control accounts select2" name="account_${id}[]">
+                                        <option selected disabled value="">--Select--</option>
+                                        @foreach ($accounts as $key => $value)
+                                            <option value="{{ $value->id }}" data-accounCode="{{ $value->accountCode }}">
+                                                {{ $value->accountCode . ' - ' . $value->account_name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                  </div>
                                  <div class="col-md-5">
                                      <label for="validationCustom01">Amount * :</label>
@@ -392,7 +416,9 @@
                 } else {
                     $('#model' + productid).modal('toggle');
                 }
-                $('.accounts').select2(); // Initialize select2 for the dynamically added select
+                $('.accounts').select2({
+                    matcher: accountMatcher
+                }); // Initialize select2 for the dynamically added select
             });
 
             $(document).on('click', '.addsupplier', function() {
@@ -401,15 +427,17 @@
                 $originalRow.find('select').each(function() {
                     $(this).select2('destroy'); // Destroy the select2 instance
                     $(this).removeAttr('data-select2-id').removeClass(
-                    'select2-hidden-accessible'); // Clean select2 attributes
+                        'select2-hidden-accessible'); // Clean select2 attributes
                     $(this).next('.select2').remove(); // Remove the extra select2 dropdown elements
                 });
 
                 // Append the new row to the modal body
                 $originalRow.appendTo($(this).closest('.modal-body'));
 
-                // Reinitialize select2 for the new select in the appended row
-                $originalRow.find('select').select2();
+                // Modified: 2026-06-21 — added custom matcher so cloned row's accounts select also supports code/name/id/accountable_id search
+                $originalRow.find('select').select2({
+                    matcher: accountMatcher
+                });
             });
 
 

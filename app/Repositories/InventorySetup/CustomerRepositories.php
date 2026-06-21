@@ -148,9 +148,9 @@ class CustomerRepositories
 
     public function store($request)
     {
-        // dd('repositories', $request->all());
+
         try {
-            \DB::beginTransaction();
+            DB::beginTransaction();
             //code...
             $customer = new $this->customer();
             $customer->customergroup_id = $request->customergroup_id;
@@ -167,6 +167,7 @@ class CustomerRepositories
 
             $Accounts = new Accounts();
             $Accounts->account_name = $request->co_name;
+            $Accounts->accountCode = $request->customerCode;
             $Accounts->parent_id = 5;
             $Accounts->accountable_id = $customer->id;
             $Accounts->accountable_type = "App\Models\Customer";
@@ -174,20 +175,20 @@ class CustomerRepositories
             $Accounts->status = 'Active';
             $Accounts->created_by = Auth::user()->id;
             $Accounts->save();
-            \DB::commit();
+            DB::commit();
         } catch (\Throwable $th) {
-            \DB::rollback();
+            DB::rollback();
             dd($th->getMessage());
             return $th->getMessage();
         }
-       
+
         return $customer;
     }
 
     public function update($request, $id)
     {
         try {
-            \DB::beginTransaction();
+            DB::beginTransaction();
             //code...
             $customer = $this->customer::findOrFail($id);
             $customer->customergroup_id = $request->customergroup_id;
@@ -202,9 +203,9 @@ class CustomerRepositories
             $customer->status = 'Active';
             $customer->updated_by = Auth::user()->id;
             $customer->save();
-            \DB::commit();
+            DB::commit();
         } catch (\Throwable $th) {
-            \DB::rollback();
+            DB::rollback();
             return $th->getMessage();
         }
         return $customer;

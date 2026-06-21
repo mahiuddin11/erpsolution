@@ -21,26 +21,18 @@ use Illuminate\Support\Facades\Validator;
 class CustomerController extends Controller
 {
 
-    /**
-     * @var supplierService
-     */
-    private $systemService;
-    /**
-     * @var supplierTransformer
-     */
-    private $systemTransformer;
 
-    /**
-     * CategoryController constructor.
-     * @param supplierService $systemService
-     * @param supplierTransformer $systemTransformer
-     */
+    private $customerService;
+
+    private $customerTransformer;
+
+
 
     public function __construct(CustomerService $customerService, CustomerTransformer $customerTransformer)
     {
-        $this->systemService = $customerService;
+        $this->customerService = $customerService;
 
-        $this->systemTransformer = $customerTransformer;
+        $this->customerTransformer = $customerTransformer;
     }
 
     /**
@@ -56,8 +48,8 @@ class CustomerController extends Controller
 
     public function dataProcessingCustomer(Request $request)
     {
-        $json_data = $this->systemService->getList($request);
-        return json_encode($this->systemTransformer->dataTable($json_data));
+        $json_data = $this->customerService->getList($request);
+        return json_encode($this->customerTransformer->dataTable($json_data));
     }
 
     /**
@@ -66,7 +58,7 @@ class CustomerController extends Controller
     public function create()
     {
         $title = 'Add New Customer';
-       
+
         $customertLastData = Customer::latest('id')->first();
         if ($customertLastData) :
             $customerData = $customertLastData->id + 1;
@@ -85,14 +77,14 @@ class CustomerController extends Controller
      */
     public function store(Request $request)
     {
-        // dd('controller',$request->all());
+        // dd('controller', $request->all());
         try {
-            $this->validate($request, $this->systemService->storeValidation($request));
+            $this->validate($request, $this->customerService->storeValidation($request));
         } catch (ValidationException $e) {
             session()->flash('error', 'Validation error !!');
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
-        $this->systemService->store($request);
+        $this->customerService->store($request);
         session()->flash('success', 'Data successfully save!!');
         return redirect()->route('inventorySetup.customer.index');
     }
@@ -106,7 +98,7 @@ class CustomerController extends Controller
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
         }
-        $editInfo =   $this->systemService->details($id);
+        $editInfo =   $this->customerService->details($id);
         if (!$editInfo) {
             session()->flash('error', 'Edit info is invalid!!');
             return redirect()->back();
@@ -128,38 +120,35 @@ class CustomerController extends Controller
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
         }
-        $editInfo = $this->systemService->details($id);
+        $editInfo = $this->customerService->details($id);
         if (!$editInfo) {
             session()->flash('error', 'Edit info is invalid!!');
             return redirect()->back();
         }
         try {
-            $this->validate($request, $this->systemService->updateValidation($request, $id));
+            $this->validate($request, $this->customerService->updateValidation($request, $id));
         } catch (ValidationException $e) {
             session()->flash('error', 'Validation error !!');
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
-        $this->systemService->update($request, $id);
+        $this->customerService->update($request, $id);
         session()->flash('success', 'Data successfully updated!!');
         return redirect()->route('inventorySetup.customer.index');
     }
 
-    /**
-     * @param $slug
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
-     */
+
     public function statusUpdate($id, $status)
     {
         if (!is_numeric($id)) {
-            return response()->json($this->systemTransformer->invalidId($id), 200);
+            return response()->json($this->customerTransformer->invalidId($id), 200);
         }
-        $detailsInfo =   $this->systemService->details($id);
+        $detailsInfo =   $this->customerService->details($id);
         if (!$detailsInfo) {
-            return response()->json($this->systemTransformer->notFound($detailsInfo), 200);
+            return response()->json($this->customerTransformer->notFound($detailsInfo), 200);
         }
-        $statusInfo =  $this->systemService->statusUpdate($id, $status);
+        $statusInfo =  $this->customerService->statusUpdate($id, $status);
         if ($statusInfo) {
-            return response()->json($this->systemTransformer->statusUpdate($statusInfo), 200);
+            return response()->json($this->customerTransformer->statusUpdate($statusInfo), 200);
         }
     }
 
@@ -171,15 +160,15 @@ class CustomerController extends Controller
     public function destroy($id)
     {
         if (!is_numeric($id)) {
-            return response()->json($this->systemTransformer->invalidId($id), 200);
+            return response()->json($this->customerTransformer->invalidId($id), 200);
         }
-        $detailsInfo =   $this->systemService->details($id);
+        $detailsInfo =   $this->customerService->details($id);
         if (!$detailsInfo) {
-            return response()->json($this->systemTransformer->notFound($detailsInfo), 200);
+            return response()->json($this->customerTransformer->notFound($detailsInfo), 200);
         }
-        $deleteInfo =  $this->systemService->destroy($id);
+        $deleteInfo =  $this->customerService->destroy($id);
         if ($deleteInfo) {
-            return response()->json($this->systemTransformer->delete($deleteInfo), 200);
+            return response()->json($this->customerTransformer->delete($deleteInfo), 200);
         }
     }
 }

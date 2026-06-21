@@ -161,63 +161,61 @@
         </div>
         <!-- /.col-->
     </div>
-
-
 @endsection
-@section("scripts")
-<script>
-    function removeSpaces(input) {
-        input.value = input.value.replace(/\s+/g, '');
-    }
+@section('scripts')
+    <script>
+        function removeSpaces(input) {
+            input.value = input.value.replace(/\s+/g, '');
+        }
 
 
-    $(document).on('click', '.remove_item', function() {
-        if (confirm('Are You Sure')) {
-            $(this).closest('tr').remove();
+        $(document).on('click', '.remove_item', function() {
+            if (confirm('Are You Sure')) {
+                $(this).closest('tr').remove();
+                totalAmount();
+            }
+        })
+        $(document).on("input", 'input[name="debit[]"],input[name="credit[]"]', function() {
             totalAmount();
-        }
-    })
-    $(document).on("input", 'input[name="debit[]"],input[name="credit[]"]', function() {
-        totalAmount();
-    })
-
-    function totalAmount() {
-        let creditamount = 0;
-        let debitamount = 0;
-
-        $('input[name="credit[]"]').each(function() {
-            creditamount += Number($(this).val());
         })
 
-        $('input[name="debit[]"]').each(function() {
-            debitamount += Number($(this).val());
-        })
+        function totalAmount() {
+            let creditamount = 0;
+            let debitamount = 0;
 
-        $("#creditTotal").text(creditamount);
-        $("#debitTotal").text(debitamount);
+            $('input[name="credit[]"]').each(function() {
+                creditamount += Number($(this).val());
+            })
 
-    }
+            $('input[name="debit[]"]').each(function() {
+                debitamount += Number($(this).val());
+            })
 
-    $('body').on('click', '#add_new', function() {
-        let account_id = $('#account_id option:selected').val();
-        let credit = $('#credit').val();
-        let debit = $('#debit').val();
-        let payment_invoice = $('#payment_invoice option:selected').val() == undefined ? "" : $(
-            '#payment_invoice option:selected').val();
+            $("#creditTotal").text(creditamount);
+            $("#debitTotal").text(debitamount);
 
-        (!account_id ? $('#account_id').closest('td').find('.error').text(`Account Can't Empty`) : $(
-            '#account_id').closest('td').find('.error').text(''));
-
-        if (!credit && !debit) {
-            $('#credit').closest('td').find('.error').text(`Amount Can't Empty`);
-            $('#debit').closest('td').find('.error').text(`Amount Can't Empty`);
-            return false;
-        } else {
-            $('#credit').closest('td').find('.error').text('');
-            $('#debit').closest('td').find('.error').text('');
         }
 
-        let html = `<tr>
+        $('body').on('click', '#add_new', function() {
+            let account_id = $('#account_id option:selected').val();
+            let credit = $('#credit').val();
+            let debit = $('#debit').val();
+            let payment_invoice = $('#payment_invoice option:selected').val() == undefined ? "" : $(
+                '#payment_invoice option:selected').val();
+
+            (!account_id ? $('#account_id').closest('td').find('.error').text(`Account Can't Empty`) : $(
+                '#account_id').closest('td').find('.error').text(''));
+
+            if (!credit && !debit) {
+                $('#credit').closest('td').find('.error').text(`Amount Can't Empty`);
+                $('#debit').closest('td').find('.error').text(`Amount Can't Empty`);
+                return false;
+            } else {
+                $('#credit').closest('td').find('.error').text('');
+                $('#debit').closest('td').find('.error').text('');
+            }
+
+            let html = `<tr>
 
 <td>
  <div class="d-flex align-items-start gap-1 flex-wrap">
@@ -237,7 +235,7 @@
   <div class="d-none">
     <select name="branch_id[]" class="form-control select2 form-control-sm branch-section " style="min-width: 150px;">
       <option value="">Select Branch</option>
-      @foreach($branches as $branch)
+      @foreach ($branches as $branch)
         <option value="{{ $branch->id }}">{{ $branch->name }}</option>
       @endforeach
     </select>
@@ -246,7 +244,7 @@
   <div class="d-none">
     <select name="project_id[]" class="form-control select2 form-control-sm project-section " style="min-width: 150px;">
       <option value="">Select Project</option>
-      @foreach($projects as $project)
+      @foreach ($projects as $project)
         <option value="{{ $project->id }}">{{ $project->name }}</option>
       @endforeach
     </select>
@@ -269,191 +267,196 @@
    </a>
 </td>
 </tr>`;
-        $('#main-table').append(html);
-        $('.select2').select2({
-            theme: 'bootstrap4', // Optional, depends on your theme
-            width: '100%'
-        });
-        $('#account_id').select2().val(null);
-        $('#credit').val('');
-        $('#debit').val('');
-        $('#showamount').html('');
-        $('#payment-options-container').html("");
+            $('#main-table').append(html);
+            $('.select2').select2({
+                theme: 'bootstrap4', // Optional, depends on your theme
+                width: '100%'
+            });
+            $('#account_id').select2().val(null);
+            $('#credit').val('');
+            $('#debit').val('');
+            $('#showamount').html('');
+            $('#payment-options-container').html("");
 
-        totalAmount();
+            totalAmount();
 
-    })
-
-    $(document).on('click', '#add_item', function() {
-        if (confirm('Are You Sure')) {
-            $(this).closest('tr').remove();
-        }
-    })
-
-    $('#main-table').on('change', '.cost_center_type', function () {
-    let type = $(this).val();
-    let row = $(this).closest('td');
-
-    if (type === 'branch') {
-        row.find('.branch-section').closest("div").removeClass('d-none').prop('disabled', false);
-        row.find('.project-section').closest("div").addClass('d-none').prop('disabled', true);
-    } else if (type === 'project') {
-        row.find('.project-section').closest("div").removeClass('d-none').prop('disabled', false);
-        row.find('.branch-section').closest("div").addClass('d-none').prop('disabled', true);
-    } else {
-        row.find('.branch-section, .project-section').addClass('d-none').prop('disabled', true);
-    }
-});
-
-    $('#credit').prop('disabled', true);
-    $('select[name="type"]').on('change', function() {
-        var selectedType = $(this).val();
-        if (selectedType === 'DR') {
-            $('#credit').prop('disabled', true).val(''); // Disable credit input and clear value
-            $('#debit').prop('disabled', false); // Enable debit input
-        } else if (selectedType === 'CR') {
-            $('#debit').prop('disabled', true).val(''); // Disable debit input and clear value
-            $('#credit').prop('disabled', false); // Enable credit input
-        }
-    });
-
-    function getSubCat(catId) {
-        $.ajax({
-            url: "/admin/getSubCategory/", // path to function
-            method: "GET",
-            data: {
-                "_token": "{{ csrf_token() }}",
-                catId: catId
-            },
-            success: function(val) {
-                $("#showsubhead").html(val);
-            },
-            error: function() {
-                alert('Error while request..');
-            }
-        });
-    }
-
-    function getAccountBalance(account_id) {
-        $.ajax({
-            url: "/admin/getAccountBalance/", // path to function
-            method: "GET",
-            data: {
-                "_token": "{{ csrf_token() }}",
-                account_id: account_id
-            },
-            success: function(val) {
-                let totalamount = 0;
-                $.each($("input[name='amount[]']"), function() {
-                    amount = Number($(this).val());
-                    totalamount += amount;
-                });
-                alert(totalamount);
-                let newamount = val - totalamount
-                $("#showamount").html('<span>Cureent Balance : ' + newamount + '</span>');
-                $("#showamount").attr('data-id', newamount);
-                $("#currentBalance").val(newamount);
-
-            },
-            error: function() {
-                // alert('Error while request..');
-                alertMessage.error('Error while request..');
-
-            }
-        });
-    }
-
-    $(document).on('click', '#getsubmit', function(e) {
-        e.preventDefault();
-        let creditamount = 0;
-        let debitamount = 0;
-
-        $('input[name="credit[]"]').each(function() {
-            creditamount += Number($(this).val());
         })
 
-        $('input[name="debit[]"]').each(function() {
-            debitamount += Number($(this).val());
+        $(document).on('click', '#add_item', function() {
+            if (confirm('Are You Sure')) {
+                $(this).closest('tr').remove();
+            }
         })
 
-        if (creditamount != debitamount) {
-            alert('Debit and Credit Amount Not Same');
-        } else {
-            $('#getform').submit();
+        $('#main-table').on('change', '.cost_center_type', function() {
+            let type = $(this).val();
+            let row = $(this).closest('td');
+
+            if (type === 'branch') {
+                row.find('.branch-section').closest("div").removeClass('d-none').prop('disabled', false);
+                row.find('.project-section').closest("div").addClass('d-none').prop('disabled', true);
+            } else if (type === 'project') {
+                row.find('.project-section').closest("div").removeClass('d-none').prop('disabled', false);
+                row.find('.branch-section').closest("div").addClass('d-none').prop('disabled', true);
+            } else {
+                row.find('.branch-section, .project-section').addClass('d-none').prop('disabled', true);
+            }
+        });
+
+        $('#credit').prop('disabled', true);
+        $('select[name="type"]').on('change', function() {
+            var selectedType = $(this).val();
+            if (selectedType === 'DR') {
+                $('#credit').prop('disabled', true).val(''); // Disable credit input and clear value
+                $('#debit').prop('disabled', false); // Enable debit input
+            } else if (selectedType === 'CR') {
+                $('#debit').prop('disabled', true).val(''); // Disable debit input and clear value
+                $('#credit').prop('disabled', false); // Enable credit input
+            }
+        });
+
+        function getSubCat(catId) {
+            $.ajax({
+                url: "/admin/getSubCategory/", // path to function
+                method: "GET",
+                data: {
+                    "_token": "{{ csrf_token() }}",
+                    catId: catId
+                },
+                success: function(val) {
+                    $("#showsubhead").html(val);
+                },
+                error: function() {
+                    alert('Error while request..');
+                }
+            });
         }
-    })
 
-    function cehckBalance(amount) {
+        function getAccountBalance(account_id) {
+            $.ajax({
+                url: "/admin/getAccountBalance/", // path to function
+                method: "GET",
+                data: {
+                    "_token": "{{ csrf_token() }}",
+                    account_id: account_id
+                },
+                success: function(val) {
+                    let totalamount = 0;
+                    $.each($("input[name='amount[]']"), function() {
+                        amount = Number($(this).val());
+                        totalamount += amount;
+                    });
+                    alert(totalamount);
+                    let newamount = val - totalamount
+                    $("#showamount").html('<span>Cureent Balance : ' + newamount + '</span>');
+                    $("#showamount").attr('data-id', newamount);
+                    $("#currentBalance").val(newamount);
 
-        var reminingAmount = $("#showamount").attr('data-id');
+                },
+                error: function() {
+                    // alert('Error while request..');
+                    alertMessage.error('Error while request..');
 
-        if (reminingAmount == undefined) {
-            $("#amount").val('');
-            // alert('Please select Account Name*')
-            alertMessage.error('Please select Account Name*');
-
+                }
+            });
         }
 
-        if (reminingAmount < parseFloat(amount)) {
-            // lert('Opps !! Your desired amount of money is not in the Account...');
-            alertMessage.error('Your desired amount of money is not in the Account...');
+        $(document).on('click', '#getsubmit', function(e) {
+            e.preventDefault();
+            let creditamount = 0;
+            let debitamount = 0;
 
-            $("#amount").val('');
+            $('input[name="credit[]"]').each(function() {
+                creditamount += Number($(this).val());
+            })
+
+            $('input[name="debit[]"]').each(function() {
+                debitamount += Number($(this).val());
+            })
+
+            if (creditamount != debitamount) {
+                alert('Debit and Credit Amount Not Same');
+            } else {
+                $('#getform').submit();
+            }
+        })
+
+        function cehckBalance(amount) {
+
+            var reminingAmount = $("#showamount").attr('data-id');
+
+            if (reminingAmount == undefined) {
+                $("#amount").val('');
+                // alert('Please select Account Name*')
+                alertMessage.error('Please select Account Name*');
+
+            }
+
+            if (reminingAmount < parseFloat(amount)) {
+                // lert('Opps !! Your desired amount of money is not in the Account...');
+                alertMessage.error('Your desired amount of money is not in the Account...');
+
+                $("#amount").val('');
+            }
         }
-    }
 
-    $(document).ready(function() {
-        $('#account_id').change(function() {
-            var accountId = $(this).val(); // Get the selected account ID
+        $(document).ready(function() {
+            $('#account_id').change(function() {
+                var accountId = $(this).val(); // Get the selected account ID
 
-            // Clear previous payment options
-            $('#payment-options-container').empty();
+                // Clear previous payment options
+                $('#payment-options-container').empty();
 
-            if (accountId) {
-                $.ajax({
-                    url: '{{ route('settings.dabit.voucher.checkBillByBill') }}', // Route to check bill-by-bill flag
-                    type: 'GET',
-                    data: {
-                        account_id: accountId
-                    },
-                    success: function(response) {
-                        if (response.bill_by_bill) {
-                            // Show payment options
-                            $('#payment-options-container').html(`
+                if (accountId) {
+                    $.ajax({
+                        url: '{{ route('settings.dabit.voucher.checkBillByBill') }}', // Route to check bill-by-bill flag
+                        type: 'GET',
+                        data: {
+                            account_id: accountId
+                        },
+                        success: function(response) {
+                            if (response.bill_by_bill) {
+                                // Show payment options
+                                $('#payment-options-container').html(`
                         <select class="form-control select2" id="payment_invoice">
                             <option value=""></option>
                      ${response.payment_invoices.map(invoice => `<option value="${invoice.invoice}">${invoice.invoice} (${invoice.amount}) ${invoice.date}</option>`).join('')}
                         </select>
                     `);
-                        } else {
-                            $('#payment-options-container').html("")
+
+                                $('#payment_invoice').select2({
+                                    theme: 'bootstrap4',
+                                    width: '100%'
+                                });
+                            } else {
+                                $('#payment-options-container').html("")
+                            }
+                        },
+                        error: function(xhr) {
+                            console.error('Failed to check bill-by-bill flag:', xhr);
                         }
-                    },
-                    error: function(xhr) {
-                        console.error('Failed to check bill-by-bill flag:', xhr);
-                    }
-                });
+                    });
+                }
+            });
+        });
+
+
+        $(document).on('change', "#cost_center", function() {
+            var value = this.value;
+            // Hide both the project and branch divs initially
+            $('#project_div').hide();
+            $('#branch_div').hide();
+
+            // Reset selected options for both project and branch
+            $('#project_id').val('0').trigger('change'); // trigger change event if using select2
+            $('#branch_id').val('0').trigger('change'); // trigger change event if using select2
+
+            // Show the relevant div based on the selected value
+            if (value === 'project') {
+                $('#project_div').show();
+            } else if (value === 'branch') {
+                $('#branch_div').show();
             }
         });
-    });
-
-
-    $(document).on('change', "#cost_center", function() {
-        var value = this.value;
-        // Hide both the project and branch divs initially
-        $('#project_div').hide();
-        $('#branch_div').hide();
-
-        // Reset selected options for both project and branch
-        $('#project_id').val('0').trigger('change'); // trigger change event if using select2
-        $('#branch_id').val('0').trigger('change'); // trigger change event if using select2
-
-        // Show the relevant div based on the selected value
-        if (value === 'project') {
-            $('#project_div').show();
-        } else if (value === 'branch') {
-            $('#branch_div').show();
-        }
-    });
-</script>
+    </script>
 @endsection

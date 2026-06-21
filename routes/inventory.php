@@ -10,6 +10,7 @@ use App\Http\Controllers\Backend\InventorySetup\PurchaseRequisitionController;
 use App\Http\Controllers\Backend\InventorySetup\StockAjdustmentController;
 use App\Http\Controllers\Backend\InventorySetup\StockReportController;
 use App\Http\Controllers\Backend\InventorySetup\StockTransferController;
+use App\Http\Controllers\Backend\InventorySetup\SupplierController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -110,15 +111,15 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //conversion operation end
 
         //Supplier  crud operation start
-        Route::get('/inventory-setup-supplier-list', 'SupplierController@index')->name('inventorySetup.supplier.index');
-        Route::get('/dataProcessingSupplier', 'SupplierController@dataProcessingSupplier')->name('inventorySetup.supplier.dataProcessingSupplier');
-        Route::get('/inventory-setup-supplier-create', 'SupplierController@create')->name('inventorySetup.supplier.create');
-        Route::post('/inventory-setup-supplier-store', 'SupplierController@store')->name('inventorySetup.supplier.store');
-        Route::get('/inventory-setup-supplier-edit/{id}', 'SupplierController@edit')->name('inventorySetup.supplier.edit');
-        Route::get('/inventory-setup-supplier-show/{id}', 'SupplierController@show')->name('inventorySetup.supplier.show');
-        Route::post('/inventory-setup-supplier-update/{id}', 'SupplierController@update')->name('inventorySetup.supplier.update');
-        Route::get('/inventory-setup-supplier-delete/{id}', 'SupplierController@destroy')->name('inventorySetup.supplier.destroy');
-        Route::get('/inventory-setup-supplier-status/{id}/{status}', 'SupplierController@statusUpdate')->name('inventorySetup.supplier.status');
+        Route::get('/inventory-setup-supplier-list', [SupplierController::class, 'index'])->name('inventorySetup.supplier.index');
+        Route::get('/dataProcessingSupplier', [SupplierController::class, 'dataProcessingSupplier'])->name('inventorySetup.supplier.dataProcessingSupplier');
+        Route::get('/inventory-setup-supplier-create', [SupplierController::class, 'create'])->name('inventorySetup.supplier.create');
+        Route::post('/inventory-setup-supplier-store', [SupplierController::class, 'store'])->name('inventorySetup.supplier.store');
+        Route::get('/inventory-setup-supplier-edit/{id}', [SupplierController::class, 'edit'])->name('inventorySetup.supplier.edit');
+        Route::get('/inventory-setup-supplier-show/{id}', [SupplierController::class, 'show'])->name('inventorySetup.supplier.show');
+        Route::post('/inventory-setup-supplier-update/{id}', [SupplierController::class, 'update'])->name('inventorySetup.supplier.update');
+        Route::get('/inventory-setup-supplier-delete/{id}', [SupplierController::class, 'destroy'])->name('inventorySetup.supplier.destroy');
+        Route::get('/inventory-setup-supplier-status/{id}/{status}', [SupplierController::class, 'statusUpdate'])->name('inventorySetup.supplier.status');
         // Inventory setup crud start
 
         //purchaserequisition  crud operation start
@@ -187,8 +188,8 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //Good received note  crud operation end
 
         //Customer  crud operation start
-        Route::get('/inventory-setup-customer-list', 'CustomerController@index')->name('inventorySetup.customer.index');
-        Route::get('/dataProcessingCustomer', 'CustomerController@dataProcessingCustomer')->name('inventorySetup.customer.dataProcessingCustomer');
+        Route::get('/inventory-setup-customer-list', [CustomerController::class, 'index'])->name('inventorySetup.customer.index');
+        Route::get('/dataProcessingCustomer', [CustomerController::class, 'dataProcessingCustomer'])->name('inventorySetup.customer.dataProcessingCustomer');
         Route::get('/inventory-setup-customer-create', [CustomerController::class, 'create'])->name('inventorySetup.customer.create');
         Route::post('/inventory-setup-customer-store', [CustomerController::class, 'store'])->name('inventorySetup.customer.store');
 

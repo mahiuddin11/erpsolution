@@ -9,6 +9,25 @@ UPDATE account_transactions
 SET payment_invoice = NULL
 WHERE payment_invoice = '';
 
+UPDATE dabit_voucher_details
+SET payment_invoice = NULL
+WHERE payment_invoice = '';
+
+
+UPDATE credit_voucher_details
+SET payment_invoice = NULL
+WHERE payment_invoice = '';
+
+UPDATE chart_of_accounts coa
+JOIN suppliers s ON coa.accountable_id = s.id
+SET coa.accountCode = s.supplierCode
+WHERE coa.accountable_type = 'App\\Models\\Supplier';
+
+UPDATE chart_of_accounts coa
+JOIN customers c ON coa.accountable_id = c.id
+SET coa.accountCode = c.customerCode
+WHERE coa.accountable_type = 'App\\Models\\Customer';
+
 
 SELECT 
     at.id                          as at_id,

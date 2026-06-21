@@ -410,6 +410,7 @@ class PurchaseController extends Controller
 
     public function getAccounts(Request $request)
     {
+
         $accounts = ChartOfAccount::getaccount(4)->get();
         $html = '';
         if ($accounts->isNotEmpty()) {
@@ -485,7 +486,7 @@ class PurchaseController extends Controller
             $price = $supplierSelectedPrice->purchases_price ?? 0;
             $total_price = $value->qty * $price;
 
-            // ✅ DEFAULT VALUE (VERY IMPORTANT)
+            //  DEFAULT VALUE (VERY IMPORTANT)
             $name = '';
             $supplierValue = 0;
             $ledgerValue = 0;
