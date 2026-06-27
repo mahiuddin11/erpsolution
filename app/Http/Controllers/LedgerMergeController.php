@@ -255,4 +255,33 @@ class LedgerMergeController extends Controller
 
         return response()->json($accounts);
     }
+
+    public function tableDetail(Request $request)
+    {
+        $table    = $request->get('table');
+        $column   = $request->get('column');
+        $removeId = (int) $request->get('remove_id');
+
+        // Whitelist — শুধু allowed tables থেকে data আনা যাবে
+        $allowedTables = collect(array_merge($this->accountTables, $this->supplierTables))
+            ->pluck('table')
+            ->unique()
+            ->toArray();
+
+        if (!in_array($table, $allowedTables)) {
+            return response()->json(['error' => 'Invalid table!'], 422);
+        }
+
+        $rows = DB::table($table)
+            ->where($column, $removeId)
+            ->limit(200)
+            ->get();
+
+        return response()->json([
+            'table'  => $table,
+            'column' => $column,
+            'rows'   => $rows,
+            'count'  => count($rows),
+        ]);
+    }
 }

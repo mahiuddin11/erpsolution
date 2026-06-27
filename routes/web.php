@@ -708,5 +708,6 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/search',   [LedgerMergeController::class, 'search'])->name('search');
         Route::post('/preview', [LedgerMergeController::class, 'preview'])->name('preview');
         Route::post('/execute', [LedgerMergeController::class, 'merge'])->name('execute');
+        Route::get('/table-detail', [LedgerMergeController::class, 'tableDetail'])->name('tableDetail');
     });
 });
