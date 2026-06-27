@@ -1682,6 +1682,17 @@ $parent_menu = array(
                 )
             ),
 
+            (object) array(
+                'label' => 'Marge Ledger',
+                'route' => null,
+                'uniqueName' => "MargeLedger",
+                'icon' => 'fas fa-code-branch',
+                'parent_id' => null,
+                'childMenu' => (object) array(
+                    (object) array('label' => 'Marge Ledger', 'route' => 'ledger.merge.index', 'icon' => 'fas fa-code-branch', 'navigate_status' => 1),
+                )
+            ),
+
         )
     ),
 

@@ -5,14 +5,15 @@
 @section('admin-content')
     <div class="container-fluid py-3">
         <div class="row justify-content-center">
-            <div class="col-md-9">
+            <div class="col-12">
 
                 <div class="card card-primary card-outline">
+
                     <div class="card-header d-flex align-items-center justify-content-between">
                         <h3 class="card-title mb-0">
                             <i class="fas fa-code-branch mr-2"></i> Ledger Merge
                         </h3>
-                        <small class="text-muted">দুটো Ledger একত্রিত করুন</small>
+                        <h3 class="text-muted mr-2">Merge two Ledgers into one</h3>
                     </div>
 
                     <div class="card-body">
@@ -22,8 +23,8 @@
 
                             <div class="form-group row align-items-center">
                                 <label class="col-sm-3 col-form-label font-weight-bold text-success">
-                                    <i class="fas fa-check-circle mr-1"></i> রাখব যেটা
-                                    <small class="d-block text-muted font-weight-normal">(Keep Account)</small>
+                                    <i class="fas fa-check-circle mr-1"></i> Keep Account
+                                    {{-- <small class="d-block text-muted font-weight-normal">(Keep Account)</small> --}}
                                 </label>
                                 <div class="col-sm-9">
                                     <select id="keep_id" name="keep_id" class="form-control" style="width:100%"></select>
@@ -36,16 +37,16 @@
 
                             <div class="form-group row align-items-center">
                                 <label class="col-sm-3 col-form-label font-weight-bold text-danger">
-                                    <i class="fas fa-times-circle mr-1"></i> মার্জ হবে যেটা
-                                    <small class="d-block text-muted font-weight-normal">(Remove Account)</small>
+                                    <i class="fas fa-times-circle mr-1"></i> Remove Account
+                                    {{-- <small class="d-block text-muted font-weight-normal">(Remove Account)</small> --}}
                                 </label>
                                 <div class="col-sm-9">
                                     <select id="remove_id" name="remove_id" class="form-control"
                                         style="width:100%"></select>
                                     <small class="text-danger mt-1 d-block">
                                         <i class="fas fa-exclamation-triangle mr-1"></i>
-                                        এই account-এর সব transaction <strong>Keep Account</strong>-এ চলে যাবে এবং এটি
-                                        Inactive হবে।
+                                        All transactions of this account will go to <strong>Keep Account</strong>- and it
+                                        will be inactive.
                                     </small>
                                 </div>
                             </div>
@@ -53,7 +54,7 @@
                             <div class="form-group row">
                                 <div class="col-sm-9 offset-sm-3">
                                     <button id="btn_preview" class="btn btn-info px-4">
-                                        <i class="fas fa-eye mr-1"></i> Preview দেখুন
+                                        <i class="fas fa-eye mr-1"></i> Preview
                                     </button>
                                 </div>
                             </div>
@@ -70,7 +71,7 @@
                             <div class="row mb-4">
                                 <div class="col-md-5">
                                     <div class="alert alert-success mb-0 h-100">
-                                        <strong><i class="fas fa-check-circle mr-1"></i> রাখা হবে (Keep):</strong>
+                                        <strong><i class="fas fa-check-circle mr-1"></i> Keep Account:</strong>
                                         <div id="preview_keep" class="mt-1"></div>
                                         <small id="preview_keep_supplier" class="text-muted d-block mt-1"></small>
                                     </div>
@@ -92,20 +93,20 @@
 
                             <div id="no_affected" class="alert alert-warning" style="display:none">
                                 <i class="fas fa-info-circle mr-1"></i>
-                                এই Ledger কোনো Table-এ ব্যবহার হয়নি — তবে account টি Inactive হবে।
+                                This ledger is not used in any table — but the account will be inactive.
                             </div>
 
                             {{-- Merge Button --}}
                             <div id="btn_merge_wrapper" class="mt-3" style="display:none">
                                 <div class="alert alert-warning py-2 mb-2">
                                     <i class="fas fa-exclamation-triangle mr-1"></i>
-                                    <strong>সতর্কতা:</strong> Merge একবার করলে পূর্বাবস্থায় ফেরানো সম্ভব হবে না।
+                                    <strong>Warning:</strong> Merge once done cannot be undone.
                                 </div>
                                 <button id="btn_merge" class="btn btn-danger btn-lg">
-                                    <i class="fas fa-code-branch mr-1"></i> Confirm করে Merge করুন
+                                    <i class="fas fa-code-branch mr-1"></i> Confirm and merge
                                 </button>
                                 <button id="btn_cancel" class="btn btn-secondary btn-lg ml-2">
-                                    <i class="fas fa-times mr-1"></i> বাতিল
+                                    <i class="fas fa-times mr-1"></i> Cancel
                                 </button>
                             </div>
                         </div>
@@ -130,7 +131,7 @@
             // Select2 AJAX — Keep
             // ============================================================
             $('#keep_id').select2({
-                placeholder: 'কোড বা নাম দিয়ে খুঁজুন...',
+                placeholder: 'Search by code or name...',
                 allowClear: true,
                 minimumInputLength: 1,
                 ajax: {
@@ -151,7 +152,7 @@
             // Select2 AJAX — Remove
             // ============================================================
             $('#remove_id').select2({
-                placeholder: 'কোড বা নাম দিয়ে খুঁজুন...',
+                placeholder: 'Search by code or name...',
                 allowClear: true,
                 minimumInputLength: 1,
                 ajax: {
@@ -189,20 +190,20 @@
                 if (!keepId || !removeId) {
                     return Swal.fire({
                         icon: 'warning',
-                        title: 'Account নির্বাচন করুন',
-                        text: 'Keep এবং Remove দুটোই নির্বাচন করুন।'
+                        title: 'Select Account',
+                        text: 'Select both Keep and Remove.'
                     });
                 }
                 if (keepId === removeId) {
                     return Swal.fire({
                         icon: 'error',
                         title: 'একই Account!',
-                        text: 'Keep এবং Remove Account একই হতে পারবে না।'
+                        text: 'Keep and Remove Account cannot be same.'
                     });
                 }
 
                 var $btn = $(this).prop('disabled', true)
-                    .html('<i class="fas fa-spinner fa-spin mr-1"></i> লোড হচ্ছে...');
+                    .html('<i class="fas fa-spinner fa-spin mr-1"></i> Loading...');
 
                 $.ajax({
                     url: "{{ route('ledger.merge.preview') }}",
@@ -224,7 +225,7 @@
                     },
                     complete: function() {
                         $btn.prop('disabled', false).html(
-                            '<i class="fas fa-eye mr-1"></i> Preview দেখুন');
+                            '<i class="fas fa-eye mr-1"></i> Preview');
                     }
                 });
             });
@@ -286,21 +287,21 @@
                         html += `<div class="alert alert-secondary">
                     <i class="fas fa-truck mr-1"></i>
                     <strong>Supplier ID Level:</strong>
-                    Supplier ID <code>${data.remove_accountable_id}</code> কোনো table-এ ব্যবহার হয়নি।
+                    Supplier ID <code>${data.remove_accountable_id}</code> Not used in any table।
                 </div>`;
                     }
                 } else if (data.remove_accountable_id) {
                     html += `<div class="alert alert-secondary">
                 <i class="fas fa-info-circle mr-1"></i>
                 Remove account এর <code>accountable_id = ${data.remove_accountable_id}</code> —
-                Keep account এর accountable_id একই, তাই supplier_id update দরকার নেই।
+                Keep account's accountable_id same, so supplier_id update is not required।
             </div>`;
                 }
 
                 // ── Grand Total ──────────────────────────────────────────
                 if (hasData) {
                     html += `<div class="alert alert-dark mt-2 py-2">
-                <strong>সর্বমোট Affected Rows: </strong>
+                <strong> Affected Rows: </strong>
                 <span class="badge badge-danger badge-pill" style="font-size:14px">${data.total_affected}</span>
             </div>`;
                 }
@@ -384,19 +385,19 @@
 
                 Swal.fire({
                     icon: 'warning',
-                    title: 'নিশ্চিত করুন',
-                    html: `<p>এই কাজটি স্থায়ী এবং Undo করা যাবে না।</p>
+                    title: 'Make Sure',
+                    html: `<p>This action is permanent and cannot be undone।</p>
                    <p class="mb-0">Remove account <strong>Inactive</strong> হয়ে যাবে।</p>`,
                     showCancelButton: true,
                     confirmButtonColor: '#dc3545',
                     cancelButtonColor: '#6c757d',
-                    confirmButtonText: '<i class="fas fa-code-branch mr-1"></i> হ্যাঁ, Merge করো',
-                    cancelButtonText: 'না, বাতিল করো'
+                    confirmButtonText: '<i class="fas fa-code-branch mr-1"></i> Yes, do Merge',
+                    cancelButtonText: 'No, Cancel it'
                 }).then(function(result) {
                     if (!result.isConfirmed) return;
 
                     var $btn = $('#btn_merge').prop('disabled', true)
-                        .html('<i class="fas fa-spinner fa-spin mr-1"></i> Merge হচ্ছে...');
+                        .html('<i class="fas fa-spinner fa-spin mr-1"></i> Merging...');
 
                     $.ajax({
                         url: "{{ route('ledger.merge.execute') }}",
@@ -417,13 +418,13 @@
                                 });
                                 $btn.prop('disabled', false)
                                     .html(
-                                        '<i class="fas fa-code-branch mr-1"></i> Confirm করে Merge করুন'
-                                        );
+                                        '<i class="fas fa-code-branch mr-1"></i> Confirm and merge'
+                                    );
                             }
                         },
                         error: function(xhr) {
                             var msg = xhr.responseJSON?.message ??
-                                'Merge করতে সমস্যা হয়েছে।';
+                                'There was a problem merging.';
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Server Error',
@@ -431,8 +432,8 @@
                             });
                             $btn.prop('disabled', false)
                                 .html(
-                                    '<i class="fas fa-code-branch mr-1"></i> Confirm করে Merge করুন'
-                                    );
+                                    '<i class="fas fa-code-branch mr-1"></i> Confirm and merge'
+                                );
                         }
                     });
                 });
@@ -449,7 +450,7 @@
                 var supRows = updated.filter(r => r.level === 'supplier_id');
 
                 var html = `<div class="alert alert-success">
-            <h5><i class="fas fa-check-circle mr-2"></i> Merge সফল হয়েছে!</h5>
+            <h5><i class="fas fa-check-circle mr-2"></i> Merge was successful!</h5>
             <p>${data.message}</p>`;
 
                 if (accRows.length > 0) {
@@ -461,7 +462,7 @@
 
                 html += `<hr>
             <a href="{{ route('ledger.merge.index') }}" class="btn btn-sm btn-success">
-                <i class="fas fa-plus mr-1"></i> নতুন Merge করুন
+                <i class="fas fa-plus mr-1"></i> Merge new
             </a>
         </div>`;
 

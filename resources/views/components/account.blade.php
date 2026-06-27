@@ -2,7 +2,9 @@
     $num = isset($countNum) ? $countNum + 1 : 0;
     $selected = isset($selectVal) ? $selectVal : 0;
     $skip = $skip ?? [];
+
 @endphp
+
 
 
 @foreach ($setAccounts as $account)
