@@ -84,7 +84,6 @@ class StockTransferRepositories
             }
             $transfers =   $transfers->limit($limit)
                 ->orderBy($order, $dir)
-
                 //->orderBy('status', 'desc')
                 ->get();
             $totalFiltered = $this->transfer::count();

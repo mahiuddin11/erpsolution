@@ -1586,6 +1586,8 @@ class ReportController extends Controller
 
     public function ledger(Request $request)
     {
+
+
         $title       = 'Ledger Report';
         $accounts    = ChartOfAccount::where("parent_id", 0)->get();
         $companyInfo = Company::latest('id')->first();

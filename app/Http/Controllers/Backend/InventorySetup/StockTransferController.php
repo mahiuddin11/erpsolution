@@ -90,6 +90,7 @@ class StockTransferController extends Controller
     {
         $title = 'Add New Transfer';
         $user = auth()->user();
+
         $category_info = Category::where('status', 'Active')->get();
 
 
@@ -99,13 +100,13 @@ class StockTransferController extends Controller
         }
         $branches = $branchQuery->orderBy('parent_id')->orderBy('name')->get();
 
-        // To Branch ( Active Branch)
+
         $toBranches = Branch::where('status', 'Active')
             ->orderBy('parent_id')
             ->orderBy('name')
             ->get();
 
-        //  Display Name (From Branch)
+
         $formattedBranches = $branches->map(function ($branch) use ($branches) {
             $displayName = $branch->branchCode . ' - ' . $branch->name;
 

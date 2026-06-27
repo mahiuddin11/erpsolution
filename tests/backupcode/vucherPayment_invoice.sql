@@ -379,3 +379,49 @@ AND NOT EXISTS (
       AND s.date        = pd.date
       AND s.quantity     = pd.quantity
 );
+
+
+--Ladger Marge --
+
+UPDATE `account_transactions` SET account_id = 759 WHERE account_id = 1306;
+UPDATE `journal_voucher_details` SET account_id = 759 WHERE account_id = 1306;
+UPDATE `dabit_voucher_details` SET account_id = 759 WHERE account_id = 1306;
+UPDATE `purchases` SET ledger_id = 759 WHERE ledger_id = 1306;
+UPDATE `purchases_details` SET ledger_id = 759 WHERE ledger_id = 1306;
+UPDATE `credit_vouchers` SET account_id = 759 WHERE account_id = 1306;
+UPDATE `credit_vouchers` SET account_id = 759 WHERE account_id = 1306;
+UPDATE `credit_voucher_details` SET account_id = 759 WHERE account_id = 1306;
+UPDATE `projects` SET ledger_id = 759 WHERE ledger_id = 1306;
+UPDATE `supplier_select_prices` SET account_id = 759 WHERE account_id = 1306;
+
+
+--check chear of account supplyer id or customer id -- 
+SELECT id, accountable_type, accountable_id, account_name, accountCode
+FROM chart_of_accounts
+WHERE id = 1306;
+
+
+-- purchase id chececk --
+SELECT 'chart_of_accounts' AS source_table, 'accountable_id' AS matched_column, id AS matched_id FROM chart_of_accounts WHERE accountable_id = (SELECT accountable_id FROM chart_of_accounts WHERE id = 1306)
+UNION ALL
+SELECT 'suppliers', 'id', id FROM suppliers WHERE id = (SELECT accountable_id FROM chart_of_accounts WHERE id = 1306)
+UNION ALL
+SELECT 'customers', 'id', id FROM customers WHERE id = (SELECT accountable_id FROM chart_of_accounts WHERE id = 1306)
+UNION ALL
+SELECT 'purchases', 'supplier_id', id FROM purchases WHERE supplier_id = (SELECT accountable_id FROM chart_of_accounts WHERE id = 1306)
+UNION ALL
+SELECT 'purchases', 'ledger_id', id FROM purchases WHERE ledger_id = (SELECT accountable_id FROM chart_of_accounts WHERE id = 1306)
+UNION ALL
+SELECT 'purchases_details', 'supplier_id', id FROM purchases_details WHERE supplier_id = (SELECT accountable_id FROM chart_of_accounts WHERE id = 1306)
+UNION ALL
+SELECT 'purchases_details', 'ledger_id', id FROM purchases_details WHERE ledger_id = (SELECT accountable_id FROM chart_of_accounts WHERE id = 1306)
+UNION ALL
+SELECT 'purchase_orders', 'supplier_id', id FROM purchase_orders WHERE supplier_id = (SELECT accountable_id FROM chart_of_accounts WHERE id = 1306)
+UNION ALL
+SELECT 'purchase_orders', 'account_id', id FROM purchase_orders WHERE account_id = (SELECT accountable_id FROM chart_of_accounts WHERE id = 1306)
+UNION ALL
+SELECT 'purchase_order_details', 'supplier_ledger_id', id FROM purchase_order_details WHERE supplier_ledger_id = (SELECT accountable_id FROM chart_of_accounts WHERE id = 1306)
+UNION ALL
+SELECT 'supplier_select_prices', 'supplier_id', id FROM supplier_select_prices WHERE supplier_id = (SELECT accountable_id FROM chart_of_accounts WHERE id = 1306)
+UNION ALL
+SELECT 'supplier_select_prices', 'account_id', id FROM supplier_select_prices WHERE account_id = (SELECT accountable_id FROM chart_of_accounts WHERE id = 1306);

@@ -11,6 +11,7 @@ use App\Http\Controllers\Backend\Settings\CreditVoucherController;
 use App\Http\Controllers\Backend\Settings\DabitVoucherController;
 use App\Http\Controllers\Backend\Settings\JournalVoucherController;
 use App\Http\Controllers\Backend\Settings\OpeningController;
+use App\Http\Controllers\LedgerMergeController;
 use App\Models\Accounts;
 use App\Models\Customer;
 use App\Models\Employee;
@@ -699,5 +700,13 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/usermanage-user-delete/{id}', 'UserController@destroy')->name('usermanage.user.destroy');
         Route::get('/usermanage-user-status/{id}/{status}', 'UserController@statusUpdate')->name('usermanage.user.status');
         //user role operation end
+    });
+
+    Route::prefix('ledger-merge')->name('ledger.merge.')->middleware(['auth'])->group(function () {
+
+        Route::get('/',         [LedgerMergeController::class, 'index'])->name('index');
+        Route::get('/search',   [LedgerMergeController::class, 'search'])->name('search');
+        Route::post('/preview', [LedgerMergeController::class, 'preview'])->name('preview');
+        Route::post('/execute', [LedgerMergeController::class, 'merge'])->name('execute');
     });
 });
