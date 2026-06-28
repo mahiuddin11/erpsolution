@@ -468,7 +468,7 @@
                             </tbody>
                             <tfoot class="bg-light">
                                 <tr>
-                                    <td colspan="3" class="text-right font-weight-bold">মোট:</td>
+                                    <td colspan="3" class="text-right font-weight-bold">Total:</td>
                                     <td class="text-right">
                                         <span class="badge badge-danger badge-pill">${total}</span>
                                     </td>
@@ -500,7 +500,7 @@
                         success: function(res) {
                             if (!res.rows || res.rows.length === 0) {
                                 $section.html(
-                                    '<div class="text-muted" style="font-size:12px;">কোনো data নেই।</div>'
+                                    '<div class="text-muted" style="font-size:12px;">Empty Data</div>'
                                 );
                                 return;
                             }
@@ -545,7 +545,7 @@
                         },
                         error: function() {
                             $section.html(
-                                '<div class="text-danger" style="font-size:12px;">Data load হয়নি।</div>'
+                                '<div class="text-danger" style="font-size:12px;">Data load Faild</div>'
                             );
                         }
                     });
