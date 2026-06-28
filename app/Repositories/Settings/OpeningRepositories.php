@@ -133,10 +133,11 @@ class OpeningRepositories
 
     public function store($request)
     {
-        foreach ($request->accounts as $id => $data) {
-            $account = ChartOfAccount::findOrFail($id);   // FindOrFail 
 
-            //   debit and credit 
+        foreach ($request->accounts as $id => $data) {
+
+            $account = ChartOfAccount::findOrFail($id);
+
             $debit  = isset($data['debit'])  ? (float)$data['debit']  : 0;
             $credit = isset($data['credit']) ? (float)$data['credit'] : 0;
 
@@ -148,7 +149,7 @@ class OpeningRepositories
                 $account->balance_type = "credit";
             } else {
                 $account->opening_balance = 0;
-                $account->balance_type = "debit"; // 
+                $account->balance_type = "debit";
             }
 
             $account->save();

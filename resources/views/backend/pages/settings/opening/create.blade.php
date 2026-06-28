@@ -104,26 +104,26 @@
                     debit += value;
                 });
 
-                // Loop through all elements with class "credit"
+
                 $(".credit").each(function() {
                     const value = parseFloat($(this).val()) || 0;
                     credit += value;
                 });
 
-                // Set the total values
+
                 $('.totalDebit').text(debit.toFixed(2));
                 $('.totalCredit').text(credit.toFixed(2));
             }
 
-            // Update totals on page load
+
             updateTotals();
 
-            // Update totals when input values change
+
             $(document).on('input', '.debit, .credit', function() {
                 updateTotals();
             });
 
-            // Handle form submission
+
             $('#openingBalanceForm').on('submit', function(e) {
                 e.preventDefault();
 
