@@ -75,7 +75,7 @@
                                     <div class="alert alert-success mb-0 h-100">
                                         <strong><i class="fas fa-check-circle mr-1"></i> Keep Account:</strong>
                                         <div id="preview_keep" class="mt-1"></div>
-                                        <small id="preview_keep_supplier" class="text-muted d-block mt-1"></small>
+                                        <small id="preview_keep_supplier" class="d-block mt-1 text-white"></small>
                                     </div>
                                 </div>
                                 <div class="col-md-2 d-flex align-items-center justify-content-center">
@@ -83,9 +83,9 @@
                                 </div>
                                 <div class="col-md-5">
                                     <div class="alert alert-danger mb-0 h-100">
-                                        <strong><i class="fas fa-times-circle mr-1"></i> Inactive হবে (Remove):</strong>
+                                        <strong><i class="fas fa-times-circle mr-1"></i> Inactive (Remove):</strong>
                                         <div id="preview_remove" class="mt-1"></div>
-                                        <small id="preview_remove_supplier" class="text-muted d-block mt-1"></small>
+                                        <small id="preview_remove_supplier" class="text-white d-block mt-1"></small>
                                     </div>
                                 </div>
                             </div>
@@ -98,21 +98,9 @@
                                 This ledger is not used in any table — but the account will be inactive.
                             </div>
 
-                            {{-- Merge Button --}}
-                            {{-- <div id="btn_merge_wrapper" class="mt-3" style="display:none">
-                                <div class="alert alert-warning py-2 mb-2">
-                                    <i class="fas fa-exclamation-triangle mr-1"></i>
-                                    <strong>Warning:</strong> Merge once done cannot be undone.
-                                </div>
-                                <button id="btn_merge" class="btn btn-danger btn-lg">
-                                    <i class="fas fa-code-branch mr-1"></i> Confirm and merge
-                                </button>
-                                <button id="btn_cancel" class="btn btn-secondary btn-lg ml-2">
-                                    <i class="fas fa-times mr-1"></i> Cancel
-                                </button>
-                            </div> --}}
 
-                            {{-- Modified: 2026-06-27 — Print button add করা হয়েছে --}}
+
+
                             <div id="btn_merge_wrapper" class="mt-3" style="display:none">
                                 <div class="alert alert-warning py-2 mb-2">
                                     <i class="fas fa-exclamation-triangle mr-1"></i>
