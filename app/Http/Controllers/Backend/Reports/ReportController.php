@@ -1986,113 +1986,240 @@ class ReportController extends Controller
         return view('backend.pages.reports.accountledger', get_defined_vars());
     }
 
+    // public function trialbalance(Request $request)
+    // {
+    //     $title = 'Trial Balance Report';
+
+    //     $startDate = $request->input('start_date') ?? date("Y-m-d");
+    //     $endDate = $request->input('end_date') ?? date("Y-m-d");
+
+    //     // Fetch names for main heads from the database
+    //     $parentAccounts = ChartOfAccount::whereIn('id', [1, 9, 17, 19])->get();
+    //     $parentIds = [
+    //         'Asset' => getAccountByUniqueID(1)->id,
+    //         'Liabilities' => getAccountByUniqueID(9)->id,
+    //         'Income' => getAccountByUniqueID(17)->id,
+    //         'Expenses' => getAccountByUniqueID(19)->id,
+    //     ];
+    //     $parentNames = [
+    //         'Asset' => $parentAccounts->where('id', 1)->first()->account_name ?? 'Asset',
+    //         'Liabilities' => $parentAccounts->where('id', 9)->first()->account_name ?? 'Liabilities',
+    //         'Income' => $parentAccounts->where('id', 17)->first()->account_name ?? 'Income',
+    //         'Expenses' => $parentAccounts->where('id', 19)->first()->account_name ?? 'Expenses',
+    //     ];
+
+    //     $groupedTrialBalance = [
+    //         'Asset' => [],
+    //         'Liabilities' => [],
+    //         'Income' => [],
+    //         'Expenses' => []
+    //     ];
+
+    //     foreach ($parentIds as $key => $parentId) {
+    //         $accounts = getAllSubAccounts($parentId);
+
+    //         foreach ($accounts as $account) {
+    //             $openingDebit = $account->balance_type === 'debit' ? $account->opening_balance : 0;
+    //             $openingCredit = $account->balance_type === 'credit' ? $account->opening_balance : 0;
+
+    //             $openingTransactionDebit = AccountTransaction::where('account_id', $account->id)
+    //                 ->whereDate('created_at', '<', $startDate)
+    //                 ->sum('debit');
+
+    //             $openingTransactionCredit = AccountTransaction::where('account_id', $account->id)
+    //                 ->whereDate('created_at', '<', $startDate)
+    //                 ->sum('credit');
+
+    //             if (getFirstAccount($account->id) == $parentIds['Asset'] || getFirstAccount($account->id) == $parentIds['Expenses']) {
+    //                 $openingDebit += $openingTransactionDebit - $openingTransactionCredit;
+    //                 $openingCredit += 0;
+    //             } elseif (getFirstAccount($account->id) == $parentIds['Liabilities'] || getFirstAccount($account->id) == $parentIds['Income']) {
+    //                 $openingDebit += 0;
+    //                 $openingCredit += $openingTransactionCredit - $openingTransactionDebit;
+    //             }
+
+
+    //             // if (getFirstAccount($account->id) == $parentIds['Income'] || getFirstAccount($account->id) == $parentIds['Expenses']) {
+    //             //     $openingDebit = 0;
+    //             //     $openingCredit = 0;
+    //             // }
+
+    //             // Calculate transactions within the period
+    //             $transactionDebit = AccountTransaction::where('account_id', $account->id)
+    //                 ->whereDate('created_at', '>=', $startDate)
+    //                 ->whereDate('created_at', '<=', $endDate)
+    //                 ->sum('debit');
+
+    //             $transactionCredit = AccountTransaction::where('account_id', $account->id)
+    //                 ->whereDate('created_at', '>=', $startDate)
+    //                 ->whereDate('created_at', '<=', $endDate)
+    //                 ->sum('credit');
+
+    //             // Determine closing balances based on account type
+
+    //             $closingDebit = $openingDebit + $transactionDebit - $transactionCredit;
+    //             $closingCredit = $openingCredit + $transactionCredit - $transactionDebit;
+    //             // Adjust closing balance logic based on account type
+
+    //             if (getFirstAccount($account->id) == $parentIds['Asset'] || getFirstAccount($account->id) == $parentIds['Expenses']) {
+    //                 $closingDebit = $closingDebit  ? $closingDebit : 0;
+    //                 $closingCredit = $closingDebit == 0 ? abs($closingDebit) : 0;
+    //             } elseif (getFirstAccount($account->id) == $parentIds['Liabilities'] || getFirstAccount($account->id) == $parentIds['Income']) {
+    //                 $closingCredit = $closingCredit ? $closingCredit : 0;
+    //                 $closingDebit = $closingCredit == 0 ? abs($closingCredit) : 0;
+    //             }
+
+    //             // Only add the entry if it has a non-zero opening balance or transactions within the period
+    //             if ($openingDebit != 0 || $openingCredit != 0 || $transactionDebit != 0 || $transactionCredit != 0) {
+    //                 $entry = [
+    //                     'account_name' => $account->account_name,
+    //                     'opening_debit' => $openingDebit,
+    //                     'opening_credit' => $openingCredit,
+    //                     'transaction_debit' => $transactionDebit,
+    //                     'transaction_credit' => $transactionCredit,
+    //                     'closing_debit' => $closingDebit,
+    //                     'closing_credit' => $closingCredit,
+    //                     'parent_id' => $account->parent_id,
+    //                 ];
+
+    //                 // Group accounts by parent ID
+    //                 if ($key == 'Asset') {
+    //                     $groupedTrialBalance['Asset'][] = $entry;
+    //                 } elseif ($key == 'Liabilities') {
+    //                     $groupedTrialBalance['Liabilities'][] = $entry;
+    //                 } elseif ($key == 'Income') {
+    //                     $groupedTrialBalance['Income'][] = $entry;
+    //                 } elseif ($key == 'Expenses') {
+    //                     $groupedTrialBalance['Expenses'][] = $entry;
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     $companyInfo = Company::latest('id')->first();
+
+    //     return view('backend.pages.reports.trialbalance', get_defined_vars());
+    // }
+
     public function trialbalance(Request $request)
     {
         $title = 'Trial Balance Report';
 
         $startDate = $request->input('start_date') ?? date("Y-m-d");
-        $endDate = $request->input('end_date') ?? date("Y-m-d");
+        $endDate   = $request->input('end_date')   ?? date("Y-m-d");
 
-        // Fetch names for main heads from the database
-        $parentAccounts = ChartOfAccount::whereIn('id', [1, 9, 17, 19])->get();
+        // Bug 1 & 2 Fix: getAccountByUniqueID দিয়ে সব নাও, hardcoded id ব্যবহার করো না - Modified: 2026-06-29
+        $assetAccount       = getAccountByUniqueID(1);
+        $liabilitiesAccount = getAccountByUniqueID(9);
+        $incomeAccount      = getAccountByUniqueID(17);
+        $expensesAccount    = getAccountByUniqueID(19);
+
         $parentIds = [
-            'Asset' => getAccountByUniqueID(1)->id,
-            'Liabilities' => getAccountByUniqueID(9)->id,
-            'Income' => getAccountByUniqueID(17)->id,
-            'Expenses' => getAccountByUniqueID(19)->id,
+            'Asset'       => $assetAccount->id,
+            'Liabilities' => $liabilitiesAccount->id,
+            'Income'      => $incomeAccount->id,
+            'Expenses'    => $expensesAccount->id,
         ];
+
         $parentNames = [
-            'Asset' => $parentAccounts->where('id', 1)->first()->account_name ?? 'Asset',
-            'Liabilities' => $parentAccounts->where('id', 9)->first()->account_name ?? 'Liabilities',
-            'Income' => $parentAccounts->where('id', 17)->first()->account_name ?? 'Income',
-            'Expenses' => $parentAccounts->where('id', 19)->first()->account_name ?? 'Expenses',
+            'Asset'       => $assetAccount->account_name,
+            'Liabilities' => $liabilitiesAccount->account_name,
+            'Income'      => $incomeAccount->account_name,
+            'Expenses'    => $expensesAccount->account_name,
         ];
 
         $groupedTrialBalance = [
-            'Asset' => [],
+            'Asset'       => [],
             'Liabilities' => [],
-            'Income' => [],
-            'Expenses' => []
+            'Income'      => [],
+            'Expenses'    => [],
         ];
 
         foreach ($parentIds as $key => $parentId) {
             $accounts = getAllSubAccounts($parentId);
 
+            // Bug 5 Fix: সব account-এর transaction একসাথে ২টা query-তে নাও - Added: 2026-06-29
+            $allAccountIds = collect($accounts)->pluck('id')->toArray();
+
+            $openingTransactions = AccountTransaction::whereIn('account_id', $allAccountIds)
+                ->whereDate('created_at', '<', $startDate)
+                ->selectRaw('account_id, SUM(debit) as total_debit, SUM(credit) as total_credit')
+                ->groupBy('account_id')
+                ->get()
+                ->keyBy('account_id');
+
+            $periodTransactions = AccountTransaction::whereIn('account_id', $allAccountIds)
+                ->whereDate('created_at', '>=', $startDate)
+                ->whereDate('created_at', '<=', $endDate)
+                ->selectRaw('account_id, SUM(debit) as total_debit, SUM(credit) as total_credit')
+                ->groupBy('account_id')
+                ->get()
+                ->keyBy('account_id');
+
             foreach ($accounts as $account) {
-                $openingDebit = $account->balance_type === 'debit' ? $account->opening_balance : 0;
-                $openingCredit = $account->balance_type === 'credit' ? $account->opening_balance : 0;
 
-                $openingTransactionDebit = AccountTransaction::where('account_id', $account->id)
-                    ->whereDate('created_at', '<', $startDate)
-                    ->sum('debit');
+                // Bug 6 Fix: getFirstAccount() একবারই call করো - Modified: 2026-06-29
+                $firstAccountId = getFirstAccount($account->id);
+                $isDebitNature  = (
+                    $firstAccountId == $parentIds['Asset'] ||
+                    $firstAccountId == $parentIds['Expenses']
+                );
 
-                $openingTransactionCredit = AccountTransaction::where('account_id', $account->id)
-                    ->whereDate('created_at', '<', $startDate)
-                    ->sum('credit');
+                // chart_of_accounts opening balance
+                $obDebit  = $account->balance_type === 'debit'  ? (float) $account->opening_balance : 0;
+                $obCredit = $account->balance_type === 'credit' ? (float) $account->opening_balance : 0;
 
-                if (getFirstAccount($account->id) == $parentIds['Asset'] || getFirstAccount($account->id) == $parentIds['Expenses']) {
-                    $openingDebit += $openingTransactionDebit - $openingTransactionCredit;
-                    $openingCredit += 0;
-                } elseif (getFirstAccount($account->id) == $parentIds['Liabilities'] || getFirstAccount($account->id) == $parentIds['Income']) {
-                    $openingDebit += 0;
-                    $openingCredit += $openingTransactionCredit - $openingTransactionDebit;
+                // start date  transactions
+                $openTxn       = $openingTransactions->get($account->id);
+                $openTxnDebit  = $openTxn ? (float) $openTxn->total_debit  : 0;
+                $openTxnCredit = $openTxn ? (float) $openTxn->total_credit : 0;
+
+                // Bug 4 Fix: net opening  calculate  - Modified: 2026-06-29
+                if ($isDebitNature) {
+                    $netOpening    = ($obDebit - $obCredit) + ($openTxnDebit - $openTxnCredit);
+                    $openingDebit  = $netOpening >= 0 ? $netOpening : 0;
+                    $openingCredit = $netOpening <  0 ? abs($netOpening) : 0;
+                } else {
+                    $netOpening    = ($obCredit - $obDebit) + ($openTxnCredit - $openTxnDebit);
+                    $openingCredit = $netOpening >= 0 ? $netOpening : 0;
+                    $openingDebit  = $netOpening <  0 ? abs($netOpening) : 0;
                 }
 
+                // period transactions
+                $periodTxn         = $periodTransactions->get($account->id);
+                $transactionDebit  = $periodTxn ? (float) $periodTxn->total_debit  : 0;
+                $transactionCredit = $periodTxn ? (float) $periodTxn->total_credit : 0;
 
-                // if (getFirstAccount($account->id) == $parentIds['Income'] || getFirstAccount($account->id) == $parentIds['Expenses']) {
-                //     $openingDebit = 0;
-                //     $openingCredit = 0;
-                // }
-
-                // Calculate transactions within the period
-                $transactionDebit = AccountTransaction::where('account_id', $account->id)
-                    ->whereDate('created_at', '>=', $startDate)
-                    ->whereDate('created_at', '<=', $endDate)
-                    ->sum('debit');
-
-                $transactionCredit = AccountTransaction::where('account_id', $account->id)
-                    ->whereDate('created_at', '>=', $startDate)
-                    ->whereDate('created_at', '<=', $endDate)
-                    ->sum('credit');
-
-                // Determine closing balances based on account type
-
-                $closingDebit = $openingDebit + $transactionDebit - $transactionCredit;
-                $closingCredit = $openingCredit + $transactionCredit - $transactionDebit;
-                // Adjust closing balance logic based on account type
-
-                if (getFirstAccount($account->id) == $parentIds['Asset'] || getFirstAccount($account->id) == $parentIds['Expenses']) {
-                    $closingDebit = $closingDebit  ? $closingDebit : 0;
-                    $closingCredit = $closingDebit == 0 ? abs($closingDebit) : 0;
-                } elseif (getFirstAccount($account->id) == $parentIds['Liabilities'] || getFirstAccount($account->id) == $parentIds['Income']) {
-                    $closingCredit = $closingCredit ? $closingCredit : 0;
-                    $closingDebit = $closingCredit == 0 ? abs($closingCredit) : 0;
+                // Bug 3 Fix: closing balance  calculate - Modified: 2026-06-29
+                if ($isDebitNature) {
+                    $netClosing    = $netOpening + ($transactionDebit - $transactionCredit);
+                    $closingDebit  = $netClosing >= 0 ? $netClosing : 0;
+                    $closingCredit = $netClosing <  0 ? abs($netClosing) : 0;
+                } else {
+                    $netClosing    = $netOpening + ($transactionCredit - $transactionDebit);
+                    $closingCredit = $netClosing >= 0 ? $netClosing : 0;
+                    $closingDebit  = $netClosing <  0 ? abs($netClosing) : 0;
                 }
 
-                // Only add the entry if it has a non-zero opening balance or transactions within the period
-                if ($openingDebit != 0 || $openingCredit != 0 || $transactionDebit != 0 || $transactionCredit != 0) {
-                    $entry = [
-                        'account_name' => $account->account_name,
-                        'opening_debit' => $openingDebit,
-                        'opening_credit' => $openingCredit,
-                        'transaction_debit' => $transactionDebit,
-                        'transaction_credit' => $transactionCredit,
-                        'closing_debit' => $closingDebit,
-                        'closing_credit' => $closingCredit,
-                        'parent_id' => $account->parent_id,
-                    ];
-
-                    // Group accounts by parent ID
-                    if ($key == 'Asset') {
-                        $groupedTrialBalance['Asset'][] = $entry;
-                    } elseif ($key == 'Liabilities') {
-                        $groupedTrialBalance['Liabilities'][] = $entry;
-                    } elseif ($key == 'Income') {
-                        $groupedTrialBalance['Income'][] = $entry;
-                    } elseif ($key == 'Expenses') {
-                        $groupedTrialBalance['Expenses'][] = $entry;
-                    }
+                // zero balance account skip 
+                if (
+                    $openingDebit     == 0 &&
+                    $openingCredit    == 0 &&
+                    $transactionDebit == 0 &&
+                    $transactionCredit == 0
+                ) {
+                    continue;
                 }
+
+                $groupedTrialBalance[$key][] = [
+                    'account_name'       => $account->account_name,
+                    'opening_debit'      => $openingDebit,
+                    'opening_credit'     => $openingCredit,
+                    'transaction_debit'  => $transactionDebit,
+                    'transaction_credit' => $transactionCredit,
+                    'closing_debit'      => $closingDebit,
+                    'closing_credit'     => $closingCredit,
+                ];
             }
         }
 
