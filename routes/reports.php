@@ -60,7 +60,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::any('/report-bank-book', [ReportController::class, 'bankbook'])->name('report.bank_book');
         Route::any('/report-expense-book', [ReportController::class, 'newexpense'])->name('report.expense');
         Route::any('/report-voucher-report', [ReportController::class, 'voucher'])->name('report.voucher.report');
-        Route::any('/report-income-trans-details', [ReportController::class, 'incomeDetails'])->name('report.incomestatement.details');
+        Route::any('/report-income-trans-details', [ReportController::class, 'incomestatementDetails'])->name('report.incomestatement.details');
 
 
         // cheque register 

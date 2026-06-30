@@ -33,7 +33,6 @@
         @media print {
             tfoot {
                 display: table-row-group;
-
             }
         }
     </style>
@@ -43,17 +42,15 @@
     <div class="content-header">
         <div class="container-fluid">
             <div class="row mb-2">
-                <div class="col-sm-6">
-                    <h1 class="m-0">Report</h1>
-                </div>
+                <h1 class="m-0">Report</h1>
             </div>
         </div>
+    </div>
     </div>
 @endsection
 
 @section('admin-content')
     <div class="row">
-
         {{-- Filter Form --}}
         <div class="col-md-12">
             <div class="card card-default no-print">
