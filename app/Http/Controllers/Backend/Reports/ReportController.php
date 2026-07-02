@@ -2722,18 +2722,18 @@ class ReportController extends Controller
         return view('backend.pages.reports.balancesheet', get_defined_vars());
     } */
 
+
     private $categoryAnchors = [
-        1  => 'asset',     // ASSETS (root)
-        10 => 'equity',     // Equity
-        14 => 'liability',  // Long Term Liabilities
-        15 => 'liability',  // Current Liabilities
-        17 => 'income',     // INCOME (root)
-        21 => 'expense',    // EXPENSES (root)
+        1  => 'asset',
+        9  => 'liability',
+        10 => 'equity',
+        14 => 'liability',
+        15 => 'liability',
+        17 => 'income',
+        21 => 'expense',
     ];
 
-    /**
-     * parent_id ধরে root পর্যন্ত walk করে account category বের করে।
-     */
+
     private function resolveAccountType($accountId, $accountsById)
     {
         $currentId = $accountId;
@@ -2759,9 +2759,6 @@ class ReportController extends Controller
         return null; // resolve করা গেলো না — manual review লাগবে
     }
 
-    /**
-     * Assets = Liabilities + Equity হচ্ছে কিনা যাচাই করে, mismatch থাকলে log করে।
-     */
     private function verifyBalanceSheet($balanceSheet, $unresolvedAccounts = [])
     {
         $difference = round($balanceSheet['total_assets'] - $balanceSheet['total_liabilities_and_equity'], 2);
@@ -2788,42 +2785,65 @@ class ReportController extends Controller
 
     public function balancesheet(Request $request)
     {
-        $title     = 'Balance Sheet Report';
-        $startDate = $request->from_date ?? date('Y-01-01');
-        $endDate   = $request->to_date ?? date('Y-m-d');
+        $title   = 'Balance Sheet Report';
+        $asOfDate = $request->as_of_date ?? date('Y-m-d');
 
-        $accounts     = DB::table('chart_of_accounts')->get();
+
+        $fiscalYearStart = date('Y', strtotime($asOfDate)) . '-01-01';
+        $accounts     = DB::table('chart_of_accounts')->whereNull('deleted_at')->get(); // Added: deleted_at filter
         $accountsById = $accounts->keyBy('id');
 
 
         $balanceSheetTotals = DB::table('account_transactions')
-            ->where('created_at', '<=', $endDate . ' 23:59:59')
-            ->select('account_id', DB::raw('SUM(debit) as total_debit'), DB::raw('SUM(credit) as total_credit'))
+            ->whereDate('created_at', '<=', $asOfDate)
+            ->select(
+                'account_id',
+                DB::raw('COALESCE(SUM(debit), 0) as total_debit'),
+                DB::raw('COALESCE(SUM(credit), 0) as total_credit')
+            )
             ->groupBy('account_id')
             ->get()
             ->keyBy('account_id');
 
 
         $periodTotals = DB::table('account_transactions')
-            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
-            ->select('account_id', DB::raw('SUM(debit) as total_debit'), DB::raw('SUM(credit) as total_credit'))
+            ->whereDate('created_at', '>=', $fiscalYearStart)
+            ->whereDate('created_at', '<=', $asOfDate)
+            ->select(
+                'account_id',
+                DB::raw('COALESCE(SUM(debit), 0) as total_debit'),
+                DB::raw('COALESCE(SUM(credit), 0) as total_credit')
+            )
             ->groupBy('account_id')
             ->get()
             ->keyBy('account_id');
 
         $balanceSheet = [
-            'assets' => [],
-            'liabilities' => [],
-            'equity' => [],
-            'total_assets' => 0,
-            'total_liabilities' => 0,
-            'total_equity' => 0,
+            'current_assets'      => [],
+            'fixed_assets'        => [],
+            'current_liabilities' => [],
+            'long_term_liabilities' => [],
+            'equity'              => [],
+            'total_current_assets'        => 0,
+            'total_fixed_assets'          => 0,
+            'total_assets'                => 0,
+            'total_current_liabilities'   => 0,
+            'total_long_term_liabilities' => 0,
+            'total_liabilities'           => 0,
+            'total_equity'                => 0,
         ];
 
         $currentYearProfit  = 0;
+        $priorYearAdjustment = 0;
         $unresolvedAccounts = [];
+        $skipIds = [9, 25];
 
         foreach ($accounts as $account) {
+
+            if (in_array($account->id, $skipIds)) {
+                continue;
+            }
+
             $accountType = $this->resolveAccountType($account->id, $accountsById);
 
             if ($accountType === null) {
@@ -2833,46 +2853,123 @@ class ReportController extends Controller
 
             if (in_array($accountType, ['asset', 'liability', 'equity'])) {
                 $totals      = $balanceSheetTotals->get($account->id);
-                $totalDebit  = $totals->total_debit ?? 0;
-                $totalCredit = $totals->total_credit ?? 0;
+                $totalDebit  = $totals ? (float)$totals->total_debit  : 0;
+                $totalCredit = $totals ? (float)$totals->total_credit : 0;
 
-                $signedOpening = $account->balance_type === 'debit'
-                    ? $account->opening_balance
-                    : -$account->opening_balance;
 
-                $runningBalance = $signedOpening + ($totalDebit - $totalCredit);
-                $balance        = $accountType === 'asset' ? $runningBalance : -$runningBalance;
+                $openingBalance = (float)$account->opening_balance;
+                if ($account->balance_type === 'credit') {
+                    $openingBalance = -$openingBalance;
+                }
 
-                $row = ['name' => $account->account_name, 'balance' => $balance];
+
+                $runningBalance = $openingBalance + ($totalDebit - $totalCredit);
+
 
                 if ($accountType === 'asset') {
-                    $balanceSheet['assets'][] = $row;
+                    $balance = $runningBalance; // Asset: debit = positive
+                } else {
+                    $balance = -$runningBalance; // Liability/Equity: credit = positive
+                }
+
+                if ($balance == 0) {
+                    continue; // zero balance account skip
+                }
+
+                $row = [
+                    'name'       => $account->account_name,
+                    'balance'    => $balance,
+                    'account_id' => $account->id,
+                ];
+
+                // Added: 2026-07-02 — Current Assets vs Fixed Assets আলাদা করা
+                if ($accountType === 'asset') {
+                    $subType = $this->resolveAssetSubType($account->id, $accountsById);
+                    if ($subType === 'fixed') {
+                        $balanceSheet['fixed_assets'][] = $row;
+                        $balanceSheet['total_fixed_assets'] += $balance;
+                    } else {
+                        $balanceSheet['current_assets'][] = $row;
+                        $balanceSheet['total_current_assets'] += $balance;
+                    }
                     $balanceSheet['total_assets'] += $balance;
                 } elseif ($accountType === 'liability') {
-                    $balanceSheet['liabilities'][] = $row;
+                    // Added: 2026-07-02 — Current vs Long Term আলাদা করা
+                    $parentId = $account->parent_id;
+                    $isLongTerm = $this->isUnderAnchor($account->id, 14, $accountsById);
+                    if ($isLongTerm) {
+                        $balanceSheet['long_term_liabilities'][] = $row;
+                        $balanceSheet['total_long_term_liabilities'] += $balance;
+                    } else {
+                        $balanceSheet['current_liabilities'][] = $row;
+                        $balanceSheet['total_current_liabilities'] += $balance;
+                    }
                     $balanceSheet['total_liabilities'] += $balance;
                 } else {
                     $balanceSheet['equity'][] = $row;
                     $balanceSheet['total_equity'] += $balance;
                 }
             } elseif (in_array($accountType, ['income', 'expense'])) {
-                $totals      = $periodTotals->get($account->id);
-                $totalDebit  = $totals->total_debit ?? 0;
-                $totalCredit = $totals->total_credit ?? 0;
+                // Modified: 2026-07-02 — prior-year (fiscal year শুরুর আগের) income/expense
+                // আলাদা করে ধরা হচ্ছে, যাতে কখনো close না হওয়া অতীতের profit/loss
+                // Balance Sheet থেকে হারিয়ে না যায়
+
+                // সব-সময়ের total (company শুরু থেকে as-of-date পর্যন্ত)
+                $allTimeTotals    = $balanceSheetTotals->get($account->id);
+                $allTimeDebit     = $allTimeTotals ? (float)$allTimeTotals->total_debit  : 0;
+                $allTimeCredit    = $allTimeTotals ? (float)$allTimeTotals->total_credit : 0;
+
+                // শুধু এই fiscal year-এর total
+                $periodTotal      = $periodTotals->get($account->id);
+                $periodDebit      = $periodTotal ? (float)$periodTotal->total_debit  : 0;
+                $periodCredit     = $periodTotal ? (float)$periodTotal->total_credit : 0;
+
+                // Prior-year part = all-time - current-year
+                $priorDebit  = $allTimeDebit  - $periodDebit;
+                $priorCredit = $allTimeCredit - $periodCredit;
+
+                $openingBalance = (float)$account->opening_balance;
 
                 if ($accountType === 'income') {
-                    $currentYearProfit += ($totalCredit - $totalDebit);
+                    // Current year profit-এ শুধু এই বছরের অংশ
+                    $currentYearProfit += ($periodCredit - $periodDebit);
+
+                    // Prior-year অংশ Retained Earnings adjustment-এ যাবে
+                    $priorYearAdjustment += ($priorCredit - $priorDebit);
+
+                    if ($account->balance_type === 'credit') {
+                        $priorYearAdjustment += $openingBalance;
+                    }
                 } else {
-                    $currentYearProfit -= ($totalDebit - $totalCredit);
+                    $currentYearProfit -= ($periodDebit - $periodCredit);
+                    $priorYearAdjustment -= ($priorDebit - $priorCredit);
+
+                    if ($account->balance_type === 'debit') {
+                        $priorYearAdjustment -= $openingBalance;
+                    }
                 }
             }
         }
 
+        // Net Profit/Loss equity-তে যোগ করা — Added: 2026-07-02
+        // Net Profit/Loss equity-তে যোগ করা — Added: 2026-07-02
         $balanceSheet['equity'][] = [
-            'name'    => 'Current Year Profit / (Loss)',
-            'balance' => $currentYearProfit,
+            'name'       => 'Current Year ' . ($currentYearProfit >= 0 ? 'Profit' : 'Loss'),
+            'balance'    => $currentYearProfit,
+            'account_id' => null,
         ];
         $balanceSheet['total_equity'] += $currentYearProfit;
+
+        // Added: 2026-07-02 — Prior years-এর unclosed income/expense কে
+        // Retained Earnings adjustment হিসেবে দেখানো হচ্ছে, যাতে balance sheet balance হয়
+        // if (abs($priorYearAdjustment) > 0.01) {
+        //     $balanceSheet['equity'][] = [
+        //         'name'       => 'Retained Earnings Adjustment (Prior Years)',
+        //         'balance'    => $priorYearAdjustment,
+        //         'account_id' => null,
+        //     ];
+        //     $balanceSheet['total_equity'] += $priorYearAdjustment;
+        // }
 
         $balanceSheet['total_liabilities_and_equity'] =
             $balanceSheet['total_liabilities'] + $balanceSheet['total_equity'];
@@ -2883,12 +2980,38 @@ class ReportController extends Controller
 
         return view('backend.pages.reports.balancesheet', compact(
             'title',
-            'startDate',
-            'endDate',
+            'asOfDate',
             'balanceSheet',
             'companyInfo',
             'balanceCheck'
         ));
+    }
+
+
+    private function resolveAssetSubType($accountId, $accountsById)
+    {
+
+        return $this->isUnderAnchor($accountId, 2, $accountsById) ? 'fixed' : 'current';
+    }
+
+
+    private function isUnderAnchor($accountId, $anchorId, $accountsById)
+    {
+        $currentId = $accountId;
+        $visited   = [];
+
+        while (isset($accountsById[$currentId])) {
+            if ($currentId == $anchorId) {
+                return true;
+            }
+            if (in_array($currentId, $visited)) {
+                break;
+            }
+            $visited[]  = $currentId;
+            $currentId  = $accountsById[$currentId]->parent_id ?? null;
+            if (!$currentId) break;
+        }
+        return false;
     }
 
 

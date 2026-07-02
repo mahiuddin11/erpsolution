@@ -710,4 +710,8 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::post('/execute', [LedgerMergeController::class, 'merge'])->name('execute');
         Route::get('/table-detail', [LedgerMergeController::class, 'tableDetail'])->name('tableDetail');
     });
+
+    Route::get('/debug/balance-sheet', function () {
+        return view('balance_sheet_debug');
+    });
 });
