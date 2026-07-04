@@ -2790,7 +2790,12 @@ class ReportController extends Controller
 
 
         $fiscalYearStart = date('Y', strtotime($asOfDate)) . '-01-01';
-        $accounts     = DB::table('chart_of_accounts')->whereNull('deleted_at')->get(); // Added: deleted_at filter
+        // $accounts     = DB::table('chart_of_accounts')->whereNull('deleted_at')->get();
+        $accounts = DB::table('chart_of_accounts')
+            ->whereNull('deleted_at')
+            ->select('*')
+            ->get();
+
         $accountsById = $accounts->keyBy('id');
 
 
@@ -2821,14 +2826,18 @@ class ReportController extends Controller
         $balanceSheet = [
             'current_assets'      => [],
             'fixed_assets'        => [],
+            'advance_to_suppliers' => [],
             'current_liabilities' => [],
             'long_term_liabilities' => [],
             'equity'              => [],
+            'advance_from_customers' => [],
             'total_current_assets'        => 0,
             'total_fixed_assets'          => 0,
+            'total_advance_to_suppliers'  => 0,
             'total_assets'                => 0,
             'total_current_liabilities'   => 0,
             'total_long_term_liabilities' => 0,
+            'total_advance_from_customers' => 0,
             'total_liabilities'           => 0,
             'total_equity'                => 0,
         ];
@@ -2882,9 +2891,36 @@ class ReportController extends Controller
                     'account_id' => $account->id,
                 ];
 
-                // Added: 2026-07-02 — Current Assets vs Fixed Assets আলাদা করা
+                // Added: 2026-07-02 — Current Assets vs Fixed Assets 
                 if ($accountType === 'asset') {
+
+                    // $subType = $this->resolveAssetSubType($account->id, $accountsById);
+                    // if ($subType === 'fixed') {
+                    //     $balanceSheet['fixed_assets'][] = $row;
+                    //     $balanceSheet['total_fixed_assets'] += $balance;
+                    // } else {
+                    //     $balanceSheet['current_assets'][] = $row;
+                    //     $balanceSheet['total_current_assets'] += $balance;
+                    // }
+                    // $balanceSheet['total_assets'] += $balance;
+
                     $subType = $this->resolveAssetSubType($account->id, $accountsById);
+
+                    $isReceivable = $this->isUnderAnchor($account->id, 5, $accountsById);
+                    $isCustomerAccount = $account->accountable_type === 'App\\Models\\Customer';
+
+                    if ($isReceivable && $balance < 0 && $isCustomerAccount) {
+                        $advanceRow = [
+                            'name'       => $row['name'],
+                            'balance'    => abs($balance),
+                            'account_id' => $row['account_id'],
+                        ];
+                        $balanceSheet['advance_from_customers'][] = $advanceRow;
+                        $balanceSheet['total_advance_from_customers'] += abs($balance);
+                        $balanceSheet['total_liabilities'] += abs($balance);
+                        continue;
+                    }
+
                     if ($subType === 'fixed') {
                         $balanceSheet['fixed_assets'][] = $row;
                         $balanceSheet['total_fixed_assets'] += $balance;
@@ -2894,7 +2930,34 @@ class ReportController extends Controller
                     }
                     $balanceSheet['total_assets'] += $balance;
                 } elseif ($accountType === 'liability') {
-                    // Added: 2026-07-02 — Current vs Long Term আলাদা করা
+
+                    // $parentId = $account->parent_id;
+                    // $isLongTerm = $this->isUnderAnchor($account->id, 14, $accountsById);
+                    // if ($isLongTerm) {
+                    //     $balanceSheet['long_term_liabilities'][] = $row;
+                    //     $balanceSheet['total_long_term_liabilities'] += $balance;
+                    // } else {
+                    //     $balanceSheet['current_liabilities'][] = $row;
+                    //     $balanceSheet['total_current_liabilities'] += $balance;
+                    // }
+                    // $balanceSheet['total_liabilities'] += $balance;
+
+                    $isPayable = $this->isUnderAnchor($account->id, 16, $accountsById);
+                    $isSupplierAccount = $account->accountable_type === 'App\\Models\\Supplier';
+
+                    if ($isPayable && $balance < 0 && $isSupplierAccount) {
+                        $advanceRow = [
+                            'name'       => $row['name'],
+                            'balance'    => abs($balance), // positive  asset
+                            'account_id' => $row['account_id'],
+                        ];
+                        $balanceSheet['advance_to_suppliers'][] = $advanceRow;
+                        $balanceSheet['total_advance_to_suppliers'] += abs($balance);
+                        $balanceSheet['total_assets'] += abs($balance); // Total Assets-
+                        continue; // 
+                    }
+
+                    // Added: 2026-07-02 — Current vs Long Term 
                     $parentId = $account->parent_id;
                     $isLongTerm = $this->isUnderAnchor($account->id, 14, $accountsById);
                     if ($isLongTerm) {
@@ -2910,11 +2973,8 @@ class ReportController extends Controller
                     $balanceSheet['total_equity'] += $balance;
                 }
             } elseif (in_array($accountType, ['income', 'expense'])) {
-                // Modified: 2026-07-02 — prior-year (fiscal year শুরুর আগের) income/expense
-                // আলাদা করে ধরা হচ্ছে, যাতে কখনো close না হওয়া অতীতের profit/loss
-                // Balance Sheet থেকে হারিয়ে না যায়
 
-                // সব-সময়ের total (company শুরু থেকে as-of-date পর্যন্ত)
+
                 $allTimeTotals    = $balanceSheetTotals->get($account->id);
                 $allTimeDebit     = $allTimeTotals ? (float)$allTimeTotals->total_debit  : 0;
                 $allTimeCredit    = $allTimeTotals ? (float)$allTimeTotals->total_credit : 0;

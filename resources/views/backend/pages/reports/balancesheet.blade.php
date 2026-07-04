@@ -64,6 +64,22 @@
             tfoot {
                 display: table-row-group;
             }
+
+
+            .row:has(.col-md-6) {
+                display: block !important;
+            }
+
+            .row .col-md-6 {
+                width: 100% !important;
+                max-width: 100% !important;
+                flex: 0 0 100% !important;
+                page-break-inside: auto;
+            }
+
+            .row .col-md-6:last-child {
+                page-break-before: always;
+            }
         }
     </style>
 @endsection
@@ -199,6 +215,24 @@
                                             <td class="amount-col">
                                                 {{ number_format($balanceSheet['total_fixed_assets'], 2) }}</td>
                                         </tr>
+                                        {{-- Advance to Suppliers — Added: 2026-07-02 --}}
+                                        @if (!empty($balanceSheet['advance_to_suppliers']))
+                                            <tr class="bs-section-header">
+                                                <th colspan="2">Advance to Suppliers</th>
+                                            </tr>
+                                            @foreach ($balanceSheet['advance_to_suppliers'] as $row)
+                                                <tr>
+                                                    <td class="pl-4">{{ $row['name'] }}</td>
+                                                    <td class="amount-col">{{ number_format($row['balance'], 2) }}</td>
+                                                </tr>
+                                            @endforeach
+                                            <tr class="bs-subtotal">
+                                                <td>Total Advance to Suppliers</td>
+                                                <td class="amount-col">
+                                                    {{ number_format($balanceSheet['total_advance_to_suppliers'], 2) }}
+                                                </td>
+                                            </tr>
+                                        @endif
                                     </tbody>
                                     <tfoot>
                                         <tr class="bs-total">
@@ -237,6 +271,25 @@
                                             <td class="amount-col">
                                                 {{ number_format($balanceSheet['total_current_liabilities'], 2) }}</td>
                                         </tr>
+
+                                        {{-- Advance from Customers — Added: 2026-07-02 --}}
+                                        @if (!empty($balanceSheet['advance_from_customers']))
+                                            <tr class="bs-section-header">
+                                                <th colspan="2">Advance from Customers</th>
+                                            </tr>
+                                            @foreach ($balanceSheet['advance_from_customers'] as $row)
+                                                <tr>
+                                                    <td class="pl-4">{{ $row['name'] }}</td>
+                                                    <td class="amount-col">{{ number_format($row['balance'], 2) }}</td>
+                                                </tr>
+                                            @endforeach
+                                            <tr class="bs-subtotal">
+                                                <td>Total Advance from Customers</td>
+                                                <td class="amount-col">
+                                                    {{ number_format($balanceSheet['total_advance_from_customers'], 2) }}
+                                                </td>
+                                            </tr>
+                                        @endif
 
                                         {{-- Long Term Liabilities --}}
                                         <tr class="bs-section-header">

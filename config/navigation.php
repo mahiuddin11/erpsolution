@@ -1494,16 +1494,7 @@ $parent_menu = array(
                     (object) array('label' => 'Ledger Group Amount', 'route' => 'report.group-ledger', 'icon' => 'fa fa-dashboard', 'navigate_status' => 1),
                 )
             ),
-            (object) array(
-                'label' => 'Cash Flow',
-                'route' => null,
-                'uniqueName' => "CashReport",
-                'icon' => 'fa fa-th-large',
-                'parent_id' => null,
-                'childMenu' => (object) array(
-                    (object) array('label' => 'Day Book Report', 'route' => 'report.cashflow', 'icon' => 'fa fa-dashboard', 'navigate_status' => 1),
-                )
-            ),
+
 
             (object) array(
                 'label' => 'Retained Earning',
@@ -1607,6 +1598,17 @@ $parent_menu = array(
                 'parent_id' => null,
                 'childMenu' => (object) array(
                     (object) array('label' => 'Balance Sheet Report', 'route' => 'report.balancesheet.balancesheet', 'icon' => 'fa fa-dashboard', 'navigate_status' => 1),
+                )
+            ),
+
+            (object) array(
+                'label' => 'Cash Flow',
+                'route' => null,
+                'uniqueName' => "CashReport",
+                'icon' => 'fa fa-th-large',
+                'parent_id' => null,
+                'childMenu' => (object) array(
+                    (object) array('label' => 'Day Book Report', 'route' => 'report.cashflow', 'icon' => 'fa fa-dashboard', 'navigate_status' => 1),
                 )
             ),
 
