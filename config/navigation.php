@@ -1602,13 +1602,24 @@ $parent_menu = array(
             ),
 
             (object) array(
-                'label' => 'Cash Flow',
+                'label' => 'Direct Cash Flow',
                 'route' => null,
                 'uniqueName' => "CashReport",
                 'icon' => 'fa fa-th-large',
                 'parent_id' => null,
                 'childMenu' => (object) array(
-                    (object) array('label' => 'Day Book Report', 'route' => 'report.cashflow', 'icon' => 'fa fa-dashboard', 'navigate_status' => 1),
+                    (object) array('label' => 'Direct Cash Flow', 'route' => 'report.cashflow', 'icon' => 'fa fa-dashboard', 'navigate_status' => 1),
+                )
+            ),
+
+            (object) array(
+                'label' => 'Indirect Cash Flow',
+                'route' => null,
+                'uniqueName' => "IndirectCashReport",
+                'icon' => 'fa fa-th-large',
+                'parent_id' => null,
+                'childMenu' => (object) array(
+                    (object) array('label' => 'Indirect Cash Flow', 'route' => 'report.indirectcashflow', 'icon' => 'fa fa-dashboard', 'navigate_status' => 1),
                 )
             ),
 

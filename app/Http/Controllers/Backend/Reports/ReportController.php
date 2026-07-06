@@ -647,52 +647,1536 @@ class ReportController extends Controller
         return view('backend.pages.reports.newexpense', get_defined_vars());
     }
 
+    // public function cashflow(Request $request)
+    // {
+    //     $title = 'Cash Flow Report';
+    //     $startDate = $request->from_date ?? date('Y-01-01');
+    //     $toDate = $request->to_date ?? date('Y-m-d');
+    //     if ($request->method() == 'POST') {
+    //         $getOpeningBalance =  Transection::where('account_id', 16)->where('type', 1)->first() ?? 0;
+    //         $newOpeningBalance =  $getOpeningBalance->amount ?? 0;
+
+    //         $prefindreports = new AccountTransaction();
+    //         if ($request->from_date) {
+    //             $prefindreports = $prefindreports->whereDate('created_at', '>=', $getOpeningBalance->created_at ?? date('Y-m-d'));
+    //         }
+    //         if ($request->to_date) {
+    //             $prefindreports = $prefindreports->whereDate('created_at', '<=', $startDate);
+    //         }
+    //         $pregetaccountInv = AccountTransaction::where('account_id', 16)->pluck('invoice')->toArray();
+    //         $prefindreports = $prefindreports->whereIn('invoice', $pregetaccountInv);
+    //         $precashaccount = $prefindreports->where('account_id', "!=", 16);
+    //         $preaccountlists = $precashaccount->selectRaw('sum(debit) as debit , sum(credit) as credit , account_id')->groupBy('account_id')->get();
+
+    //         foreach ($preaccountlists as $ite) {
+    //             $newOpeningBalance += $ite->credit - $ite->debit;
+    //         }
+
+    //         $findreports = new AccountTransaction();
+
+    //         if ($request->from_date) {
+    //             $findreports = $findreports->whereDate('created_at', '>=', $startDate);
+    //         }
+
+    //         if ($request->to_date) {
+    //             $findreports = $findreports->whereDate('created_at', '<=', $toDate);
+    //         }
+    //         $getaccountInv = AccountTransaction::where('account_id', 16)->pluck('invoice')->toArray();
+
+    //         $findreports = $findreports->whereIn('invoice', $getaccountInv);
+    //         $cashaccount = $findreports->where('account_id', "!=", 16);
+    //         $accountbycroupby = $cashaccount->where('account_id', "!=", 0)->selectRaw('sum(debit) as debit , sum(credit) as credit , account_id')->groupBy('account_id')->get();
+    //         $from_date = $request->from_date;
+    //         $to_date = $request->to_date;
+    //     }
+    //     $companyInfo = Company::latest('id')->first();
+
+    //     return view('backend.pages.reports.cashflow', get_defined_vars());
+    // }
+
+
+    // public function cashflow(Request $request)
+    // {
+    //     $title = 'Cash Flow Statement';
+
+    //     $request->validate([
+    //         'from_date' => 'nullable|date',
+    //         'to_date'   => 'nullable|date|after_or_equal:from_date',
+    //     ]);
+
+    //     $startDate   = $request->from_date ?? date('Y-01-01');
+    //     $toDate      = $request->to_date ?? date('Y-m-d');
+    //     $companyInfo = Company::latest('id')->first();
+
+    //     // ==========================================================
+    //     // Chart of Accounts head IDs (from Water Technology BD COA)
+    //     // ==========================================================
+    //     // Cash & Cash Equivalents parents
+    //     $cashParentIds = [6, 7, 8]; // 6=Cash&CashEquiv, 7=Cash in Hand, 8=Cash at Bank
+
+    //     // ---- Build full descendant maps of the account tree (once) ----
+    //     $allAccounts = ChartOfAccount::select('id', 'parent_id')->get();
+    //     $childrenMap = $allAccounts->groupBy('parent_id');
+
+    //     // Recursive helper: get an account id + ALL its descendants
+    //     $collectTree = function ($rootIds) use ($childrenMap) {
+    //         $result = [];
+    //         $stack  = (array) $rootIds;
+    //         while ($stack) {
+    //             $id = array_pop($stack);
+    //             if (in_array($id, $result)) continue;
+    //             $result[] = $id;
+    //             foreach (($childrenMap[$id] ?? collect()) as $child) {
+    //                 $stack[] = $child->id;
+    //             }
+    //         }
+    //         return $result;
+    //     };
+
+    //     // All cash/bank account ids (6,7,8 and every sub-account beneath them)
+    //     $cashAccountIds = $collectTree($cashParentIds);
+
+    //     // ==========================================================
+    //     // CORRECTED CLASSIFICATION SETS (specific sub-heads, NOT root)
+    //     // ==========================================================
+    //     // INVESTING = Fixed Assets + Investment/FDR + Tools ONLY
+    //     $investingIds = array_flip($collectTree([
+    //         2,    // FIXED ASSET (Land, Building, Machinery, Cars, Furniture...)
+    //         396,  // INVESTMENT (all FDR)
+    //         409,  // Tools And Accessories
+    //     ]));
+
+    //     // FINANCING = Loans + Equity ONLY (NOT supplier trade payables!)
+    //     $financingIds = array_flip($collectTree([
+    //         10,   // Equity (Share capital + Retained earnings)
+    //         14,   // Long Term Liabilities
+    //         923,  // Short Term Loan
+    //         924,  // Long Term Loan
+    //     ]));
+
+    //     // OPERATING sub-group sets (for professional grouping)
+    //     $arIds      = array_flip($collectTree(5));   // Accounts Receivable (customers)
+    //     $apIds      = array_flip($collectTree(16));  // Accounts Payable (suppliers)
+    //     $advanceIds = array_flip($collectTree(4));   // Advance, Deposits & Pre-payments
+    //     $incomeIds  = array_flip($collectTree(17));  // INCOME
+    //     $expenseIds = array_flip($collectTree(21));  // EXPENSES
+
+    //     // ----------------------------------------------------------
+    //     // Returns: [section, subGroupLabel]
+    //     //   section = operating | investing | financing
+    //     // ----------------------------------------------------------
+    //     $classify = function ($accountId)
+    //     use ($investingIds, $financingIds, $arIds, $apIds, $advanceIds, $incomeIds, $expenseIds) {
+
+    //         if ($accountId == 0)                  return ['operating', '⚠ Uncategorized (Suspense)'];
+    //         if (isset($investingIds[$accountId])) return ['investing', 'Investing'];
+    //         if (isset($financingIds[$accountId])) return ['financing', 'Financing'];
+
+    //         // ---- Operating sub-groups ----
+    //         if (isset($arIds[$accountId]))        return ['operating', 'Receipts from Customers'];
+    //         if (isset($apIds[$accountId]))        return ['operating', 'Payments to Suppliers'];
+    //         if (isset($advanceIds[$accountId]))   return ['operating', 'Advances, Deposits & Employee Loans'];
+    //         if (isset($incomeIds[$accountId]))    return ['operating', 'Other Operating Income'];
+    //         if (isset($expenseIds[$accountId]))   return ['operating', 'Operating Expenses'];
+
+    //         return ['operating', 'Other Operating'];
+    //     };
+
+    //     // ---- Init ----
+    //     $operating = collect();
+    //     $investing = collect();
+    //     $financing = collect();
+    //     $newOpeningBalance = 0;
+    //     $operatingTotal = $investingTotal = $financingTotal = 0;
+    //     $netChange = $closingBalance = 0;
+    //     $reconDifference = 0;
+    //     $actualClosing = 0;
+    //     $from_date = $to_date = null;
+
+    //     if ($request->method() == 'POST') {
+
+    //         // ==========================================================
+    //         // 1) OPENING BALANCE = static opening + net cash movement BEFORE start date
+    //         //    Cash account: debit increases cash, credit decreases cash
+    //         // ==========================================================
+    //         $staticOpening = ChartOfAccount::whereIn('id', $cashAccountIds)
+    //             ->where('status', 'Active')
+    //             ->sum('opening_balance');
+
+
+
+    //         $preMovement = AccountTransaction::whereIn('account_id', $cashAccountIds)
+    //             ->whereDate('created_at', '<', $startDate)
+    //             ->selectRaw('SUM(COALESCE(debit,0)) - SUM(COALESCE(credit,0)) as net')
+    //             ->value('net');
+
+    //         $newOpeningBalance = ($staticOpening ?? 0) + ($preMovement ?? 0);
+
+    //         // ==========================================================
+    //         // 2) PERIOD MOVEMENT
+    //         //    For every cash-side transaction find its counter entries
+    //         //    (same invoice, non-cash account) and group by counter account.
+    //         //    NOTE: account_id = 0 is NOT filtered out — shown as Suspense
+    //         //    so the report always reconciles to zero difference.
+    //         // ==========================================================
+    //         $cashInvoices = AccountTransaction::whereIn('account_id', $cashAccountIds)
+    //             ->whereDate('created_at', '>=', $startDate)
+    //             ->whereDate('created_at', '<=', $toDate)
+    //             ->pluck('invoice')
+    //             ->filter()
+    //             ->unique()
+    //             ->toArray();
+
+    //         $counterRows = collect();
+    //         if (!empty($cashInvoices)) {
+    //             $counterRows = AccountTransaction::with('account')
+    //                 ->whereIn('invoice', $cashInvoices)
+    //                 ->whereNotIn('account_id', $cashAccountIds) // exclude the cash side itself
+    //                 // (account_id != 0 filter removed on purpose → Suspense line)
+    //                 ->whereDate('created_at', '>=', $startDate)
+    //                 ->whereDate('created_at', '<=', $toDate)
+    //                 ->selectRaw('account_id,
+    //                          SUM(COALESCE(debit,0))  as debit,
+    //                          SUM(COALESCE(credit,0)) as credit,
+    //                          (SUM(COALESCE(credit,0)) - SUM(COALESCE(debit,0))) as cash_effect')
+    //                 ->groupBy('account_id')
+    //                 ->get();
+    //         }
+
+    //         // ==========================================================
+    //         // 3) CATEGORIZE (section + sub-group label attached to each row)
+    //         // ==========================================================
+    //         foreach ($counterRows as $row) {
+    //             [$section, $subGroup] = $classify($row->account_id);
+    //             $row->sub_group = $subGroup; // attach for blade grouping
+
+    //             switch ($section) {
+    //                 case 'investing':
+    //                     $investing->push($row);
+    //                     break;
+    //                 case 'financing':
+    //                     $financing->push($row);
+    //                     break;
+    //                 default:
+    //                     $operating->push($row);
+    //                     break;
+    //             }
+    //         }
+
+    //         // cash_effect = credit - debit (positive = cash inflow)
+    //         $operatingTotal = $operating->sum('cash_effect');
+    //         $investingTotal = $investing->sum('cash_effect');
+    //         $financingTotal = $financing->sum('cash_effect');
+
+    //         $netChange      = $operatingTotal + $investingTotal + $financingTotal;
+    //         $closingBalance = $newOpeningBalance + $netChange;
+
+    //         // ==========================================================
+    //         // 4) VERIFICATION - actual closing cash from ledger
+    //         //    With Suspense line included, reconDifference should now be 0.00
+    //         // ==========================================================
+    //         $actualClosing = ($staticOpening ?? 0) + (AccountTransaction::whereIn('account_id', $cashAccountIds)
+    //             ->whereDate('created_at', '<=', $toDate)
+    //             ->selectRaw('SUM(COALESCE(debit,0)) - SUM(COALESCE(credit,0)) as net')
+    //             ->value('net') ?? 0);
+
+    //         $reconDifference = round($closingBalance - $actualClosing, 2);
+
+    //         // ==========================================================
+    //         // 5) GROUP operating rows by sub-group (for professional layout)
+    //         //    Each group: ['label' => ..., 'rows' => Collection, 'total' => sum]
+    //         // ==========================================================
+    //         $operatingGroups = $operating
+    //             ->groupBy('sub_group')
+    //             ->map(function ($rows, $label) {
+    //                 return [
+    //                     'label' => $label,
+    //                     'rows'  => $rows,
+    //                     'total' => $rows->sum('cash_effect'),
+    //                 ];
+    //             })
+    //             ->values();
+
+    //         $from_date = $startDate;
+    //         $to_date   = $toDate;
+    //     }
+
+    //     return view('backend.pages.reports.cashflow', get_defined_vars());
+    // }
+
     public function cashflow(Request $request)
     {
-        $title = 'Cash Flow Report';
-        $startDate = $request->from_date ?? date('Y-01-01');
-        $toDate = $request->to_date ?? date('Y-m-d');
-        if ($request->method() == 'POST') {
-            $getOpeningBalance =  Transection::where('account_id', 16)->where('type', 1)->first() ?? 0;
-            $newOpeningBalance =  $getOpeningBalance->amount ?? 0;
+        $title = 'Cash Flow Statement';
 
-            $prefindreports = new AccountTransaction();
-            if ($request->from_date) {
-                $prefindreports = $prefindreports->whereDate('created_at', '>=', $getOpeningBalance->created_at ?? date('Y-m-d'));
-            }
-            if ($request->to_date) {
-                $prefindreports = $prefindreports->whereDate('created_at', '<=', $startDate);
-            }
-            $pregetaccountInv = AccountTransaction::where('account_id', 16)->pluck('invoice')->toArray();
-            $prefindreports = $prefindreports->whereIn('invoice', $pregetaccountInv);
-            $precashaccount = $prefindreports->where('account_id', "!=", 16);
-            $preaccountlists = $precashaccount->selectRaw('sum(debit) as debit , sum(credit) as credit , account_id')->groupBy('account_id')->get();
+        $request->validate([
+            'from_date' => 'nullable|date',
+            'to_date'   => 'nullable|date|after_or_equal:from_date',
+        ]);
 
-            foreach ($preaccountlists as $ite) {
-                $newOpeningBalance += $ite->credit - $ite->debit;
-            }
-
-            $findreports = new AccountTransaction();
-
-            if ($request->from_date) {
-                $findreports = $findreports->whereDate('created_at', '>=', $startDate);
-            }
-
-            if ($request->to_date) {
-                $findreports = $findreports->whereDate('created_at', '<=', $toDate);
-            }
-            $getaccountInv = AccountTransaction::where('account_id', 16)->pluck('invoice')->toArray();
-
-            $findreports = $findreports->whereIn('invoice', $getaccountInv);
-            $cashaccount = $findreports->where('account_id', "!=", 16);
-            $accountbycroupby = $cashaccount->where('account_id', "!=", 0)->selectRaw('sum(debit) as debit , sum(credit) as credit , account_id')->groupBy('account_id')->get();
-            $from_date = $request->from_date;
-            $to_date = $request->to_date;
-        }
+        $startDate   = $request->from_date ?? date('Y-01-01');
+        $toDate      = $request->to_date ?? date('Y-m-d');
         $companyInfo = Company::latest('id')->first();
+
+        // ==========================================================
+        // Chart of Accounts Tree তৈরি
+        // ==========================================================
+        $cashParentIds = [6, 7, 8];
+
+        $allAccounts = ChartOfAccount::select('id', 'parent_id')->get();
+        $childrenMap = $allAccounts->groupBy('parent_id');
+
+        $collectTree = function ($rootIds) use ($childrenMap) {
+            $result = [];
+            $stack  = (array) $rootIds;
+            while ($stack) {
+                $id = array_pop($stack);
+                if (in_array($id, $result)) continue;
+                $result[] = $id;
+                foreach (($childrenMap[$id] ?? collect()) as $child) {
+                    $stack[] = $child->id;
+                }
+            }
+            return $result;
+        };
+
+        $cashAccountIds = $collectTree($cashParentIds);
+
+        // ==========================================================
+        // CLASSIFICATION SETS (Updated)
+        // ==========================================================
+        $investingIds = array_flip($collectTree([2, 396, 409]));
+
+        $financingIds = array_flip($collectTree([
+            10,
+            14,
+            923,
+            924,
+            40,
+            41,
+            397,
+            398,
+            399,
+            400,
+            483,
+            888
+        ]));
+
+        $arIds      = array_flip($collectTree(5));
+        $apIds      = array_flip($collectTree(16));
+        $advanceIds = array_flip($collectTree(4));
+        $incomeIds  = array_flip($collectTree(17));
+        $expenseIds = array_flip($collectTree(21));
+
+        // ==========================================================
+        // Classify Function
+        // ==========================================================
+        $classify = function ($accountId) use ($investingIds, $financingIds, $arIds, $apIds, $advanceIds, $incomeIds, $expenseIds) {
+
+            if ($accountId == 0)                  return ['operating', 'Uncategorized (Suspense)'];
+            if (isset($investingIds[$accountId])) return ['investing', 'Investing Activities'];
+            if (isset($financingIds[$accountId])) return ['financing', 'Financing Activities'];
+
+            if (isset($arIds[$accountId]))        return ['operating', 'Receipts from Customers'];
+            if (isset($apIds[$accountId]))        return ['operating', 'Payments to Suppliers'];
+            if (isset($advanceIds[$accountId]))   return ['operating', 'Advances, Deposits & Employee Loans'];
+            if (isset($incomeIds[$accountId]))    return ['operating', 'Other Operating Income'];
+            if (isset($expenseIds[$accountId]))   return ['operating', 'Operating Expenses'];
+
+            return ['operating', 'Other Operating'];
+        };
+
+        // ---- Variables ----
+        $operating = collect();
+        $investing = collect();
+        $financing = collect();
+        $newOpeningBalance = 0;
+        $operatingTotal = $investingTotal = $financingTotal = 0;
+        $netChange = $closingBalance = 0;
+        $reconDifference = 0;
+        $actualClosing = 0;
+
+        if ($request->method() == 'POST') {
+
+            // 1. OPENING BALANCE
+            $staticOpening = ChartOfAccount::whereIn('id', $cashAccountIds)
+                ->where('status', 'Active')
+                ->sum('opening_balance');
+
+            $preMovement = AccountTransaction::whereIn('account_id', $cashAccountIds)
+                ->whereDate('created_at', '<', $startDate)
+                ->selectRaw('SUM(COALESCE(debit,0)) - SUM(COALESCE(credit,0)) as net')
+                ->value('net');
+
+            $newOpeningBalance = ($staticOpening ?? 0) + ($preMovement ?? 0);
+
+            // 2. PERIOD MOVEMENT
+            $cashInvoices = AccountTransaction::whereIn('account_id', $cashAccountIds)
+                ->whereDate('created_at', '>=', $startDate)
+                ->whereDate('created_at', '<=', $toDate)
+                ->pluck('invoice')
+                ->filter()
+                ->unique()
+                ->toArray();
+
+            $counterRows = collect();
+            if (!empty($cashInvoices)) {
+                $counterRows = AccountTransaction::with('account')
+                    ->whereIn('invoice', $cashInvoices)
+                    ->whereNotIn('account_id', $cashAccountIds)
+                    ->whereDate('created_at', '>=', $startDate)
+                    ->whereDate('created_at', '<=', $toDate)
+                    ->selectRaw('account_id,
+                         SUM(COALESCE(debit,0)) as debit,
+                         SUM(COALESCE(credit,0)) as credit,
+                         (SUM(COALESCE(credit,0)) - SUM(COALESCE(debit,0))) as cash_effect')
+                    ->groupBy('account_id')
+                    ->get();
+            }
+
+            // 3. CATEGORIZE
+            foreach ($counterRows as $row) {
+                [$section, $subGroup] = $classify($row->account_id);
+                $row->sub_group = $subGroup;
+
+                match ($section) {
+                    'investing' => $investing->push($row),
+                    'financing' => $financing->push($row),
+                    default     => $operating->push($row),
+                };
+            }
+
+            // Totals
+            $operatingTotal = $operating->sum('cash_effect');
+            $investingTotal = $investing->sum('cash_effect');
+            $financingTotal = $financing->sum('cash_effect');
+
+            $netChange      = $operatingTotal + $investingTotal + $financingTotal;
+            $closingBalance = $newOpeningBalance + $netChange;
+
+            // 4. RECONCILIATION
+            $actualClosing = ($staticOpening ?? 0) + (AccountTransaction::whereIn('account_id', $cashAccountIds)
+                ->whereDate('created_at', '<=', $toDate)
+                ->selectRaw('SUM(COALESCE(debit,0)) - SUM(COALESCE(credit,0)) as net')
+                ->value('net') ?? 0);
+
+            $reconDifference = round($closingBalance - $actualClosing, 2);
+
+            // 5. Operating Groups
+            $operatingGroups = $operating
+                ->groupBy('sub_group')
+                ->map(fn($rows, $label) => [
+                    'label' => $label,
+                    'rows'  => $rows,
+                    'total' => $rows->sum('cash_effect'),
+                ])
+                ->values();
+
+            $from_date = $startDate;
+            $to_date   = $toDate;
+        }
 
         return view('backend.pages.reports.cashflow', get_defined_vars());
     }
+
+
+    // public function indirectcashflow(Request $request)
+    // {
+    //     $title       = 'Statement of Cash Flow (Indirect Method)';
+    //     $companyInfo = Company::latest('id')->first();
+
+    //     $request->validate([
+    //         'from_date' => 'nullable|date',
+    //         'to_date'   => 'nullable|date|after_or_equal:from_date',
+    //     ]);
+
+    //     // ডিফল্ট: গত সম্পূর্ণ ফিসক্যাল ইয়ার (July-June)। প্রয়োজনে বদলাও।
+    //     $toDate   = $request->to_date ?? date('Y-m-d');
+    //     $fromDate = $request->from_date ?? date('Y-m-d', strtotime($toDate . ' -1 year +1 day'));
+
+    //     $from_date = null;
+    //     $to_date   = null;
+
+
+    //     $netProfit = $depreciation = 0;
+    //     $wcLinesData = [];
+    //     $operatingTotal = $prevOperatingTotal = 0;
+    //     $fixedAssetsAddition = $lastYearAccountsChange = 0;
+    //     $investingTotal = $prevInvestingTotal = 0;
+    //     $financingLinesData = [];
+    //     $financingTotal = $prevFinancingTotal = 0;
+    //     $netChange = $prevNetChange = 0;
+    //     $inventoryChange = 0;
+    //     $openingCash = $closingCash = $prevOpeningCash = $prevClosingCash = 0;
+    //     $reconDifference = 0;
+
+    //     if ($request->method() == 'POST') {
+
+    //         $from_date = $fromDate;
+    //         $to_date   = $toDate;
+
+    //         // ── Previous period ── (auditor statement-culums 2)
+    //         $periodDays   = (strtotime($toDate) - strtotime($fromDate));
+    //         $prevToDate   = date('Y-m-d', strtotime($fromDate . ' -1 day'));
+    //         $prevFromDate = date('Y-m-d', strtotime($prevToDate) - $periodDays);
+
+    //         // ── Day-before-from হিসাব (opening balance এর reference point) ──
+    //         $dayBeforeFrom     = date('Y-m-d', strtotime($fromDate . ' -1 day'));
+    //         $prevDayBeforeFrom = date('Y-m-d', strtotime($prevFromDate . ' -1 day'));
+
+    //         // ── Current period ──
+    //         $closingInventoryCurrent = getInventoryValueAsOf($toDate);
+    //         $openingInventoryCurrent = getInventoryValueAsOf($dayBeforeFrom);   //
+    //         $inventoryChangeCurrent  = $openingInventoryCurrent - $closingInventoryCurrent;
+
+    //         // ── Previous period ──
+    //         $closingInventoryPrevious = getInventoryValueAsOf($prevToDate);
+    //         $openingInventoryPrevious = getInventoryValueAsOf($prevDayBeforeFrom); // 
+    //         $inventoryChangePrevious  = $openingInventoryPrevious - $closingInventoryPrevious;
+
+    //         $inventoryChange = array(
+    //             'current'  => $inventoryChangeCurrent,
+    //             'previous' => $inventoryChangePrevious,
+    //         );
+
+
+
+    //         $config = [
+    //             // Net Profit calculation
+    //             'income_root'  => [17],
+    //             'expense_root' => [21],
+    //             'depreciation' => [1422], // "Depraciation On Asset" (parent: 23, Indirect Expenses)
+    //             'preliminary_expenses' => [],
+    //             'unallocated_revenue_expenditure' => [],
+    //             'inventories' => $inventoryChange,
+    //             'advance_income_tax' => [451], // "Advance Income Tax" (parent: 4)
+    //             // Accounts Receivable — 
+    //             'accounts_receivable' => [5],
+    //             'loan_to_thl' => [223],
+    //             // Investment in FDR 
+    //             'investment_fdr' => [396],
+    //             // credit-balance customer
+    //             'advance_received_for_parties' => [],
+    //             'accounts_payable_other' => [16],
+    //             'car_loan_pcbl' => [885],
+    //             // Short Term Loan — 
+    //             'short_term_loan' => [923],
+    //             'outstanding_liabilities' => [],
+    //             'provision_income_tax' => [],
+    //             'other_advances_deposits' => [4], // ADVANCE, DEPOSITS AND PRE-PAYMENTS (পুরো tree)
+    //             // Fixed Assets (Investing Activities) — 
+    //             'fixed_assets' => [2],
+    //             // Financing Activities
+    //             'share_capital' => [11],
+    //             'share_money_deposit' => [],
+    //             'directors_loan' => [568, 653], // "Loan Received from Md sir" + "Loan to Md sir"
+
+    //             // Cash & Cash Equivalents — 
+    //             'cash_bank' => [6, 7, 8],
+    //         ];
+
+    //         // ====================================================================
+    //         // TREE-WALKER — root id
+    //         // controller-এর resolveAccountType()/isUnderAnchor()  pattern)
+    //         // ====================================================================
+    //         $allAccounts = ChartOfAccount::select('id', 'parent_id', 'balance_type', 'opening_balance')
+    //             ->where('status', 'Active')
+    //             ->whereNull('deleted_at')
+    //             ->get();
+
+
+    //         $childrenMap  = $allAccounts->groupBy('parent_id');
+    //         $accountsById = $allAccounts->keyBy('id');
+
+    //         $collectTree = function ($rootIds) use ($childrenMap) {
+    //             $result = array();
+    //             $stack  = (array) $rootIds;
+    //             while (count($stack) > 0) {
+    //                 $id = array_pop($stack);
+    //                 if (in_array($id, $result)) {
+    //                     continue;
+    //                 }
+    //                 $result[] = $id;
+    //                 $children = isset($childrenMap[$id]) ? $childrenMap[$id] : collect();
+    //                 foreach ($children as $child) {
+    //                     $stack[] = $child->id;
+    //                 }
+    //             }
+    //             return $result;
+    //         };
+
+    //         $expanded = array();
+    //         foreach ($config as $key => $ids) {
+    //             $expanded[$key] = $collectTree($ids);
+    //         }
+
+    //         // ====================================================================
+    //         // HELPER 1: একটা group of accounts-এর "raw signed balance" as-of একটা
+    //         // তারিখ পর্যন্ত বের করা। positive মানে net debit position।
+    //         // ====================================================================
+    //         $getRawBalance = function ($accountIds, $asOfDate) use ($accountsById) {
+    //             if (empty($accountIds)) {
+    //                 return 0.0;
+    //             }
+
+    //             $openingSum = 0.0;
+    //             foreach ($accountIds as $id) {
+    //                 if (!isset($accountsById[$id])) {
+    //                     continue;
+    //                 }
+    //                 $acc = $accountsById[$id];
+    //                 $ob  = (float) $acc->opening_balance;
+    //                 if ($acc->balance_type === 'credit') {
+    //                     $ob = -$ob;
+    //                 }
+    //                 $openingSum += $ob;
+    //             }
+
+    //             $txn = AccountTransaction::whereIn('account_id', $accountIds)
+    //                 ->whereDate('created_at', '<=', $asOfDate)
+    //                 ->selectRaw('COALESCE(SUM(debit),0) as d, COALESCE(SUM(credit),0) as c')
+    //                 ->first();
+
+    //             $totalDebit  = $txn ? (float) $txn->d : 0.0;
+    //             $totalCredit = $txn ? (float) $txn->c : 0.0;
+
+    //             return $openingSum + ($totalDebit - $totalCredit);
+    //         };
+
+    //         // ====================================================================
+    //         // HELPER 2: একটা group of accounts-এর period-এর (flow) মোট debit/credit
+    //         // ====================================================================
+    //         $getPeriodFlow = function ($accountIds, $periodFrom, $periodTo) {
+    //             if (empty($accountIds)) {
+    //                 return array('debit' => 0.0, 'credit' => 0.0);
+    //             }
+    //             $row = AccountTransaction::whereIn('account_id', $accountIds)
+    //                 ->whereDate('created_at', '>=', $periodFrom)
+    //                 ->whereDate('created_at', '<=', $periodTo)
+    //                 ->selectRaw('COALESCE(SUM(debit),0) as d, COALESCE(SUM(credit),0) as c')
+    //                 ->first();
+    //             return array(
+    //                 'debit'  => $row ? (float) $row->d : 0.0,
+    //                 'credit' => $row ? (float) $row->c : 0.0,
+    //             );
+    //         };
+
+    //         // ====================================================================
+    //         // ১. NET PROFIT (period flow, Income Statement-এর মতো হিসাব)
+    //         // ====================================================================
+    //         $incomeFlow  = $getPeriodFlow($expanded['income_root'], $fromDate, $toDate);
+    //         $expenseFlow = $getPeriodFlow($expanded['expense_root'], $fromDate, $toDate);
+    //         $netProfit   = ($incomeFlow['credit'] - $incomeFlow['debit']) - ($expenseFlow['debit'] - $expenseFlow['credit']);
+
+    //         $prevIncomeFlow  = $getPeriodFlow($expanded['income_root'], $prevFromDate, $prevToDate);
+    //         $prevExpenseFlow = $getPeriodFlow($expanded['expense_root'], $prevFromDate, $prevToDate);
+    //         $prevNetProfit   = ($prevIncomeFlow['credit'] - $prevIncomeFlow['debit']) - ($prevExpenseFlow['debit'] - $prevExpenseFlow['credit']);
+
+    //         // ====================================================================
+    //         // ২. DEPRECIATION (non-cash expense, period flow-এ debit side)
+    //         // ====================================================================
+    //         $depFlow       = $getPeriodFlow($expanded['depreciation'], $fromDate, $toDate);
+    //         $depreciation  = $depFlow['debit'] - $depFlow['credit'];
+    //         $prevDepFlow      = $getPeriodFlow($expanded['depreciation'], $prevFromDate, $prevToDate);
+    //         $prevDepreciation = $prevDepFlow['debit'] - $prevDepFlow['credit'];
+
+    //         // ====================================================================
+    //         // ৩. WORKING CAPITAL CHANGE — generic calculator (
+    //         //    nature = 'asset' হলে বাড়লে cash কমে (negative cash effect)
+    //         //    nature = 'liability' হলে বাড়লে cash বাড়ে (positive cash effect)
+    //         // ====================================================================
+    //         $wcLine = function ($key, $nature) use ($expanded, $getRawBalance, $fromDate, $toDate, $prevFromDate, $prevToDate) {
+    //             $ids = $expanded[$key];
+
+    //             $dayBeforeFrom     = date('Y-m-d', strtotime($fromDate . ' -1 day'));
+    //             $prevDayBeforeFrom = date('Y-m-d', strtotime($prevFromDate . ' -1 day'));
+
+    //             $rawStart = $getRawBalance($ids, $dayBeforeFrom);
+    //             $rawEnd   = $getRawBalance($ids, $toDate);
+
+    //             $prevRawStart = $getRawBalance($ids, $prevDayBeforeFrom);
+    //             $prevRawEnd   = $getRawBalance($ids, $prevToDate);
+
+    //             if ($nature === 'asset') {
+    //                 $balStart     = $rawStart;
+    //                 $balEnd       = $rawEnd;
+    //                 $prevBalStart = $prevRawStart;
+    //                 $prevBalEnd   = $prevRawEnd;
+    //             } else {
+    //                 // liability/equity: raw balance-এ credit=negative ছিল, তাই
+    //                 // liability-natural-positive বানাতে sign উল্টে দেওয়া হচ্ছে
+    //                 $balStart     = -$rawStart;
+    //                 $balEnd       = -$rawEnd;
+    //                 $prevBalStart = -$prevRawStart;
+    //                 $prevBalEnd   = -$prevRawEnd;
+    //             }
+
+    //             $change     = $balEnd - $balStart;
+    //             $prevChange = $prevBalEnd - $prevBalStart;
+
+    //             $cashEffect     = $nature === 'asset' ? -$change : $change;
+    //             $prevCashEffect = $nature === 'asset' ? -$prevChange : $prevChange;
+
+    //             return array('current' => $cashEffect, 'previous' => $prevCashEffect);
+    //         };
+
+
+    //         $wcLinesData = array(
+    //             'preliminary_expenses'             => array('label' => '(Increase)/Decrease in Preliminary Expenses',                'data' => $wcLine('preliminary_expenses', 'asset')),
+    //             'unallocated_revenue_expenditure'  => array('label' => '(Increase)/Decrease in Unallocated revenue expenditure',     'data' => $wcLine('unallocated_revenue_expenditure', 'asset')),
+    //             'inventories'                      => array('label' => '(Increase)/Decrease in Inventories',                          'data'  => $inventoryChange),
+    //             'advance_income_tax'               => array('label' => '(Increase)/Decrease in Advance Income Tax',                   'data' => $wcLine('advance_income_tax', 'asset')),
+    //             'accounts_receivable'              => array('label' => '(Increase)/Decrease in Accounts Receivable',                  'data' => $wcLine('accounts_receivable', 'asset')),
+    //             'loan_to_thl'                      => array('label' => '(Increase)/Decrease in Loan To THL',                          'data' => $wcLine('loan_to_thl', 'asset')),
+    //             'investment_fdr'                   => array('label' => '(Increase)/Decrease in Investment in FDR',                    'data' => $wcLine('investment_fdr', 'asset')),
+    //             'advance_received_for_parties'     => array('label' => '(Increase)/Decrease in Advance Received For Parties',         'data' => $wcLine('advance_received_for_parties', 'liability')),
+    //             'accounts_payable_other'           => array('label' => '(Increase)/Decrease in Accounts Payable & Other Payable',     'data' => $wcLine('accounts_payable_other', 'liability')),
+    //             'car_loan_pcbl'                    => array('label' => '(Increase)/Decrease in Car Loan : UCBL PLC',                  'data' => $wcLine('car_loan_pcbl', 'liability')),
+    //             'short_term_loan'                  => array('label' => '(Increase)/Decrease in Short Term Loan',                     'data' => $wcLine('short_term_loan', 'liability')),
+    //             'outstanding_liabilities'          => array('label' => '(Increase)/Decrease in Outstanding Liabilities',              'data' => $wcLine('outstanding_liabilities', 'liability')),
+    //             'provision_income_tax'             => array('label' => '(Increase)/Decrease in Provision for income tax',             'data' => $wcLine('provision_income_tax', 'liability')),
+    //         );
+
+    //         $wcCurrentSum = 0.0;
+    //         $wcPrevSum    = 0.0;
+    //         foreach ($wcLinesData as $key => $row) {
+    //             $wcCurrentSum += $row['data']['current'];
+    //             $wcPrevSum    += $row['data']['previous'];
+    //         }
+
+    //         $operatingTotal     = $netProfit + $depreciation + $wcCurrentSum;
+    //         $prevOperatingTotal = $prevNetProfit + $prevDepreciation + $wcPrevSum;
+
+    //         // ====================================================================
+    //         // ৪. INVESTING ACTIVITIES
+    //         // ====================================================================
+    //         // Fixed Assets Addition — period-এর নতুন debit movement (asset কেনা)
+    //         $faFlow = $getPeriodFlow($expanded['fixed_assets'], $fromDate, $toDate);
+    //         $fixedAssetsAddition = - ($faFlow['debit'] - $faFlow['credit']); // কেনা = cash আউট
+
+    //         $prevFaFlow = $getPeriodFlow($expanded['fixed_assets'], $prevFromDate, $prevToDate);
+    //         $prevFixedAssetsAddition = - ($prevFaFlow['debit'] - $prevFaFlow['credit']);
+
+    //         // "Increase/(Decrease) in Last year Accounts" — auditor-এর নির্দিষ্ট
+    //         // adjustment লাইন, exact source account confirm করা হয়নি — আপাতত 0
+    //         $lastYearAccountsChange     = 0.0;
+    //         $prevLastYearAccountsChange = 0.0;
+
+    //         $investingTotal     = $fixedAssetsAddition + $lastYearAccountsChange;
+    //         $prevInvestingTotal = $prevFixedAssetsAddition + $prevLastYearAccountsChange;
+
+    //         // ====================================================================
+    //         // ৫. FINANCING ACTIVITIES
+    //         // ====================================================================
+    //         $financingLinesData = array(
+    //             'share_capital'       => array('label' => "Increase/(Decrease) in Share Capital",        'data' => $wcLine('share_capital', 'liability')),
+    //             'share_money_deposit' => array('label' => "Increase/(Decrease) in Share Money Deposit",   'data' => $wcLine('share_money_deposit', 'liability')),
+    //             'directors_loan'      => array('label' => "Increase/(Decrease) in Director's Loan",       'data' => $wcLine('directors_loan', 'liability')),
+    //         );
+
+    //         $financingTotal     = 0.0;
+    //         $prevFinancingTotal = 0.0;
+    //         foreach ($financingLinesData as $row) {
+    //             $financingTotal     += $row['data']['current'];
+    //             $prevFinancingTotal += $row['data']['previous'];
+    //         }
+
+    //         // ====================================================================
+    //         // ৬. SUMMARY (D, E, F)
+    //         // ====================================================================
+    //         $netChange     = $operatingTotal + $investingTotal + $financingTotal;
+    //         $prevNetChange = $prevOperatingTotal + $prevInvestingTotal + $prevFinancingTotal;
+
+    //         $dayBeforeFrom     = date('Y-m-d', strtotime($fromDate . ' -1 day'));
+    //         $prevDayBeforeFrom = date('Y-m-d', strtotime($prevFromDate . ' -1 day'));
+
+    //         $openingCash     = $getRawBalance($expanded['cash_bank'], $dayBeforeFrom);
+    //         $closingCash     = $getRawBalance($expanded['cash_bank'], $toDate);
+    //         $prevOpeningCash = $getRawBalance($expanded['cash_bank'], $prevDayBeforeFrom);
+    //         $prevClosingCash = $getRawBalance($expanded['cash_bank'], $prevToDate);
+
+    //         // ====================================================================
+    //         // ৭. RECONCILIATION CHECK — computed vs actual ledger closing
+    //         // ====================================================================
+    //         $computedClosing = $openingCash + $netChange;
+    //         $reconDifference = round($computedClosing - $closingCash, 2);
+    //     }
+
+    //     return view('backend.pages.reports.cashflow_indirect', get_defined_vars());
+    // }
+
+    // public function indirectcashflow(Request $request)
+    // {
+    //     $title       = 'Statement of Cash Flow (Indirect Method)';
+    //     $companyInfo = Company::latest('id')->first();
+
+    //     $request->validate([
+    //         'from_date' => 'nullable|date',
+    //         'to_date'   => 'nullable|date|after_or_equal:from_date',
+    //     ]);
+
+    //     // ডিফল্ট: গত সম্পূর্ণ ফিসক্যাল ইয়ার (July-June)। প্রয়োজনে বদলাও।
+    //     $toDate   = $request->to_date ?? date('Y-m-d');
+    //     $fromDate = $request->from_date ?? date('Y-m-d', strtotime($toDate . ' -1 year +1 day'));
+
+    //     $from_date = null;
+    //     $to_date   = null;
+
+    //     $netProfit = $depreciation = 0;
+    //     $wcLinesData = [];
+    //     $operatingTotal = $prevOperatingTotal = 0;
+    //     $fixedAssetsAddition = $lastYearAccountsChange = 0;
+    //     $investingTotal = $prevInvestingTotal = 0;
+    //     $financingLinesData = [];
+    //     $financingTotal = $prevFinancingTotal = 0;
+    //     $netChange = $prevNetChange = 0;
+    //     $openingCash = $closingCash = $prevOpeningCash = $prevClosingCash = 0;
+    //     $reconDifference = 0;
+
+    //     if ($request->method() == 'POST') {
+
+    //         $from_date = $fromDate;
+    //         $to_date   = $toDate;
+
+    //         // ── Previous period ── (auditor statement-column 2)
+    //         $periodDays   = (strtotime($toDate) - strtotime($fromDate));
+    //         $prevToDate   = date('Y-m-d', strtotime($fromDate . ' -1 day'));
+    //         $prevFromDate = date('Y-m-d', strtotime($prevToDate) - $periodDays);
+
+    //         // ── Day-before-from হিসাব (opening balance এর reference point) ──
+    //         $dayBeforeFrom     = date('Y-m-d', strtotime($fromDate . ' -1 day'));
+    //         $prevDayBeforeFrom = date('Y-m-d', strtotime($prevFromDate . ' -1 day'));
+
+    //         // ── Inventory (stocks table থেকে, chart_of_accounts এ কোনো account নেই) ──
+    //         $closingInventoryCurrent = getInventoryValueAsOf($toDate);
+    //         $openingInventoryCurrent = getInventoryValueAsOf($dayBeforeFrom);
+    //         $inventoryChangeCurrent  = $openingInventoryCurrent - $closingInventoryCurrent;
+
+    //         $closingInventoryPrevious = getInventoryValueAsOf($prevToDate);
+    //         $openingInventoryPrevious = getInventoryValueAsOf($prevDayBeforeFrom);
+    //         $inventoryChangePrevious  = $openingInventoryPrevious - $closingInventoryPrevious;
+
+    //         $inventoryChange = array(
+    //             'current'  => $inventoryChangeCurrent,
+    //             'previous' => $inventoryChangePrevious,
+    //         );
+
+
+    //         $config = [
+    //             // Net Profit calculation
+    //             'income_root'  => [17],
+    //             'expense_root' => [21],
+    //             'depreciation' => [1422], // "Depraciation On Asset" (parent: 23)
+
+    //             'preliminary_expenses'             => [],
+    //             'unallocated_revenue_expenditure'  => [],
+    //             'advance_income_tax'               => [451],  // "Advance Income Tax" (parent: 4)
+    //             'accounts_receivable'              => [5],    // ACCOUNTS RECEIVABLE root
+    //             'loan_to_thl'                      => [233],  // "Taste Harbor" (Joy/THL)
+    //             'investment_fdr'                   => [396],  // INVESTMENT root (FDR + Loan to Md sir বাদে)
+    //             'advance_received_for_parties'      => [],
+    //             'accounts_payable_other'            => [16],  // Accounts Payable root
+    //             'short_term_loan'                   => [923], // Short Term Loan
+    //             'long_term_loan'                    => [924], // Long Term Loan (Pubali car loan + SCB loan + interest)
+    //             'outstanding_liabilities'            => [],
+    //             'provision_income_tax'               => [],
+    //             'other_advances_deposits'            => [4],  // ADVANCE, DEPOSITS AND PRE-PAYMENTS (বাকি সব, ATI/THL বাদে)
+
+    //             'other_current_assets'          => [3],   // CURRENT ASSETS residual (asset)
+    //             'other_long_term_liabilities'   => [14],  // Long Term Liabilities residual
+    //             'other_current_liabilities'     => [15],  // Current Liabilities residual
+    //             // Investing Activities
+    //             'fixed_assets' => [2],
+
+    //             // Financing Activities
+    //             'share_capital'       => [11],
+    //             'share_money_deposit' => [],
+    //             'directors_loan'      => [568, 653], // "Loan Received from Md sir" + "Loan to Md sir"
+
+    //             // Cash & Cash Equivalents
+    //             'cash_bank' => [6, 7, 8],
+    //         ];
+
+    //         // ====================================================================
+    //         // TREE-WALKER — root id থেকে সব descendant বের করা
+    //         // ====================================================================
+    //         $allAccounts = ChartOfAccount::select('id', 'parent_id', 'account_name', 'balance_type', 'opening_balance')
+    //             ->where('status', 'Active')
+    //             ->whereNull('deleted_at')
+    //             ->get();
+
+    //         $childrenMap  = $allAccounts->groupBy('parent_id');
+    //         $accountsById = $allAccounts->keyBy('id');
+
+    //         $collectTree = function ($rootIds) use ($childrenMap) {
+    //             $result = array();
+    //             $stack  = (array) $rootIds;
+    //             while (count($stack) > 0) {
+    //                 $id = array_pop($stack);
+    //                 if (in_array($id, $result)) {
+    //                     continue;
+    //                 }
+    //                 $result[] = $id;
+    //                 $children = isset($childrenMap[$id]) ? $childrenMap[$id] : collect();
+    //                 foreach ($children as $child) {
+    //                     $stack[] = $child->id;
+    //                 }
+    //             }
+    //             return $result;
+    //         };
+
+    //         // rootIds tree থেকে excludeIds (এবং তাদের descendants) বাদ দেওয়ার জন্য
+    //         $collectTreeExcluding = function ($rootIds, $excludeIds) use ($collectTree) {
+    //             $full = $collectTree($rootIds);
+    //             $exclude = [];
+    //             foreach ($excludeIds as $exId) {
+    //                 $exclude = array_merge($exclude, $collectTree([$exId]));
+    //             }
+    //             return array_values(array_diff($full, $exclude));
+    //         };
+
+    //         $expanded = array();
+    //         foreach ($config as $key => $ids) {
+    //             $expanded[$key] = $collectTree($ids);
+    //         }
+
+    //         // ── Double-counting fix ──
+    //         // id 451 (Advance Income Tax) ও id 233 (Taste Harbor/THL) দুটোই
+    //         // parent_id=4 এর সন্তান, তাই other_advances_deposits থেকে বাদ দিতে হবে
+    //         $expanded['other_advances_deposits'] = $collectTreeExcluding([4], [451, 233]);
+
+    //         // id 653 (Loan to Md sir) parent_id=396 (INVESTMENT) এর সন্তান, কিন্তু
+    //         // directors_loan এও গণনা হচ্ছে, তাই investment_fdr থেকে বাদ
+    //         $expanded['investment_fdr'] = $collectTreeExcluding([396], [653]);
+
+    //         // ====================================================================
+    //         // DYNAMIC LABEL BUILDER — Chart of Accounts থেকে label বানানো
+    //         // ====================================================================
+    //         // config key => fallback label (root id array খালি থাকলে বা account না
+    //         // পেলে এই label ব্যবহার হবে, যাতে UI তে কখনো ফাঁকা label না দেখায়)
+    //         $fallbackLabels = [
+    //             'preliminary_expenses'            => '(Increase)/Decrease in Preliminary Expenses',
+    //             'unallocated_revenue_expenditure' => '(Increase)/Decrease in Unallocated Revenue Expenditure',
+    //             'advance_income_tax'              => '(Increase)/Decrease in Advance Income Tax',
+    //             'accounts_receivable'             => '(Increase)/Decrease in Accounts Receivable',
+    //             'loan_to_thl'                     => '(Increase)/Decrease in Loan To THL',
+    //             'investment_fdr'                  => '(Increase)/Decrease in Investment in FDR',
+    //             'advance_received_for_parties'    => '(Increase)/Decrease in Advance Received For Parties',
+    //             'accounts_payable_other'          => '(Increase)/Decrease in Accounts Payable & Other Payable',
+    //             'short_term_loan'                 => '(Increase)/Decrease in Short Term Loan',
+    //             'long_term_loan'                  => '(Increase)/Decrease in Long Term Loan',
+    //             'outstanding_liabilities'         => '(Increase)/Decrease in Outstanding Liabilities',
+    //             'provision_income_tax'            => '(Increase)/Decrease in Provision for Income Tax',
+    //             'share_capital'                   => "Increase/(Decrease) in Share Capital",
+    //             'share_money_deposit'             => "Increase/(Decrease) in Share Money Deposit",
+    //             'directors_loan'                  => "Increase/(Decrease) in Director's Loan",
+    //         ];
+
+    //         // config-এর root id(s) থেকে account_name(গুলো) জোড়া দিয়ে dynamic label বানায়
+    //         $buildLabel = function ($key, $prefix = '(Increase)/Decrease in ') use ($config, $accountsById, $fallbackLabels) {
+    //             $rootIds = $config[$key];
+    //             if (empty($rootIds)) {
+    //                 return $fallbackLabels[$key] ?? ucwords(str_replace('_', ' ', $key));
+    //             }
+    //             $names = [];
+    //             foreach ((array) $rootIds as $rid) {
+    //                 if (isset($accountsById[$rid])) {
+    //                     $names[] = $accountsById[$rid]->account_name;
+    //                 }
+    //             }
+    //             if (empty($names)) {
+    //                 return $fallbackLabels[$key] ?? ucwords(str_replace('_', ' ', $key));
+    //             }
+    //             return $prefix . implode(' & ', $names);
+    //         };
+
+    //         // ====================================================================
+    //         // HELPER 1: raw signed balance as-of একটা তারিখ পর্যন্ত
+    //         // ====================================================================
+    //         $getRawBalance = function ($accountIds, $asOfDate) use ($accountsById) {
+    //             if (empty($accountIds)) {
+    //                 return 0.0;
+    //             }
+
+    //             $openingSum = 0.0;
+    //             foreach ($accountIds as $id) {
+    //                 if (!isset($accountsById[$id])) {
+    //                     continue;
+    //                 }
+    //                 $acc = $accountsById[$id];
+    //                 $ob  = (float) $acc->opening_balance;
+    //                 if ($acc->balance_type === 'credit') {
+    //                     $ob = -$ob;
+    //                 }
+    //                 $openingSum += $ob;
+    //             }
+
+    //             $txn = AccountTransaction::whereIn('account_id', $accountIds)
+    //                 ->whereDate('created_at', '<=', $asOfDate)
+    //                 ->selectRaw('COALESCE(SUM(debit),0) as d, COALESCE(SUM(credit),0) as c')
+    //                 ->first();
+
+    //             $totalDebit  = $txn ? (float) $txn->d : 0.0;
+    //             $totalCredit = $txn ? (float) $txn->c : 0.0;
+
+    //             return $openingSum + ($totalDebit - $totalCredit);
+    //         };
+
+    //         // ====================================================================
+    //         // HELPER 2: period flow (debit/credit total)
+    //         // ====================================================================
+    //         $getPeriodFlow = function ($accountIds, $periodFrom, $periodTo) {
+    //             if (empty($accountIds)) {
+    //                 return array('debit' => 0.0, 'credit' => 0.0);
+    //             }
+    //             $row = AccountTransaction::whereIn('account_id', $accountIds)
+    //                 ->whereDate('created_at', '>=', $periodFrom)
+    //                 ->whereDate('created_at', '<=', $periodTo)
+    //                 ->selectRaw('COALESCE(SUM(debit),0) as d, COALESCE(SUM(credit),0) as c')
+    //                 ->first();
+    //             return array(
+    //                 'debit'  => $row ? (float) $row->d : 0.0,
+    //                 'credit' => $row ? (float) $row->c : 0.0,
+    //             );
+    //         };
+
+    //         // ====================================================================
+    //         // ১. NET PROFIT
+    //         // ====================================================================
+    //         $incomeFlow  = $getPeriodFlow($expanded['income_root'], $fromDate, $toDate);
+    //         $expenseFlow = $getPeriodFlow($expanded['expense_root'], $fromDate, $toDate);
+    //         $netProfit   = ($incomeFlow['credit'] - $incomeFlow['debit']) - ($expenseFlow['debit'] - $expenseFlow['credit']);
+
+    //         $prevIncomeFlow  = $getPeriodFlow($expanded['income_root'], $prevFromDate, $prevToDate);
+    //         $prevExpenseFlow = $getPeriodFlow($expanded['expense_root'], $prevFromDate, $prevToDate);
+    //         $prevNetProfit   = ($prevIncomeFlow['credit'] - $prevIncomeFlow['debit']) - ($prevExpenseFlow['debit'] - $prevExpenseFlow['credit']);
+
+    //         // ====================================================================
+    //         // ২. DEPRECIATION
+    //         // ====================================================================
+    //         $depFlow          = $getPeriodFlow($expanded['depreciation'], $fromDate, $toDate);
+    //         $depreciation     = $depFlow['debit'] - $depFlow['credit'];
+    //         $prevDepFlow      = $getPeriodFlow($expanded['depreciation'], $prevFromDate, $prevToDate);
+    //         $prevDepreciation = $prevDepFlow['debit'] - $prevDepFlow['credit'];
+
+    //         // ====================================================================
+    //         // ৩. WORKING CAPITAL CHANGE — generic calculator
+    //         // ====================================================================
+    //         $wcLine = function ($key, $nature) use ($expanded, $getRawBalance, $fromDate, $toDate, $prevFromDate, $prevToDate) {
+    //             $ids = $expanded[$key];
+
+    //             $dayBeforeFrom     = date('Y-m-d', strtotime($fromDate . ' -1 day'));
+    //             $prevDayBeforeFrom = date('Y-m-d', strtotime($prevFromDate . ' -1 day'));
+
+    //             $rawStart = $getRawBalance($ids, $dayBeforeFrom);
+    //             $rawEnd   = $getRawBalance($ids, $toDate);
+
+    //             $prevRawStart = $getRawBalance($ids, $prevDayBeforeFrom);
+    //             $prevRawEnd   = $getRawBalance($ids, $prevToDate);
+
+    //             if ($nature === 'asset') {
+    //                 $balStart     = $rawStart;
+    //                 $balEnd       = $rawEnd;
+    //                 $prevBalStart = $prevRawStart;
+    //                 $prevBalEnd   = $prevRawEnd;
+    //             } else {
+    //                 $balStart     = -$rawStart;
+    //                 $balEnd       = -$rawEnd;
+    //                 $prevBalStart = -$prevRawStart;
+    //                 $prevBalEnd   = -$prevRawEnd;
+    //             }
+
+    //             $change     = $balEnd - $balStart;
+    //             $prevChange = $prevBalEnd - $prevBalStart;
+
+    //             $cashEffect     = $nature === 'asset' ? -$change : $change;
+    //             $prevCashEffect = $nature === 'asset' ? -$prevChange : $prevChange;
+
+    //             return array('current' => $cashEffect, 'previous' => $prevCashEffect);
+    //         };
+
+    //         // ====================================================================
+    //         // wcLinesData — label এখন dynamic (buildLabel দিয়ে)
+    //         // ====================================================================
+    //         $wcLinesData = array(
+    //             'preliminary_expenses'             => array('label' => $buildLabel('preliminary_expenses'),            'data' => $wcLine('preliminary_expenses', 'asset')),
+    //             'unallocated_revenue_expenditure'  => array('label' => $buildLabel('unallocated_revenue_expenditure'), 'data' => $wcLine('unallocated_revenue_expenditure', 'asset')),
+    //             'inventories'                      => array('label' => '(Increase)/Decrease in Inventories',            'data' => $inventoryChange), // stocks table থেকে, COA-তে নেই
+    //             'advance_income_tax'               => array('label' => $buildLabel('advance_income_tax'),              'data' => $wcLine('advance_income_tax', 'asset')),
+    //             'accounts_receivable'              => array('label' => $buildLabel('accounts_receivable'),             'data' => $wcLine('accounts_receivable', 'asset')),
+    //             'loan_to_thl'                      => array('label' => $buildLabel('loan_to_thl'),                     'data' => $wcLine('loan_to_thl', 'asset')),
+    //             'investment_fdr'                   => array('label' => $buildLabel('investment_fdr'),                  'data' => $wcLine('investment_fdr', 'asset')),
+    //             'advance_received_for_parties'     => array('label' => $buildLabel('advance_received_for_parties'),    'data' => $wcLine('advance_received_for_parties', 'liability')),
+    //             'accounts_payable_other'           => array('label' => $buildLabel('accounts_payable_other'),          'data' => $wcLine('accounts_payable_other', 'liability')),
+    //             'short_term_loan'                  => array('label' => $buildLabel('short_term_loan'),                 'data' => $wcLine('short_term_loan', 'liability')),
+    //             'long_term_loan'                   => array('label' => $buildLabel('long_term_loan'),                  'data' => $wcLine('long_term_loan', 'liability')),
+    //             'outstanding_liabilities'          => array('label' => $buildLabel('outstanding_liabilities'),         'data' => $wcLine('outstanding_liabilities', 'liability')),
+    //             'provision_income_tax'             => array('label' => $buildLabel('provision_income_tax'),           'data' => $wcLine('provision_income_tax', 'liability')),
+    //         );
+
+    //         $wcCurrentSum = 0.0;
+    //         $wcPrevSum    = 0.0;
+    //         foreach ($wcLinesData as $row) {
+    //             $wcCurrentSum += $row['data']['current'];
+    //             $wcPrevSum    += $row['data']['previous'];
+    //         }
+
+    //         $operatingTotal     = $netProfit + $depreciation + $wcCurrentSum;
+    //         $prevOperatingTotal = $prevNetProfit + $prevDepreciation + $wcPrevSum;
+
+    //         // ====================================================================
+    //         // ৪. INVESTING ACTIVITIES
+    //         // ====================================================================
+    //         $faFlow = $getPeriodFlow($expanded['fixed_assets'], $fromDate, $toDate);
+    //         $fixedAssetsAddition = - ($faFlow['debit'] - $faFlow['credit']);
+
+    //         $prevFaFlow = $getPeriodFlow($expanded['fixed_assets'], $prevFromDate, $prevToDate);
+    //         $prevFixedAssetsAddition = - ($prevFaFlow['debit'] - $prevFaFlow['credit']);
+
+    //         $lastYearAccountsChange     = 0.0;
+    //         $prevLastYearAccountsChange = 0.0;
+
+    //         $investingTotal     = $fixedAssetsAddition + $lastYearAccountsChange;
+    //         $prevInvestingTotal = $prevFixedAssetsAddition + $prevLastYearAccountsChange;
+
+    //         // ====================================================================
+    //         // ৫. FINANCING ACTIVITIES
+    //         // ====================================================================
+    //         $financingLinesData = array(
+    //             'share_capital'       => array('label' => $buildLabel('share_capital', ''), 'data' => $wcLine('share_capital', 'liability')),
+    //             'share_money_deposit' => array('label' => $buildLabel('share_money_deposit', ''), 'data' => $wcLine('share_money_deposit', 'liability')),
+    //             'long_term_loan_fin'  => array('label' => "Increase/(Decrease) in Long Term Loan (see Operating note)", 'data' => array('current' => 0, 'previous' => 0)), // NOTE: long_term_loan ইতিমধ্যে Operating-এ ধরা হয়েছে, এখানে duplicate করা হয়নি
+    //             'directors_loan'      => array('label' => $buildLabel('directors_loan', ''), 'data' => $wcLine('directors_loan', 'liability')),
+    //         );
+
+    //         $financingTotal     = 0.0;
+    //         $prevFinancingTotal = 0.0;
+    //         foreach ($financingLinesData as $row) {
+    //             $financingTotal     += $row['data']['current'];
+    //             $prevFinancingTotal += $row['data']['previous'];
+    //         }
+
+    //         // ====================================================================
+    //         // ৬. SUMMARY (D, E, F)
+    //         // ====================================================================
+    //         $netChange     = $operatingTotal + $investingTotal + $financingTotal;
+    //         $prevNetChange = $prevOperatingTotal + $prevInvestingTotal + $prevFinancingTotal;
+
+    //         $dayBeforeFrom     = date('Y-m-d', strtotime($fromDate . ' -1 day'));
+    //         $prevDayBeforeFrom = date('Y-m-d', strtotime($prevFromDate . ' -1 day'));
+
+    //         $openingCash     = $getRawBalance($expanded['cash_bank'], $dayBeforeFrom);
+    //         $closingCash     = $getRawBalance($expanded['cash_bank'], $toDate);
+    //         $prevOpeningCash = $getRawBalance($expanded['cash_bank'], $prevDayBeforeFrom);
+    //         $prevClosingCash = $getRawBalance($expanded['cash_bank'], $prevToDate);
+
+    //         // ====================================================================
+    //         // ৭. RECONCILIATION CHECK
+    //         // ====================================================================
+    //         $computedClosing = $openingCash + $netChange;
+    //         $reconDifference = round($computedClosing - $closingCash, 2);
+    //     }
+
+    //     return view('backend.pages.reports.cashflow_indirect', get_defined_vars());
+    // }
+
+    public function indirectcashflow(Request $request)
+    {
+        $title       = 'Statement of Cash Flow (Indirect Method)';
+        $companyInfo = Company::latest('id')->first();
+
+        $request->validate([
+            'from_date' => 'nullable|date',
+            'to_date'   => 'nullable|date|after_or_equal:from_date',
+        ]);
+
+        // ডিফল্ট: গত সম্পূর্ণ ফিসক্যাল ইয়ার (July-June)। প্রয়োজনে বদলাও।
+        $toDate   = $request->to_date ?? date('Y-m-d');
+        $fromDate = $request->from_date ?? date('Y-m-d', strtotime($toDate . ' -1 year +1 day'));
+
+        $from_date = null;
+        $to_date   = null;
+
+        $netProfit = $depreciation = 0;
+        $wcLinesData = [];
+        $operatingTotal = $prevOperatingTotal = 0;
+        $fixedAssetsAddition = $lastYearAccountsChange = 0;
+        $investingTotal = $prevInvestingTotal = 0;
+        $financingLinesData = [];
+        $financingTotal = $prevFinancingTotal = 0;
+        $netChange = $prevNetChange = 0;
+        $openingCash = $closingCash = $prevOpeningCash = $prevClosingCash = 0;
+        $reconDifference = 0;
+
+        if ($request->method() == 'POST') {
+
+            $from_date = $fromDate;
+            $to_date   = $toDate;
+
+
+            $prevToDate   = date('Y-m-d', strtotime($fromDate . ' -1 day'));
+            $prevFromDate = date('Y-m-d', strtotime($fromDate . ' -1 year'));
+
+            // ── Day-before-from হিসাব (opening balance এর reference point) ──
+            $dayBeforeFrom     = date('Y-m-d', strtotime($fromDate . ' -1 day'));
+            $prevDayBeforeFrom = date('Y-m-d', strtotime($prevFromDate . ' -1 day'));
+
+
+            $useInventoryAdjustment = true;
+
+            if ($useInventoryAdjustment) {
+                $closingInventoryCurrent = getInventoryValueAsOf($toDate);
+                $openingInventoryCurrent = getInventoryValueAsOf($dayBeforeFrom);
+                $inventoryChangeCurrent  = $openingInventoryCurrent - $closingInventoryCurrent;
+
+                $closingInventoryPrevious = getInventoryValueAsOf($prevToDate);
+                $openingInventoryPrevious = getInventoryValueAsOf($prevDayBeforeFrom);
+                $inventoryChangePrevious  = $openingInventoryPrevious - $closingInventoryPrevious;
+            } else {
+                $inventoryChangeCurrent  = 0.0;
+                $inventoryChangePrevious = 0.0;
+            }
+
+            $inventoryChange = array(
+                'current'  => 0,
+                'previous' => 0,
+            );
+
+            $config = [
+                // Net Profit calculation
+                'income_root'  => [17],
+                'expense_root' => [21],
+                'depreciation' => [1422], // "Depraciation On Asset" (parent: 23)
+
+                'preliminary_expenses'             => [],
+                'unallocated_revenue_expenditure'  => [],
+                'advance_income_tax'               => [451],  // "Advance Income Tax" (parent: 4)
+                'accounts_receivable'              => [5],    // ACCOUNTS RECEIVABLE root
+                'loan_to_thl'                      => [233],  // "Taste Harbor" (Joy/THL)
+                'investment_fdr'                   => [396],  // INVESTMENT root (FDR + Loan to Md sir বাদে)
+                'advance_received_for_parties'      => [],
+                'accounts_payable_other'            => [16],  // Accounts Payable root
+                'short_term_loan'                   => [923], // Short Term Loan
+                'long_term_loan'                    => [924], // Long Term Loan (Pubali car loan + SCB loan + interest)
+                'outstanding_liabilities'            => [],
+                'provision_income_tax'               => [],
+                'other_advances_deposits'            => [4],  // ADVANCE, DEPOSITS AND PRE-PAYMENTS (বাকি সব, AIT/THL বাদে)
+
+                'other_current_assets'          => [3],   // CURRENT ASSETS residual (asset)
+                'other_long_term_liabilities'   => [14],  // Long Term Liabilities residual
+                'other_current_liabilities'     => [15],  // Current Liabilities residual
+
+                // Investing Activities
+                'fixed_assets' => [2],
+
+                // Financing Activities
+                'share_capital'       => [11],
+                'share_money_deposit' => [],
+                'directors_loan'      => [568, 653], // "Loan Received from Md sir" + "Loan to Md sir"
+
+                // Cash & Cash Equivalents
+                'cash_bank' => [6, 7, 8],
+            ];
+
+            // ====================================================================
+            // TREE-WALKER — root id থেকে সব descendant বের করা
+            // ====================================================================
+            $allAccounts = ChartOfAccount::select('id', 'parent_id', 'account_name', 'balance_type', 'opening_balance')
+                ->where('status', 'Active')
+                ->whereNull('deleted_at')
+                ->get();
+
+            $childrenMap  = $allAccounts->groupBy('parent_id');
+            $accountsById = $allAccounts->keyBy('id');
+
+            $collectTree = function ($rootIds) use ($childrenMap) {
+                $result = array();
+                $stack  = (array) $rootIds;
+                while (count($stack) > 0) {
+                    $id = array_pop($stack);
+                    if (in_array($id, $result)) {
+                        continue;
+                    }
+                    $result[] = $id;
+                    $children = isset($childrenMap[$id]) ? $childrenMap[$id] : collect();
+                    foreach ($children as $child) {
+                        $stack[] = $child->id;
+                    }
+                }
+                return $result;
+            };
+
+            // rootIds tree থেকে excludeIds (এবং তাদের descendants) বাদ দেওয়ার জন্য
+            $collectTreeExcluding = function ($rootIds, $excludeIds) use ($collectTree) {
+                $full = $collectTree($rootIds);
+                $exclude = [];
+                foreach ($excludeIds as $exId) {
+                    $exclude = array_merge($exclude, $collectTree([$exId]));
+                }
+                return array_values(array_diff($full, $exclude));
+            };
+
+            $expanded = array();
+            foreach ($config as $key => $ids) {
+                $expanded[$key] = $collectTree($ids);
+            }
+
+            // ── Double-counting fix ──
+            // id 451 (Advance Income Tax) ও id 233 (Taste Harbor/THL) দুটোই
+            // parent_id=4 এর সন্তান, তাই other_advances_deposits থেকে বাদ দিতে হবে
+            $expanded['other_advances_deposits'] = $collectTreeExcluding([4], [451, 233]);
+
+            $expanded['investment_fdr'] = $collectTreeExcluding([396], [653]);
+            $expanded['other_current_assets'] = $collectTreeExcluding(
+                [3],           // CURRENT ASSETS
+                [4, 5, 6, 396] // Advances, Receivable, Cash/Bank, Investment — এগুলো আলাদা লাইনে ইতিমধ্যে আছে
+            );
+
+            $expanded['other_long_term_liabilities'] = $collectTreeExcluding(
+                [14],  // Long Term Liabilities
+                [924]  // Long Term Loan — আলাদা লাইনে ইতিমধ্যে আছে
+            );
+
+            $expanded['other_current_liabilities'] = $collectTreeExcluding(
+                [15],            // Current Liabilities
+                [16, 923, 568]   // Accounts Payable, Short Term Loan, Director's Loan — আলাদা লাইনে ইতিমধ্যে আছে
+            );
+
+            // ====================================================================
+            // DYNAMIC LABEL BUILDER — Chart of Accounts থেকে label বানানো
+            // ====================================================================
+            $fallbackLabels = [
+                'preliminary_expenses'            => '(Increase)/Decrease in Preliminary Expenses',
+                'unallocated_revenue_expenditure' => '(Increase)/Decrease in Unallocated Revenue Expenditure',
+                'advance_income_tax'              => '(Increase)/Decrease in Advance Income Tax',
+                'accounts_receivable'             => '(Increase)/Decrease in Accounts Receivable',
+                'loan_to_thl'                     => '(Increase)/Decrease in Loan To THL',
+                'investment_fdr'                  => '(Increase)/Decrease in Investment in FDR',
+                'advance_received_for_parties'    => '(Increase)/Decrease in Advance Received For Parties',
+                'accounts_payable_other'          => '(Increase)/Decrease in Accounts Payable & Other Payable',
+                'short_term_loan'                 => '(Increase)/Decrease in Short Term Loan',
+                'long_term_loan'                  => '(Increase)/Decrease in Long Term Loan',
+                'outstanding_liabilities'         => '(Increase)/Decrease in Outstanding Liabilities',
+                'provision_income_tax'            => '(Increase)/Decrease in Provision for Income Tax',
+                'share_capital'                   => "Increase/(Decrease) in Share Capital",
+                'share_money_deposit'             => "Increase/(Decrease) in Share Money Deposit",
+                'directors_loan'                  => "Increase/(Decrease) in Director's Loan",
+                'other_current_assets'            => '(Increase)/Decrease in Other Current Assets (Misc. LC/Guarantee/Deposits)',
+                'other_long_term_liabilities'     => '(Increase)/Decrease in Other Long Term Liabilities',
+                'other_current_liabilities'       => '(Increase)/Decrease in Other Current Liabilities',
+            ];
+
+            $buildLabel = function ($key, $prefix = '(Increase)/Decrease in ') use ($config, $accountsById, $fallbackLabels) {
+                $rootIds = $config[$key];
+                if (empty($rootIds)) {
+                    return $fallbackLabels[$key] ?? ucwords(str_replace('_', ' ', $key));
+                }
+                $names = [];
+                foreach ((array) $rootIds as $rid) {
+                    if (isset($accountsById[$rid])) {
+                        $names[] = $accountsById[$rid]->account_name;
+                    }
+                }
+                if (empty($names)) {
+                    return $fallbackLabels[$key] ?? ucwords(str_replace('_', ' ', $key));
+                }
+                return $prefix . implode(' & ', $names);
+            };
+
+            // ====================================================================
+            // HELPER 1: raw signed balance as-of 
+            // ====================================================================
+            $getRawBalance = function ($accountIds, $asOfDate) use ($accountsById) {
+                if (empty($accountIds)) {
+                    return 0.0;
+                }
+
+                $openingSum = 0.0;
+                foreach ($accountIds as $id) {
+                    if (!isset($accountsById[$id])) {
+                        continue;
+                    }
+                    $acc = $accountsById[$id];
+                    $ob  = (float) $acc->opening_balance;
+                    if ($acc->balance_type === 'credit') {
+                        $ob = -$ob;
+                    }
+                    $openingSum += $ob;
+                }
+
+                $txn = AccountTransaction::whereIn('account_id', $accountIds)
+                    ->whereDate('created_at', '<=', $asOfDate)
+                    ->selectRaw('COALESCE(SUM(debit),0) as d, COALESCE(SUM(credit),0) as c')
+                    ->first();
+
+                $totalDebit  = $txn ? (float) $txn->d : 0.0;
+                $totalCredit = $txn ? (float) $txn->c : 0.0;
+
+                return $openingSum + ($totalDebit - $totalCredit);
+            };
+
+            // ====================================================================
+            // HELPER 2: period flow (debit/credit total)
+            // ====================================================================
+            $getPeriodFlow = function ($accountIds, $periodFrom, $periodTo) {
+                if (empty($accountIds)) {
+                    return array('debit' => 0.0, 'credit' => 0.0);
+                }
+                $row = AccountTransaction::whereIn('account_id', $accountIds)
+                    ->whereDate('created_at', '>=', $periodFrom)
+                    ->whereDate('created_at', '<=', $periodTo)
+                    ->selectRaw('COALESCE(SUM(debit),0) as d, COALESCE(SUM(credit),0) as c')
+                    ->first();
+                return array(
+                    'debit'  => $row ? (float) $row->d : 0.0,
+                    'credit' => $row ? (float) $row->c : 0.0,
+                );
+            };
+
+            // ====================================================================
+            // ১. NET PROFIT
+            // ====================================================================
+            $incomeFlow  = $getPeriodFlow($expanded['income_root'], $fromDate, $toDate);
+            $expenseFlow = $getPeriodFlow($expanded['expense_root'], $fromDate, $toDate);
+            $netProfit   = ($incomeFlow['credit'] - $incomeFlow['debit']) - ($expenseFlow['debit'] - $expenseFlow['credit']);
+
+            $prevIncomeFlow  = $getPeriodFlow($expanded['income_root'], $prevFromDate, $prevToDate);
+            $prevExpenseFlow = $getPeriodFlow($expanded['expense_root'], $prevFromDate, $prevToDate);
+            $prevNetProfit   = ($prevIncomeFlow['credit'] - $prevIncomeFlow['debit']) - ($prevExpenseFlow['debit'] - $prevExpenseFlow['credit']);
+
+            // ====================================================================
+            // ২. DEPRECIATION
+            // ====================================================================
+            $depFlow          = $getPeriodFlow($expanded['depreciation'], $fromDate, $toDate);
+            $depreciation     = $depFlow['debit'] - $depFlow['credit'];
+            $prevDepFlow      = $getPeriodFlow($expanded['depreciation'], $prevFromDate, $prevToDate);
+            $prevDepreciation = $prevDepFlow['debit'] - $prevDepFlow['credit'];
+
+            // ====================================================================
+            // ৩. WORKING CAPITAL CHANGE — generic calculator
+            // ====================================================================
+            $wcLine = function ($key, $nature) use ($expanded, $getRawBalance, $fromDate, $toDate, $prevFromDate, $prevToDate) {
+                $ids = $expanded[$key];
+
+                $dayBeforeFrom     = date('Y-m-d', strtotime($fromDate . ' -1 day'));
+                $prevDayBeforeFrom = date('Y-m-d', strtotime($prevFromDate . ' -1 day'));
+
+                $rawStart = $getRawBalance($ids, $dayBeforeFrom);
+                $rawEnd   = $getRawBalance($ids, $toDate);
+
+                $prevRawStart = $getRawBalance($ids, $prevDayBeforeFrom);
+                $prevRawEnd   = $getRawBalance($ids, $prevToDate);
+
+                if ($nature === 'asset') {
+                    $balStart     = $rawStart;
+                    $balEnd       = $rawEnd;
+                    $prevBalStart = $prevRawStart;
+                    $prevBalEnd   = $prevRawEnd;
+                } else {
+                    $balStart     = -$rawStart;
+                    $balEnd       = -$rawEnd;
+                    $prevBalStart = -$prevRawStart;
+                    $prevBalEnd   = -$prevRawEnd;
+                }
+
+                $change     = $balEnd - $balStart;
+                $prevChange = $prevBalEnd - $prevBalStart;
+
+                $cashEffect     = $nature === 'asset' ? -$change : $change;
+                $prevCashEffect = $nature === 'asset' ? -$prevChange : $prevChange;
+
+                return array('current' => $cashEffect, 'previous' => $prevCashEffect);
+            };
+
+            // ====================================================================
+            // wcLinesData — label dynamic (buildLabel দিয়ে)
+            // Fixed: 2026-07-06 - other_current_assets, other_long_term_liabilities,
+            // other_current_liabilities 
+            // ====================================================================
+            $wcLinesData = array(
+                'preliminary_expenses'             => array('label' => $buildLabel('preliminary_expenses'),            'data' => $wcLine('preliminary_expenses', 'asset')),
+                'unallocated_revenue_expenditure'  => array('label' => $buildLabel('unallocated_revenue_expenditure'), 'data' => $wcLine('unallocated_revenue_expenditure', 'asset')),
+                'inventories'                      => array('label' => '(Increase)/Decrease in Inventories',            'data' => $inventoryChange),
+                'advance_income_tax'               => array('label' => $buildLabel('advance_income_tax'),              'data' => $wcLine('advance_income_tax', 'asset')),
+                'accounts_receivable'              => array('label' => $buildLabel('accounts_receivable'),             'data' => $wcLine('accounts_receivable', 'asset')),
+                'loan_to_thl'                      => array('label' => $buildLabel('loan_to_thl'),                     'data' => $wcLine('loan_to_thl', 'asset')),
+                'investment_fdr'                   => array('label' => $buildLabel('investment_fdr'),                  'data' => $wcLine('investment_fdr', 'asset')),
+                'other_current_assets'             => array('label' => $buildLabel('other_current_assets'),            'data' => $wcLine('other_current_assets', 'asset')),
+                'advance_received_for_parties'     => array('label' => $buildLabel('advance_received_for_parties'),    'data' => $wcLine('advance_received_for_parties', 'liability')),
+                'accounts_payable_other'           => array('label' => $buildLabel('accounts_payable_other'),          'data' => $wcLine('accounts_payable_other', 'liability')),
+                'short_term_loan'                  => array('label' => $buildLabel('short_term_loan'),                 'data' => $wcLine('short_term_loan', 'liability')),
+                'long_term_loan'                   => array('label' => $buildLabel('long_term_loan'),                  'data' => $wcLine('long_term_loan', 'liability')),
+                'outstanding_liabilities'          => array('label' => $buildLabel('outstanding_liabilities'),         'data' => $wcLine('outstanding_liabilities', 'liability')),
+                'provision_income_tax'             => array('label' => $buildLabel('provision_income_tax'),           'data' => $wcLine('provision_income_tax', 'liability')),
+                'other_long_term_liabilities'      => array('label' => $buildLabel('other_long_term_liabilities'),     'data' => $wcLine('other_long_term_liabilities', 'liability')),
+                'other_current_liabilities'        => array('label' => $buildLabel('other_current_liabilities'),       'data' => $wcLine('other_current_liabilities', 'liability')),
+            );
+
+            $wcCurrentSum = 0.0;
+            $wcPrevSum    = 0.0;
+            foreach ($wcLinesData as $row) {
+                $wcCurrentSum += $row['data']['current'];
+                $wcPrevSum    += $row['data']['previous'];
+            }
+
+            $operatingTotal     = $netProfit + $depreciation + $wcCurrentSum;
+            $prevOperatingTotal = $prevNetProfit + $prevDepreciation + $wcPrevSum;
+
+            // ====================================================================
+            // ৪. INVESTING ACTIVITIES
+            // ====================================================================
+            $faFlow = $getPeriodFlow($expanded['fixed_assets'], $fromDate, $toDate);
+            $fixedAssetsAddition = - ($faFlow['debit'] - $faFlow['credit']);
+
+            $prevFaFlow = $getPeriodFlow($expanded['fixed_assets'], $prevFromDate, $prevToDate);
+            $prevFixedAssetsAddition = - ($prevFaFlow['debit'] - $prevFaFlow['credit']);
+
+            $lastYearAccountsChange     = 0.0;
+            $prevLastYearAccountsChange = 0.0;
+
+            $investingTotal     = $fixedAssetsAddition + $lastYearAccountsChange;
+            $prevInvestingTotal = $prevFixedAssetsAddition + $prevLastYearAccountsChange;
+
+            // ====================================================================
+            // ৫. FINANCING ACTIVITIES
+            // ====================================================================
+            $financingLinesData = array(
+                'share_capital'       => array('label' => $buildLabel('share_capital', ''), 'data' => $wcLine('share_capital', 'liability')),
+                'share_money_deposit' => array('label' => $buildLabel('share_money_deposit', ''), 'data' => $wcLine('share_money_deposit', 'liability')),
+                'long_term_loan_fin'  => array('label' => "Increase/(Decrease) in Long Term Loan (see Operating note)", 'data' => array('current' => 0, 'previous' => 0)), // NOTE: long_term_loan ইতিমধ্যে Operating-এ ধরা হয়েছে, এখানে duplicate করা হয়নি
+                'directors_loan'      => array('label' => $buildLabel('directors_loan', ''), 'data' => $wcLine('directors_loan', 'liability')),
+            );
+
+            $financingTotal     = 0.0;
+            $prevFinancingTotal = 0.0;
+            foreach ($financingLinesData as $row) {
+                $financingTotal     += $row['data']['current'];
+                $prevFinancingTotal += $row['data']['previous'];
+            }
+
+            // ====================================================================
+            // ৬. SUMMARY (D, E, F)
+            // ====================================================================
+            $netChange     = $operatingTotal + $investingTotal + $financingTotal;
+            $prevNetChange = $prevOperatingTotal + $prevInvestingTotal + $prevFinancingTotal;
+
+            $dayBeforeFrom     = date('Y-m-d', strtotime($fromDate . ' -1 day'));
+            $prevDayBeforeFrom = date('Y-m-d', strtotime($prevFromDate . ' -1 day'));
+
+            $openingCash     = $getRawBalance($expanded['cash_bank'], $dayBeforeFrom);
+            $closingCash     = $getRawBalance($expanded['cash_bank'], $toDate);
+            $prevOpeningCash = $getRawBalance($expanded['cash_bank'], $prevDayBeforeFrom);
+            $prevClosingCash = $getRawBalance($expanded['cash_bank'], $prevToDate);
+
+            // ====================================================================
+            // ৭. RECONCILIATION CHECK
+            // ====================================================================
+            $computedClosing = $openingCash + $netChange;
+            $reconDifference = round($computedClosing - $closingCash, 2);
+        }
+
+        return view('backend.pages.reports.cashflow_indirect', get_defined_vars());
+    }
+
 
     public function retainedearning(Request $request)
     {
@@ -921,506 +2405,6 @@ class ReportController extends Controller
     //             'opening_balance' => $openingBalance,
     //             'total_debit' => $totalDebit,
     //             'total_credit' => $totalCredit,
-    //             'closing_balance' => $runningBalance,
-    //         ];
-    //     }
-
-    //     return view('backend.pages.reports.ledger', get_defined_vars());
-    // }
-
-
-    // public function ledger(Request $request)
-    // {
-    //     $title = 'Ledger Report';
-    //     $accounts = ChartOfAccount::where("parent_id", 0)->get();
-    //     $companyInfo = Company::latest('id')->first();
-
-    //     $selectedAccountId = $request->input('account_id');
-    //     $startDate = $request->input('start_date');
-    //     $endDate = $request->input('end_date');
-
-    //     $ledgerEntries = [];
-    //     $openingBalance = 0;
-    //     $runningBalance = 0;
-    //     $account = null;
-
-    //     if ($selectedAccountId) {
-    //         $account = ChartOfAccount::findOrFail($selectedAccountId);
-
-    //         // Opening Balance Calculation (আগের কোড ঠিক আছে)
-    //         $debitSumBeforeStartDate = AccountTransaction::where('account_id', $selectedAccountId)
-    //             ->whereDate('created_at', '<', $startDate)
-    //             ->sum('debit');
-
-    //         $creditSumBeforeStartDate = AccountTransaction::where('account_id', $selectedAccountId)
-    //             ->whereDate('created_at', '<', $startDate)
-    //             ->sum('credit');
-
-    //         if ($account->balance_type === 'debit') {
-    //             $openingBalance = $account->opening_balance + $debitSumBeforeStartDate - $creditSumBeforeStartDate;
-    //         } else {
-    //             $openingBalance = $account->opening_balance + $creditSumBeforeStartDate - $debitSumBeforeStartDate;
-    //         }
-
-    //         $runningBalance = $openingBalance;
-    //         $totalDebit = 0;
-    //         $totalCredit = 0;
-
-    //         $transactions = AccountTransaction::with(['supplier', 'customer', 'account'])
-    //             ->where('account_id', $selectedAccountId)
-    //             ->when($startDate, fn($q) => $q->whereDate('created_at', '>=', $startDate))
-    //             ->when($endDate, fn($q) => $q->whereDate('created_at', '<=', $endDate))
-    //             ->orderBy('created_at')
-    //             ->get();
-
-    //         foreach ($transactions as $transaction) {
-
-
-    //             $oppositeName = 'N/A';
-
-    //             if ($transaction->supplier_id && $transaction->supplier) {
-    //                 $oppositeName = $transaction->supplier->name;
-    //             } elseif ($transaction->customer_id && $transaction->customer) {
-    //                 $oppositeName = $transaction->customer->name;
-    //             } elseif ($transaction->remark) {
-    //                 $oppositeName = $transaction->remark;
-    //             }
-
-    //             $debit = $transaction->debit ?? 0;
-    //             $credit = $transaction->credit ?? 0;
-
-    //             $totalDebit += $debit;
-    //             $totalCredit += $credit;
-
-    //             if ($account->balance_type == "debit") {
-    //                 $runningBalance += $debit - $credit;
-    //             } else {
-    //                 $runningBalance += $credit - $debit;
-    //             }
-
-    //             $ledgerEntries[] = [
-    //                 'date'          => $transaction->created_at,
-    //                 'invoice'       => $transaction->invoice ?? $transaction->payment_invoice,
-    //                 'description'   => $transaction->remark ?? 'Purchase Voucher',
-    //                 'debit'         => $debit,
-    //                 'credit'        => $credit,
-    //                 'balance'       => $runningBalance,
-    //                 'account_name'  => $oppositeName,           // 
-    //             ];
-    //         }
-
-    //         $ledgerSummary = [
-    //             'opening_balance' => $openingBalance,
-    //             'total_debit'     => $totalDebit,
-    //             'total_credit'    => $totalCredit,
-    //             'closing_balance' => $runningBalance,
-    //         ];
-    //     }
-
-    //     return view('backend.pages.reports.ledger', get_defined_vars());
-    // }
-
-    // public function ledger(Request $request)
-    // {
-    //     $title = 'Ledger Report';
-    //     $accounts = ChartOfAccount::where("parent_id", 0)->get();
-    //     $companyInfo = Company::latest('id')->first();
-
-    //     $selectedAccountId = $request->input('account_id');
-    //     $startDate = $request->input('start_date');
-    //     $endDate = $request->input('end_date');
-
-    //     $ledgerEntries = [];
-    //     $openingBalance = 0;
-    //     $runningBalance = 0;
-    //     $account = null;
-
-    //     if ($selectedAccountId) {
-    //         $account = ChartOfAccount::findOrFail($selectedAccountId);
-
-    //         // Opening Balance Calculation 
-    //         $debitSumBeforeStartDate = AccountTransaction::where('account_id', $selectedAccountId)
-    //             ->whereDate('created_at', '<', $startDate)
-    //             ->sum('debit');
-
-    //         $creditSumBeforeStartDate = AccountTransaction::where('account_id', $selectedAccountId)
-    //             ->whereDate('created_at', '<', $startDate)
-    //             ->sum('credit');
-
-    //         if ($account->balance_type === 'debit') {
-    //             $openingBalance = $account->opening_balance + $debitSumBeforeStartDate - $creditSumBeforeStartDate;
-    //         } else {
-    //             $openingBalance = $account->opening_balance + $creditSumBeforeStartDate - $debitSumBeforeStartDate;
-    //         }
-
-    //         $runningBalance = $openingBalance;
-    //         $totalDebit = 0;
-    //         $totalCredit = 0;
-
-    //         $transactions = AccountTransaction::with(['supplier', 'customer', 'account'])
-    //             ->where('account_id', $selectedAccountId)
-    //             ->when($startDate, fn($q) => $q->whereDate('created_at', '>=', $startDate))
-    //             ->when($endDate, fn($q) => $q->whereDate('created_at', '<=', $endDate))
-    //             ->orderBy('created_at')
-    //             ->get();
-
-    //         $allInvoices = $transactions->pluck('invoice')->filter()->unique()->values()->toArray();
-
-    //         $invoiceTransactions = AccountTransaction::with('account')
-    //             ->whereIn('invoice', $allInvoices)
-    //             ->get()
-    //             ->groupBy('invoice');
-
-    //         foreach ($transactions as $transaction) {
-
-    //             $oppositeName = 'N/A';
-
-    //             if ($transaction->supplier_id && $transaction->supplier) {
-    //                 $oppositeName = $transaction->supplier->name;
-    //             } elseif ($transaction->customer_id && $transaction->customer) {
-    //                 $oppositeName = $transaction->customer->name;
-    //             } elseif ($transaction->invoice && isset($invoiceTransactions[$transaction->invoice])) {
-
-    //                 $sameInvoiceGroup = $invoiceTransactions[$transaction->invoice];
-
-    //                 $isDebit  = $transaction->debit > 0;
-    //                 $amount   = $isDebit ? $transaction->debit : $transaction->credit;
-
-    //                 $opposite = $sameInvoiceGroup
-    //                     ->where('id', '!=', $transaction->id)
-    //                     ->where('account_id', '!=', $transaction->account_id)
-    //                     ->when($isDebit, function ($col) use ($amount) {
-    //                         return $col->where('credit', $amount);
-    //                     }, function ($col) use ($amount) {
-    //                         return $col->where('debit', $amount);
-    //                     })
-    //                     ->first();
-
-    //                 if ($opposite && $opposite->account) {
-    //                     $oppositeName = $opposite->account->account_name;
-    //                 }
-    //             } elseif ($transaction->remark) {
-    //                 $oppositeName = explode(' - ', $transaction->remark)[0] ?? $transaction->remark;
-    //             }
-
-    //             $debit  = (float) ($transaction->debit  ?? 0);
-    //             $credit = (float) ($transaction->credit ?? 0);
-
-    //             $totalDebit  += $debit;
-    //             $totalCredit += $credit;
-
-    //             $runningBalance += $account->balance_type === 'debit'
-    //                 ? ($debit - $credit)
-    //                 : ($credit - $debit);
-
-    //             $ledgerEntries[] = [
-    //                 'date'         => $transaction->created_at,
-    //                 'invoice'      => $transaction->invoice ?? $transaction->payment_invoice ?? 'N/A',
-    //                 'account_name' => $oppositeName,
-    //                 'description'  => $transaction->remark ?? 'N/A',
-    //                 'debit'        => $debit,
-    //                 'credit'       => $credit,
-    //                 'balance'      => $runningBalance,
-    //             ];
-    //         }
-
-    //         $ledgerSummary = [
-    //             'opening_balance' => $openingBalance,
-    //             'total_debit'     => $totalDebit,
-    //             'total_credit'    => $totalCredit,
-    //             'closing_balance' => $runningBalance,
-    //         ];
-    //     }
-
-    //     return view('backend.pages.reports.ledger', get_defined_vars());
-    // }
-
-    // public function ledger(Request $request)
-    // {
-    //     $title       = 'Ledger Report';
-    //     $accounts    = ChartOfAccount::where("parent_id", 0)->get();
-    //     $companyInfo = Company::latest('id')->first();
-
-    //     $selectedAccountId = $request->input('account_id');
-    //     $startDate         = $request->input('start_date');
-    //     $endDate           = $request->input('end_date');
-
-    //     $ledgerEntries  = [];
-    //     $openingBalance = 0;
-    //     $runningBalance = 0;
-    //     $account        = null;
-    //     $ledgerSummary  = [];
-
-    //     if ($selectedAccountId) {
-    //         $account = ChartOfAccount::findOrFail($selectedAccountId);
-
-    //         // ── Opening Balance ──
-    //         $debitSumBeforeStartDate = AccountTransaction::where('account_id', $selectedAccountId)
-    //             ->whereDate('created_at', '<', $startDate)
-    //             ->sum('debit');
-
-    //         $creditSumBeforeStartDate = AccountTransaction::where('account_id', $selectedAccountId)
-    //             ->whereDate('created_at', '<', $startDate)
-    //             ->sum('credit');
-
-    //         if ($account->balance_type === 'debit') {
-    //             $openingBalance = $account->opening_balance + $debitSumBeforeStartDate - $creditSumBeforeStartDate;
-    //         } else {
-    //             $openingBalance = $account->opening_balance + $creditSumBeforeStartDate - $debitSumBeforeStartDate;
-    //         }
-
-    //         $runningBalance = $openingBalance;
-    //         $totalDebit     = 0;
-    //         $totalCredit    = 0;
-
-    //         $transactions = AccountTransaction::with(['supplier', 'customer', 'account'])
-    //             ->where('account_id', $selectedAccountId)
-    //             ->when($startDate, fn($q) => $q->whereDate('created_at', '>=', $startDate))
-    //             ->when($endDate,   fn($q) => $q->whereDate('created_at', '<=', $endDate))
-    //             ->orderBy('created_at')
-    //             ->get();
-
-    //         // ── Same invoice এর সব transaction load ──
-    //         $allInvoices = $transactions->pluck('invoice')->filter()->unique()->values()->toArray();
-
-    //         $invoiceTransactions = AccountTransaction::with('account')
-    //             ->whereIn('invoice', $allInvoices)
-    //             ->get()
-    //             ->groupBy('invoice');
-
-    //         foreach ($transactions as $transaction) {
-
-    //             $oppositeName = 'N/A';
-
-    //             if ($transaction->invoice && isset($invoiceTransactions[$transaction->invoice])) {
-
-    //                 $sameInvoiceGroup = $invoiceTransactions[$transaction->invoice];
-
-    //                 $isDebit = (float)$transaction->debit > 0;
-    //                 $amount  = $isDebit ? (float)$transaction->debit : (float)$transaction->credit;
-
-    //                 // ✅ Current debit → same invoice + same amount এর credit record খুঁজো
-    //                 // ✅ Current credit → same invoice + same amount এর debit record খুঁজো
-    //                 $opposite = $sameInvoiceGroup
-    //                     ->where('id', '!=', $transaction->id)
-    //                     ->where('account_id', '!=', $transaction->account_id)
-    //                     ->first(function ($item) use ($isDebit, $amount) {
-    //                         if ($isDebit) {
-    //                             // debit transaction → opposite এ credit হবে same amount
-    //                             return (float)$item->credit == $amount && (float)$item->debit == 0;
-    //                         } else {
-    //                             // credit transaction → opposite এ debit হবে same amount
-    //                             return (float)$item->debit == $amount && (float)$item->credit == 0;
-    //                         }
-    //                     });
-
-    //                 if ($opposite && $opposite->account) {
-    //                     // ✅ Opposite record এর account_id এর account_name
-    //                     $oppositeName = $opposite->account->account_name;
-    //                 }
-    //             }
-
-    //             // ── Opposite পাওয়া না গেলে supplier/customer/remark fallback ──
-    //             if ($oppositeName === 'N/A') {
-    //                 if (
-    //                     $transaction->party_type === 'supplier' &&
-    //                     (int)$transaction->supplier_id > 0 &&
-    //                     $transaction->supplier
-    //                 ) {
-    //                     $oppositeName = $transaction->supplier->name;
-    //                 } elseif (
-    //                     $transaction->party_type === 'customer' &&
-    //                     (int)$transaction->customer_id > 0
-    //                 ) {
-    //                     $oppositeName = $transaction->customer?->name
-    //                         ?? \App\Models\Customer::find($transaction->customer_id)?->name
-    //                         ?? 'N/A';
-    //                 } elseif (
-    //                     (int)$transaction->supplier_id > 0 &&
-    //                     $transaction->supplier
-    //                 ) {
-    //                     $oppositeName = $transaction->supplier->name;
-    //                 } elseif ((int)$transaction->customer_id > 0) {
-    //                     $oppositeName = $transaction->customer?->name
-    //                         ?? \App\Models\Customer::find($transaction->customer_id)?->name
-    //                         ?? 'N/A';
-    //                 } elseif ($transaction->remark) {
-    //                     $oppositeName = explode(' - ', $transaction->remark)[0] ?? $transaction->remark;
-    //                 }
-    //             }
-
-    //             $debit  = (float) ($transaction->debit  ?? 0);
-    //             $credit = (float) ($transaction->credit ?? 0);
-
-    //             $totalDebit  += $debit;
-    //             $totalCredit += $credit;
-
-    //             $runningBalance += $account->balance_type === 'debit'
-    //                 ? ($debit - $credit)
-    //                 : ($credit - $debit);
-
-    //             $ledgerEntries[] = [
-    //                 'date'         => $transaction->created_at,
-    //                 'invoice'      => $transaction->invoice ?? $transaction->payment_invoice ?? 'N/A',
-    //                 'account_name' => $oppositeName,
-    //                 'description'  => $transaction->remark ?? 'N/A',
-    //                 'debit'        => $debit,
-    //                 'credit'       => $credit,
-    //                 'balance'      => $runningBalance,
-    //             ];
-    //         }
-
-    //         $ledgerSummary = [
-    //             'opening_balance' => $openingBalance,
-    //             'total_debit'     => $totalDebit,
-    //             'total_credit'    => $totalCredit,
-    //             'closing_balance' => $runningBalance,
-    //         ];
-    //     }
-
-    //     return view('backend.pages.reports.ledger', get_defined_vars());
-    // }
-
-    // public function ledger(Request $request)
-    // {
-    //     $title       = 'Ledger Report';
-    //     $accounts    = ChartOfAccount::where("parent_id", 0)->get();
-    //     $companyInfo = Company::latest('id')->first();
-
-    //     $selectedAccountId = $request->input('account_id');
-    //     $startDate         = $request->input('start_date');
-    //     $endDate           = $request->input('end_date');
-
-    //     $ledgerEntries  = [];
-    //     $openingBalance = 0;
-    //     $runningBalance = 0;
-    //     $account        = null;
-    //     $ledgerSummary  = [];
-
-    //     if ($selectedAccountId) {
-    //         $account = ChartOfAccount::findOrFail($selectedAccountId);
-
-    //         // ── Opening Balance ──
-    //         $debitSumBeforeStartDate = AccountTransaction::where('account_id', $selectedAccountId)
-    //             ->whereDate('created_at', '<', $startDate)
-    //             ->sum('debit');
-
-    //         $creditSumBeforeStartDate = AccountTransaction::where('account_id', $selectedAccountId)
-    //             ->whereDate('created_at', '<', $startDate)
-    //             ->sum('credit');
-
-    //         if ($account->balance_type === 'debit') {
-    //             $openingBalance = $account->opening_balance + $debitSumBeforeStartDate - $creditSumBeforeStartDate;
-    //         } else {
-    //             $openingBalance = $account->opening_balance + $creditSumBeforeStartDate - $debitSumBeforeStartDate;
-    //         }
-
-    //         $runningBalance = $openingBalance;
-    //         $totalDebit     = 0;
-    //         $totalCredit    = 0;
-
-    //         $transactions = AccountTransaction::with(['supplier', 'customer', 'account'])
-    //             ->where('account_id', $selectedAccountId)
-    //             ->when($startDate, fn($q) => $q->whereDate('created_at', '>=', $startDate))
-    //             ->when($endDate,   fn($q) => $q->whereDate('created_at', '<=', $endDate))
-    //             ->orderBy('created_at')
-    //             ->get();
-
-    //         // ── Same invoice এর সব transaction load ──
-    //         $allInvoices = $transactions->pluck('invoice')->filter()->unique()->values()->toArray();
-
-    //         $invoiceTransactions = AccountTransaction::with('account')
-    //             ->whereIn('invoice', $allInvoices)
-    //             ->get()
-    //             ->groupBy('invoice');
-
-    //         foreach ($transactions as $transaction) {
-
-    //             $oppositeName = 'N/A';
-
-    //             if ($transaction->invoice && isset($invoiceTransactions[$transaction->invoice])) {
-
-    //                 $sameInvoiceGroup = $invoiceTransactions[$transaction->invoice];
-
-    //                 $isDebit = (float)$transaction->debit > 0;
-    //                 $amount  = $isDebit ? (float)$transaction->debit : (float)$transaction->credit;
-
-    //                 $opposite = $sameInvoiceGroup
-    //                     ->where('id', '!=', $transaction->id)
-    //                     ->where('account_id', '!=', $transaction->account_id)
-    //                     // ✅ same date filter
-    //                     ->filter(function ($item) use ($transaction) {
-    //                         return $item->created_at->toDateString() === $transaction->created_at->toDateString();
-    //                     })
-    //                     // ✅ same amount + correct debit/credit side
-    //                     ->first(function ($item) use ($isDebit, $amount) {
-    //                         if ($isDebit) {
-    //                             return (float)$item->credit == $amount && (float)$item->debit == 0;
-    //                         } else {
-    //                             return (float)$item->debit == $amount && (float)$item->credit == 0;
-    //                         }
-    //                     });
-
-    //                 if ($opposite && $opposite->account) {
-    //                     $oppositeName = $opposite->account->account_name;
-    //                 }
-    //             }
-
-    //             // ── Opposite পাওয়া না গেলে fallback ──
-    //             if ($oppositeName === 'N/A') {
-
-    //                 if (
-    //                     $transaction->party_type === 'supplier' &&
-    //                     (int)$transaction->supplier_id > 0 &&
-    //                     $transaction->supplier
-    //                 ) {
-    //                     $oppositeName = $transaction->supplier->name;
-    //                 } elseif (
-    //                     $transaction->party_type === 'customer' &&
-    //                     (int)$transaction->customer_id > 0
-    //                 ) {
-    //                     $oppositeName = $transaction->customer?->name
-    //                         ?? \App\Models\Customer::find($transaction->customer_id)?->name
-    //                         ?? 'N/A';
-    //                 } elseif (
-    //                     (int)$transaction->supplier_id > 0 &&
-    //                     $transaction->supplier
-    //                 ) {
-    //                     $oppositeName = $transaction->supplier->name;
-    //                 } elseif ((int)$transaction->customer_id > 0) {
-    //                     $oppositeName = $transaction->customer?->name
-    //                         ?? \App\Models\Customer::find($transaction->customer_id)?->name
-    //                         ?? 'N/A';
-    //                 } elseif ($transaction->remark) {
-    //                     $oppositeName = explode(' - ', $transaction->remark)[0] ?? $transaction->remark;
-    //                 }
-    //             }
-
-    //             $debit  = (float) ($transaction->debit  ?? 0);
-    //             $credit = (float) ($transaction->credit ?? 0);
-
-    //             $totalDebit  += $debit;
-    //             $totalCredit += $credit;
-
-    //             $runningBalance += $account->balance_type === 'debit'
-    //                 ? ($debit - $credit)
-    //                 : ($credit - $debit);
-
-    //             $ledgerEntries[] = [
-    //                 'date'         => $transaction->created_at,
-    //                 'invoice'      => $transaction->invoice ?? $transaction->payment_invoice ?? 'N/A',
-    //                 'account_name' => $oppositeName,
-    //                 'description'  => $transaction->remark ?? 'N/A',
-    //                 'debit'        => $debit,
-    //                 'credit'       => $credit,
-    //                 'balance'      => $runningBalance,
-    //             ];
-    //         }
-
-    //         $ledgerSummary = [
-    //             'opening_balance' => $openingBalance,
-    //             'total_debit'     => $totalDebit,
-    //             'total_credit'    => $totalCredit,
     //             'closing_balance' => $runningBalance,
     //         ];
     //     }

@@ -712,6 +712,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
     });
 
     Route::get('/debug/balance-sheet', function () {
-        return view('');
+
+        return view('debug');
     });
 });

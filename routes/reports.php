@@ -56,6 +56,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::any('/report-stock-stocksummery', [ReportController::class, 'stocksummery'])->name('report.stock.stocksummery');
         Route::any('/report-day-book', [ReportController::class, 'daybook'])->name('report.day.book');
         Route::any('/report-cashflow', [ReportController::class, 'cashflow'])->name('report.cashflow');
+        Route::any('/report-indirect-cashflow', [ReportController::class, 'indirectcashflow'])->name('report.indirectcashflow');
         Route::any('/report-retained-earning', [ReportController::class, 'retainedearning'])->name('report.retained_earning');
         Route::any('/report-bank-book', [ReportController::class, 'bankbook'])->name('report.bank_book');
         Route::any('/report-expense-book', [ReportController::class, 'newexpense'])->name('report.expense');

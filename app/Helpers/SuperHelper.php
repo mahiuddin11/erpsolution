@@ -993,3 +993,23 @@ function getEffectiveDate($datetime)
 
     return $datetime->format('Y-m-d');
 }
+
+function getInventoryValueAsOf($date)
+{
+    $inRow  = ['Purchase', 'Opening', 'Transfer In', 'Project In', 'Gain'];
+    $outRow = ['Sale', 'Transfer Out', 'Project Out', 'Lost', 'Damage'];
+
+    $inValue = DB::table('stocks')
+        ->whereNull('deleted_at')
+        ->where('date', '<=', $date)
+        ->whereIn('status', $inRow)
+        ->sum(DB::raw('quantity * unit_price'));
+
+    $outValue = DB::table('stocks')
+        ->whereNull('deleted_at')
+        ->where('date', '<=', $date)
+        ->whereIn('status', $outRow)
+        ->sum(DB::raw('quantity * unit_price'));
+
+    return $inValue - $outValue;
+}
