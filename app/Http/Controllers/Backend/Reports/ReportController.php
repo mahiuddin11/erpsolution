@@ -1789,7 +1789,7 @@ class ReportController extends Controller
             'to_date'   => 'nullable|date|after_or_equal:from_date',
         ]);
 
-        // ডিফল্ট: গত সম্পূর্ণ ফিসক্যাল ইয়ার (July-June)। প্রয়োজনে বদলাও।
+
         $toDate   = $request->to_date ?? date('Y-m-d');
         $fromDate = $request->from_date ?? date('Y-m-d', strtotime($toDate . ' -1 year +1 day'));
 
@@ -1915,16 +1915,19 @@ class ReportController extends Controller
                 return array_values(array_diff($full, $exclude));
             };
 
+
+
             $expanded = array();
+
+
             foreach ($config as $key => $ids) {
                 $expanded[$key] = $collectTree($ids);
             }
 
-            // ── Double-counting fix ──
-            // id 451 (Advance Income Tax) ও id 233 (Taste Harbor/THL) দুটোই
-            // parent_id=4 এর সন্তান, তাই other_advances_deposits থেকে বাদ দিতে হবে
-            $expanded['other_advances_deposits'] = $collectTreeExcluding([4], [451, 233]);
 
+
+            $expanded['expense_root'] = array_values(array_diff($expanded['expense_root'], [25]));
+            $expanded['other_advances_deposits'] = $collectTreeExcluding([4], [451, 233]);
             $expanded['investment_fdr'] = $collectTreeExcluding([396], [653]);
             $expanded['other_current_assets'] = $collectTreeExcluding(
                 [3],           // CURRENT ASSETS
@@ -1941,9 +1944,8 @@ class ReportController extends Controller
                 [16, 923, 568]   // Accounts Payable, Short Term Loan, Director's Loan — আলাদা লাইনে ইতিমধ্যে আছে
             );
 
-            // ====================================================================
-            // DYNAMIC LABEL BUILDER — Chart of Accounts থেকে label বানানো
-            // ====================================================================
+
+
             $fallbackLabels = [
                 'preliminary_expenses'            => '(Increase)/Decrease in Preliminary Expenses',
                 'unallocated_revenue_expenditure' => '(Increase)/Decrease in Unallocated Revenue Expenditure',
@@ -2088,7 +2090,7 @@ class ReportController extends Controller
             };
 
             // ====================================================================
-            // wcLinesData — label dynamic (buildLabel দিয়ে)
+            // wcLinesData — label dynamic (buildLabel )
             // Fixed: 2026-07-06 - other_current_assets, other_long_term_liabilities,
             // other_current_liabilities 
             // ====================================================================
@@ -2100,6 +2102,7 @@ class ReportController extends Controller
                 'accounts_receivable'              => array('label' => $buildLabel('accounts_receivable'),             'data' => $wcLine('accounts_receivable', 'asset')),
                 'loan_to_thl'                      => array('label' => $buildLabel('loan_to_thl'),                     'data' => $wcLine('loan_to_thl', 'asset')),
                 'investment_fdr'                   => array('label' => $buildLabel('investment_fdr'),                  'data' => $wcLine('investment_fdr', 'asset')),
+                'other_advances_deposits'           =>  array('label' => $buildLabel('other_advances_deposits'),        'data'  => $wcLine('other_advances_deposits', 'asset')),
                 'other_current_assets'             => array('label' => $buildLabel('other_current_assets'),            'data' => $wcLine('other_current_assets', 'asset')),
                 'advance_received_for_parties'     => array('label' => $buildLabel('advance_received_for_parties'),    'data' => $wcLine('advance_received_for_parties', 'liability')),
                 'accounts_payable_other'           => array('label' => $buildLabel('accounts_payable_other'),          'data' => $wcLine('accounts_payable_other', 'liability')),
@@ -2126,9 +2129,11 @@ class ReportController extends Controller
             // ====================================================================
             $faFlow = $getPeriodFlow($expanded['fixed_assets'], $fromDate, $toDate);
             $fixedAssetsAddition = - ($faFlow['debit'] - $faFlow['credit']);
+            // $fixedAssetsAddition = -$faFlow['debit'];
 
             $prevFaFlow = $getPeriodFlow($expanded['fixed_assets'], $prevFromDate, $prevToDate);
             $prevFixedAssetsAddition = - ($prevFaFlow['debit'] - $prevFaFlow['credit']);
+            // $prevFixedAssetsAddition = -$prevFaFlow['debit'];
 
             $lastYearAccountsChange     = 0.0;
             $prevLastYearAccountsChange = 0.0;
