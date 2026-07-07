@@ -159,6 +159,7 @@ class ApproveLoneApplicationController extends Controller
             return back()->with('error', 'This loan is already approved!');
         }
 
+
         DB::beginTransaction();
 
         try {
@@ -170,7 +171,7 @@ class ApproveLoneApplicationController extends Controller
                 'adjustment_start' => $request->adjustment_start . '-01',
                 'status' => 'approved',
                 'approved_by' => auth()->id(),
-                'note' => $request->note ?? 'Loan approved',
+                'note' => $lone->reason ?? 'Loan approved',
             ]);
 
             //  Prepare Data
@@ -180,7 +181,7 @@ class ApproveLoneApplicationController extends Controller
             $months = ceil($amount / $installment);
             $remaining = $amount;
 
-            //    dd($amount, $installment, $startDate,  $months );
+
 
             //  EMI Generate
             for ($i = 0; $i < $months; $i++) {
@@ -193,14 +194,14 @@ class ApproveLoneApplicationController extends Controller
                     'month'       => $startDate->copy()->addMonths($i),
                     'amount'      => $pay,
                     'status'      => 'unpaid',
-                    'note'      => 'lone',
+                    'note'      => $lone->reason ?? '',
                 ]);
 
                 $remaining -= $pay;
             }
 
             //  Invoice
-            $invoice = 'LOAN-' . str_pad($lone->id, 6, '0', STR_PAD_LEFT);
+            $invoice = 'LO-' . str_pad($lone->id, 6, '0', STR_PAD_LEFT);
 
             //  Debit Entry (Loan Asset)
             AccountTransaction::create([
@@ -211,7 +212,7 @@ class ApproveLoneApplicationController extends Controller
                 'type'          => 'employee_loan',
                 'debit'         => $amount,
                 'credit'        => 0,
-                'remark'        => 'Employee Loan Approved - ' . ($lone->employee->name ?? ''),
+                'remark'        => ($lone->reason ?? '') . 'Employee Loan Approved - ' . ($lone->employee->name ?? ''),
                 'employee_id'   => $lone->employee_id,
                 'created_by'    => auth()->id(),
                 'created_at'    => now(),
@@ -226,7 +227,7 @@ class ApproveLoneApplicationController extends Controller
                 'type'          => 'employee_loan',
                 'debit'         => 0,
                 'credit'        => $amount,
-                'remark'        => 'Loan Disbursed to Employee - ' . ($lone->employee->name ?? ''),
+                'remark'        => ($lone->reason ?? '') . 'Loan Disbursed to Employee - ' . ($lone->employee->name ?? ''),
                 'employee_id'   => $lone->employee_id,
                 'created_by'    => auth()->id(),
                 'created_at'    => now(),

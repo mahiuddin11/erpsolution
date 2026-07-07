@@ -74,11 +74,11 @@
                             <div>
 
                                 <h5 class="mb-1 font-weight-bold">
-                                    {{ $lone->employee->name }}
+                                    {{ $lone->employee->name ?? '' }}
                                 </h5>
 
                                 <div class="small text-muted">
-                                    <div><strong>ID:</strong> {{ $lone->employee->id ?? '-' }}</div>
+                                    <div><strong>ID:</strong> {{ $lone->employee->id_card ?? '-' }}</div>
                                     <div><strong>Phone:</strong> {{ $lone->employee->personal_phone ?? '-' }}</div>
                                     <div><strong>Email:</strong> {{ $lone->employee->email ?? '-' }}</div>
                                     <div><strong>Address:</strong>
@@ -144,9 +144,9 @@
 
                                 <!-- Check Number -->
                                 <div class="col-md-6 mb-3">
-                                    <label>Cheque Number</label>
+                                    <label>Reason:</label>
                                     <input type="text" name="check_number" class="form-control form-control-lg"
-                                        value="{{ $lone->check_number }}">
+                                        value="{{ $lone->reason ?? $lone->check_number }}">
                                 </div>
 
                                 <!-- From Account -->

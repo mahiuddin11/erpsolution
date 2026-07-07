@@ -14,15 +14,15 @@ use Illuminate\Support\Facades\Storage;
 
 class CashApplicationRepositories
 {
-   
+
     private $cashReq;
-   
+
     public function __construct(CashReq $cashReq)
     {
         $this->cashReq = $cashReq;
     }
 
-   
+
     public function getAllList()
     {
         $result = $this->cashReq::latest()->get();
@@ -35,7 +35,7 @@ class CashApplicationRepositories
      * @return mixed
      */
 
-  
+
 
     public function getList($request)
     {

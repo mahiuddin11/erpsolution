@@ -36,7 +36,7 @@
                     <div class="card-tools">
                         @if (helper::roleAccess('hrm.lone.index'))
                             <a class="btn btn-default" href="{{ route('hrm.lone.index') }}"><i class="fa fa-list"></i>
-                                Salary Sheet List</a>
+                                Lone List</a>
                         @endif
                         <span id="buttons"></span>
                         <a class="btn btn-tool btn-default" data-card-widget="collapse">

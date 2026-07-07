@@ -10,6 +10,7 @@ use App\Models\CashReq;
 use App\Models\DabitVoucher;
 use App\Models\DabitVoucherDetails;
 use App\Models\Employee;
+use App\Models\JournalVoucher;
 use App\Models\Lone;
 use App\Models\Transection;
 use App\Services\Hrm\ApproveCashApplicationService;
@@ -42,9 +43,10 @@ class ApproveCashReqApplicationController extends Controller
         return view('backend.pages.hrm.cash_req_approve.index', get_defined_vars());
     }
 
-    public function makepayment(Request $request, $id){
+    public function makepayment(Request $request, $id)
+    {
 
-    return 'hello';
+        return 'hello';
     }
 
     public function dataProcessing(Request $request)
@@ -153,12 +155,9 @@ class ApproveCashReqApplicationController extends Controller
     public function approve(Request $request, $id)
     {
 
-   
-        
         DB::beginTransaction();
 
         try {
-
             $cash_req = CashReq::findOrFail($id);
 
             if ($cash_req->status == 'approved') {
@@ -167,23 +166,29 @@ class ApproveCashReqApplicationController extends Controller
 
             $amount = (float) ($request->amount ?? $cash_req->amount);
 
+            $cash_req_1 =  $cash_req;
             // =========================
             // UPDATE CASH REQ
             // =========================
+
             $cash_req->update([
                 'approval_amount'   => $amount,
                 'account_id'        => $request->account_id,
                 'recive_account_id' => $request->recive_account_id,
-                'check_number'      => $request->check_number,
+                'check_number'      => '',
+                'reason'            => $request->check_number ?? '',
                 'status'            => 'approved',
                 'approve_by'        => auth()->id(),
             ]);
+
+
 
             // =========================
             // VOUCHER NO GENERATE
             // =========================
             $last = DabitVoucher::latest('id')->first();
             $voucherNo = 'DV' . str_pad(($last->id ?? 0) + 1, 5, '0', STR_PAD_LEFT);
+
 
             // =========================
             // CREATE VOUCHER (SAVE METHOD)
@@ -193,13 +198,14 @@ class ApproveCashReqApplicationController extends Controller
             $voucher->employee_id = $cash_req->employee_id;
             $voucher->date        = now();
             $voucher->branch_id   = auth()->user()->branch_id ?? 0;
-            $voucher->note        = 'Cash Req #' . $cash_req->id;
+            $voucher->note        = $request->check_number ?? ''; //reason
             $voucher->approve     = 1;
             $voucher->approved_by = auth()->id();
             $voucher->created_by  = auth()->id();
             $voucher->save();
 
-           
+
+
             // =========================
             // VOUCHER DETAILS (FROM)
             // =========================
@@ -209,7 +215,7 @@ class ApproveCashReqApplicationController extends Controller
             $detail1->credit           = $amount;
             $detail1->debit            = 0;
             $detail1->amount           = $amount;
-            $detail1->check_number     = $request->check_number ?? '';
+            $detail1->check_number     = $request->check_number ?? ''; //reason
             $detail1->save();
 
             // =========================
@@ -221,13 +227,13 @@ class ApproveCashReqApplicationController extends Controller
             $detail2->debit            = $amount;
             $detail2->credit           = 0;
             $detail2->amount           = $amount;
-            $detail2->check_number     = $request->check_number ?? '';
+            $detail2->check_number     = $request->check_number ?? ''; //reason
             $detail2->save();
 
             // =========================
             // TRANSACTION CREATE
             // =========================
-            $invoice = 'CASH-' . str_pad($cash_req->id, 6, '0', STR_PAD_LEFT);
+            $invoice = $voucherNo;
 
             // CREDIT
             $t1 = new AccountTransaction();
@@ -237,7 +243,7 @@ class ApproveCashReqApplicationController extends Controller
             $t1->type        = 'debit_voucher';
             $t1->debit       = 0;
             $t1->credit      = $amount;
-            $t1->remark      = 'Advance to ' . ($cash_req->employee->name ?? '');
+            $t1->remark      = $request->check_number ?? ''; //reason;
             $t1->employee_id = $cash_req->employee_id;
             $t1->created_by  = auth()->id();
             $t1->created_at  = now();
@@ -251,15 +257,16 @@ class ApproveCashReqApplicationController extends Controller
             $t2->type        = 'debit_voucher';
             $t2->debit       = $amount;
             $t2->credit      = 0;
-            $t2->remark      = 'Advance received by ' . ($cash_req->employee->name ?? '');
+            $t2->remark      = $request->check_number ?? ''; //reason;
             $t2->employee_id = $cash_req->employee_id;
             $t2->created_by  = auth()->id();
             $t2->created_at  = now();
             $t2->save();
 
             DB::commit();
+            session()->flash('success', ' Approved, Voucher & Transaction Completed!');
 
-            return back()->with('success', 'Approved, Voucher & Transaction Completed!');
+            return back();
         } catch (\Throwable $e) {
 
             DB::rollBack();

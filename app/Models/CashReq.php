@@ -15,6 +15,7 @@ class CashReq extends Model
         'recive_account_id',
         'check_number',
         'status',
+        'reason',
         'approve_by'
     ];
 
