@@ -82,7 +82,8 @@
                                     )</b><br>
                                 <b> Branch :</b>{{ $invoice->branch->branchCode ?? 'N/A' }} -
                                 {{ $invoice->branch->name ?? 'N/A' }}<br>
-                                <b>Supplier:</b> {{ $invoice->supplier->account_name ?? 'N/A' }}
+
+                                <b>Supplier:</b> {{ $invoice->supplier->account_name ?? $invoice->ledger->account_name }}
                             </div>
                             <!-- /.col -->
                         </div><br>
@@ -215,7 +216,8 @@
                                         <tr>
 
                                             <th colspan="6">
-                                               <b>In Words :</b> {{ numberToWords(str_replace(',', '', $invoice->net_total)) }}
+                                                <b>In Words :</b>
+                                                {{ numberToWords(str_replace(',', '', $invoice->net_total)) }}
                                             </th>
                                         </tr>
                                         <tr>

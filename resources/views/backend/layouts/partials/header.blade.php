@@ -102,7 +102,7 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 160px;
+        max-width: 250px;
     }
 
     /* Search block: keep it inside viewport width when toggled open on mobile */
