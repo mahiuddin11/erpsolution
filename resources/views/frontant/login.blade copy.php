@@ -186,81 +186,91 @@
 
         }
 
- /* Global styles remain the same */
+        /* Global styles remain the same */
 
-@media (max-width: 750px) {
-    #container {
-        width: 90%;
-        display: block;
-        height: auto; /* Allow height to adjust automatically */
-    }
+        @media (max-width: 750px) {
+            #container {
+                width: 90%;
+                display: block;
+                height: auto;
+                /* Allow height to adjust automatically */
+            }
 
-    #left {
-        display: block; /* Make #left visible */
-        width: 100%;
-        margin: 0 auto 20px auto; /* Add some spacing */
-        background: #fbfbfb;
-        background-size: cover;
-        background-position: center;
-        box-shadow: var(--box-shadow);
-        text-align: center; /* Center align text */
-    }
+            #left {
+                display: block;
+                /* Make #left visible */
+                width: 100%;
+                margin: 0 auto 20px auto;
+                /* Add some spacing */
+                background: #fbfbfb;
+                background-size: cover;
+                background-position: center;
+                box-shadow: var(--box-shadow);
+                text-align: center;
+                /* Center align text */
+            }
 
-    #right {
-        width: 100%;
-        margin: 0 auto;
-        background: #fbfbfb;
-        background-size: cover;
-        background-position: center;
-        box-shadow: var(--box-shadow);
-    }
+            #right {
+                width: 100%;
+                margin: 0 auto;
+                background: #fbfbfb;
+                background-size: cover;
+                background-position: center;
+                box-shadow: var(--box-shadow);
+            }
 
-    #login {
-        padding-top: 20px;
-    }
+            #login {
+                padding-top: 20px;
+            }
 
-    .client-info {
-        width: 80%; /* Make input fields more flexible */
-        height: 45px; /* Adjust height for smaller screens */
-    }
+            .client-info {
+                width: 80%;
+                /* Make input fields more flexible */
+                height: 45px;
+                /* Adjust height for smaller screens */
+            }
 
-    .password-container {
-        width: 80%; /* Adjust width */
-    }
+            .password-container {
+                width: 80%;
+                /* Adjust width */
+            }
 
-    ul {
-        padding-left: 0; /* Remove default padding */
-    }
+            ul {
+                padding-left: 0;
+                /* Remove default padding */
+            }
 
-    li {
-        text-align: left;
-        padding-left: 20px;
-    }
-}
+            li {
+                text-align: left;
+                padding-left: 20px;
+            }
+        }
 
-@media (max-height: 850px) {
-    #container {
-        width: 90%;
-        height: auto; /* Adjust height for smaller screens */
-    }
+        @media (max-height: 850px) {
+            #container {
+                width: 90%;
+                height: auto;
+                /* Adjust height for smaller screens */
+            }
 
-    #login {
-        padding-top: 10%;
-    }
+            #login {
+                padding-top: 10%;
+            }
 
-    #welcome {
-        margin-top: 240px;
-        font-size: 40px;
-    }
+            #welcome {
+                margin-top: 240px;
+                font-size: 40px;
+            }
 
-    #lorem {
-        font-size: 15px;
-    }
+            #lorem {
+                font-size: 15px;
+            }
 
-    .client-info {
-        width: 90%; /* Make input fields more flexible */
-    }
-}
+            .client-info {
+                width: 90%;
+                /* Make input fields more flexible */
+            }
+        }
 
 
         .invalid-feedback {
@@ -305,27 +315,28 @@
         }
 
         .client-info {
-    position: relative;
-    padding-top: 20px; /* Make space for the label */
-}
+            position: relative;
+            padding-top: 20px;
+            /* Make space for the label */
+        }
 
 
-table {
-  font-family: arial, sans-serif;
-  border-collapse: collapse;
-  width: 100%;
-}
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
 
-td, th {
-  border: 1px solid #dddddd;
-  text-align: left;
-  padding: 8px;
-}
+        td,
+        th {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
 
-tr:nth-child(even) {
-  background-color: #dddddd;
-}
-
+        tr:nth-child(even) {
+            background-color: #dddddd;
+        }
     </style>
 </head>
 
@@ -356,33 +367,34 @@ tr:nth-child(even) {
             @csrf
             <div id="right">
                 @php
-                    use App\Helpers\Helper;
-                    $company = \App\Models\Company::where('status', 'Active')->first();
+                use App\Helpers\Helper;
+                $company = \App\Models\Company::where('status', 'Active')->first();
                 @endphp
 
+
                 @if (isset($company['logo']))
-                    <img id="login" style="display: block;margin-left: auto;margin-right: auto;"
-                        src="{{ asset('/backend/logo/' . ($company['logo'] ?? 0)) }}" class="img-thumbnail "
-                        alt="Responsive image">
+                <img id="login" style="display: block;margin-left: auto;margin-right: auto;"
+                    src="{{ asset('/backend/logo/' . ($company['logo'] ?? 0)) }}" class="img-thumbnail "
+                    alt="Responsive image">
                 @else
-                    <h6 id="login" style="color: red">
-                        ops! your logo missing
-                    </h6>
+                <h6 id="login" style="color: red">
+                    ops! your logo missing
+                </h6>
                 @endif
                 <input type="email" id="email" name="email" class="client-info">
                 <label for="email">Email</label>
                 @error('email')
-                    <span class="invalid-feedback" role="alert">
-                        <strong>{{ $message }}</strong>
-                    </span>
+                <span class="invalid-feedback" role="alert">
+                    <strong>{{ $message }}</strong>
+                </span>
                 @enderror
                 <input type="password" id="password" name="password" class="client-info">
 
                 <label for="password">Password</label>
                 @error('password')
-                    <span class="invalid-feedback" role="alert">
-                        <strong>{{ $message }}</strong>
-                    </span>
+                <span class="invalid-feedback" role="alert">
+                    <strong>{{ $message }}</strong>
+                </span>
                 @enderror
 
                 <p style="text-align: center;">
@@ -390,12 +402,12 @@ tr:nth-child(even) {
                 </p>
                 <input type="submit" id="submit" class="client-info" value="Submit">
             </div>
-            
+
         </form>
-        
+
     </div>
 
-      
+
     <script>
         /* Work in proggress */
         document.getElementById('see-button').addEventListener('click', evt => {

@@ -17,12 +17,13 @@
     <link rel="stylesheet" href="{{ asset('backend/assets/dist/css/adminlte.min.css') }}">
 </head>
 
-<body class="hold-transition login-page" >
+<body class="hold-transition login-page">
     <div class="login-box">
         <div class="login-logo">
             <a href="../../index2.html"><b>THERAPID</b>CREW</a>
         </div>
         <!-- /.login-logo -->
+
         <div class="card">
             <div class="card-body login-card-body">
                 @include('backend.layouts.partials.messages')
@@ -37,9 +38,9 @@
                             </div>
                         </div>
                         @error('email')
-                        <span class="invalid-feedback" role="alert">
-                            <strong>{{ $message }}</strong>
-                        </span>
+                            <span class="invalid-feedback" role="alert">
+                                <strong>{{ $message }}</strong>
+                            </span>
                         @enderror
                     </div>
                     <div class="input-group mb-3">
@@ -50,9 +51,9 @@
                             </div>
                         </div>
                         @error('password')
-                        <span class="invalid-feedback" role="alert">
-                            <strong>{{ $message }}</strong>
-                        </span>
+                            <span class="invalid-feedback" role="alert">
+                                <strong>{{ $message }}</strong>
+                            </span>
                         @enderror
                     </div>
                     <div class="row">
@@ -80,8 +81,7 @@
     <!-- /.login-box -->
 
     <!-- jQuery -->
-    <script src="{{ asset('backend/assets/plugins/jquery/jquery.min.js') }}">
-    </script>
+    <script src="{{ asset('backend/assets/plugins/jquery/jquery.min.js') }}"></script>
     <!-- Bootstrap 4 -->
     <script src="{{ asset('backend/assets/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
     <!-- AdminLTE App -->
