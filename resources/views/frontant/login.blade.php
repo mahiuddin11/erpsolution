@@ -157,25 +157,22 @@
             height: 20px;
         }
 
-        /*
-         * ===== water wave animation (rebuilt) =====
-         * Each layer is its own <svg>, width 200% of the viewport.
-         * The path is a mathematically exact sine-wave (Q + T commands)
-         * drawn for exactly TWO periods, matching the svg's viewBox width.
-         * Animating translateX from 0 -> -50% therefore shifts the artwork
-         * by EXACTLY one period, so the loop point is perfectly seamless
-         * (no jump, no stutter, no visible seam).
-         */
+        /* =====================================================================
+           WATER WAVE ANIMATION — CSS CONTROL PANEL
+           নিচের comment গুলো পড়ে তুমি নিজেই height / speed / opacity বদলাতে পারবে।
+           ===================================================================== */
 
         .wave-wrapper {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 100px;
+            height: 80px;
             overflow: hidden;
+            /* ^ এটা off করলে না — এটাই wave-কে screen-এর বাইরে চলে যেতে দেয় না */
             z-index: 1;
             pointer-events: none;
+
             will-change: transform;
         }
 
@@ -184,33 +181,35 @@
             bottom: 0;
             left: 0;
             width: 200%;
-            height: 100%;
+            height: 90%;
             display: block;
         }
 
-        /* farthest layer: slow, faint, softly blurred (atmospheric depth) */
+
         .wave-layer.wave3 {
-            animation: waveScrollBack 26s linear infinite;
-            opacity: 0.12;
+            /* 👉 SPEED: সংখ্যা বাড়ালে ধীর হবে, কমালে দ্রুত হবে (unit = second) */
+            animation: waveScrollBack 40s linear infinite;
+
+
+            opacity: 0.20;
             filter: blur(1.5px);
         }
 
-        /* mid layer: medium speed/size, moves opposite direction for parallax */
+
         .wave-layer.wave2 {
-            animation: waveScrollFront 20s linear infinite reverse;
+            animation: waveScrollFront 26s linear infinite reverse;
             opacity: 0.30;
         }
 
-        /* nearest layer: fastest, brightest, sharpest — feels "closest" to viewer */
+        /* ---------- FRONT LAYER (সবচেয়ে কাছের, সবচেয়ে বড়/উজ্জ্বল) ---------- */
         .wave-layer.wave1 {
-            animation: waveScrollFront 10s linear infinite;
+
+            animation: waveScrollFront 16s linear infinite;
             opacity: 0.50;
             filter: drop-shadow(0 -2px 3px rgba(0, 60, 90, 0.15));
         }
 
-        /* Each layer's path is drawn twice (2 full periods) inside the viewBox,
-           so translateX(-50%) shifts the artwork by EXACTLY one period —
-           a perfectly seamless, glitch-free loop. */
+
         @keyframes waveScrollFront {
             from {
                 transform: translateX(0);
@@ -228,6 +227,126 @@
 
             to {
                 transform: translateX(0);
+            }
+        }
+
+        /* =====================================================================
+           LOGIN LOADING OVERLAY — CSS CONTROL PANEL
+           Login বাটনে ক্লিক করলে পুরো screen জুড়ে এই overlay দেখাবে (form submit
+           হয়ে server response না আসা পর্যন্ত)। নিচের comment পড়ে রঙ/স্পিড বদলাও।
+           ===================================================================== */
+
+        .login-loading-overlay {
+            /* পুরো screen ঢেকে রাখে, সবকিছুর উপরে (z-index সবচেয়ে বেশি) */
+            position: fixed;
+            inset: 0;
+            /* ^ inset:0 মানে top/right/bottom/left সবগুলোই 0 */
+            z-index: 9999;
+
+            /* 👉 overlay-এর background color/gradient এখানে বদলাও */
+            background: linear-gradient(135deg, rgba(0, 60, 90, 0.55), rgba(0, 119, 182, 0.55));
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 22px;
+
+            /* শুরুতে overlay লুকানো থাকবে (opacity 0 + visibility hidden) */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity .25s ease;
+        }
+
+        /* JS দিয়ে এই class যোগ করা হলে overlay visible/active হয়ে যাবে */
+        .login-loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* ---------- spinner (ঘূর্ণায়মান রিং) ---------- */
+        .login-spinner {
+            /* 👉 spinner-এর সাইজ বদলাতে width/height বদলাও */
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            border: 5px solid rgba(255, 255, 255, 0.25);
+            border-top-color: #ffffff;
+            animation: spinnerRotate 0.5s linear infinite;
+        }
+
+        @keyframes spinnerRotate {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .login-spinner-ripple {
+            position: absolute;
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            animation: rippleExpand 1.8s ease-out infinite;
+        }
+
+        .login-spinner-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes rippleExpand {
+            0% {
+                transform: scale(1);
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: scale(2.2);
+                opacity: 0;
+            }
+        }
+
+        /* ---------- text ---------- */
+        .login-loading-text {
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 500;
+            letter-spacing: .3px;
+            text-align: center;
+        }
+
+
+        .login-loading-text .dot {
+            animation: dotBlink 1.4s infinite;
+            opacity: 0;
+        }
+
+        .login-loading-text .dot:nth-child(2) {
+            animation-delay: .2s;
+        }
+
+        .login-loading-text .dot:nth-child(3) {
+            animation-delay: .4s;
+        }
+
+        @keyframes dotBlink {
+
+            0%,
+            20% {
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
             }
         }
 
@@ -253,7 +372,7 @@
             }
 
             .wave-wrapper {
-                height: 90px;
+                height: 100px;
             }
         }
 
@@ -289,7 +408,7 @@
 
         </div>
 
-        <form method="POST" action="{{ route('login') }}">
+        <form method="POST" action="{{ route('login') }}" id="loginForm">
 
             @csrf
 
@@ -342,21 +461,11 @@
 
     </div>
 
-    <!--
-      ===== Wave layers (natural, irregular, seamless) =====
-      Each svg viewBox is "0 0 3200 140": exactly TWO periods of an
-      irregular 1600-unit wave, built from 8 hand-placed height points
-      per period and connected with a Catmull-Rom -> cubic-Bezier spline
-      (the long C... chains below). Unlike a plain sine wave, each crest
-      and trough has a different height, so the water looks organic
-      instead of "printed". Because period 2 is an exact copy of period 1
-      (same relative heights), translateX(-50%) still shifts the artwork
-      by exactly one period -> perfectly seamless, glitch-free looping.
-    -->
+
     <div class="wave-wrapper" id="waveWrapper">
 
-        <!-- back layer: subtle, small, far away -->
-        <svg class="wave-layer wave3" viewBox="0 0 3200 140" preserveAspectRatio="none"
+        <!-- ================= BACK LAYER: সবচেয়ে দূরের, ছোট ঢেউ ================= -->
+        <svg class="wave-layer wave3" viewBox="0 0 3200 220" preserveAspectRatio="none"
             xmlns="http://www.w3.org/2000/svg">
             <defs>
                 <linearGradient id="waveGrad3" x1="0" y1="0" x2="0" y2="1">
@@ -364,29 +473,30 @@
                     <stop offset="100%" stop-color="#0077b6" />
                 </linearGradient>
             </defs>
-            <path fill="url(#waveGrad3)" d="M0,96.2
-                   C66.667,96.4 133.333,90.6 200,91.4
-                   C266.667,92.2 333.333,101.6 400,101
-                   C466.667,100.4 533.333,88 600,87.8
-                   C666.667,87.6 733.333,99 800,99.8
-                   C866.667,100.6 933.333,92.8 1000,92.6
-                   C1066.667,92.4 1133.333,99 1200,98.6
-                   C1266.667,98.2 1333.333,90.6 1400,90.2
-                   C1466.667,89.8 1533.333,96 1600,96.2
-                   C1666.667,96.4 1733.333,90.6 1800,91.4
-                   C1866.667,92.2 1933.333,101.6 2000,101
-                   C2066.667,100.4 2133.333,88 2200,87.8
-                   C2266.667,87.6 2333.333,99 2400,99.8
-                   C2466.667,100.6 2533.333,92.8 2600,92.6
-                   C2666.667,92.4 2733.333,99 2800,98.6
-                   C2866.667,98.2 2933.333,90.6 3000,90.2
-                   C3066.667,89.8 3133.333,96 3200,96.2
-                   L3200,140 L0,140 Z">
+            <!-- baseline ~ y:110, amplitude ~ 22px (ছোট ঢেউ, দূরের অনুভূতি) -->
+            <path fill="url(#waveGrad3)" d="M0,112.2
+                   C66.667,112.567 133.333,101.933 200,103.4
+                   C266.667,104.867 333.333,122.1 400,121
+                   C466.667,119.9 533.333,97.167 600,96.8
+                   C666.667,96.433 733.333,117.333 800,118.8
+                   C866.667,120.267 933.333,105.967 1000,105.6
+                   C1066.667,105.233 1133.333,117.333 1200,116.6
+                   C1266.667,115.867 1333.333,101.933 1400,101.2
+                   C1466.667,100.467 1533.333,111.833 1600,112.2
+                   C1666.667,112.567 1733.333,101.933 1800,103.4
+                   C1866.667,104.867 1933.333,122.1 2000,121
+                   C2066.667,119.9 2133.333,97.167 2200,96.8
+                   C2266.667,96.433 2333.333,117.333 2400,118.8
+                   C2466.667,120.267 2533.333,105.967 2600,105.6
+                   C2666.667,105.233 2733.333,117.333 2800,116.6
+                   C2866.667,115.867 2933.333,101.933 3000,101.2
+                   C3066.667,100.467 3133.333,111.833 3200,112.2
+                   L3200,220 L0,220 Z">
             </path>
         </svg>
 
-        <!-- mid layer: medium size, opposite drift direction -->
-        <svg class="wave-layer wave2" viewBox="0 0 3200 140" preserveAspectRatio="none"
+        <!-- ================= MID LAYER: মাঝারি সাইজ, উলটো দিকে ভাসে ================= -->
+        <svg class="wave-layer wave2" viewBox="0 0 3200 220" preserveAspectRatio="none"
             xmlns="http://www.w3.org/2000/svg">
             <defs>
                 <linearGradient id="waveGrad2" x1="0" y1="0" x2="0" y2="1">
@@ -394,29 +504,30 @@
                     <stop offset="100%" stop-color="#00b4d8" />
                 </linearGradient>
             </defs>
-            <path fill="url(#waveGrad2)" d="M0,80.4
-                   C66.667,79.8 133.333,64.2 200,66
-                   C266.667,67.8 333.333,90.3 400,91.2
-                   C466.667,92.1 533.333,72.3 600,71.4
-                   C666.667,70.5 733.333,87.9 800,85.8
-                   C866.667,83.7 933.333,59.4 1000,58.8
-                   C1066.667,58.2 1133.333,80.4 1200,82.2
-                   C1266.667,84 1333.333,69.9 1400,69.6
-                   C1466.667,69.3 1533.333,81 1600,80.4
-                   C1666.667,79.8 1733.333,64.2 1800,66
-                   C1866.667,67.8 1933.333,90.3 2000,91.2
-                   C2066.667,92.1 2133.333,72.3 2200,71.4
-                   C2266.667,70.5 2333.333,87.9 2400,85.8
-                   C2466.667,83.7 2533.333,59.4 2600,58.8
-                   C2666.667,58.2 2733.333,80.4 2800,82.2
-                   C2866.667,84 2933.333,69.9 3000,69.6
-                   C3066.667,69.3 3133.333,81 3200,80.4
-                   L3200,140 L0,140 Z">
+            <!-- baseline ~ y:90, amplitude ~ 32px (আগের চেয়ে বড় দোলন) -->
+            <path fill="url(#waveGrad2)" d="M0,99.6
+                   C66.667,98.533 133.333,70.8 200,74
+                   C266.667,77.2 333.333,117.2 400,118.8
+                   C466.667,120.4 533.333,85.2 600,83.6
+                   C666.667,82 733.333,112.933 800,109.2
+                   C866.667,105.467 933.333,62.267 1000,61.2
+                   C1066.667,60.133 1133.333,99.6 1200,102.8
+                   C1266.667,106 1333.333,80.933 1400,80.4
+                   C1466.667,79.867 1533.333,100.667 1600,99.6
+                   C1666.667,98.533 1733.333,70.8 1800,74
+                   C1866.667,77.2 1933.333,117.2 2000,118.8
+                   C2066.667,120.4 2133.333,85.2 2200,83.6
+                   C2266.667,82 2333.333,112.933 2400,109.2
+                   C2466.667,105.467 2533.333,62.267 2600,61.2
+                   C2666.667,60.133 2733.333,99.6 2800,102.8
+                   C2866.667,106 2933.333,80.933 3000,80.4
+                   C3066.667,79.867 3133.333,100.667 3200,99.6
+                   L3200,220 L0,220 Z">
             </path>
         </svg>
 
-        <!-- front layer: biggest, brightest, closest — has a foam-line highlight -->
-        <svg class="wave-layer wave1" viewBox="0 0 3200 140" preserveAspectRatio="none"
+        <!-- ================= FRONT LAYER: সবচেয়ে কাছের, সবচেয়ে বড় ঢেউ ================= -->
+        <svg class="wave-layer wave1" viewBox="0 0 3200 220" preserveAspectRatio="none"
             xmlns="http://www.w3.org/2000/svg">
             <defs>
                 <linearGradient id="waveGrad1" x1="0" y1="0" x2="0" y2="1">
@@ -424,31 +535,47 @@
                     <stop offset="100%" stop-color="#48cae4" />
                 </linearGradient>
             </defs>
-            <path fill="url(#waveGrad1)" stroke="rgba(255,255,255,0.45)" stroke-width="2.5" stroke-linejoin="round" d="M0,55
-                   C66.667,54.375 133.333,32.5 200,35
-                   C266.667,37.5 333.333,69.167 400,70
-                   C466.667,70.833 533.333,38.333 600,40
-                   C666.667,41.667 733.333,79.583 800,80
-                   C866.667,80.417 933.333,43.75 1000,42.5
-                   C1066.667,41.25 1133.333,73.125 1200,72.5
-                   C1266.667,71.875 1333.333,41.667 1400,38.75
-                   C1466.667,35.833 1533.333,55.625 1600,55
-                   C1666.667,54.375 1733.333,32.5 1800,35
-                   C1866.667,37.5 1933.333,69.167 2000,70
-                   C2066.667,70.833 2133.333,38.333 2200,40
-                   C2266.667,41.667 2333.333,79.583 2400,80
-                   C2466.667,80.417 2533.333,43.75 2600,42.5
-                   C2666.667,41.25 2733.333,73.125 2800,72.5
-                   C2866.667,71.875 2933.333,41.667 3000,38.75
-                   C3066.667,35.833 3133.333,55.625 3200,55
-                   L3200,140 L0,140 Z">
+            <!-- baseline ~ y:65, amplitude ~ 45px (সবচেয়ে বড় দোলন — সবচেয়ে বেশি
+                 উপরে ওঠে এবং নিচে নামে, কারণ এটাই সবচেয়ে কাছের/প্রধান wave) -->
+            <path fill="url(#waveGrad1)" stroke="rgba(255,255,255,0.45)" stroke-width="2.5" stroke-linejoin="round" d="M0,65
+                   C66.667,63.875 133.333,24.5 200,29
+                   C266.667,33.5 333.333,90.5 400,92
+                   C466.667,93.5 533.333,35 600,38
+                   C666.667,41 733.333,109.25 800,110
+                   C866.667,110.75 933.333,44.75 1000,42.5
+                   C1066.667,40.25 1133.333,97.625 1200,96.5
+                   C1266.667,95.375 1333.333,41 1400,35.75
+                   C1466.667,30.5 1533.333,66.125 1600,65
+                   C1666.667,63.875 1733.333,24.5 1800,29
+                   C1866.667,33.5 1933.333,90.5 2000,92
+                   C2066.667,93.5 2133.333,35 2200,38
+                   C2266.667,41 2333.333,109.25 2400,110
+                   C2466.667,110.75 2533.333,44.75 2600,42.5
+                   C2666.667,40.25 2733.333,97.625 2800,96.5
+                   C2866.667,95.375 2933.333,41 3000,35.75
+                   C3066.667,30.5 3133.333,66.125 3200,65
+                   L3200,220 L0,220 Z">
             </path>
         </svg>
 
     </div>
 
+    <!--
+      ===== LOGIN LOADING OVERLAY =====
+    
+    -->
+    <div class="login-loading-overlay" id="loginLoadingOverlay">
+        <div class="login-spinner-wrap">
+            <div class="login-spinner-ripple"></div>
+            <div class="login-spinner"></div>
+        </div>
+        <div class="login-loading-text">
+            Login<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
+        </div>
+    </div>
+
     <script>
-        // ===== password toggle =====
+        // ===== password toggle ( password show/hide ) =====
         const togglePassword = document.getElementById('togglePassword');
         const passwordInput = document.getElementById('password');
         const eyeIcon = document.getElementById('eyeIcon');
@@ -458,11 +585,13 @@
             const isPassword = passwordInput.getAttribute('type') === 'password';
             passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
 
+            //icon hiden or show
             eyeIcon.style.display = isPassword ? 'none' : 'block';
             eyeOffIcon.style.display = isPassword ? 'block' : 'none';
         });
 
-        // ===== login credentials autofill (local env only) =====
+        // ===== login credentials autofill 
+
         document.querySelectorAll('.credentials-table tr').forEach(row => {
             row.addEventListener('click', function() {
                 const email = this.getAttribute('data-email');
@@ -472,6 +601,19 @@
                     document.getElementById('password').value = password;
                 }
             });
+        });
+
+
+        const loginForm = document.getElementById('loginForm');
+        const loginLoadingOverlay = document.getElementById('loginLoadingOverlay');
+        const loginSubmitButton = loginForm.querySelector('button[type="submit"]');
+
+        loginForm.addEventListener('submit', function() {
+
+            loginLoadingOverlay.classList.add('active');
+            loginSubmitButton.disabled = true;
+            loginSubmitButton.style.opacity = '0.7';
+            loginSubmitButton.style.cursor = 'not-allowed';
         });
 
         // ===== water wave mouse interaction (smooth, lerp-based parallax tilt) =====
