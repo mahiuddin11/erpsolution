@@ -71,6 +71,98 @@
         top: 0;
         border-radius: 0 10px;
     }
+
+    /* Added: 2026-07-08 - Top navbar responsive fixes */
+
+    /* Prevent the whole navbar row from ever forcing horizontal scroll */
+    nav.main-header.navbar {
+        flex-wrap: nowrap;
+        padding-right: 4px;
+    }
+
+    /* User dropdown: keep avatar + name from squeezing other icons on small screens */
+    .main-header .user-menu .dropdown-toggle {
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .main-header .user-menu .user-image {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-left: 6px;
+        flex-shrink: 0;
+    }
+
+    .main-header .user-menu .dropdown-toggle span.user-name-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 160px;
+    }
+
+    /* Search block: keep it inside viewport width when toggled open on mobile */
+    .navbar-search-block {
+        max-width: 100%;
+    }
+
+    @media (max-width: 575.98px) {
+
+        /* Modified: 2026-07-08 - username hidden now, so icons can be a bit bigger without crowding */
+        .main-header .navbar-nav .nav-item a .fas {
+            font-size: 26px;
+        }
+
+        .main-header .navbar-nav .nav-item a {
+            padding: 0 12px;
+        }
+
+        .main-header .user-menu .user-image {
+            width: 34px;
+            height: 34px;
+        }
+
+        .main-header .user-menu .dropdown-toggle {
+            padding: 0 12px;
+        }
+
+        /* Modified: 2026-07-08 - user name now stays visible on mobile too (per request);
+           only constrain its width with ellipsis so it can't push other icons off-screen */
+        .main-header .user-menu .dropdown-toggle span.user-name-text {
+            display: inline-block;
+            /* max-width: 110px; */
+        }
+
+        /* Fullscreen toggle is not useful in mobile browsers - hide to save space */
+        .main-header .navbar-nav.ml-auto>li.nav-item.d-none-mobile {
+            display: none !important;
+        }
+
+        /* Make the search dropdown span the full width under the navbar instead of overflowing */
+        .navbar-search-block {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            width: 100%;
+            padding: 8px;
+            background: #fff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, .15);
+            z-index: 1030;
+        }
+
+        .navbar-search-block .form-control-navbar {
+            width: 100%;
+        }
+
+        ol.breadcrumb li.breadcrumb-item a {
+            font-size: 13px;
+        }
+    }
 </style>
 
 
@@ -253,14 +345,14 @@
         </li> -->
 
         <li class="dropdown user user-menu">
+
             <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                <span class="user-name-text"> {{ Auth()->user()->name }}</span>
+
                 @if (isset($companyDetails->logo))
                     <img class="user-image" src="{{ asset('/backend/logo/' . $companyDetails->logo) }}"
                         alt="User profile picture">
                 @endif
-
-
-                <span class="hidden-xs"> {{ Auth()->user()->name }}</span>
             </a>
             <ul class="dropdown-menu">
                 <!-- User image -->
@@ -279,12 +371,13 @@
                 <!-- Menu Footer-->
                 <li class="user-footer">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-6">
                             <div class="pull-left">
-                                <a href="{{route("usermanage.userRole.profile",auth()->id())}}" class="btn btn-default btn-flat btn-block">Profile</a>
+                                <a href="{{ route('usermanage.userRole.profile', auth()->id()) }}"
+                                    class="btn btn-default btn-flat btn-block">Profile</a>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-6">
 
                             <div class="pull-right">
                                 <a class="btn btn-default btn-flat btn-block" href="{{ route('logout') }}"
@@ -304,7 +397,8 @@
 
 
 
-        <li class="nav-item">
+        {{-- Modified: 2026-07-08 - added "d-none-mobile" hook class so fullscreen icon can be hidden on phones via media query --}}
+        <li class="nav-item d-none-mobile">
             <a class="nav-link" data-widget="fullscreen" href="#" role="button">
                 <i class="fas fa-expand-arrows-alt"></i>
             </a>
