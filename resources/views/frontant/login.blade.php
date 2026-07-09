@@ -6,9 +6,9 @@
     <title>Water Technology BD Ltd</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <link rel="preload" as="image" href="{{ asset('backend/logo/loginpage_bg.png') }}">
+
 
     <style>
         * {
@@ -24,7 +24,8 @@
 
         body {
             font-family: 'Roboto', sans-serif;
-            background: url('{{ asset('backend/logo/loginpage_bg.png') }}') no-repeat center center fixed;
+
+            background: url('{{ asset('backend/logo/loginpage_bg.png') }}') no-repeat center center scroll;
             background-size: cover;
             min-height: 100vh;
             display: flex;
@@ -157,10 +158,6 @@
             height: 20px;
         }
 
-        /* =====================================================================
-           WATER WAVE ANIMATION — CSS CONTROL PANEL
-           নিচের comment গুলো পড়ে তুমি নিজেই height / speed / opacity বদলাতে পারবে।
-           ===================================================================== */
 
         .wave-wrapper {
             position: fixed;
@@ -183,6 +180,9 @@
             width: 200%;
             height: 90%;
             display: block;
+
+
+            will-change: transform;
         }
 
 
@@ -230,11 +230,7 @@
             }
         }
 
-        /* =====================================================================
-           LOGIN LOADING OVERLAY — CSS CONTROL PANEL
-           Login বাটনে ক্লিক করলে পুরো screen জুড়ে এই overlay দেখাবে (form submit
-           হয়ে server response না আসা পর্যন্ত)। নিচের comment পড়ে রঙ/স্পিড বদলাও।
-           ===================================================================== */
+
 
         .login-loading-overlay {
             /* পুরো screen ঢেকে রাখে, সবকিছুর উপরে (z-index সবচেয়ে বেশি) */
@@ -254,7 +250,7 @@
             justify-content: center;
             gap: 22px;
 
-            /* শুরুতে overlay লুকানো থাকবে (opacity 0 + visibility hidden) */
+
             opacity: 0;
             visibility: hidden;
             transition: opacity .25s ease;
@@ -266,9 +262,9 @@
             visibility: visible;
         }
 
-        /* ---------- spinner (ঘূর্ণায়মান রিং) ---------- */
+
         .login-spinner {
-            /* 👉 spinner-এর সাইজ বদলাতে width/height বদলাও */
+
             width: 68px;
             height: 68px;
             border-radius: 50%;
@@ -374,6 +370,15 @@
             .wave-wrapper {
                 height: 100px;
             }
+
+
+            .wave-layer.wave3 {
+                filter: none;
+            }
+
+            .wave-layer.wave1 {
+                filter: none;
+            }
         }
 
         @media (max-width: 480px) {
@@ -384,6 +389,17 @@
             .wrapper {
                 max-width: 100%;
                 padding: 25px 20px;
+            }
+        }
+
+
+        @media (prefers-reduced-motion: reduce) {
+
+            .wave-layer,
+            .login-spinner,
+            .login-spinner-ripple,
+            .login-loading-text .dot {
+                animation: none !important;
             }
         }
     </style>
@@ -413,7 +429,8 @@
             @csrf
 
             <div class="form-group">
-                <input type="text" name="email" id="email" placeholder="Enter Your Email" required>
+                <input type="text" name="email" id="email" placeholder="Enter Your Email" autocomplete="email"
+                    required>
             </div>
 
             <div class="form-group password-group">
@@ -450,8 +467,8 @@
                     <th>Role</th>
                 </tr>
 
-                <tr data-email="info@xtreem.com" data-password="12345678">
-                    <td>info@xtreem.com</td>
+                <tr data-email="info@wtbl.com" data-password="12345678">
+                    <td>info@wtbl.com</td>
                     <td>12345678</td>
                     <td>Admin</td>
                 </tr>
@@ -464,7 +481,7 @@
 
     <div class="wave-wrapper" id="waveWrapper">
 
-        <!-- ================= BACK LAYER: সবচেয়ে দূরের, ছোট ঢেউ ================= -->
+        <!-- ================= BACK LAYER: big water wave and longdestance ================= -->
         <svg class="wave-layer wave3" viewBox="0 0 3200 220" preserveAspectRatio="none"
             xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -473,7 +490,7 @@
                     <stop offset="100%" stop-color="#0077b6" />
                 </linearGradient>
             </defs>
-            <!-- baseline ~ y:110, amplitude ~ 22px (ছোট ঢেউ, দূরের অনুভূতি) -->
+            <!-- baseline ~ y:110, amplitude ~ 22px lognth destance water wave small -->
             <path fill="url(#waveGrad3)" d="M0,112.2
                    C66.667,112.567 133.333,101.933 200,103.4
                    C266.667,104.867 333.333,122.1 400,121
@@ -495,7 +512,7 @@
             </path>
         </svg>
 
-        <!-- ================= MID LAYER: মাঝারি সাইজ, উলটো দিকে ভাসে ================= -->
+        <!-- ================= MID LAYER: water wave ================= -->
         <svg class="wave-layer wave2" viewBox="0 0 3200 220" preserveAspectRatio="none"
             xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -504,7 +521,7 @@
                     <stop offset="100%" stop-color="#00b4d8" />
                 </linearGradient>
             </defs>
-            <!-- baseline ~ y:90, amplitude ~ 32px (আগের চেয়ে বড় দোলন) -->
+            <!-- baseline ~ y:90, amplitude ~ 32px (after water wave) -->
             <path fill="url(#waveGrad2)" d="M0,99.6
                    C66.667,98.533 133.333,70.8 200,74
                    C266.667,77.2 333.333,117.2 400,118.8
@@ -526,7 +543,7 @@
             </path>
         </svg>
 
-        <!-- ================= FRONT LAYER: সবচেয়ে কাছের, সবচেয়ে বড় ঢেউ ================= -->
+        <!-- ================= FRONT LAYER: watter leyer ================= -->
         <svg class="wave-layer wave1" viewBox="0 0 3200 220" preserveAspectRatio="none"
             xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -535,8 +552,7 @@
                     <stop offset="100%" stop-color="#48cae4" />
                 </linearGradient>
             </defs>
-            <!-- baseline ~ y:65, amplitude ~ 45px (সবচেয়ে বড় দোলন — সবচেয়ে বেশি
-                 উপরে ওঠে এবং নিচে নামে, কারণ এটাই সবচেয়ে কাছের/প্রধান wave) -->
+
             <path fill="url(#waveGrad1)" stroke="rgba(255,255,255,0.45)" stroke-width="2.5" stroke-linejoin="round" d="M0,65
                    C66.667,63.875 133.333,24.5 200,29
                    C266.667,33.5 333.333,90.5 400,92
@@ -560,10 +576,7 @@
 
     </div>
 
-    <!--
-      ===== LOGIN LOADING OVERLAY =====
-    
-    -->
+
     <div class="login-loading-overlay" id="loginLoadingOverlay">
         <div class="login-spinner-wrap">
             <div class="login-spinner-ripple"></div>
@@ -590,18 +603,17 @@
             eyeOffIcon.style.display = isPassword ? 'block' : 'none';
         });
 
-        // ===== login credentials autofill 
 
-        document.querySelectorAll('.credentials-table tr').forEach(row => {
-            row.addEventListener('click', function() {
-                const email = this.getAttribute('data-email');
-                const password = this.getAttribute('data-password');
-                if (email) {
-                    document.getElementById('email').value = email;
-                    document.getElementById('password').value = password;
-                }
+        const credentialsTable = document.querySelector('.credentials-table');
+        if (credentialsTable) {
+            credentialsTable.addEventListener('click', function(e) {
+                const row = e.target.closest('tr[data-email]');
+                if (!row) return;
+
+                document.getElementById('email').value = row.getAttribute('data-email');
+                document.getElementById('password').value = row.getAttribute('data-password');
             });
-        });
+        }
 
 
         const loginForm = document.getElementById('loginForm');
@@ -616,12 +628,17 @@
             loginSubmitButton.style.cursor = 'not-allowed';
         });
 
-        // ===== water wave mouse interaction (smooth, lerp-based parallax tilt) =====
-        // Instead of snapping the wave straight to the cursor position (which felt
-        // jerky), we lerp (linearly interpolate) towards a target value every
-        // animation frame. This makes the tilt feel like it is "catching up" to
-        // the mouse smoothly and naturally, and it never fights with the
-        // continuous CSS translateX wave-scroll animation running on each layer.
+
+
+        document.addEventListener('visibilitychange', function() {
+            const playState = document.hidden ? 'paused' : 'running';
+            document.querySelectorAll('.wave-layer').forEach(function(layer) {
+                layer.style.animationPlayState = playState;
+            });
+        });
+
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
         const waveWrapper = document.getElementById('waveWrapper');
 
         let targetX = 0;
@@ -632,22 +649,44 @@
         let currentY = 0;
         let currentRotate = 0;
 
-        const EASE = 0.00; // lower = smoother/slower catch-up, higher = snappier
+
+        const EASE = 0.0;
+        const STOP_THRESHOLD = 0.02;
+
+        let tiltAnimationRunning = false;
 
         document.addEventListener('mousemove', function(e) {
+            if (prefersReducedMotion) return;
+
             const x = e.clientX / window.innerWidth - 0.5;
             const y = e.clientY / window.innerHeight - 0.5;
 
             targetX = x * 20;
             targetY = y * 15;
             targetRotate = x * -2;
+
+            // মাউস নড়লে animation loop বন্ধ থাকলে আবার চালু করা হয়
+            startTiltAnimation();
+        }, {
+            passive: true
         });
 
         document.addEventListener('mouseleave', function() {
+            if (prefersReducedMotion) return;
+
             targetX = 0;
             targetY = 0;
             targetRotate = 0;
+            startTiltAnimation();
+        }, {
+            passive: true
         });
+
+        function startTiltAnimation() {
+            if (tiltAnimationRunning) return; // ইতিমধ্যে চলছে, দ্বিতীয়বার শুরু করার দরকার নেই
+            tiltAnimationRunning = true;
+            requestAnimationFrame(animateTilt);
+        }
 
         function animateTilt() {
             currentX += (targetX - currentX) * EASE;
@@ -657,10 +696,18 @@
             waveWrapper.style.transform =
                 `translateX(${currentX.toFixed(2)}px) translateY(${currentY.toFixed(2)}px) rotate(${currentRotate.toFixed(2)}deg)`;
 
-            requestAnimationFrame(animateTilt);
-        }
+            const stillMoving =
+                Math.abs(targetX - currentX) > STOP_THRESHOLD ||
+                Math.abs(targetY - currentY) > STOP_THRESHOLD ||
+                Math.abs(targetRotate - currentRotate) > STOP_THRESHOLD;
 
-        requestAnimationFrame(animateTilt);
+            if (stillMoving) {
+                requestAnimationFrame(animateTilt);
+            } else {
+
+                tiltAnimationRunning = false;
+            }
+        }
     </script>
 
 </body>

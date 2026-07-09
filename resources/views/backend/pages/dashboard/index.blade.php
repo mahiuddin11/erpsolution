@@ -5,9 +5,9 @@
 @endsection
 <style>
     .small-box>.small-box-footer {
-    border: none;
-    width: 100%;
-}
+        border: none;
+        width: 100%;
+    }
 </style>
 
 
@@ -29,33 +29,33 @@
 @endsection
 
 @section('admin-content')
-        <div class="row">
-            @if ($user->branch_id !== null)
-                <div class="col-md-6 offset-md-3">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="col-md-12">
-                                <div class="position-relative p-3 bg-green" style="height: 150px">
-                                    <div class="ribbon-wrapper ribbon-xl">
-                                        <div class="ribbon bg-red">
-                                            {{ $user->branch->branchCode ?? "" }} <br>
-                                            {{ $user->branch->name ?? "" }}
-                                        </div>
+    <div class="row">
+        @if ($user->branch_id !== null)
+            <div class="col-md-6 offset-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="col-md-12">
+                            <div class="position-relative p-3 bg-green" style="height: 150px">
+                                <div class="ribbon-wrapper ribbon-xl">
+                                    <div class="ribbon bg-red">
+                                        {{ $user->branch->branchCode ?? '' }} <br>
+                                        {{ $user->branch->name ?? '' }}
                                     </div>
-                                    <h3> Today : {{ date('d-M-Y') }}
-                                    </h3>
-                                    <h2>Hello <br> {{ $user->name }}</h2>
-                                    <br>
                                 </div>
+                                <h3> Today : {{ date('d-M-Y') }}
+                                </h3>
+                                <h2>Hello <br> {{ $user->name }}</h2>
+                                <br>
                             </div>
                         </div>
                     </div>
                 </div>
-            @endif
-        </div>
+            </div>
+        @endif
+    </div>
 
-        <div class="row">
-            @if (in_array( 18, $rollper))
+    <div class="row">
+        @if (in_array(18, $rollper))
             <div class="col-lg-3 col-6">
                 <!-- small box -->
                 <div class="small-box bg-default">
@@ -66,13 +66,13 @@
                     <div class="icon">
                         <i class="ion ion-pie-graph"></i>
                     </div>
-                    <a href="{{route('hrm.employee.index')}}"  class="small-box-footer bg-success">More info <i
+                    <a href="{{ route('hrm.employee.index') }}" class="small-box-footer bg-success">More info <i
                             class="fas fa-arrow-circle-right"></i></a>
                 </div>
             </div>
-            @endif
+        @endif
 
-            @if (in_array( 19, $rollper))
+        @if (in_array(19, $rollper))
             <div class="col-lg-3 col-6">
                 <!-- small box -->
                 <div class="small-box bg-default">
@@ -83,12 +83,12 @@
                     <div class="icon">
                         <i class="ion ion-pie-graph"></i>
                     </div>
-                    <a  href="{{route("hrm.attendancelog.index")}}" class="small-box-footer bg-success">More info <i
+                    <a href="{{ route('hrm.attendancelog.index') }}" class="small-box-footer bg-success">More info <i
                             class="fas fa-arrow-circle-right"></i></a>
                 </div>
             </div>
-            @endif
-            @if (in_array( 1, $rollper))
+        @endif
+        @if (in_array(1, $rollper))
             <div class="col-lg-3 col-6">
                 <!-- small box -->
                 <div class="small-box bg-default">
@@ -100,13 +100,13 @@
                     <div class="icon">
                         <i class="ion ion-pie-graph"></i>
                     </div>
-                    <a href="{{route('hrm.leaveapprove.index')}}" class="small-box-footer bg-success">More info <i
+                    <a href="{{ route('hrm.leaveapprove.index') }}" class="small-box-footer bg-success">More info <i
                             class="fas fa-arrow-circle-right"></i></a>
                 </div>
             </div>
-            @endif
+        @endif
 
-            @if (in_array( 2, $rollper))
+        @if (in_array(2, $rollper))
             <div class="col-lg-3 col-6">
                 <!-- small box -->
                 <div class="small-box bg-default">
@@ -118,13 +118,13 @@
                     <div class="icon">
                         <i class="ion ion-pie-graph"></i>
                     </div>
-                    <a href="{{route('hrm.attendancelog.absent')}}" class="small-box-footer bg-success">More info <i
+                    <a href="{{ route('hrm.attendancelog.absent') }}" class="small-box-footer bg-success">More info <i
                             class="fas fa-arrow-circle-right"></i></a>
                 </div>
             </div>
-            @endif
+        @endif
 
-            @if (in_array( 3, $rollper))
+        @if (in_array(3, $rollper))
             <div class="col-lg-3 col-6">
                 <!-- small box -->
                 <div class="small-box bg-default">
@@ -136,13 +136,13 @@
                     <div class="icon">
                         <i class="ion ion-pie-graph"></i>
                     </div>
-                    <a href="{{route('hrm.leave.index')}}" class="small-box-footer bg-success">More info <i
+                    <a href="{{ route('hrm.leave.index') }}" class="small-box-footer bg-success">More info <i
                             class="fas fa-arrow-circle-right"></i></a>
                 </div>
             </div>
-            @endif
+        @endif
 
-            @if (in_array( 4, $rollper))
+        @if (in_array(4, $rollper))
             <div class="col-lg-3 col-6">
                 <!-- small box -->
                 <div class="small-box bg-default">
@@ -154,13 +154,13 @@
                     <div class="icon">
                         <i class="ion ion-pie-graph"></i>
                     </div>
-                    <a href="{{route('hrm.employee.newemployee')}}" class="small-box-footer bg-success">More info <i
+                    <a href="{{ route('hrm.employee.newemployee') }}" class="small-box-footer bg-success">More info <i
                             class="fas fa-arrow-circle-right"></i></a>
                 </div>
             </div>
-            @endif
+        @endif
 
-            @if (in_array( 5, $rollper))
+        @if (in_array(5, $rollper))
             <div class="col-lg-3 col-6">
                 <!-- small box -->
                 <div class="small-box bg-default">
@@ -172,13 +172,13 @@
                     <div class="icon">
                         <i class="ion ion-pie-graph"></i>
                     </div>
-                    <a href="{{route('hrm.lone.index')}}" class="small-box-footer bg-success">More info <i
+                    <a href="{{ route('hrm.lone.index') }}" class="small-box-footer bg-success">More info <i
                             class="fas fa-arrow-circle-right"></i></a>
                 </div>
             </div>
-            @endif
+        @endif
 
-            @if (in_array( 5, $rollper))
+        @if (in_array(5, $rollper))
             <div class="col-lg-3 col-6">
                 <!-- small box -->
                 <div class="small-box bg-default">
@@ -190,57 +190,57 @@
                     <div class="icon">
                         <i class="ion ion-pie-graph"></i>
                     </div>
-                    <a href="{{route('hrm.loneapprove.index')}}" class="small-box-footer bg-success">More info <i
+                    <a href="{{ route('hrm.loneapprove.index') }}" class="small-box-footer bg-success">More info <i
                             class="fas fa-arrow-circle-right"></i></a>
                 </div>
             </div>
-            @endif
+        @endif
 
-            @if (in_array( 1, $rollper))
+        @if (in_array(1, $rollper))
             <div class="col-lg-3 col-6">
                 <!-- small box -->
-                <form action="{{route('report.cashbook.cashbook')}}" method="post">
-                    <input type="hidden" name="account_id" value="{{getAccountByUniqueID(7)->id}}">
-                    <input type="hidden" name="start_date" value="{{date('Y-01-01')}}">
-                    <input type="hidden" name="to_date" value="{{date('Y-m-d')}}">
-                @csrf
-                <div class="small-box bg-default">
-                    <div class="inner">
-                        <h3>{{ number_format($totalcashbalance) }}</h3>
-                        <p>Cash Balance</p>
-                    </div>
-                    <div class="icon">
-                        <i class="ion ion-pie-graph"></i>
-                    </div>
-                    <button href="" class="small-box-footer bg-success">More info <i
-                        class="fas fa-arrow-circle-right"></i></button>
-                    </div>
-                </form>
-            </div>
-
-            <div class="col-lg-3 col-6">
-                <!-- small box -->
-                <form action="{{route('report.dashboard.trialbalance')}}" method="post">
+                <form action="{{ route('report.cashbook.cashbook') }}" method="post">
+                    <input type="hidden" name="account_id" value="{{ getAccountByUniqueID(7)->id }}">
+                    <input type="hidden" name="start_date" value="{{ date('Y-01-01') }}">
+                    <input type="hidden" name="to_date" value="{{ date('Y-m-d') }}">
                     @csrf
-                <div class="small-box bg-default">
-                    <div class="inner">
-                        <h3>{{ number_format($totalbankbalance) }}</h3>
-                        <p>Bank Balance</p>
+                    <div class="small-box bg-default">
+                        <div class="inner">
+                            <h3>{{ number_format($totalcashbalance) }}</h3>
+                            <p>Cash Balance</p>
+                        </div>
+                        <div class="icon">
+                            <i class="ion ion-pie-graph"></i>
+                        </div>
+                        <button href="" class="small-box-footer bg-success">More info <i
+                                class="fas fa-arrow-circle-right"></i></button>
                     </div>
-                    <div class="icon">
-                        <i class="ion ion-pie-graph"></i>
-                    </div>
-                    <button href="" class="small-box-footer bg-success">More info <i
-                        class="fas fa-arrow-circle-right"></i></button>
+                </form>
+            </div>
+
+            <div class="col-lg-3 col-6">
+                <!-- small box -->
+                <form action="{{ route('report.dashboard.trialbalance') }}" method="post">
+                    @csrf
+                    <div class="small-box bg-default">
+                        <div class="inner">
+                            <h3>{{ number_format($totalbankbalance) }}</h3>
+                            <p>Bank Balance</p>
+                        </div>
+                        <div class="icon">
+                            <i class="ion ion-pie-graph"></i>
+                        </div>
+                        <button href="" class="small-box-footer bg-success">More info <i
+                                class="fas fa-arrow-circle-right"></i></button>
                     </div>
                 </form>
 
             </div>
-            @endif
+        @endif
 
 
 
-            @if (in_array( 2, $rollper))
+        @if (in_array(2, $rollper))
             <div class="col-lg-3 col-6">
                 <!-- small box -->
                 <div class="small-box bg-default">
@@ -252,13 +252,13 @@
                     <div class="icon">
                         <i class="ion ion-pie-graph"></i>
                     </div>
-                    <a href="{{route('inventorySetup.purchase.index')}}" class="small-box-footer bg-success">More info <i
-                            class="fas fa-arrow-circle-right"></i></a>
+                    <a href="{{ route('inventorySetup.purchase.index') }}" class="small-box-footer bg-success">More info
+                        <i class="fas fa-arrow-circle-right"></i></a>
                 </div>
             </div>
-            @endif
+        @endif
 
-            @if (in_array( 3, $rollper))
+        @if (in_array(3, $rollper))
             <div class="col-lg-3 col-6">
                 <!-- small box -->
                 <div class="small-box bg-default">
@@ -269,13 +269,13 @@
                     <div class="icon">
                         <i class="ion ion-bag"></i>
                     </div>
-                    <a href="{{route('inventorySetup.purchase.index',['date'=> date('Y-m-d') ])}}" class="small-box-footer bg-success">More info <i
-                            class="fas fa-arrow-circle-right"></i></a>
+                    <a href="{{ route('inventorySetup.purchase.index', ['date' => date('Y-m-d')]) }}"
+                        class="small-box-footer bg-success">More info <i class="fas fa-arrow-circle-right"></i></a>
                 </div>
             </div>
-            @endif
+        @endif
 
-            @if (in_array( 4, $rollper))
+        @if (in_array(4, $rollper))
             <div class="col-lg-3 col-6">
                 <!-- small box -->
                 <div class="small-box bg-default">
@@ -286,13 +286,13 @@
                     <div class="icon">
                         <i class="ion ion-pie-graph"></i>
                     </div>
-                    <a href="{{route('sale.sale.index')}}" class="small-box-footer bg-success">More info <i
+                    <a href="{{ route('sale.sale.index') }}" class="small-box-footer bg-success">More info <i
                             class="fas fa-arrow-circle-right"></i></a>
                 </div>
             </div>
-            @endif
+        @endif
 
-            @if (in_array( 5, $rollper))
+        @if (in_array(5, $rollper))
             <!-- ./col -->
             <div class="col-lg-3 col-6">
                 <!-- small box -->
@@ -305,60 +305,61 @@
                     <div class="icon">
                         <i class="ion ion-stats-bars"></i>
                     </div>
-                    <a href="{{route('sale.sale.index', ['date'=> date('Y-m-d') ])}}" class="small-box-footer bg-success">More info <i
-                            class="fas fa-arrow-circle-right"></i></a>
+                    <a href="{{ route('sale.sale.index', ['date' => date('Y-m-d')]) }}"
+                        class="small-box-footer bg-success">More info <i class="fas fa-arrow-circle-right"></i></a>
                 </div>
             </div>
-            @endif
+        @endif
 
-            @if (in_array( 6, $rollper))
+        @if (in_array(6, $rollper))
             <!-- ./col -->
             <div class="col-lg-3 col-6">
                 <!-- small box -->
-                <form action="{{route('report.expense',['to_date' => date('Y-m-d') ])}}" method="post">
+                <form action="{{ route('report.expense', ['to_date' => date('Y-m-d')]) }}" method="post">
                     @csrf
-                <div class="small-box bg-default">
-                    <div class="inner">
-                        <h3>{{ number_format($expense) }}</h3>
+                    <div class="small-box bg-default">
+                        <div class="inner">
+                            <h3>{{ number_format($expense) }}</h3>
 
-                        <p>Total Expense</p>
+                            <p>Total Expense</p>
+                        </div>
+                        <div class="icon">
+                            <i class="ion ion-pie-graph"></i>
+                        </div>
+                        <button class="small-box-footer bg-success">More info <i
+                                class="fas fa-arrow-circle-right"></i></button>
                     </div>
-                    <div class="icon">
-                        <i class="ion ion-pie-graph"></i>
-                    </div>
-                    <button  class="small-box-footer bg-success">More info <i
-                        class="fas fa-arrow-circle-right"></i></button>
-                </div>
-            </form>
+                </form>
             </div>
-            @endif
+        @endif
 
 
-            @if (in_array( 7, $rollper))
+        @if (in_array(7, $rollper))
             <!-- ./col -->
             <div class="col-lg-3 col-6">
                 <!-- small box -->
-                <form action="{{route('report.expense',['from_date' => date('Y-m-d'),'to_date' => date('Y-m-d') ])}}" method="post">
+                <form action="{{ route('report.expense', ['from_date' => date('Y-m-d'), 'to_date' => date('Y-m-d')]) }}"
+                    method="post">
                     @csrf
-                <div class="small-box bg-default">
-                    <div class="inner">
-                        <h3>{{ number_format($todayExpense) }}</h3>
+                    <div class="small-box bg-default">
+                        <div class="inner">
+                            <h3>{{ number_format($todayExpense) }}</h3>
 
-                        <p>Today Expense</p>
-                    </div>
-                    <div class="icon">
-                        <i class="ion ion-person-add"></i>
-                    </div>
+                            <p>Today Expense</p>
+                        </div>
+                        <div class="icon">
+                            <i class="ion ion-person-add"></i>
+                        </div>
 
-                    <button  class="small-box-footer bg-success">More info <i
-                            class="fas fa-arrow-circle-right"></i></button>
-                </div>
-            </form>
+                        <button class="small-box-footer bg-success">More info <i
+                                class="fas fa-arrow-circle-right"></i></button>
+                    </div>
+                </form>
 
             </div>
-            @endif
+        @endif
 
-            @if (in_array( 8, $rollper))
+        @if (in_array(8, $rollper))
             <div class="col-lg-3 col-6">
                 <!-- small box -->
                 <div class="small-box bg-default">
@@ -369,13 +370,13 @@
                     <div class="icon">
                         <i class="ion ion-pie-graph"></i>
                     </div>
-                    <a href="{{route('settings.dabit.voucher.index')}}" class="small-box-footer bg-success">More info <i
-                            class="fas fa-arrow-circle-right"></i></a>
+                    <a href="{{ route('settings.dabit.voucher.index') }}" class="small-box-footer bg-success">More info
+                        <i class="fas fa-arrow-circle-right"></i></a>
                 </div>
             </div>
-            @endif
+        @endif
 
-            @if (in_array( 9, $rollper))
+        @if (in_array(9, $rollper))
             <div class="col-lg-3 col-6">
                 <!-- small box -->
                 <div class="small-box bg-default">
@@ -386,58 +387,58 @@
                     <div class="icon">
                         <i class="ion ion-pie-graph"></i>
                     </div>
-                    <a href="{{route('settings.credit.voucher.index')}}" class="small-box-footer bg-success">More info <i
-                            class="fas fa-arrow-circle-right"></i></a>
+                    <a href="{{ route('settings.credit.voucher.index') }}" class="small-box-footer bg-success">More info
+                        <i class="fas fa-arrow-circle-right"></i></a>
                 </div>
             </div>
-            @endif
+        @endif
 
-            @if (in_array( 10, $rollper))
+        @if (in_array(10, $rollper))
             <div class="col-lg-3 col-6">
                 <!-- small box -->
-                <form action="{{route('report.supledger.supledger',['supplier_id' => "all"])}}" method="post">
+                <form action="{{ route('report.supledger.supledger', ['supplier_id' => 'all']) }}" method="post">
                     @csrf
-                <div class="small-box bg-default">
-                    <div class="inner">
-                        <h3>{{ $supplierDue }}</h3>
-                        <p>Supplier Due</p>
+                    <div class="small-box bg-default">
+                        <div class="inner">
+                            <h3>{{ $supplierDue }}</h3>
+                            <p>Supplier Due</p>
+                        </div>
+                        <div class="icon">
+                            <i class="ion ion-pie-graph"></i>
+                        </div>
+                        <button class="small-box-footer bg-success">More info <i
+                                class="fas fa-arrow-circle-right"></i></button>
                     </div>
-                    <div class="icon">
-                        <i class="ion ion-pie-graph"></i>
-                    </div>
-                    <button  class="small-box-footer bg-success">More info <i
-                            class="fas fa-arrow-circle-right"></i></button>
-                </div>
-             </form>
+                </form>
 
             </div>
-            @endif
+        @endif
 
-            @if (in_array( 11, $rollper))
+        @if (in_array(11, $rollper))
             <div class="col-lg-3 col-6">
                 <!-- small box -->
-                <form action="{{route('report.custledger.custledger',['customer_id' => "all"])}}" method="post">
+                <form action="{{ route('report.custledger.custledger', ['customer_id' => 'all']) }}" method="post">
                     @csrf
-                <div class="small-box bg-default">
-                    <div class="inner">
-                        <h3>{{ $customerDue }}</h3>
+                    <div class="small-box bg-default">
+                        <div class="inner">
+                            <h3>{{ $customerDue }}</h3>
 
-                        <p>Customer Due</p>
+                            <p>Customer Due</p>
+                        </div>
+                        <div class="icon">
+                            <i class="ion ion-pie-graph"></i>
+                        </div>
+                        <button class="small-box-footer bg-success">More info <i
+                                class="fas fa-arrow-circle-right"></i></button>
                     </div>
-                    <div class="icon">
-                        <i class="ion ion-pie-graph"></i>
-                    </div>
-                    <button  class="small-box-footer bg-success">More info <i
-                            class="fas fa-arrow-circle-right"></i></button>
-                </div>
-             </form>
+                </form>
 
             </div>
-            @endif
+        @endif
 
 
 
-            @if (in_array( 12, $rollper))
+        @if (in_array(12, $rollper))
             {{-- <div class="col-lg-3 col-6">
                 <!-- small box -->
                 <div class="small-box bg-default">
@@ -453,11 +454,11 @@
                             class="fas fa-arrow-circle-right"></i></a>
                 </div>
             </div> --}}
-            @endif
+        @endif
 
 
-            @if ($user->branch_id == null)
-            @if (in_array( 13, $rollper))
+        @if ($user->branch_id == null)
+            @if (in_array(13, $rollper))
                 <div class="col-lg-6 col-sm-12">
                     <div class="card">
                         <div class="card-header border-0">
@@ -476,9 +477,9 @@
                         </div>
                     </div>
                 </div>
-                @endif
+            @endif
 
-                @if (in_array( 14, $rollper))
+            @if (in_array(14, $rollper))
                 <div class="col-lg-6 col-sm-12">
                     <div class="card">
                         <div class="card-header border-0">
@@ -493,9 +494,9 @@
                         </div>
                     </div>
                 </div>
-                @endif
+            @endif
 
-                @if (in_array( 15, $rollper))
+            @if (in_array(15, $rollper))
                 <div class="col-lg-6 col-sm-12">
                     <div class="card">
                         <div class="card-header border-0">
@@ -581,10 +582,10 @@
                         </div>
                     </div>
                 </div>
-                @endif
+            @endif
 
-                <!-- ## Rabbi Work -->
-                @if (in_array( 16, $rollper))
+            <!-- ## Rabbi Work -->
+            @if (in_array(16, $rollper))
                 <div class="col-lg-6 col-sm-12">
                     <div class="card">
                         <div class="card-header border-0">
@@ -624,10 +625,9 @@
                         </div>
                     </div>
                 </div>
-                @endif
-
             @endif
-        </div>
+        @endif
+    </div>
     {{-- @if ($user->type == 'Project')
         <div class="row">
             <div class="col-md-12 bg-info">
@@ -922,7 +922,7 @@
         $(document).ready(function() {
             $.get(url, function(response) {
 
-                console.log(response);
+
                 response.forEach(function(data) {
                     branchCode.push(data.branchCode);
                     Labels.push(data.stockName);
@@ -960,6 +960,8 @@
             'packages': ['corechart']
         });
         google.charts.setOnLoadCallback(drawChart);
+
+
 
         function drawChart() {
 

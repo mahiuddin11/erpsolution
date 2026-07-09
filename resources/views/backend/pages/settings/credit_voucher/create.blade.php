@@ -599,7 +599,7 @@
                             account_id: accountId
                         },
                         success: function(response) {
-                            console.log(response);
+
                             if (response.bill_by_bill) {
                                 // Show payment options
                                 $('#payment-options-container').html(`
