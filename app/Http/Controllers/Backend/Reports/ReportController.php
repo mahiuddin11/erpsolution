@@ -2619,7 +2619,7 @@ class ReportController extends Controller
                 ->orderBy('created_at')
                 ->get();
 
-            // ── Same invoice এর সব transaction load ──
+            // ── Same invoice  transaction load ──
             $allInvoices = $transactions->pluck('invoice')->filter()->unique()->values()->toArray();
 
             $invoiceTransactions = AccountTransaction::with('account')
@@ -2719,9 +2719,13 @@ class ReportController extends Controller
                     ? ($debit - $credit)
                     : ($credit - $debit);
 
+
+
                 $ledgerEntries[] = [
                     'date'         => $transaction->created_at,
                     'invoice'      => $transaction->invoice ?? 'N/A',
+                    'voucher_url'    => $transaction->voucher_url ?? '',
+                    'custom_invoice' => $transaction->custom_invoice,
                     'account_name' => $oppositeName,
                     'description'  => $transaction->remark ?? 'N/A',
                     'debit'        => $debit,

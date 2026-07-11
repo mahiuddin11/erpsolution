@@ -109,15 +109,22 @@ class JournalVoucherController extends Controller
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
 
-     public function show($id)
-     {
-         $title = "Journal Voucher";
-         $journalVoucher = JournalVoucher::findOrFail($id);
-         $account_transactions = AccountTransaction::whereIn('table_id', $journalVoucher->details->pluck("id"))->where('type', 8)->get();
+    public function show($id)
+    {
 
-         $companyInfo = Company::latest('id')->first();
-         return view('backend.pages.settings.journal_voucher.show', get_defined_vars());
-     }
+        $title = "Journal Voucher";
+        $journalVoucher = JournalVoucher::findOrFail($id);
+        $jrDetailsId = $journalVoucher->details->pluck("id");
+
+        // $account_transactions = AccountTransaction::whereIn('table_id', $journalVoucher->details->pluck("id"))->where('type', 8)->get();
+
+        $account_transactions = AccountTransaction::where('type', 'journal_voucher')->where('table_id', $id)->get();
+
+        $companyInfo = Company::latest('id')->first();
+
+
+        return view('backend.pages.settings.journal_voucher.show', get_defined_vars());
+    }
 
     public function edit($id)
     {

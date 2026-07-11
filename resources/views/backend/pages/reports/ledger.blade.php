@@ -8,6 +8,17 @@
         .bootstrap-switch-large {
             width: 200px;
         }
+
+        .ledger-table {
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        .ledger-table td,
+        .ledger-table th {
+            word-wrap: break-word;
+            white-space: normal;
+        }
     </style>
 @endsection
 @section('navbar-content')
@@ -102,11 +113,23 @@
                                             </td>
                                         </tr>
                                     </table>
-                                    <table class="table table-bordered mt-2">
+                                    <table class="table table-bordered mt-2 ledger-table">
+                                        <colgroup>
+                                            <col style="width: 6%;"> {{-- Date --}}
+                                            <col style="width: 8%;"> {{-- Voucher No --}}
+                                            <col style="width: 7%;"> {{-- custom invoice (same as Voucher No) --}}
+                                            <col style="width: 20%;"> {{-- Account Name --}}
+                                            <col style="width: 24%;"> {{-- Description --}}
+                                            <col style="width: 11%;"> {{-- Debit --}}
+                                            <col style="width: 11%;"> {{-- Credit --}}
+                                            <col style="width: 12%;"> {{-- Balance --}}
+                                        </colgroup>
                                         <thead>
                                             <tr>
                                                 <th>Date</th>
-                                                <th>Voucher No</th>
+                                                <th class="voucher-no-col">Voucher No</th>
+                                                <th class="custom-invoice-col">
+                                                    custom invoice</th>
                                                 <th>Account Name</th>
                                                 <th>Description</th>
                                                 <th>Debit</th>
@@ -116,8 +139,8 @@
                                         </thead>
                                         <tbody>
                                             <tr>
-                                                <td colspan="6"><strong>Opening Balance</strong></td>
-                                                {{-- Opening Balance row --}}
+                                                <td colspan="7"><strong>Opening Balance</strong></td>
+
                                                 @php
                                                     $ob = $openingBalance;
                                                     $obAbs = number_format(abs($ob), 2);
@@ -140,7 +163,20 @@
                                             @foreach ($ledgerEntries as $entry)
                                                 <tr>
                                                     <td>{{ $entry['date']->format('Y-m-d') }}</td>
-                                                    <td>{{ $entry['invoice'] }}</td>
+                                                    <td>
+                                                        @if ($entry['voucher_url'])
+                                                            <a href="javascript:void(0)"
+                                                                class="voucher-link badge badge-info"
+                                                                data-url="{{ $entry['voucher_url'] }}"
+                                                                style="cursor: pointer; font-size: 0.85rem; padding: 5px 10px;">
+                                                                {{ $entry['invoice'] }} <i class="fas fa-eye"></i>
+                                                            </a>
+                                                        @else
+                                                            {{ $entry['invoice'] }}
+                                                        @endif
+                                                    </td>
+                                                    <td>{{ $entry['custom_invoice'] !== 'N/A' ? $entry['custom_invoice'] : '' }}
+                                                    </td>
                                                     <td>{{ $entry['account_name'] }}</td>
                                                     <td>{{ $entry['description'] }}</td>
                                                     <td>{{ number_format($entry['debit'], 2) }}</td>
@@ -159,7 +195,7 @@
                                                 </tr>
                                             @endforeach
                                             <tr>
-                                                <td colspan="4"><strong>Closing Balance</strong></td>
+                                                <td colspan="5"><strong>Closing Balance</strong></td>
 
                                                 {{-- Closing Balance row --}}
                                                 @php
@@ -229,7 +265,63 @@
 
 
     </div>
+
+    <div class="modal fade" id="voucherModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document" style="max-width: 90%;">
+            <div class="modal-content" style="height: 90vh;">
+                <div class="modal-header">
+                    <h5 class="modal-title">Voucher Details</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-0" style="height: 100%; position: relative;">
+                    <div id="voucherLoader"
+                        style="
+                    position: absolute;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    background: #fff;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10;
+                ">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading voucher details...</p>
+                        </div>
+                    </div>
+                    <iframe id="voucherIframe" src="" style="width:100%; height:100%; border:none;"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 @section('scripts')
     @include('backend.pages.reports.excel')
+    <script>
+        $(document).on('click', '.voucher-link', function() {
+            const url = $(this).data('url');
+
+
+            $('#voucherLoader').show();
+            $('#voucherIframe').hide();
+            $('#voucherIframe').attr('src', url);
+            $('#voucherModal').modal('show');
+        });
+
+
+        $('#voucherIframe').on('load', function() {
+            $('#voucherLoader').hide();
+            $('#voucherIframe').show();
+        });
+
+
+        $('#voucherModal').on('hidden.bs.modal', function() {
+            $('#voucherIframe').attr('src', '').hide();
+            $('#voucherLoader').show();
+        });
+    </script>
 @endsection

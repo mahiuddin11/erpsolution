@@ -40,6 +40,7 @@ class LedgerMergeController extends Controller
     // ----------------------------------------------------------------
     public function index()
     {
+
         return view('backend.pages.ledgermarg');
     }
 

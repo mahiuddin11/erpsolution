@@ -28,7 +28,7 @@
         <div class="col-md-12">
             <div class="card card-default">
                 <div class="card-header no-print">
-                    <h3 class="card-title">Debit Voucher Report</h3>
+                    <h3 class="card-title">Journal Voucher Report</h3>
                     <a onclick="window.print()" target="_blank" class="btn btn-default float-right my-2 no-print"><i
                             class="fas fa-print"></i>
                         Print</a>
@@ -203,7 +203,7 @@
                             <div class="col-4  text-left">
                                 <br>
                                 <br>
-                                <p>Prepared By: {{$journalVoucher->createdBy->name ?? ""}}<br />
+                                <p>Prepared By: {{ $journalVoucher->createdBy->name ?? '' }}<br />
                                     Date:____________________
                                 </p>
                             </div>
