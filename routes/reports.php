@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\Backend\Reports\CheckRegisterController;
+use App\Http\Controllers\Backend\Reports\FinancialStatementController;
 use App\Http\Controllers\Backend\Reports\ReportController;
+use App\Http\Controllers\Backend\Reports\StatementOfChangesInEquityController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -62,6 +64,10 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::any('/report-expense-book', [ReportController::class, 'newexpense'])->name('report.expense');
         Route::any('/report-voucher-report', [ReportController::class, 'voucher'])->name('report.voucher.report');
         Route::any('/report-income-trans-details', [ReportController::class, 'incomestatementDetails'])->name('report.incomestatement.details');
+        Route::match(['get', 'post'], '/changes-in-equity', [StatementOfChangesInEquityController::class, 'changesInEquity'])->name('report.changesinequity');
+
+        Route::match(['get', 'post'], '/notes-to-financial-statements', [FinancialStatementController::class, 'notesToFinancialStatements'])
+            ->name('report.financialstatements');
 
 
         // cheque register 

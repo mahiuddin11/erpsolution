@@ -114,11 +114,7 @@ class JournalVoucherController extends Controller
 
         $title = "Journal Voucher";
         $journalVoucher = JournalVoucher::findOrFail($id);
-        $jrDetailsId = $journalVoucher->details->pluck("id");
-
-        // $account_transactions = AccountTransaction::whereIn('table_id', $journalVoucher->details->pluck("id"))->where('type', 8)->get();
-
-        $account_transactions = AccountTransaction::where('type', 'journal_voucher')->where('table_id', $id)->get();
+        $account_transactions = AccountTransaction::whereIn('table_id', $journalVoucher->details->pluck("id"))->where('type', 8)->get();
 
         $companyInfo = Company::latest('id')->first();
 

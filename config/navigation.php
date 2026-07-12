@@ -1624,6 +1624,28 @@ $parent_menu = array(
             ),
 
             (object) array(
+                'label' => 'SOCE',
+                'route' => null,
+                'uniqueName' => "SOCE",
+                'icon' => 'fa fa-th-large',
+                'parent_id' => null,
+                'childMenu' => (object) array(
+                    (object) array('label' => 'SOCE', 'route' => 'report.changesinequity', 'icon' => 'fa fa-dashboard', 'navigate_status' => 1),
+                )
+            ),
+
+            (object) array(
+                'label' => 'Financial Statements',
+                'route' => null,
+                'uniqueName' => "NFS",
+                'icon' => 'fa fa-th-large',
+                'parent_id' => null,
+                'childMenu' => (object) array(
+                    (object) array('label' => 'Financial Statements', 'route' => 'report.financialstatements', 'icon' => 'fa fa-dashboard', 'navigate_status' => 1),
+                )
+            ),
+
+            (object) array(
                 'label' => 'Stock Detail',
                 'route' => null,
                 'uniqueName' => "Stock1Report",
