@@ -31,25 +31,25 @@ class FinancialStatementController extends Controller
         ]);
 
         // ============================================================
-        // CONFIG — confirmed against WTBL Chart of Accounts (2026-07-12)
+        // CONFIG — confirmed against Chart of Accounts 
         // ============================================================
-        $fixedAssetRootId    = 2;   // Fixed Asset tree root
-        $inventoryRootId     = null; // TODO: still unresolved — no dedicated Inventory account found
-        $receivableRootId    = 5;   // Accounts Receivable
-        $payableRootId       = 16;  // Accounts Payable
-        $cashBankRootId      = 6;   // Cash and Cash Equivalents (parent of Cash in Hand id=7, Cash at Bank id=8)
+        $fixedAssetRootId    = 2;         // Fixed Asset tree root
+        $inventoryRootId     = null;     // TODO: still unresolved — no dedicated Inventory account found
+        $receivableRootId    = 5;       // Accounts Receivable
+        $payableRootId       = 16;     // Accounts Payable
+        $cashBankRootId      = 6;     // Cash and Cash Equivalents (parent of Cash in Hand id=7, Cash at Bank id=8)
         $shareCapitalId      = 11;
         $reserveSurplusId    = 12;
         $incomeRootId        = 17;
         $expenseRootId       = 21;
 
         // ============================================================
-        // Note: Property, Plant & Equipment (Fixed Asset Schedule)
+        // Note: Property, Plant & Equipment 
         // ============================================================
         $fixedAssetSchedule = $this->buildFixedAssetSchedule($fixedAssetRootId, $from_date, $to_date);
 
         // ============================================================
-        // Note: Reserve and Surplus (reuses SOCE-proven logic)
+        // Note: Reserve and Surplus 
         // ============================================================
         $reserveTreeIds     = $this->collectAccountTree($reserveSurplusId);
         $reserveOpening     = $this->getAccountTreeBalanceAsOf($reserveTreeIds, $from_date, false);
@@ -67,7 +67,7 @@ class FinancialStatementController extends Controller
         $revenueByYear = $this->getYearlyMovementRows($incomeTreeIds, $from_date, $to_date);
 
         // ============================================================
-        // Note: Accounts Receivable Ageing (only runs if ID confirmed)
+        // Note: Accounts Receivable Ageing 
         // ============================================================
         $receivableAgeing = $receivableRootId
             ? $this->buildAgeingSchedule($receivableRootId, $to_date, 'debit')
@@ -132,9 +132,7 @@ class FinancialStatementController extends Controller
         return $total;
     }
 
-    /**
-     * FLOW (movement only, no opening_balance) within a date range.
-     */
+
     private function getAccountTreeMovement(array $accountIds, $fromDate, $toDate)
     {
         $accounts = ChartOfAccount::whereIn('id', $accountIds)->get(['id', 'balance_type']);
