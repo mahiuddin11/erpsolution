@@ -52,22 +52,42 @@ class EmployeeController extends Controller
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
 
+    // public function create()
+    // {
+
+    //     $title = 'Add New Employee';
+    //     $userRoll = $this->userRoleService->getAllRole();
+    //     $branchs = Branch::where('status', 'Active')->get();
+    //     $positions = Position::get();
+
+    //     $area = [];
+    //     if (env("ZKTECO")) {
+    //         $area =  isset(getZKTecoAreas()['data']) ? getZKTecoAreas()['data'] : [];
+    //     } else {
+    //         $area = [];
+    //     }
+
+    //     return view('backend.pages.hrm.employee.create', get_defined_vars());
+    // }
+
     public function create()
     {
-
         $title = 'Add New Employee';
         $userRoll = $this->userRoleService->getAllRole();
         $branchs = Branch::where('status', 'Active')->get();
         $positions = Position::get();
 
+        return view('backend.pages.hrm.employee.create', get_defined_vars());
+    }
+
+    public function getZktecoAreas()
+    {
+
         $area = [];
         if (env("ZKTECO")) {
-            $area =  isset(getZKTecoAreas()['data']) ? getZKTecoAreas()['data'] : [];
-        } else {
-            $area = [];
+            $area = isset(getZKTecoAreas()['data']) ? getZKTecoAreas()['data'] : [];
         }
-
-        return view('backend.pages.hrm.employee.create', get_defined_vars());
+        return response()->json(['area' => $area ?? '']);
     }
 
     /**
@@ -93,6 +113,31 @@ class EmployeeController extends Controller
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
 
+    // public function edit($id)
+    // {
+
+    //     if (!is_numeric($id)) {
+    //         session()->flash('error', 'Edit id must be numeric!!');
+    //         return redirect()->back();
+    //     }
+    //     $editInfo =   $this->systemService->details($id);
+    //     if (!$editInfo) {
+    //         session()->flash('error', 'Edit info is invalid!!');
+    //         return redirect()->back();
+    //     }
+    //     $title = 'Add New Employee';
+    //     $userRoll = $this->userRoleService->getAllRole();
+    //     $branchs = Branch::where('status', 'Active')->get();
+    //     $positions = Position::get();
+
+    //     if (env("ZKTECO")) {
+    //         $area =  isset(getZKTecoAreas()['data']) ? getZKTecoAreas()['data'] : [];
+    //     } else {
+    //         $area = [];
+    //     }
+    //     return view('backend.pages.hrm.employee.edit', get_defined_vars());
+    // }
+
     public function edit($id)
     {
 
@@ -110,11 +155,6 @@ class EmployeeController extends Controller
         $branchs = Branch::where('status', 'Active')->get();
         $positions = Position::get();
 
-        if (env("ZKTECO")) {
-            $area =  isset(getZKTecoAreas()['data']) ? getZKTecoAreas()['data'] : [];
-        } else {
-            $area = [];
-        }
         return view('backend.pages.hrm.employee.edit', get_defined_vars());
     }
 

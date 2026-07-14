@@ -7,6 +7,7 @@ use App\Models\Accounts;
 use App\Models\Employee;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use PhpParser\Node\Stmt\TryCatch;
 use Rats\Zkteco\Lib\ZKTeco;
@@ -265,6 +266,8 @@ class EmployeeRepositories
 
     public function store($request)
     {
+
+        // dd('adsfads', $request->all());
         try {
 
             $employee = new Employee();
@@ -352,28 +355,30 @@ class EmployeeRepositories
             $employee->area = json_encode($request->area);
             $employee->save();
 
+
             if (env("ZKTECO")) {
+
                 $employeedf = createZKTecoEmployee([
                     "emp_code" => $employee->id_card,
-                    "first_name" => $request->am_name,
+                    "first_name" => $employee->am_name,
                     "last_name" => null,
                     "nickname" => null,
-                    "card_no" => null,
+                    "card_no" => $employee->id_card ?? '',
                     "department" => 1,
                     "position" => null,
-                    "hire_date" => $request->join_date ?? date("Y-m-d"),
-                    "gender" => $employee['gender'] ?? null,
-                    "birthday" => $employee['dob'] ?? null,
+                    "hire_date" => $employee->join_date ?? date("Y-m-d"),
+                    "gender" => strtolower($employee->gender) == 'male' ? 'M' : 'F',
+                    "birthday" => $employee->dob ?? null,
                     "verify_mode" => 0,
                     "emp_type" => null,
                     "contact_tel" => null,
-                    "office_tel" => $employee['office_phone'] ?? null,
-                    "mobile" => $employee['personal_phone'] ?? null,
+                    "office_tel" => $employee->office_phone ?? null,
+                    "mobile" => $employee->personal_phone ?? null,
                     "national" => null,
                     "city" => null,
-                    "address" => $employee['permanent_address'] ?? null,
+                    "address" => $employee->permanent_address ?? null,
                     "postcode" => null,
-                    "email" => $employee['email'] ?? null,
+                    "email" => $employee->email ?? null,
                     "enroll_sn" => "",
                     "ssn" => null,
                     "religion" => null,
@@ -381,14 +386,26 @@ class EmployeeRepositories
                     "enable_overtime" => false,
                     "enable_holiday" => true,
                     "dev_privilege" => 0,
-                    "area" => $request->area,
+                    "area" => is_array($request->area) ? array_values($request->area) : [$request->area],
                     "app_status" => 0,
                     "app_role" => 1
                 ]);
-                $employee->device_id = $employeedf['id'] ?? 0;
-                $employee->save();
-            } else {
-                $employee->save();
+
+                if (is_string($employeedf)) {
+                    $decoded = json_decode($employeedf, true);
+                    $employeedf = $decoded ?? [];
+                }
+
+                if (is_array($employeedf) && isset($employeedf['id'])) {
+                    $employee->device_id = $employeedf['id'];
+                    $employee->save();
+                } else {
+                    Log::error('ZKTeco employee create failed', [
+                        'employee_id' => $employee->id,
+                        'response' => $employeedf,
+                    ]);
+                    session()->flash('warning', 'Employee saved but ZKTeco device sync failed. Please check device connection.');
+                }
             }
 
             return $employee;
@@ -397,173 +414,407 @@ class EmployeeRepositories
         }
     }
 
+    // public function update($request, $id)
+    // {
+
+
+    //     $employee = $this->model::find($id);
+    //     $employee->name = $request->name;
+    //     $employee->dob = $request->dob;
+    //     $employee->id_card = $request->id_card;
+    //     $employee->gender = $request->gender;
+    //     $employee->personal_phone = $request->personal_phone;
+    //     $employee->branch_id = $request->branch_id;
+    //     $employee->office_phone = $request->office_phone;
+    //     $employee->marital_status = $request->marital_status;
+    //     $employee->nid = $request->nid;
+    //     $employee->email = $request->email;
+    //     $employee->last_in_time = $request->last_in_time;
+    //     $employee->reference = $request->reference;
+    //     $employee->department = $request->department;
+    //     $employee->position_id = $request->position_id;
+    //     $employee->experience = $request->experience;
+    //     $employee->present_address = $request->present_address;
+    //     $employee->permanent_address = $request->permanent_address;
+    //     $employee->achieved_degree = $request->achieved_degree;
+    //     $employee->institution = $request->institution;
+    //     $employee->passing_year = $request->passing_year;
+    //     $employee->salary = $request->salary;
+    //     $employee->join_date = $request->join_date;
+    //     $employee->blood_group = $request->blood_group;
+    //     $employee->over_time_is = $request->over_time_is;
+    //     $employee->updated_by = auth()->id();
+    //     $employee->guardian_number = $request->guardian_number;
+    //     $employee->employee_status = $request->status;
+    //     $employee->auto_checkout = $request->auto_checkout;
+
+
+    //     $image = $request->file('image');
+    //     if (isset($image)) {
+    //         $currentDate = Carbon::now()->toDateString();
+    //         $imageName  = $currentDate . '-' . uniqid() . '.' . $image->getClientOriginalExtension();
+
+    //         if (!Storage::disk('public')->exists('photo')) {
+    //             Storage::disk('public')->makeDirectory('photo');
+    //         }
+
+    //         Storage::disk('public')->delete('photo/' . $employee->image);
+
+    //         $image->storeAs('photo', $imageName, 'public');
+    //         $employee->image = $imageName;
+    //     }
+
+
+    //     // Emplyee Signature
+
+    //     $emp_signature = $request->file('emp_signature');
+    //     if (isset($emp_signature)) {
+    //         $currentDate = Carbon::now()->toDateString();
+    //         $imageNameemp_signature  = $currentDate . '-' . uniqid() . '.' . $emp_signature->getClientOriginalExtension();
+
+    //         if (!Storage::disk('public')->exists('photo')) {
+    //             Storage::disk('public')->makeDirectory('photo');
+    //         }
+
+    //         Storage::disk('public')->delete('photo/' . $employee->emp_signature);
+
+    //         $emp_signature->storeAs('photo', $imageNameemp_signature, 'public');
+    //         $employee->emp_signature = $imageNameemp_signature;
+    //     }
+
+    //     // Emplyee Guardian NID Photo
+
+    //     $guardian_nid = $request->file('guardian_nid');
+    //     if (isset($guardian_nid)) {
+    //         $currentDate = Carbon::now()->toDateString();
+    //         $imageNameguardian_nid  = $currentDate . '-' . uniqid() . '.' . $guardian_nid->getClientOriginalExtension();
+    //         if (!Storage::disk('public')->exists('photo')) {
+    //             Storage::disk('public')->makeDirectory('photo');
+    //         }
+    //         Storage::disk('public')->delete('photo/' . $employee->guardian_nid);
+    //         $guardian_nid->storeAs('photo', $imageNameguardian_nid, 'public');
+    //         $employee->guardian_nid = $imageNameguardian_nid;
+    //     }
+
+    //     $employee->am_name = $request->am_name;
+    //     $employee->area = json_encode($request->area);
+    //     $employee->save();
+
+
+    //     if (env("ZKTECO")) {
+    //         $local =  editZKTecoEmployee($employee->device_id, [
+    //             "emp_code" => $employee->id_card,
+    //             "first_name" => $request->am_name,
+    //             "last_name" => null,
+    //             "nickname" => null,
+    //             "card_no" => null,
+    //             "department" => 1,
+    //             "position" => null,
+    //             "hire_date" => $request->join_date ?? date("Y-m-d"),
+    //             "gender" => null,
+    //             "birthday" => null,
+    //             "verify_mode" => 0,
+    //             "emp_type" => null,
+    //             "contact_tel" => null,
+    //             "office_tel" => null,
+    //             "mobile" => null,
+    //             "national" => null,
+    //             "city" => null,
+    //             "address" => null,
+    //             "postcode" => null,
+    //             "email" => null,
+    //             "enroll_sn" => "",
+    //             "ssn" => null,
+    //             "religion" => null,
+    //             "enable_att" => true,
+    //             "enable_overtime" => false,
+    //             "enable_holiday" => true,
+    //             "dev_privilege" => 0,
+    //             "area" => $request->area,
+    //             "app_status" => 0,
+    //             "app_role" => 1
+    //         ]);
+
+
+
+    //         if (!is_array($local)) {
+    //             $data = json_decode($local, true);
+    //             // dd( $data);
+    //         }
+
+    //         if (isset($data['detail']) && !is_array($local)) {
+    //             $employeedf = createZKTecoEmployee([
+    //                 "emp_code" => $employee->id_card,
+    //                 "first_name" => $request->am_name,
+    //                 "last_name" => null,
+    //                 "nickname" => null,
+    //                 "card_no" => null,
+    //                 "department" => 1,
+    //                 "position" => null,
+    //                 "hire_date" => $request->join_date ?? date("Y-m-d"),
+    //                 "gender" => null,
+    //                 "birthday" => null,
+    //                 "verify_mode" => 0,
+    //                 "emp_type" => null,
+    //                 "contact_tel" => null,
+    //                 "office_tel" => null,
+    //                 "mobile" => null,
+    //                 "national" => null,
+    //                 "city" => null,
+    //                 "address" => null,
+    //                 "postcode" => null,
+    //                 "email" => null,
+    //                 "enroll_sn" => "",
+    //                 "ssn" => null,
+    //                 "religion" => null,
+    //                 "enable_att" => true,
+    //                 "enable_overtime" => false,
+    //                 "enable_holiday" => true,
+    //                 "dev_privilege" => 0,
+    //                 "area" => $request->area,
+    //                 "app_status" => 0,
+    //                 "app_role" => 1
+    //             ]);
+    //             $employee->device_id = $employeedf['id'] ?? 0;
+    //             $employee->save();
+    //         }
+    //     } else {
+    //         $employee->save();
+    //     }
+
+    //     return $employee;
+    // }
+
     public function update($request, $id)
     {
-        $employee = $this->model::find($id);
-        $employee->name = $request->name;
-        $employee->dob = $request->dob;
-        $employee->id_card = $request->id_card;
-        $employee->gender = $request->gender;
-        $employee->personal_phone = $request->personal_phone;
-        $employee->branch_id = $request->branch_id;
-        $employee->office_phone = $request->office_phone;
-        $employee->marital_status = $request->marital_status;
-        $employee->nid = $request->nid;
-        $employee->email = $request->email;
-        $employee->last_in_time = $request->last_in_time;
-        $employee->reference = $request->reference;
-        $employee->department = $request->department;
-        $employee->position_id = $request->position_id;
-        $employee->experience = $request->experience;
-        $employee->present_address = $request->present_address;
-        $employee->permanent_address = $request->permanent_address;
-        $employee->achieved_degree = $request->achieved_degree;
-        $employee->institution = $request->institution;
-        $employee->passing_year = $request->passing_year;
-        $employee->salary = $request->salary;
-        $employee->join_date = $request->join_date;
-        $employee->blood_group = $request->blood_group;
-        $employee->over_time_is = $request->over_time_is;
-        $employee->updated_by = auth()->id();
-        $employee->guardian_number = $request->guardian_number;
-        $employee->employee_status = $request->status;
-        $employee->auto_checkout = $request->auto_checkout;
+        try {
 
+            $employee = $this->model::find($id);
 
-        $image = $request->file('image');
-        if (isset($image)) {
-            $currentDate = Carbon::now()->toDateString();
-            $imageName  = $currentDate . '-' . uniqid() . '.' . $image->getClientOriginalExtension();
-
-            if (!Storage::disk('public')->exists('photo')) {
-                Storage::disk('public')->makeDirectory('photo');
+            if (!$employee) {
+                session()->flash('error', 'Employee not found!');
+                return back();
             }
 
-            Storage::disk('public')->delete('photo/' . $employee->image);
-
-            $image->storeAs('photo', $imageName, 'public');
-            $employee->image = $imageName;
-        }
 
 
-        // Emplyee Signature
+            $employee->name = $request->name;
+            $employee->dob = $request->dob;
+            $employee->id_card = $request->id_card;
+            $employee->gender = $request->gender;
+            $employee->personal_phone = $request->personal_phone;
+            $employee->branch_id = $request->branch_id;
+            $employee->office_phone = $request->office_phone;
+            $employee->marital_status = $request->marital_status;
+            $employee->nid = $request->nid;
+            $employee->email = $request->email;
+            $employee->last_in_time = $request->last_in_time;
+            $employee->reference = $request->reference;
+            $employee->department = $request->department;
+            $employee->position_id = $request->position_id;
+            $employee->experience = $request->experience;
+            $employee->present_address = $request->present_address;
+            $employee->permanent_address = $request->permanent_address;
+            $employee->achieved_degree = $request->achieved_degree;
+            $employee->institution = $request->institution;
+            $employee->passing_year = $request->passing_year;
+            $employee->salary = $request->salary;
+            $employee->join_date = $request->join_date;
+            $employee->blood_group = $request->blood_group;
+            $employee->over_time_is = $request->over_time_is;
+            $employee->updated_by = auth()->id();
+            $employee->guardian_number = $request->guardian_number;
+            $employee->employee_status = $request->status;
+            $employee->auto_checkout = $request->auto_checkout;
+            $employee->am_name = $request->am_name;
 
-        $emp_signature = $request->file('emp_signature');
-        if (isset($emp_signature)) {
-            $currentDate = Carbon::now()->toDateString();
-            $imageNameemp_signature  = $currentDate . '-' . uniqid() . '.' . $emp_signature->getClientOriginalExtension();
 
-            if (!Storage::disk('public')->exists('photo')) {
-                Storage::disk('public')->makeDirectory('photo');
+
+            // area 
+            $normalizedArea = is_array($request->area) ? array_values($request->area) : array_filter([$request->area]);
+            $employee->area = json_encode($normalizedArea);
+
+            // ---- Profile Photo ----
+            $image = $request->file('image');
+            if (isset($image)) {
+                $currentDate = Carbon::now()->toDateString();
+                $imageName = $currentDate . '-' . uniqid() . '.' . $image->getClientOriginalExtension();
+
+                if (!Storage::disk('public')->exists('photo')) {
+                    Storage::disk('public')->makeDirectory('photo');
+                }
+
+                if ($employee->image) {
+                    Storage::disk('public')->delete('photo/' . $employee->image);
+                }
+
+                $image->storeAs('photo', $imageName, 'public');
+                $employee->image = $imageName;
             }
 
-            Storage::disk('public')->delete('photo/' . $employee->emp_signature);
+            // ---- Employee Signature ----
+            $emp_signature = $request->file('emp_signature');
+            if (isset($emp_signature)) {
+                $currentDate = Carbon::now()->toDateString();
+                $imageNameemp_signature = $currentDate . '-' . uniqid() . '.' . $emp_signature->getClientOriginalExtension();
 
-            $emp_signature->storeAs('photo', $imageNameemp_signature, 'public');
-            $employee->emp_signature = $imageNameemp_signature;
-        }
+                if (!Storage::disk('public')->exists('photo')) {
+                    Storage::disk('public')->makeDirectory('photo');
+                }
 
-        // Emplyee Guardian NID Photo
+                if ($employee->emp_signature) {
+                    Storage::disk('public')->delete('photo/' . $employee->emp_signature);
+                }
 
-        $guardian_nid = $request->file('guardian_nid');
-        if (isset($guardian_nid)) {
-            $currentDate = Carbon::now()->toDateString();
-            $imageNameguardian_nid  = $currentDate . '-' . uniqid() . '.' . $guardian_nid->getClientOriginalExtension();
-            if (!Storage::disk('public')->exists('photo')) {
-                Storage::disk('public')->makeDirectory('photo');
-            }
-            Storage::disk('public')->delete('photo/' . $employee->guardian_nid);
-            $guardian_nid->storeAs('photo', $imageNameguardian_nid, 'public');
-            $employee->guardian_nid = $imageNameguardian_nid;
-        }
-
-        $employee->am_name = $request->am_name;
-        $employee->area = json_encode($request->area);
-        $employee->save();
-
-
-        if (env("ZKTECO")) {
-            $local =  editZKTecoEmployee($employee->device_id, [
-                "emp_code" => $employee->id_card,
-                "first_name" => $request->am_name,
-                "last_name" => null,
-                "nickname" => null,
-                "card_no" => null,
-                "department" => 1,
-                "position" => null,
-                "hire_date" => $request->join_date ?? date("Y-m-d"),
-                "gender" => null,
-                "birthday" => null,
-                "verify_mode" => 0,
-                "emp_type" => null,
-                "contact_tel" => null,
-                "office_tel" => null,
-                "mobile" => null,
-                "national" => null,
-                "city" => null,
-                "address" => null,
-                "postcode" => null,
-                "email" => null,
-                "enroll_sn" => "",
-                "ssn" => null,
-                "religion" => null,
-                "enable_att" => true,
-                "enable_overtime" => false,
-                "enable_holiday" => true,
-                "dev_privilege" => 0,
-                "area" => $request->area,
-                "app_status" => 0,
-                "app_role" => 1
-            ]);
-
-
-
-            if (!is_array($local)) {
-                $data = json_decode($local, true);
-                // dd( $data);
+                $emp_signature->storeAs('photo', $imageNameemp_signature, 'public');
+                $employee->emp_signature = $imageNameemp_signature;
             }
 
-            if (isset($data['detail']) && !is_array($local)) {
-                $employeedf = createZKTecoEmployee([
+            $employee->status = $request->status === 'left' ? 'Inactive' : 'Active';
+
+            // ---- Guardian NID Photo ----
+            $guardian_nid = $request->file('guardian_nid');
+            if (isset($guardian_nid)) {
+                $currentDate = Carbon::now()->toDateString();
+                $imageNameguardian_nid = $currentDate . '-' . uniqid() . '.' . $guardian_nid->getClientOriginalExtension();
+
+                if (!Storage::disk('public')->exists('photo')) {
+                    Storage::disk('public')->makeDirectory('photo');
+                }
+
+                if ($employee->guardian_nid) {
+                    Storage::disk('public')->delete('photo/' . $employee->guardian_nid);
+                }
+
+                $guardian_nid->storeAs('photo', $imageNameguardian_nid, 'public');
+                $employee->guardian_nid = $imageNameguardian_nid;
+            }
+
+
+
+
+            $employee->save();
+
+
+
+
+            // ---- ZKTeco sync ----
+            if (env("ZKTECO")) {
+
+                $zkGender = strtolower($employee->gender) == 'male' ? 'M' : 'F';
+                $enableAttendance = $request->status === 'left' ? false : true;
+
+                $local = editZKTecoEmployee($employee->device_id, [
                     "emp_code" => $employee->id_card,
-                    "first_name" => $request->am_name,
+                    "first_name" => $employee->am_name,
                     "last_name" => null,
                     "nickname" => null,
-                    "card_no" => null,
+                    "card_no" => $employee->id_card ?? '',
                     "department" => 1,
                     "position" => null,
-                    "hire_date" => $request->join_date ?? date("Y-m-d"),
-                    "gender" => null,
-                    "birthday" => null,
+                    "hire_date" => $employee->join_date ?? date("Y-m-d"),
+                    "gender" => $zkGender,
+                    "birthday" => $employee->dob ?? null,
                     "verify_mode" => 0,
                     "emp_type" => null,
                     "contact_tel" => null,
-                    "office_tel" => null,
-                    "mobile" => null,
+                    "office_tel" => $employee->office_phone ?? null,
+                    "mobile" => $employee->personal_phone ?? null,
                     "national" => null,
                     "city" => null,
-                    "address" => null,
+                    "address" => $employee->permanent_address ?? null,
                     "postcode" => null,
-                    "email" => null,
+                    "email" => $employee->email ?? null,
                     "enroll_sn" => "",
                     "ssn" => null,
                     "religion" => null,
-                    "enable_att" => true,
+                    "enable_att" => $enableAttendance,
                     "enable_overtime" => false,
                     "enable_holiday" => true,
                     "dev_privilege" => 0,
-                    "area" => $request->area,
+                    "area" => $normalizedArea,
                     "app_status" => 0,
                     "app_role" => 1
                 ]);
-                $employee->device_id = $employeedf['id'] ?? 0;
-                $employee->save();
-            }
-        } else {
-            $employee->save();
-        }
 
-        return $employee;
+                // response string 
+                $data = [];
+                if (!is_array($local)) {
+                    $data = json_decode($local, true) ?? [];
+                }
+
+                // device-
+                if (!is_array($local) && isset($data['detail'])) {
+
+                    $employeedf = createZKTecoEmployee([
+                        "emp_code" => $employee->id_card,
+                        "first_name" => $employee->am_name,
+                        "last_name" => null,
+                        "nickname" => null,
+                        "card_no" => $employee->id_card ?? '',
+                        "department" => 1,
+                        "position" => null,
+                        "hire_date" => $employee->join_date ?? date("Y-m-d"),
+                        "gender" => $zkGender,
+                        "birthday" => $employee->dob ?? null,
+                        "verify_mode" => 0,
+                        "emp_type" => null,
+                        "contact_tel" => null,
+                        "office_tel" => $employee->office_phone ?? null,
+                        "mobile" => $employee->personal_phone ?? null,
+                        "national" => null,
+                        "city" => null,
+                        "address" => $employee->permanent_address ?? null,
+                        "postcode" => null,
+                        "email" => $employee->email ?? null,
+                        "enroll_sn" => "",
+                        "ssn" => null,
+                        "religion" => null,
+                        "enable_att" => true,
+                        "enable_overtime" => false,
+                        "enable_holiday" => true,
+                        "dev_privilege" => 0,
+                        "area" => $normalizedArea,
+                        "app_status" => 0,
+                        "app_role" => 1
+                    ]);
+
+                    // string 
+                    if (is_string($employeedf)) {
+                        $employeedf = json_decode($employeedf, true) ?? [];
+                    }
+
+                    if (is_array($employeedf) && isset($employeedf['id'])) {
+                        $employee->device_id = $employeedf['id'];
+                        $employee->save();
+                    } else {
+                        Log::error('ZKTeco employee re-create on update failed', [
+                            'employee_id' => $employee->id,
+                            'response' => $employeedf,
+                        ]);
+                        session()->flash('warning', 'Employee updated but ZKTeco device re-sync failed. Please check device connection.');
+                    }
+                } elseif (!is_array($local)) {
+                    // 
+                    Log::error('ZKTeco employee update failed', [
+                        'employee_id' => $employee->id,
+                        'response' => $data,
+                    ]);
+                    session()->flash('warning', 'Employee updated but ZKTeco device sync failed. Please check device connection.');
+                }
+                // $local array 
+            }
+
+            return $employee;
+        } catch (\Exception $e) {
+            Log::error('Employee update failed', [
+                'employee_id' => $id,
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+            ]);
+            session()->flash('error', 'Employee update failed: ' . $e->getMessage());
+            return back()->withInput();
+        }
     }
 
     public function statusUpdate($id, $status)

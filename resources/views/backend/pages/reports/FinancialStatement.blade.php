@@ -44,6 +44,13 @@
             margin-bottom: 8px;
         }
 
+        .note-scope {
+            font-size: 11px;
+            font-weight: 400;
+            font-style: italic;
+            color: #555;
+        }
+
         .note-body {
             font-size: 12.5px;
             line-height: 1.6;
@@ -97,6 +104,15 @@
             color: #b8860b;
         }
 
+        tr.resolved-row {
+            background: #eef6ff;
+        }
+
+        tr.resolved-row td.label::after {
+            content: " ℹ";
+            color: #31708f;
+        }
+
         .config-warning {
             background: #fdecea;
             color: #c0392b;
@@ -114,6 +130,16 @@
             font-size: 11.5px;
             margin-bottom: 10px;
             border: 1px solid #f0d97a;
+        }
+
+        .info-note {
+            background: #eef6ff;
+            color: #31708f;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11.5px;
+            margin-bottom: 10px;
+            border: 1px solid #bce8f1;
         }
 
         @media print {
@@ -140,8 +166,6 @@
     @php
         // Consistent negative-number formatting across every note table:
         // accounting convention uses parentheses, not a leading minus sign.
-        // Guarded with function_exists() in case this view is ever rendered
-        // more than once within the same PHP request (e.g. nested includes).
         if (!function_exists('fmt')) {
             function fmt($n, $decimals = 0)
             {
@@ -166,21 +190,14 @@
                         <div class="row">
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label>From Date:</label>
-                                    <input type="date" class="form-control" name="from_date"
-                                        value="{{ $from_date ?? '' }}">
-                                    @error('from_date')
+                                    <label>Reporting Year-End Date:</label>
+                                    <input type="date" class="form-control" name="year_end_date"
+                                        value="{{ $year_end_date ?? '' }}">
+                                    @error('year_end_date')
                                         <span class="error text-red text-bold">{{ $message }}</span>
                                     @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label>To Date:</label>
-                                    <input type="date" class="form-control" name="to_date" value="{{ $to_date ?? '' }}">
-                                    @error('to_date')
-                                        <span class="error text-red text-bold">{{ $message }}</span>
-                                    @enderror
+                                    <small class="text-muted">Current year and comparative prior year are derived
+                                        automatically from this date.</small>
                                 </div>
                             </div>
                             <div class="col-md-2">
@@ -196,7 +213,7 @@
             </div>
         </div>
 
-        @if ($request->method() == 'POST' && $from_date)
+        @if ($request->method() == 'POST' && $year_end_date)
             <div class="col-md-12">
                 <div class="card card-default">
                     <div class="card-header no-print">
@@ -210,25 +227,42 @@
                             <div class="nfs-header">
                                 <h4>{{ $companyInfo->company_name ?? 'N/A' }}</h4>
                                 <div class="sub">NOTES TO THE FINANCIAL STATEMENTS</div>
-                                <div class="sub">FOR THE YEAR ENDED {{ strtoupper(date('jS F Y', strtotime($to_date))) }}
+                                <div class="sub">FOR THE YEAR ENDED {{ strtoupper($currentYearEnd->format('jS F Y')) }}
                                 </div>
                                 <div class="sub">(Amount in BDT)</div>
                             </div>
 
                             {{-- Note: Property, Plant & Equipment --}}
                             <div class="note-block">
-                                <div class="note-heading">Note 1 — Property, Plant &amp; Equipment</div>
+                                <div class="note-heading">Note 1 — Property, Plant &amp; Equipment
+                                    <div class="note-scope">For the year ended {{ $currentYearEnd->format('d M Y') }}
+                                        (comparative: {{ $priorYearEnd->format('d M Y') }})</div>
+                                </div>
                                 <div class="note-body">
 
                                     @if (count($fixedAssetSchedule['flaggedRows']) > 0)
                                         <div class="data-warning">
                                             ⚠ Data integrity: {{ count($fixedAssetSchedule['flaggedRows']) }}
-                                            asset(s) below show a depreciation/disposal charge with <strong>zero
-                                                recorded opening balance and zero addition</strong> in this system —
-                                            meaning a write-off was posted against an asset whose original cost was
-                                            never capitalised here. Please reconcile these against the physical
-                                            Fixed Asset register before this note is finalised:
+                                            asset(s) below still carry a <strong>negative closing
+                                                balance</strong> this year. Fixed asset (debit-normal) accounts should
+                                            never sit negative — this means cumulative depreciation/write-offs on
+                                            these assets exceed any cost ever recorded for them in this system.
+                                            Please reconcile these against the physical Fixed Asset register
+                                            before this note is finalised:
                                             <strong>{{ implode(', ', $fixedAssetSchedule['flaggedRows']) }}</strong>
+                                        </div>
+                                    @endif
+
+                                    @if (count($fixedAssetSchedule['resolvedRows']) > 0)
+                                        <div class="info-note no-print">
+                                            ℹ️ Note: {{ count($fixedAssetSchedule['resolvedRows']) }}
+                                            asset(s) below carried a negative <strong>opening</strong> balance
+                                            earlier in the year — typically from an asset-under-construction
+                                            cost transfer that didn't fully net out at the time — but have
+                                            since been reconciled with an offsetting entry and now sit at a
+                                            <strong>closing balance of zero</strong>. No further action needed
+                                            unless the underlying capitalisation entries require review:
+                                            <strong>{{ implode(', ', $fixedAssetSchedule['resolvedRows']) }}</strong>
                                         </div>
                                     @endif
 
@@ -239,6 +273,12 @@
                                                 ({{ fmt($fixedAssetSchedule['totals']['closing']) }})</strong>.
                                             This cannot be presented as-is in a statutory report — it indicates the
                                             data-integrity issue above needs to be resolved first.
+                                            @if ($fixedAssetPriorYearClosing < 0)
+                                                The comparative {{ $priorYearEnd->year }} closing balance is
+                                                <strong>also negative ({{ fmt($fixedAssetPriorYearClosing) }})</strong>,
+                                                so this is not a new issue introduced this year — it has been
+                                                carried forward from at least the prior year.
+                                            @endif
                                         </div>
                                     @endif
 
@@ -249,12 +289,12 @@
                                                 <th>Opening</th>
                                                 <th>Addition</th>
                                                 <th>Disposal / Depreciation</th>
-                                                <th>Closing</th>
+                                                <th>Closing {{ $currentYearEnd->year }}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @foreach ($fixedAssetSchedule['rows'] as $row)
-                                                <tr class="{{ $row['suspicious'] ? 'suspicious' : '' }}">
+                                                <tr class="{{ $row['suspicious'] ? 'suspicious' : ($row['resolved'] ? 'resolved-row' : '') }}">
                                                     <td class="label">{{ $row['label'] }}</td>
                                                     <td class="num">{{ fmt($row['opening']) }}</td>
                                                     <td class="num">{{ fmt($row['addition']) }}</td>
@@ -278,6 +318,13 @@
                                                     {{ fmt($fixedAssetSchedule['totals']['closing']) }}
                                                 </td>
                                             </tr>
+                                            <tr>
+                                                <td class="label">Comparative — Closing {{ $priorYearEnd->year }}</td>
+                                                <td class="num" colspan="3">—</td>
+                                                <td class="num {{ $fixedAssetPriorYearClosing < 0 ? 'negative' : '' }}">
+                                                    {{ fmt($fixedAssetPriorYearClosing) }}
+                                                </td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                     <p class="no-print" style="font-size:11px; color:#856404;">
@@ -290,46 +337,70 @@
 
                             {{-- Note: Reserve and Surplus --}}
                             <div class="note-block">
-                                <div class="note-heading">Note 2 — Reserve and Surplus</div>
+                                <div class="note-heading">Note 2 — Reserve and Surplus
+                                    <div class="note-scope">For the year ended {{ $currentYearEnd->format('d M Y') }}
+                                        (comparative: year ended {{ $priorYearEnd->format('d M Y') }})</div>
+                                </div>
                                 <div class="note-body">
 
-                                    @if (count($reserveMissingYears) > 0)
+                                    @if ($reserveMissingClosingForPriorFy)
                                         <div class="data-warning">
-                                            ⚠ No closing Profit/Loss movement found for FY
-                                            {{ implode(', FY ', $reserveMissingYears) }} within this range. These
-                                            fiscal years fall inside the report period but appear not to have been
-                                            swept from Income/Expense into Retained Earnings yet — please confirm
-                                            whether the year-end closing JV for
-                                            {{ count($reserveMissingYears) > 1 ? 'these years' : 'this year' }}
-                                            is still pending.
+                                            ⚠ No closing Profit/Loss entry found representing FY
+                                            {{ $representedFyForCurrent }} (expected to post on
+                                            {{ $currentYearStart->format('d M Y') }}). Please confirm whether that
+                                            year-end closing JV is still pending.
                                         </div>
+                                    @endif
+
+                                    @if ($reserveClosingLagNote)
+                                        <p class="no-print" style="font-size:11px; color:#856404;">
+                                            ⚠ Note: Because closing JVs post on 1 Jan of the following year, the
+                                            "Movement" figure shown under each column header does NOT represent
+                                            that column's own calendar year — it represents the closing JV posted
+                                            on 1 Jan of that year, which is the PRIOR fiscal year's result (see the
+                                            "represents FY ..." label under each figure below). FY
+                                            {{ $currentYearEnd->year }}'s
+                                            own closing JV will post on
+                                            {{ $currentYearEnd->copy()->addYear()->startOfYear()->format('d M Y') }}
+                                            and will only appear in next year's note — this is expected, not an error.
+                                        </p>
                                     @endif
 
                                     <table class="note-table">
                                         <thead>
                                             <tr>
                                                 <th class="label">Particulars</th>
-                                                <th>Amount</th>
+                                                <th>{{ $currentYearEnd->year }}</th>
+                                                <th>{{ $priorYearEnd->year }}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <tr>
-                                                <td class="label">Balance as at {{ date('d F Y', strtotime($from_date)) }}
-                                                </td>
-                                                <td class="num">{{ fmt($reserveOpening) }}</td>
+                                                <td class="label">Balance at the beginning of the year</td>
+                                                <td class="num">{{ fmt($reserveCurrent['opening']) }}</td>
+                                                <td class="num">{{ fmt($reservePrior['opening']) }}</td>
                                             </tr>
-                                            @foreach ($reserveMovements as $m)
-                                                <tr>
-                                                    <td class="label">{{ $m['label'] }}</td>
-                                                    <td class="num {{ $m['amount'] < 0 ? 'negative' : '' }}">
-                                                        {{ fmt($m['amount']) }}
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                            <tr class="total-row">
-                                                <td class="label">Balance as at {{ date('d F Y', strtotime($to_date)) }}
+                                            <tr>
+                                                <td class="label">Movement during the year <span
+                                                        style="font-weight:400;font-style:italic;font-size:10.5px;">(closing
+                                                        JV posted 1 Jan)</span></td>
+                                                <td class="num {{ $reserveCurrent['movement'] < 0 ? 'negative' : '' }}">
+                                                    {{ fmt($reserveCurrent['movement']) }}
+                                                    <div
+                                                        style="font-size:10px;font-style:italic;font-weight:400;color:#555;">
+                                                        represents FY {{ $reserveCurrent['representedFy'] }}</div>
                                                 </td>
-                                                <td class="num">{{ fmt($reserveClosing) }}</td>
+                                                <td class="num {{ $reservePrior['movement'] < 0 ? 'negative' : '' }}">
+                                                    {{ fmt($reservePrior['movement']) }}
+                                                    <div
+                                                        style="font-size:10px;font-style:italic;font-weight:400;color:#555;">
+                                                        represents FY {{ $reservePrior['representedFy'] }}</div>
+                                                </td>
+                                            </tr>
+                                            <tr class="total-row">
+                                                <td class="label">Balance at the end of the year</td>
+                                                <td class="num">{{ fmt($reserveCurrent['closing']) }}</td>
+                                                <td class="num">{{ fmt($reservePrior['closing']) }}</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -340,50 +411,62 @@
 
                             {{-- Note: Share Capital --}}
                             <div class="note-block">
-                                <div class="note-heading">Note 3 — Share Capital</div>
+                                <div class="note-heading">Note 3 — Share Capital
+                                    <div class="note-scope">As at {{ $currentYearEnd->format('d M Y') }}
+                                        (comparative: {{ $priorYearEnd->format('d M Y') }})</div>
+                                </div>
                                 <div class="note-body">
+                                    @if ($shareCapitalMissing)
+                                        <div class="config-warning">
+                                            ⚠ Paid-up Share Capital shows zero in both years. This is unusual
+                                            for an operating company — please confirm the Share Capital account
+                                            ID ({{ $shareCapitalId }}) is correct, or check whether capital was
+                                            posted under a different account.
+                                        </div>
+                                    @endif
                                     <table class="note-table">
                                         <thead>
                                             <tr>
                                                 <th class="label">Particulars</th>
-                                                <th>{{ date('d M Y', strtotime($to_date)) }}</th>
+                                                <th>{{ $currentYearEnd->year }}</th>
+                                                <th>{{ $priorYearEnd->year }}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <tr>
                                                 <td class="label">Paid-up Share Capital</td>
-                                                <td class="num">{{ fmt($shareCapitalBalance) }}</td>
+                                                <td class="num">{{ fmt($shareCapitalCurrent) }}</td>
+                                                <td class="num">{{ fmt($shareCapitalPrior) }}</td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
 
-                            {{-- Note: Revenue — year-by-year (FIX 2026-07-12: no more
-                                 single overlapping "current vs prior" pair) --}}
+                            {{-- Note: Revenue --}}
                             <div class="note-block">
-                                <div class="note-heading">Note 4 — Revenue</div>
+                                <div class="note-heading">Note 4 — Revenue
+                                    <div class="note-scope">For the year ended {{ $currentYearEnd->format('d M Y') }}
+                                        (comparative: year ended {{ $priorYearEnd->format('d M Y') }})</div>
+                                </div>
                                 <div class="note-body">
                                     <table class="note-table">
                                         <thead>
                                             <tr>
-                                                <th class="label">Fiscal Year</th>
-                                                <th>Total Revenue</th>
+                                                <th class="label">Particulars</th>
+                                                <th>{{ $currentYearEnd->year }}</th>
+                                                <th>{{ $priorYearEnd->year }}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach ($revenueByYear as $year => $amount)
-                                                <tr>
-                                                    <td class="label">{{ $year }}</td>
-                                                    <td class="num {{ $amount < 0 ? 'negative' : '' }}">
-                                                        {{ fmt($amount) }}
-                                                    </td>
-                                                </tr>
-                                            @endforeach
                                             <tr class="total-row">
-                                                <td class="label">Total ({{ date('d M Y', strtotime($from_date)) }} –
-                                                    {{ date('d M Y', strtotime($to_date)) }})</td>
-                                                <td class="num">{{ fmt(array_sum($revenueByYear)) }}</td>
+                                                <td class="label">Total Revenue for the year</td>
+                                                <td class="num {{ $revenueCurrent < 0 ? 'negative' : '' }}">
+                                                    {{ fmt($revenueCurrent) }}
+                                                </td>
+                                                <td class="num {{ $revenuePrior < 0 ? 'negative' : '' }}">
+                                                    {{ fmt($revenuePrior) }}
+                                                </td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -392,9 +475,22 @@
 
                             {{-- Note: Accounts Receivable Ageing --}}
                             <div class="note-block">
-                                <div class="note-heading">Note 5 — Accounts Receivable Ageing</div>
+                                <div class="note-heading">Note 5 — Accounts Receivable Ageing
+                                    <div class="note-scope">As at {{ $currentYearEnd->format('d M Y') }}
+                                        (point-in-time snapshot — no comparative column, per standard practice)</div>
+                                </div>
                                 <div class="note-body">
                                     @if ($receivableAgeing)
+                                        @if ($receivableAbnormalSign)
+                                            <div class="data-warning">
+                                                ⚠ Accounts Receivable is an asset and would normally carry a
+                                                debit (positive) balance. The total below nets to a
+                                                negative figure ({{ fmt($receivableTotal) }}), meaning the
+                                                tree nets to an overall credit position — please verify
+                                                against the customer ledger (e.g. overpayments, misapplied
+                                                credit memos, or advance receipts) before finalising this note.
+                                            </div>
+                                        @endif
                                         <table class="note-table">
                                             <thead>
                                                 <tr>
@@ -419,35 +515,46 @@
                                     @endif
                                     <p class="no-print" style="font-size:11px; color:#856404;">
                                         ⚠ Note: This ageing is bucketed by each transaction's own posting date
-                                        against today, not by open-item (invoice-vs-payment) matching. A partially
-                                        paid old invoice keeps its full net amount in its original bucket while the
-                                        payment lands separately — so a single bucket dominating the total (as seen
-                                        here) is expected with this method and does not necessarily mean the
-                                        receivable book is truly that old.
+                                        against the reporting date, not by open-item (invoice-vs-payment) matching.
+                                        A single bucket dominating the total does not necessarily mean the
+                                        receivable book is truly that old — see prior discussion.
                                     </p>
                                 </div>
                             </div>
 
                             {{-- Note: Accounts Payable --}}
                             <div class="note-block">
-                                <div class="note-heading">Note 6 — Accounts Payable</div>
+                                <div class="note-heading">Note 6 — Accounts Payable
+                                    <div class="note-scope">As at {{ $currentYearEnd->format('d M Y') }}
+                                        (comparative: {{ $priorYearEnd->format('d M Y') }})</div>
+                                </div>
                                 <div class="note-body">
-                                    @if (!is_null($payableBalance))
-                                        @if ($payableAbnormalSign)
+                                    @if (!is_null($payableBalanceCurrent))
+                                        @if ($payableAbnormalSignCurrent || $payableAbnormalSignPrior)
                                             <div class="data-warning">
                                                 ⚠ Accounts Payable is a liability and would normally carry a
-                                                credit (positive) balance. The figure below is negative, meaning
-                                                the tree nets to an overall debit position — please verify against
-                                                the supplier ledger before finalising this note.
+                                                credit (positive) balance. The figure below is negative in
+                                                {{ $payableAbnormalSignCurrent && $payableAbnormalSignPrior ? 'both ' . $currentYearEnd->year . ' and ' . $priorYearEnd->year : ($payableAbnormalSignCurrent ? $currentYearEnd->year : $priorYearEnd->year) }},
+                                                meaning the tree nets to an overall debit position — please
+                                                verify against the supplier ledger before finalising this note.
                                             </div>
                                         @endif
                                         <table class="note-table">
+                                            <thead>
+                                                <tr>
+                                                    <th class="label">Particulars</th>
+                                                    <th>{{ $currentYearEnd->year }}</th>
+                                                    <th>{{ $priorYearEnd->year }}</th>
+                                                </tr>
+                                            </thead>
                                             <tbody>
                                                 <tr>
-                                                    <td class="label">Total Accounts Payable as at
-                                                        {{ date('d M Y', strtotime($to_date)) }}</td>
-                                                    <td class="num {{ $payableAbnormalSign ? 'negative' : '' }}">
-                                                        {{ fmt($payableBalance) }}
+                                                    <td class="label">Total Accounts Payable</td>
+                                                    <td class="num {{ $payableAbnormalSignCurrent ? 'negative' : '' }}">
+                                                        {{ fmt($payableBalanceCurrent) }}
+                                                    </td>
+                                                    <td class="num {{ $payableAbnormalSignPrior ? 'negative' : '' }}">
+                                                        {{ fmt($payableBalancePrior) }}
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -461,10 +568,24 @@
 
                             {{-- Note: Cash and Bank Balances --}}
                             <div class="note-block">
-                                <div class="note-heading">Note 7 — Cash and Bank Balances</div>
+                                <div class="note-heading">Note 7 — Cash and Bank Balances
+                                    <div class="note-scope">As at {{ $currentYearEnd->format('d M Y') }}
+                                        (comparative: {{ $priorYearEnd->format('d M Y') }})</div>
+                                </div>
                                 <div class="note-body">
                                     @if ($cashBankBreakdown)
                                         @php $unexpectedCashItems = collect($cashBankBreakdown)->where('unexpected', true); @endphp
+
+                                        @if ($cashInHandNegative)
+                                            <div class="config-warning">
+                                                ⚠ Cash in Hand shows a negative balance in at least one of the
+                                                two years below. Physical cash on hand cannot go negative — this
+                                                points to a data-entry or posting error (e.g. a payment recorded
+                                                against Cash in Hand instead of Cash at Bank) and should be
+                                                investigated before this note is finalised.
+                                            </div>
+                                        @endif
+
                                         @if ($unexpectedCashItems->isNotEmpty())
                                             <div class="data-warning">
                                                 ⚠ The following account(s) sit directly under "Cash and Cash
@@ -479,7 +600,8 @@
                                             <thead>
                                                 <tr>
                                                     <th class="label">Particulars</th>
-                                                    <th>Amount</th>
+                                                    <th>{{ $currentYearEnd->year }}</th>
+                                                    <th>{{ $priorYearEnd->year }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -488,6 +610,10 @@
                                                         <td class="label">{{ $item['label'] }}</td>
                                                         <td class="num {{ $item['balance'] < 0 ? 'negative' : '' }}">
                                                             {{ fmt($item['balance']) }}
+                                                        </td>
+                                                        <td
+                                                            class="num {{ $item['balance_prior'] < 0 ? 'negative' : '' }}">
+                                                            {{ fmt($item['balance_prior']) }}
                                                         </td>
                                                     </tr>
                                                 @endforeach

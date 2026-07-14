@@ -11,6 +11,7 @@ use App\Http\Controllers\Backend\Settings\CreditVoucherController;
 use App\Http\Controllers\Backend\Settings\DabitVoucherController;
 use App\Http\Controllers\Backend\Settings\JournalVoucherController;
 use App\Http\Controllers\Backend\Settings\OpeningController;
+use App\Http\Controllers\Backend\Test\ZktecoSyncController;
 use App\Http\Controllers\LedgerMergeController;
 use App\Models\Accounts;
 use App\Models\Customer;
@@ -40,6 +41,9 @@ Route::get('/', function () {
 })->middleware('guest');
 
 
+Route::get('zkteco-sync', [ZktecoSyncController::class, 'index'])->name('hrm.zkteco-sync.index');
+Route::get('zkteco-sync/{id}/check', [ZktecoSyncController::class, 'check'])->name('hrm.zkteco-sync.check');
+Route::post('zkteco-sync/{id}/confirm', [ZktecoSyncController::class, 'confirm'])->name('hrm.zkteco-sync.confirm');
 
 Route::get('/create-employee', function () {
 

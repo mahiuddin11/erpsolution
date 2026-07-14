@@ -36,6 +36,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/dataProcessingemployee', [EmployeeController::class, 'dataProcessingEmployee'])->name('hrm.employee.dataProcessingEmployee');
         Route::get('/hrm-employe-create', [EmployeeController::class, 'create'])->name('hrm.employee.create');
         Route::post('/hrm-employe-store', [EmployeeController::class, 'store'])->name('hrm.employee.store');
+        Route::get('/get-zkteco-areas', [EmployeeController::class, 'getZktecoAreas'])->name('hrm.employee.get-zkteco-areas');
 
 
         Route::get('/hrm-employe-edit/{id}', [EmployeeController::class, 'edit'])->name('hrm.employee.edit');
@@ -178,6 +179,9 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('hrm-holiday-month', [HolidayController::class, 'getMonthHolidays'])->name('hrm.holiday.month');
         Route::post('hrm-holiday-save', [HolidayController::class, 'save'])->name('hrm.holiday.save');
     });
+
+
+
 
 
     Route::group(['middleware' => ['web', 'auth'], 'namespace' => 'Recruitment'], function () {

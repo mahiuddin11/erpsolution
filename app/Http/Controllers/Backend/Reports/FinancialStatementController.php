@@ -13,76 +13,174 @@ use Illuminate\Support\Facades\DB;
 class FinancialStatementController extends Controller
 {
 
-    public function notesToFinancialStatements(Request $request)
+ public function notesToFinancialStatements(Request $request)
     {
         $title = 'Notes to the Financial Statements';
         $companyInfo = Company::first();
 
-        $from_date = $request->from_date;
-        $to_date   = $request->to_date;
+        $year_end_date = $request->year_end_date;
 
-        if ($request->method() != 'POST' || !$from_date) {
+        if ($request->method() != 'POST' || !$year_end_date) {
             return view('backend.pages.reports.FinancialStatement', get_defined_vars());
         }
 
         $request->validate([
-            'from_date' => 'required|date',
-            'to_date'   => 'required|date|after_or_equal:from_date',
+            'year_end_date' => 'required|date',
         ]);
 
         // ============================================================
-        // CONFIG — confirmed against Chart of Accounts 
+        // Derive current FY and comparative prior FY from the single
+        // reporting date. Current FY = Jan 1 .. year_end_date (in case
+        // year_end_date isn't exactly Dec 31, e.g. interim reporting).
+        // Prior FY = the full calendar year immediately before.
         // ============================================================
-        $fixedAssetRootId    = 2;         // Fixed Asset tree root
-        $inventoryRootId     = null;     // TODO: still unresolved — no dedicated Inventory account found
-        $receivableRootId    = 5;       // Accounts Receivable
-        $payableRootId       = 16;     // Accounts Payable
-        $cashBankRootId      = 6;     // Cash and Cash Equivalents (parent of Cash in Hand id=7, Cash at Bank id=8)
+        $currentYearEnd   = Carbon::parse($year_end_date)->endOfDay();
+        $currentYearStart = $currentYearEnd->copy()->startOfYear();
+        $priorYearEnd     = $currentYearStart->copy()->subDay()->endOfDay();
+        $priorYearStart   = $priorYearEnd->copy()->startOfYear();
+
+        // kept for the Blade header/date labels
+        $from_date = $currentYearStart->toDateString();
+        $to_date   = $currentYearEnd->toDateString();
+
+        // ============================================================
+        // CONFIG — confirmed against WTBL Chart of Accounts (2026-07-12)
+        // ============================================================
+        $fixedAssetRootId    = 2;   // Fixed Asset tree root
+        $inventoryRootId     = null; // TODO: still unresolved — no dedicated Inventory account found
+        $receivableRootId    = 5;   // Accounts Receivable
+        $payableRootId       = 16;  // Accounts Payable
+        $cashBankRootId      = 6;   // Cash and Cash Equivalents (parent of Cash in Hand id=7, Cash at Bank id=8)
         $shareCapitalId      = 11;
         $reserveSurplusId    = 12;
         $incomeRootId        = 17;
         $expenseRootId       = 21;
 
         // ============================================================
-        // Note: Property, Plant & Equipment 
+        // Note: Property, Plant & Equipment — current FY schedule,
+        // plus a Prior Year Closing comparative figure.
         // ============================================================
-        $fixedAssetSchedule = $this->buildFixedAssetSchedule($fixedAssetRootId, $from_date, $to_date);
+        $fixedAssetSchedule = $this->buildFixedAssetSchedule(
+            $fixedAssetRootId,
+            $currentYearStart->toDateString(),
+            $currentYearEnd->toDateString()
+        );
+        $fixedAssetPriorYearClosing = $this->getAccountTreeBalanceAsOf(
+            $this->collectAccountTree($fixedAssetRootId),
+            $priorYearEnd->toDateString(),
+            true
+        );
 
         // ============================================================
-        // Note: Reserve and Surplus 
+        // Note: Reserve and Surplus — Current FY | Prior FY columns
         // ============================================================
-        $reserveTreeIds     = $this->collectAccountTree($reserveSurplusId);
-        $reserveOpening     = $this->getAccountTreeBalanceAsOf($reserveTreeIds, $from_date, false);
-        $reserveClosing     = $this->getAccountTreeBalanceAsOf($reserveTreeIds, $to_date, true);
-        $reserveMovements   = $this->getYearlyProfitLossRows($reserveTreeIds, $from_date, $to_date);
-        $reserveMissingYears = $this->detectMissingClosingYears($reserveMovements, $from_date, $to_date);
+        $reserveTreeIds = $this->collectAccountTree($reserveSurplusId);
+
+        $reserveCurrent = [
+            'opening'  => $this->getAccountTreeBalanceAsOf($reserveTreeIds, $priorYearEnd->toDateString(), true),
+            'movement' => $this->getAccountTreeMovement($reserveTreeIds, $currentYearStart->toDateString(), $currentYearEnd->toDateString()),
+            'closing'  => $this->getAccountTreeBalanceAsOf($reserveTreeIds, $currentYearEnd->toDateString(), true),
+            // FIX (2026-07-13): the "movement" queried within calendar year
+            // $currentYearEnd->year is actually the closing JV that
+            // REPRESENTS the prior fiscal year (posted Jan 1). Store which
+            // FY it represents so the view can label it correctly instead
+            // of implying it's this year's own result.
+            'representedFy' => $currentYearStart->year - 1,
+        ];
+        $reservePrior = [
+            'opening'  => $this->getAccountTreeBalanceAsOf($reserveTreeIds, $priorYearStart->copy()->subDay()->toDateString(), true),
+            'movement' => $this->getAccountTreeMovement($reserveTreeIds, $priorYearStart->toDateString(), $priorYearEnd->toDateString()),
+            'closing'  => $this->getAccountTreeBalanceAsOf($reserveTreeIds, $priorYearEnd->toDateString(), true),
+            'representedFy' => $priorYearStart->year - 1,
+        ];
+
+        // FLAG: because closing JVs post on Jan 1 of the FOLLOWING year, the
+        // "movement" shown for the year ended $currentYearEnd actually
+        // represents the PRIOR fiscal year's result (posted on this year's
+        // Jan 1). This year's own closing JV won't post until next Jan 1 —
+        // that is expected, not an error, but worth disclosing so it isn't
+        // mistaken for a missing entry.
+        $reserveClosingLagNote = true;
+
+        $reserveMovementsCurrentRaw = $this->getYearlyProfitLossRows($reserveTreeIds, $currentYearStart->toDateString(), $currentYearEnd->toDateString());
+        $representedFyForCurrent = $currentYearStart->year - 1;
+        $reserveMissingClosingForPriorFy = !collect($reserveMovementsCurrentRaw)->pluck('year')->contains($representedFyForCurrent);
 
         // ============================================================
-        // Note: Share Capital
+        // Note: Share Capital — Current Year-End | Prior Year-End
         // ============================================================
         $shareCapitalTreeIds = $this->collectAccountTree($shareCapitalId);
-        $shareCapitalBalance = $this->getAccountTreeBalanceAsOf($shareCapitalTreeIds, $to_date, true);
+        $shareCapitalCurrent = $this->getAccountTreeBalanceAsOf($shareCapitalTreeIds, $currentYearEnd->toDateString(), true);
+        $shareCapitalPrior   = $this->getAccountTreeBalanceAsOf($shareCapitalTreeIds, $priorYearEnd->toDateString(), true);
 
-        $incomeTreeIds = $this->collectAccountTree($incomeRootId);
-        $revenueByYear = $this->getYearlyMovementRows($incomeTreeIds, $from_date, $to_date);
+        // FLAG (2026-07-14): Share Capital showing zero in both years is
+        // unusual for an operating company with paid-up capital on record.
+        // Flagged so it doesn't silently render as a blank "-" with no
+        // explanation — either the account ID needs re-confirming or the
+        // capital was posted under a different account.
+        $shareCapitalMissing = ($shareCapitalCurrent == 0) && ($shareCapitalPrior == 0);
 
         // ============================================================
-        // Note: Accounts Receivable Ageing 
+        // Note: Revenue — Current FY Total | Prior FY Total
+        // ============================================================
+        $incomeTreeIds = $this->collectAccountTree($incomeRootId);
+        $revenueCurrent = $this->getAccountTreeMovement($incomeTreeIds, $currentYearStart->toDateString(), $currentYearEnd->toDateString());
+        $revenuePrior   = $this->getAccountTreeMovement($incomeTreeIds, $priorYearStart->toDateString(), $priorYearEnd->toDateString());
+
+        // ============================================================
+        // Note: Accounts Receivable Ageing — current year-end snapshot
+        // only (industry norm: ageing is a point-in-time snapshot, not
+        // typically shown with a prior-year comparative column).
         // ============================================================
         $receivableAgeing = $receivableRootId
-            ? $this->buildAgeingSchedule($receivableRootId, $to_date, 'debit')
+            ? $this->buildAgeingSchedule($receivableRootId, $currentYearEnd->toDateString(), 'debit')
             : null;
 
+        // FLAG (2026-07-14): Receivable is debit-normal (asset). If the
+        // total nets negative, the tree has slipped into an overall
+        // credit position — e.g. customer overpayments, misapplied credit
+        // memos, or a genuine data issue. Flagged the same way Note 6
+        // (Payable) already flags its abnormal sign, so this doesn't sit
+        // unexplained in the note.
+        $receivableTotal = $receivableAgeing ? array_sum($receivableAgeing) : null;
+        $receivableAbnormalSign = !is_null($receivableTotal) && $receivableTotal < 0;
 
-        $payableBalance = $payableRootId
-            ? $this->getAccountTreeBalanceAsOf($this->collectAccountTree($payableRootId), $to_date, true)
+        // ============================================================
+        // Note: Accounts Payable — Current Year-End | Prior Year-End
+        // ============================================================
+        $payableBalanceCurrent = $payableRootId
+            ? $this->getAccountTreeBalanceAsOf($this->collectAccountTree($payableRootId), $currentYearEnd->toDateString(), true)
             : null;
-        $payableAbnormalSign = !is_null($payableBalance) && $payableBalance < 0;
+        $payableBalancePrior = $payableRootId
+            ? $this->getAccountTreeBalanceAsOf($this->collectAccountTree($payableRootId), $priorYearEnd->toDateString(), true)
+            : null;
+        $payableAbnormalSignCurrent = !is_null($payableBalanceCurrent) && $payableBalanceCurrent < 0;
+        $payableAbnormalSignPrior   = !is_null($payableBalancePrior) && $payableBalancePrior < 0;
+        // kept for backward compatibility with anything referencing the old single-year flag
+        $payableAbnormalSign = $payableAbnormalSignCurrent;
 
-
+        // ============================================================
+        // Note: Cash and Bank Balances — Current Year-End | Prior Year-End
+        // per line item.
+        // ============================================================
         $cashBankBreakdown = $cashBankRootId
-            ? $this->buildLeafBreakdown($cashBankRootId, $to_date, [7, 8])
+            ? $this->buildLeafBreakdownComparative($cashBankRootId, $currentYearEnd->toDateString(), $priorYearEnd->toDateString(), [7, 8])
             : null;
+
+        // FLAG (2026-07-13): Cash in Hand (id=7) going negative in either
+        // year is physically impossible — unlike Cash at Bank, which can
+        // legitimately go negative under an overdraft facility. Detected
+        // here by account id rather than by sign-only heuristics on the
+        // breakdown array, so it survives even if the Chart of Accounts
+        // ordering changes.
+        $cashInHandNegative = false;
+        if ($cashBankBreakdown) {
+            foreach ($cashBankBreakdown as $item) {
+                if ($item['id'] === 7 && ($item['balance'] < 0 || $item['balance_prior'] < 0)) {
+                    $cashInHandNegative = true;
+                }
+            }
+        }
 
         return view('backend.pages.reports.FinancialStatement', get_defined_vars());
     }
@@ -103,7 +201,10 @@ class FinancialStatementController extends Controller
         return $ids;
     }
 
-
+    /**
+     * STOCK balance as of a date — opening_balance + transactions,
+     * direction resolved per balance_type. Proven pattern from SOCE.
+     */
     private function getAccountTreeBalanceAsOf(array $accountIds, $toDate, $inclusive = false)
     {
         $accounts = ChartOfAccount::whereIn('id', $accountIds)->get(['id', 'opening_balance', 'balance_type']);
@@ -132,7 +233,9 @@ class FinancialStatementController extends Controller
         return $total;
     }
 
-
+    /**
+     * FLOW (movement only, no opening_balance) within a date range.
+     */
     private function getAccountTreeMovement(array $accountIds, $fromDate, $toDate)
     {
         $accounts = ChartOfAccount::whereIn('id', $accountIds)->get(['id', 'balance_type']);
@@ -160,7 +263,11 @@ class FinancialStatementController extends Controller
         return $total;
     }
 
-
+    /**
+     * Groups Reserve/Retained Earnings movements by the FISCAL YEAR
+     * they represent (posting year - 1, since closing JVs post Jan 1).
+     * Reused verbatim from the proven SOCE controller.
+     */
     private function getYearlyProfitLossRows(array $accountIds, $fromDate, $toDate)
     {
         $rows = DB::table('account_transactions')
@@ -199,62 +306,6 @@ class FinancialStatementController extends Controller
         return $movements;
     }
 
-    private function getYearlyMovementRows(array $accountIds, $fromDate, $toDate)
-    {
-        // balance_type per account so debit/credit direction is resolved correctly
-        $accounts = ChartOfAccount::whereIn('id', $accountIds)->get(['id', 'balance_type'])->keyBy('id');
-
-        $rowsWithAccount = DB::table('account_transactions')
-            ->whereIn('account_id', $accountIds)
-            ->whereDate('created_at', '>=', $fromDate)
-            ->whereDate('created_at', '<=', $toDate)
-            ->select('account_id', 'credit', 'debit', 'created_at')
-            ->get();
-
-        $yearly = [];
-
-        foreach ($rowsWithAccount as $row) {
-            $acc = $accounts->get($row->account_id);
-            $balanceType = $acc->balance_type ?? 'credit';
-
-            $net = ($balanceType === 'debit')
-                ? ((float) $row->debit - (float) $row->credit)
-                : ((float) $row->credit - (float) $row->debit);
-
-            if ($net == 0) continue;
-
-            $year = Carbon::parse($row->created_at)->year;
-            $yearly[$year] = ($yearly[$year] ?? 0) + $net;
-        }
-
-        ksort($yearly);
-        return array_map(fn($v) => round($v), $yearly); // ['2023' => 1234, '2024' => ...]
-    }
-
-
-    private function detectMissingClosingYears(array $movements, $fromDate, $toDate)
-    {
-        $coveredYears = collect($movements)->pluck('year')->all();
-
-        $startYear = Carbon::parse($fromDate)->year;
-        $lastCompletableYear = Carbon::parse($toDate)->year - 1;
-
-        // If the range itself starts and ends within the same year,
-        // there's no completed fiscal year to expect a closing JV for.
-        if ($lastCompletableYear < $startYear) {
-            return [];
-        }
-
-        $missing = [];
-        for ($year = $startYear; $year <= $lastCompletableYear; $year++) {
-            if (!in_array($year, $coveredYears)) {
-                $missing[] = $year;
-            }
-        }
-
-        return $missing;
-    }
-
     private function buildFixedAssetSchedule($rootId, $fromDate, $toDate)
     {
         $categories = ChartOfAccount::where('parent_id', $rootId)->get(['id', 'account_name']);
@@ -262,6 +313,7 @@ class FinancialStatementController extends Controller
         $schedule = [];
         $totals = ['opening' => 0, 'addition' => 0, 'disposal' => 0, 'closing' => 0];
         $flaggedRows = [];
+        $resolvedRows = [];
 
         foreach ($categories as $cat) {
             $treeIds = $this->collectAccountTree($cat->id);
@@ -269,7 +321,6 @@ class FinancialStatementController extends Controller
             $opening = $this->getAccountTreeBalanceAsOf($treeIds, $fromDate, false);
             $closing = $this->getAccountTreeBalanceAsOf($treeIds, $toDate, true);
 
-            // Split movement into positive (addition) and negative (disposal/depreciation)
             $accounts = ChartOfAccount::whereIn('id', $treeIds)->get(['id', 'balance_type']);
             $addition = 0;
             $disposal = 0;
@@ -290,15 +341,33 @@ class FinancialStatementController extends Controller
                     if ($net >= 0) {
                         $addition += $net;
                     } else {
-                        $disposal += $net; // negative
+                        $disposal += $net;
                     }
                 }
             }
 
+            // FLAG (2026-07-13, widened): flag on negative opening OR
+            // negative closing, since a debit-normal asset account should
+            // never sit negative at any point.
+            //
+            // REFINED (2026-07-14): a negative OPENING that has already
+            // self-resolved to a non-negative CLOSING within this year
+            // (e.g. an asset-under-construction cost transferred out
+            // in a prior period, then reconciled with an offsetting entry
+            // this year — see Crane Structure case) is a DIFFERENT
+            // situation from a balance that is STILL negative at closing.
+            // The former is a resolved transitional artifact worth noting
+            // but not alarming about; the latter is a live, unresolved
+            // data-integrity issue. These are now tracked separately so
+            // the banner text doesn't overstate resolved items as if they
+            // were still open problems.
+            $isUnresolved = $closing < 0;
+            $isResolvedTransitional = ($opening < 0) && !$isUnresolved;
 
-            $isSuspicious = ($opening == 0 && $addition == 0 && $disposal < 0);
-            if ($isSuspicious) {
+            if ($isUnresolved) {
                 $flaggedRows[] = $cat->account_name;
+            } elseif ($isResolvedTransitional) {
+                $resolvedRows[] = $cat->account_name;
             }
 
             $schedule[] = [
@@ -307,8 +376,9 @@ class FinancialStatementController extends Controller
                 'addition'   => $addition,
                 'disposal'   => $disposal,
                 'closing'    => $closing,
-                'suspicious' => $isSuspicious,
-                'negative_closing' => $closing < 0,
+                'suspicious' => $isUnresolved,
+                'resolved'   => $isResolvedTransitional,
+                'negative_closing' => $isUnresolved,
             ];
 
             $totals['opening']  += $opening;
@@ -318,13 +388,18 @@ class FinancialStatementController extends Controller
         }
 
         return [
-            'rows'         => $schedule,
-            'totals'       => $totals,
-            'flaggedRows'  => $flaggedRows,
+            'rows'          => $schedule,
+            'totals'        => $totals,
+            'flaggedRows'   => $flaggedRows,
+            'resolvedRows'  => $resolvedRows,
             'totalNegative' => $totals['closing'] < 0,
         ];
     }
 
+    /**
+     * Generic ageing schedule (0-30, 31-60, 61-90, 90+) for a receivable
+     * or payable tree, based on individual transaction age from $asOfDate.
+     */
     private function buildAgeingSchedule($rootId, $asOfDate, $normalSide = 'debit')
     {
         $treeIds = $this->collectAccountTree($rootId);
@@ -356,8 +431,12 @@ class FinancialStatementController extends Controller
         return $buckets;
     }
 
-
-    private function buildLeafBreakdown($rootId, $asOfDate, array $expectedChildIds = [])
+    /**
+     * Leaf-level breakdown (e.g. individual bank accounts) under a root,
+     * WITH a prior-year comparative balance per line — used for Note 7
+     * under Option 2's current/prior year presentation.
+     */
+    private function buildLeafBreakdownComparative($rootId, $currentAsOf, $priorAsOf, array $expectedChildIds = [])
     {
         $leaves = ChartOfAccount::where('parent_id', $rootId)->get(['id', 'account_name']);
 
@@ -365,12 +444,15 @@ class FinancialStatementController extends Controller
         foreach ($leaves as $leaf) {
             $treeIds = $this->collectAccountTree($leaf->id);
             $result[] = [
-                'label'      => $leaf->account_name,
-                'balance'    => $this->getAccountTreeBalanceAsOf($treeIds, $asOfDate, true),
-                'unexpected' => !empty($expectedChildIds) && !in_array($leaf->id, $expectedChildIds),
+                'id'            => $leaf->id,
+                'label'         => $leaf->account_name,
+                'balance'       => $this->getAccountTreeBalanceAsOf($treeIds, $currentAsOf, true),
+                'balance_prior' => $this->getAccountTreeBalanceAsOf($treeIds, $priorAsOf, true),
+                'unexpected'    => !empty($expectedChildIds) && !in_array($leaf->id, $expectedChildIds),
             ];
         }
 
         return $result;
     }
+
 }
