@@ -44,6 +44,8 @@ Route::get('/', function () {
 Route::get('zkteco-sync', [ZktecoSyncController::class, 'index'])->name('hrm.zkteco-sync.index');
 Route::get('zkteco-sync/{id}/check', [ZktecoSyncController::class, 'check'])->name('hrm.zkteco-sync.check');
 Route::post('zkteco-sync/{id}/confirm', [ZktecoSyncController::class, 'confirm'])->name('hrm.zkteco-sync.confirm');
+Route::post('zkteco-sync/{id}/apply-correction', [ZktecoSyncController::class, 'applyCorrection'])
+    ->name('hrm.zkteco-sync.apply-correction');
 
 Route::get('/create-employee', function () {
 

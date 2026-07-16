@@ -15,7 +15,7 @@ class ZktecoSyncController extends Controller
      */
     public function index()
     {
-        $employees = Employee::select('id', 'id_card', 'am_name', 'device_id')
+        $employees = Employee::select('id', 'id_card', 'am_name', 'device_id', 'employee_status', 'status')
             ->whereNotNull('id_card')
             ->orderBy('name')
             ->get();
@@ -23,17 +23,7 @@ class ZktecoSyncController extends Controller
         return view('employe_deviceid', get_defined_vars());
     }
 
-    /**
-     * একটা নির্দিষ্ট employee-কে device-এর সাথে match করে দেখা (শুধু preview, কোনো save হয় না)
-     *
-     * Cascade lookup order:
-     *  1) device_id দিয়ে (pk হিসেবে)
-     *  2) না মিললে id_card দিয়ে (emp_code হিসেবে)
-     *  3) না মিললে am_name দিয়ে (first_name হিসেবে)
-     * যেই step-এ record পাওয়া যায়, সেটা নিয়ে emp_code/first_name/card_no তিনটা field-ই
-     * ফাইনাল ভাবে compare করা হয় — তাই "কোন method দিয়ে পাওয়া গেছে" সেটা matched হওয়া মানেই না
-     * যে সব field মিলেছে, সেটা নিচের comparison থেকেই বোঝা যাবে।
-     */
+
     public function check($id)
     {
         $employee = Employee::find($id);
@@ -288,5 +278,223 @@ class ZktecoSyncController extends Controller
         }
 
         return ['status' => 'error', 'response' => $response->body()];
+    }
+
+    /**
+     * Modal থেকে admin যা যা correction select করেছেন, সেগুলো software ও device — দুই জায়গাতেই apply করা হয়
+     */
+
+
+    public function applyCorrection(Request $request, $id)
+    {
+        $employee = Employee::find($id);
+
+        if (!$employee) {
+            return response()->json(['status' => 'error', 'message' => 'Employee not found'], 404);
+        }
+
+        $updateDeviceId     = (bool) $request->boolean('update_device_id');
+        $updateCardNo       = (bool) $request->boolean('update_card_no');
+        $newCardNo          = $request->input('new_card_no');
+        $deleteFromDevice   = (bool) $request->boolean('delete_from_device');
+        $disableAttendance  = (bool) $request->boolean('disable_attendance'); // নতুন
+        $setInactive        = (bool) $request->boolean('set_inactive');
+
+        $resolved = $this->resolveZktecoEmployeeCascade($employee);
+
+        $needsDeviceLookup = $updateDeviceId || $updateCardNo || $deleteFromDevice || $disableAttendance;
+
+        if ($resolved['status'] !== 'found' && $needsDeviceLookup) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Device-এ employee verify করা যায়নি, কোনো correction apply করা হয়নি।',
+            ], 422);
+        }
+
+        $log = [];
+
+        try {
+
+            // ---- ১. Status correction (software-only) ----
+            if ($setInactive) {
+                $employee->status = 'Inactive';
+                $log[] = 'Software status → Inactive';
+            }
+
+            // ---- ২. Delete from device (সবচেয়ে destructive, সবার আগে চেক) ----
+            if ($deleteFromDevice) {
+                $deviceId = $resolved['data']['id'];
+                $deleteResult = $this->zktecoDeleteEmployee((string) $deviceId);
+
+                if ($deleteResult['status'] !== 'success') {
+                    Log::error('ZKTeco device delete failed', [
+                        'employee_id' => $employee->id,
+                        'device_id' => $deviceId,
+                        'response' => $deleteResult,
+                    ]);
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Device থেকে delete করা যায়নি। ' . ($deleteResult['message'] ?? ''),
+                    ], 422);
+                }
+
+                $employee->device_id = null;
+                $log[] = "Device থেকে delete হলো (device_id: {$deviceId})";
+            }
+
+            // ---- ৩. শুধু Attendance বন্ধ করা — employee device-এ থেকেই যাবে, delete না হলেই কেবল প্রযোজ্য ----
+            if ($disableAttendance && !$deleteFromDevice) {
+                $targetDeviceId = $resolved['data']['id'];
+                $payload = $this->buildZktecoPayload($employee, [
+                    'enable_att' => false,
+                ]);
+
+                $editResult = editZKTecoEmployee($targetDeviceId, $payload);
+
+                if (is_string($editResult)) {
+                    $editResult = json_decode($editResult, true) ?? [];
+                }
+
+                if (!is_array($editResult)) {
+                    Log::error('ZKTeco disable-attendance failed', [
+                        'employee_id' => $employee->id,
+                        'device_id' => $targetDeviceId,
+                        'response' => $editResult,
+                    ]);
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Device-এ attendance বন্ধ করা যায়নি।',
+                    ], 422);
+                }
+
+                $log[] = 'Device-এ attendance বন্ধ করা হলো (enable_att = false), employee record অক্ষত আছে';
+            }
+
+            // ---- ৪. Device ID correction ----
+            if ($updateDeviceId && !$deleteFromDevice) {
+                $employee->device_id = $resolved['data']['id'];
+                $log[] = 'Software device_id সংশোধন হলো → ' . $resolved['data']['id'];
+            }
+
+            // ---- ৫. Card No correction ----
+            if ($updateCardNo && !$deleteFromDevice) {
+                $targetDeviceId = $resolved['data']['id'];
+                $payload = $this->buildZktecoPayload($employee, [
+                    'card_no' => $newCardNo,
+                    // attendance এই call-এ overwrite যাতে না হয়ে যায়, তাই আগের disable রাখা হলে সেটাও বজায় রাখা হচ্ছে
+                    'enable_att' => $disableAttendance ? false : ($employee->employee_status !== 'left'),
+                ]);
+
+                $editResult = editZKTecoEmployee($targetDeviceId, $payload);
+
+                if (is_string($editResult)) {
+                    $editResult = json_decode($editResult, true) ?? [];
+                }
+
+                if (!is_array($editResult)) {
+                    Log::error('ZKTeco card_no correction failed', [
+                        'employee_id' => $employee->id,
+                        'device_id' => $targetDeviceId,
+                        'response' => $editResult,
+                    ]);
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Device-এ card_no update করা যায়নি।',
+                    ], 422);
+                }
+
+                $log[] = "Device card_no সংশোধন হলো → {$newCardNo}";
+            }
+
+            $employee->save();
+
+            Log::info('ZKTeco manual correction applied', [
+                'employee_id' => $employee->id,
+                'actions' => $log,
+                'applied_by' => auth()->id(),
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'employee_id' => $employee->id,
+                'device_id' => $employee->device_id,
+                'software_status' => $employee->status,
+                'actions' => $log,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('ZKTeco correction apply exception', [
+                'employee_id' => $employee->id,
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+            ]);
+            return response()->json(['status' => 'error', 'message' => 'Correction apply করার সময় error হয়েছে।'], 500);
+        }
+    }
+
+    /**
+     * device-এ employee delete করার জন্য shared helper
+     */
+    private function zktecoDeleteEmployee(string $deviceId): array
+    {
+        $token = zktecoGetToken();
+        if (!$token) {
+            return ['status' => 'error', 'message' => 'Token retrieve করা যায়নি।'];
+        }
+
+        $url = env('ZKTECO_IP') . "/personnel/api/employees/{$deviceId}/";
+
+        $response = Http::withHeaders([
+            'Authorization' => "Token $token",
+        ])->delete($url);
+
+        if ($response->successful() || $response->status() == 204) {
+            return ['status' => 'success'];
+        }
+
+        return ['status' => 'error', 'message' => $response->body()];
+    }
+
+    /**
+     * editZKTecoEmployee()-এ পাঠানোর জন্য পূর্ণ payload বানানো — employee model থেকে ভিত্তি ডেটা নিয়ে,
+     * override array দিয়ে নির্দিষ্ট field (যেমন card_no) বসিয়ে দেওয়া যায়
+     */
+    private function buildZktecoPayload(Employee $employee, array $overrides = []): array
+    {
+        $zkGender = strtolower((string) $employee->gender) === 'male' ? 'M' : 'F';
+
+        $base = [
+            "emp_code" => $employee->id_card,
+            "first_name" => $employee->am_name,
+            "last_name" => null,
+            "nickname" => null,
+            "card_no" => $employee->id_card ?? '',
+            "department" => 1,
+            "position" => null,
+            "hire_date" => $employee->join_date ?? date("Y-m-d"),
+            "gender" => $zkGender,
+            "birthday" => $employee->dob ?? null,
+            "verify_mode" => 0,
+            "emp_type" => null,
+            "contact_tel" => null,
+            "office_tel" => $employee->office_phone ?? null,
+            "mobile" => $employee->personal_phone ?? null,
+            "national" => null,
+            "city" => null,
+            "address" => $employee->permanent_address ?? null,
+            "postcode" => null,
+            "email" => $employee->email ?? null,
+            "enroll_sn" => "",
+            "ssn" => null,
+            "religion" => null,
+            "enable_att" => $employee->employee_status !== 'left',
+            "enable_overtime" => false,
+            "enable_holiday" => true,
+            "dev_privilege" => 0,
+            "area" => json_decode($employee->area) ?? [],
+            "app_status" => 0,
+            "app_role" => 1,
+        ];
+
+        return array_merge($base, $overrides);
     }
 }

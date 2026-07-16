@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 
-    <link rel="preload" as="image" href="{{ asset('backend/logo/loginpage_bg.png') }}">
+    <link rel="preload" as="image" href="{{ asset('backend/logo/finalbg.png') }}">
 
 
     <style>
@@ -25,7 +25,7 @@
         body {
             font-family: 'Roboto', sans-serif;
 
-            background: url('{{ asset('backend/logo/loginpage_bg.png') }}') no-repeat center center scroll;
+            background: url('{{ asset('backend/logo/finalbg.png') }}') no-repeat center center scroll;
             background-size: cover;
             min-height: 100vh;
             display: flex;

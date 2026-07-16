@@ -596,8 +596,6 @@ class EmployeeRepositories
                 return back();
             }
 
-
-
             $employee->name = $request->name;
             $employee->dob = $request->dob;
             $employee->id_card = $request->id_card;
@@ -694,9 +692,6 @@ class EmployeeRepositories
 
 
             $employee->save();
-
-
-
 
             // ---- ZKTeco sync ----
             if (env("ZKTECO")) {
