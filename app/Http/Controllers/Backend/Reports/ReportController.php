@@ -364,6 +364,8 @@ class ReportController extends Controller
         return view('backend.pages.reports.project', get_defined_vars());
     }
 
+
+
     public function supledger(Request $request)
     {
         $supplierLedger = '';

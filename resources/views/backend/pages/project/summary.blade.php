@@ -5,7 +5,6 @@
 
 
 @section('styles')
-    
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <!-- Google Fonts -->
@@ -151,9 +150,7 @@
 
         /* ── MAIN WRAPPER ── */
         .page-wrapper {
-            max-width: 1320px;
             margin: 0 auto;
-            padding: 28px 20px 60px;
         }
 
         /* ── BREADCRUMB ── */
@@ -1478,8 +1475,8 @@
 
 
                             <!-- ─────────────────────────────────────────
-                           1. PROJECT HEADER SECTION
-                      ────────────────────────────────────────── -->
+                                   1. PROJECT HEADER SECTION
+                              ────────────────────────────────────────── -->
                             <div class="project-header-card mb-4 reveal">
                                 <div class="project-title-row">
                                     <div>
@@ -1525,8 +1522,8 @@
                             </div>
 
                             <!-- ─────────────────────────────────────────
-                           2. KPI SUMMARY CARDS
-                      ────────────────────────────────────────── -->
+                                   2. KPI SUMMARY CARDS
+                              ────────────────────────────────────────── -->
                             <p class="section-label">Financial KPIs</p>
                             <div class="kpi-section-anchor"></div>
                             <div class="row g-3 mb-4">
@@ -1637,33 +1634,31 @@
                                         </thead>
                                         <tbody>
                                             @foreach ($productgoodreceive as $index => $detail)
-
-                                                    <tr>
-                                                        <td style="color:var(--text-muted);font-size:12px">
-                                                            {{ sprintf('%03d', $index + 1) }}</td>
-                                                        <td>
-                                                            <span class="cat-badge dev">
-                                                                <i class="bi bi-box-seam"></i>
-                                                                {{ $detail->invoice_no ?? 'N/A' }}
-                                                            </span>
-                                                        </td>
-                                                        <td>{{ \Carbon\Carbon::parse($detail->date)->format('M d, Y') }}</td>
-                                                        <td class="amount-cell">
-                                                           {{ $detail->supplier->name ?? 'N/A' }}
-                                                        </td>
-                                                        <td class="amount-cell">
-                                                            {{ number_format($detail->total_price, 0) }}Tk
-                                                        </td>
-                                                        <td>{{ $detail->note ?? 'N/A' }}</td>
-                                                        <td>
-                                                            <span
-                                                                class="status-badge {{ $detail->status == 'Approved' ? 'active' : 'pending' }}"
-                                                                style="font-size:11px;padding:3px 10px">
-                                                                <span class="dot"></span>{{ $detail->status }}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                
+                                                <tr>
+                                                    <td style="color:var(--text-muted);font-size:12px">
+                                                        {{ sprintf('%03d', $index + 1) }}</td>
+                                                    <td>
+                                                        <span class="cat-badge dev">
+                                                            <i class="bi bi-box-seam"></i>
+                                                            {{ $detail->invoice_no ?? 'N/A' }}
+                                                        </span>
+                                                    </td>
+                                                    <td>{{ \Carbon\Carbon::parse($detail->date)->format('M d, Y') }}</td>
+                                                    <td class="amount-cell">
+                                                        {{ $detail->supplier->name ?? 'N/A' }}
+                                                    </td>
+                                                    <td class="amount-cell">
+                                                        {{ number_format($detail->total_price, 0) }}Tk
+                                                    </td>
+                                                    <td>{{ $detail->note ?? 'N/A' }}</td>
+                                                    <td>
+                                                        <span
+                                                            class="status-badge {{ $detail->status == 'Approved' ? 'active' : 'pending' }}"
+                                                            style="font-size:11px;padding:3px 10px">
+                                                            <span class="dot"></span>{{ $detail->status }}
+                                                        </span>
+                                                    </td>
+                                                </tr>
                                             @endforeach
                                         </tbody>
                                     </table>
@@ -1672,8 +1667,8 @@
 
 
                             <!-- ─────────────────────────────────────────
-                           TEAM MEMBERS SECTION
-                      ────────────────────────────────────────── -->
+                                   TEAM MEMBERS SECTION
+                              ────────────────────────────────────────── -->
                             <div class="team-section-header section-gap reveal">
                                 <div>
                                     <p class="section-label" style="margin-bottom:2px;">Project Team</p>
@@ -2035,8 +2030,8 @@
                             </div>
 
                             <!-- ─────────────────────────────────────────
-                           3. FINANCIAL OVERVIEW CHARTS
-                      ────────────────────────────────────────── -->
+                                   3. FINANCIAL OVERVIEW CHARTS
+                              ────────────────────────────────────────── -->
                             <p class="section-label section-gap reveal">Financial Overview</p>
                             <div class="row g-3 mb-4">
                                 <div class="col-12 col-lg-7">
@@ -2076,8 +2071,8 @@
                             </div>
 
                             <!-- ─────────────────────────────────────────
-                           4. EXPENSE BREAKDOWN TABLE
-                      ────────────────────────────────────────── -->
+                                   4. EXPENSE BREAKDOWN TABLE
+                              ────────────────────────────────────────── -->
                             <p class="section-label section-gap reveal">Expense Breakdown</p>
                             <div class="table-card mb-4">
                                 <div class="table-header">
@@ -2177,8 +2172,8 @@
                             </div>
 
                             <!-- ─────────────────────────────────────────
-                           5 & 6. PROGRESS + PAYMENT (side by side)
-                      ────────────────────────────────────────── -->
+                                   5 & 6. PROGRESS + PAYMENT (side by side)
+                              ────────────────────────────────────────── -->
                             <p class="section-label section-gap reveal">Project Progress &amp; Payment Status</p>
                             <div class="row g-3 mb-4">
 
@@ -2340,8 +2335,8 @@
                             </div>
 
                             <!-- ─────────────────────────────────────────
-                           7. RECENT TRANSACTIONS TABLE
-                      ────────────────────────────────────────── -->
+                                   7. RECENT TRANSACTIONS TABLE
+                              ────────────────────────────────────────── -->
                             <p class="section-label section-gap reveal">Recent Transactions</p>
                             <div class="table-card mb-4">
                                 <div class="table-header">
@@ -2507,8 +2502,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         /* ═══════════════════════════════════════════
-                       CHART.JS DEFAULTS
-                    ════════════════════════════════════════════ */
+                               CHART.JS DEFAULTS
+                            ════════════════════════════════════════════ */
         Chart.defaults.font.family = "'DM Sans', sans-serif";
         Chart.defaults.font.size = 12;
         Chart.defaults.color = '#64748b';

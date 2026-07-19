@@ -184,6 +184,7 @@ class ProjectRepositories
     public function store($request)
     {
 
+
         $eproject = new $this->project();
         $eproject->projectCode = $request->projectCode;
         $eproject->name = $request->name;
@@ -191,12 +192,15 @@ class ProjectRepositories
         $eproject->customer_id = $request->customer_id ?? '';
         $eproject->manager_id = $request->manager_id ? $request->manager_id : '';
         $eproject->budget = $request->budget;
+        $eproject->estimate_profit = $request->estimate_profit;
+        $eproject->actual_costing = $request->actualCosting;
         $eproject->start_date = $request->start_date;
         $eproject->end_date = $request->end_date;
         $eproject->address = $request->address;
-        $eproject->estimate_profit = $request->estimate_profit;
         $eproject->created_by = Auth::user()->id;
         $eproject->save();
+
+
 
         activity_log(
             'create',
@@ -264,10 +268,11 @@ class ProjectRepositories
 
         $eproject->manager_id = $request->manager_id ?? null;
         $eproject->budget = $request->budget;
+        $eproject->estimate_profit = $request->estimate_profit;
+        $eproject->actual_costing = $request->actualCosting;
         $eproject->start_date = $request->start_date;
         $eproject->end_date = $request->end_date;
         $eproject->address = $request->address;
-        $eproject->estimate_profit = $request->estimate_profit;
         $eproject->updated_by = Auth::id();
 
         activity_log(

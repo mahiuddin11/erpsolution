@@ -18,6 +18,7 @@ use App\Models\Invoice;
 use App\Models\Project;
 use App\Models\ProjectMoney;
 use App\Models\ProjectTransfer;
+use App\Models\PurchasesDetails;
 use App\Models\Supplier;
 use DB;
 use App\Services\Project\ProjectService;
@@ -62,7 +63,7 @@ class ProjectController extends Controller
     public function dataProcessingproject(Request $request)
     {
         $json_data = $this->systemService->getList($request);
-      
+
         return json_encode($this->systemTransformer->dataTable($json_data));
     }
 
@@ -84,16 +85,12 @@ class ProjectController extends Controller
         $projectCode = 'PRJ' . str_pad($projectData, 5, "0", STR_PAD_LEFT);
         $managers = User::get()->whereNotIn('id', [1])->where('status', 'Active');
 
-        // $branchs = Branch::get()->where('status', 'Active');
-        
-        
-        
         $user = auth()->user();
         $branchs = Branch::where('status', 'Active');
         if ($user->branch_id !== null) {
             $branchs = $branchs->where('id', $user->branch_id);
-            }
-            $branchs = $branchs->get();
+        }
+        $branchs = $branchs->get();
 
         $customer = Customer::all();
 
@@ -102,100 +99,329 @@ class ProjectController extends Controller
             'App\Models\Supplier'
         ])->get();
 
-    
+
         return view('backend.pages.project.create', get_defined_vars());
     }
 
+    // public function show($id)
+    // {
+    //     $title = 'Project Invoice';
+
+    //     $project_id = '';
+
+    //     $projectDetails = '';
+    //     $projectExpense = '';
+    //     $productUses = '';
+    //     $productReturn = '';
+    //     $productIssue = '';
+
+    //     $project_id = $id;
+    //     $projectDetails = Project::join('users', 'users.id', '=', 'projects.manager_id')
+    //         ->leftJoin('chart_of_accounts', 'chart_of_accounts.id', '=', 'projects.ledger_id')
+    //         ->leftJoin('customers', 'customers.id', '=', 'projects.customer_id')
+    //         ->where("projects.id", $project_id) // Specify the table name
+    //         ->first([
+    //             'users.name as aname',
+    //             'projects.budget',
+    //             'projects.start_date',
+    //             'projects.estimate_profit',
+    //             'projects.condition',
+    //             'projects.closing',
+    //             'projects.end_date',
+    //             'projects.name as pname',
+    //             'users.phone as aphone',
+    //             'projects.address',
+    //             'projects.projectCode',
+    //             'customers.name as customer_name',
+    //             'chart_of_accounts.account_name as ledger_name'
+    //         ]);
+    //     // dd($projectDetails);
+
+    //     // dd($projectDetails);
+    //     // $productUses = ProductUse::join('product_use_details', 'product_use_details.product_use_id', '=', 'product_uses.id')
+    //     //     ->join('products', 'products.id', '=', 'product_use_details.product_id')
+    //     //     ->get(['products.name as pname', 'products.productCode as pcode', 'product_uses.invoice_no as in_no', 'product_use_details.updated_at as upDate', 'product_use_details.use_qty as uqty', 'products.purchases_price as purPrice', 'products.id as productId']);
+
+    //     $accountsTrans = AccountTransaction::where('type', 5)->whereNull('credit')->where('project_id', $project_id)->get();
+    //     $productgoodreceive = Grn::with('details')->where('project_id', $project_id)->get();
+
+
+    //     $projectTransfer = ProjectTransfer::with('details')->where('project_id', $project_id)->get();
+    //     $projectMoney = ProjectMoney::where('project_id', $project_id)->sum('debit');
+
+
+
+
+    //     $directIncome = AccountTransaction::whereIn('account_id', getOldAccount(24)->pluck("id"))->where('project_id', $project_id)->get();
+    //     $indirectIncome = AccountTransaction::whereIn('account_id', getOldAccount(25)->pluck("id"))->where('project_id', $project_id)->get();
+    //     $directExpenses = AccountTransaction::whereIn('account_id', getOldAccount(20)->pluck("id"))->where('project_id', $project_id)->get();
+    //     $indirectExpenses = AccountTransaction::whereIn('account_id', getOldAccount(21)->pluck("id"))->where('project_id', $project_id)->get();
+
+    //     $invoice = Invoice::where('project_id', $project_id)->first();
+
+
+    //     $companyInfo = Company::latest('id')->first();
+    //     $project = Project::where('status', 'Active')->get();
+
+    //     // $invoice = project::with(['details.product.category', 'branch', 'customer'])->findOrFail($id);
+
+    //     $companyInfo = Company::latest('id')->first();
+
+    //     //Dashbord Data 
+    //     $totalBudget = $projectDetails->budget ?? 0;
+    //     $totalExpense = ($directExpenses->sum('debit') ?? 0)
+    //         + ($indirectExpenses->sum('debit') ?? 0)
+    //         + ($productgoodreceive->sum('total_price') ?? 0);
+
+
+    //     $totalInvoice = $invoice ? $invoice->sum('total_amount') : 0;
+
+
+    //     $totalReceived = $projectMoney ?? 0;
+    //     $dueAmount = max(0, $totalBudget - $totalReceived);
+    //     $profit = ($totalBudget + ($directIncome->sum('credit') ?? 0) + ($indirectIncome->sum('credit') ?? 0)) - $totalExpense;
+
+
+    //     return view('backend.pages.project.summary', get_defined_vars());
+    // }
+
+    // public function show($id)
+    // {
+
+    //     $title = 'Project Report';
+
+    //     $project_id = $id ?? '';
+    //     $projectDetails = null;
+
+    //     $summary = [
+    //         'productAmount'     => 0,
+    //         'ttlexpdirinc'      => 0, // Direct Income
+    //         'ttlexpindrinc'     => 0, // Indirect Income
+    //         'ttlexpdir'         => 0, // Direct Expense
+    //         'ttlexpind'         => 0, // Indirect Expense
+    //         'totalIncome'       => 0,
+    //         'totalExpense'      => 0,
+    //         'totalProfit'       => 0,
+    //         'completePercent'   => 0,
+    //         'incompletePercent' => 100,
+    //         'currentProfit'     => 0,
+    //         'estimateProfit'    => 0,
+    //         'actualCost'        => 0,
+    //     ];
+
+    //     $productgoodreceive = collect();
+    //     $projectTransfer     = collect();
+    //     $directIncome        = collect();
+    //     $indirectIncome       = collect();
+    //     $directExpenses       = collect();
+    //     $indirectExpenses     = collect();
+    //     $projectMoney         = 0;
+
+    //     $projectDetails = Project::join('users', 'users.id', '=', 'projects.manager_id')->where('projects.id', $project_id)->first([
+    //         'users.name as aname',
+    //         'projects.budget',
+    //         'projects.start_date',
+    //         'projects.estimate_profit',
+    //         'projects.condition',
+    //         'projects.closing',
+    //         'projects.end_date',
+    //         'projects.name as pname',
+    //         'users.phone as aphone',
+    //         'projects.address',
+    //         'projects.projectCode',
+    //     ]);
+
+    //     if (!$projectDetails) {
+    //         return Redirect::back()->withErrors(['msg' => 'Project not found!']);
+    //     }
+
+    //     $productgoodreceive = Grn::with('details.product')->where('project_id', $project_id)->get();
+    //     $projectTransfer     = ProjectTransfer::with('details.product')->where('project_id', $project_id)->get();
+    //     $projectMoney         = ProjectMoney::where('project_id', $project_id)->sum('debit');
+
+    //     $directIncome     = AccountTransaction::with('account')->whereIn('account_id', getOldAccount(24)->pluck('id'))->where('project_id', $project_id)->get();
+    //     $indirectIncome   = AccountTransaction::with('account')->whereIn('account_id', getOldAccount(25)->pluck('id'))->where('project_id', $project_id)->get();
+    //     $directExpenses   = AccountTransaction::with('account')->whereIn('account_id', getOldAccount(20)->pluck('id'))->where('project_id', $project_id)->get();
+    //     $indirectExpenses = AccountTransaction::with('account')->whereIn('account_id', getOldAccount(21)->pluck('id'))->where('project_id', $project_id)->get();
+
+    //     // --- Product consumption from GRN ---
+    //     foreach ($productgoodreceive as $val) {
+    //         foreach ($val->details as $eachuse) {
+    //             $summary['productAmount'] += $eachuse->unit_price * $eachuse->qty;
+    //         }
+    //     }
+
+    //     // --- Product consumption from Transfers (N+1 fixed: batch fetch latest purchase price) ---
+    //     $productIds = $projectTransfer->flatMap(fn($val) => $val->details->pluck('product_id'))->unique();
+    //     $latestPurchasePrices = PurchasesDetails::whereIn('product_id', $productIds)
+    //         ->orderByDesc('id')
+    //         ->get()
+    //         ->groupBy('product_id')
+    //         ->map(fn($rows) => $rows->first()->unit_price);
+
+    //     foreach ($projectTransfer as $val) {
+    //         foreach ($val->details as $eachuse) {
+    //             $unitPrice = $latestPurchasePrices[$eachuse->product_id] ?? 0;
+    //             $summary['productAmount'] += $unitPrice * $eachuse->qty;
+    //         }
+    //     }
+
+    //     $summary['ttlexpdirinc']  = (float) $directIncome->sum('credit');
+    //     $summary['ttlexpindrinc'] = (float) $indirectIncome->sum('credit');
+    //     $summary['ttlexpdir']     = (float) $directExpenses->sum('debit');
+    //     $summary['ttlexpind']     = (float) $indirectExpenses->sum('debit');
+
+    //     $summary['totalIncome']  = ($projectDetails->budget ?? 0) + $summary['ttlexpdirinc'] + $summary['ttlexpindrinc'];
+    //     $summary['totalExpense'] = $summary['ttlexpdir'] + $summary['ttlexpind'] + $summary['productAmount'];
+    //     $summary['totalProfit']  = $summary['totalIncome'] - $summary['totalExpense'];
+
+    //     // --- Completion % — divide-by-zero guarded ---
+    //     $estimateProfitTarget = ($projectDetails->budget ?? 0) - ($projectDetails->estimate_profit ?? 0);
+    //     $expenseSoFar = abs($summary['ttlexpdir'] + $summary['ttlexpind'] + $summary['productAmount']);
+
+    //     if ($estimateProfitTarget != 0) {
+    //         $summary['completePercent'] = round(($expenseSoFar / $estimateProfitTarget) * 100, 2);
+    //     }
+    //     $summary['completePercent']   = min(100, max(0, $summary['completePercent']));
+    //     $summary['incompletePercent'] = 100 - $summary['completePercent'];
+    //     $summary['currentProfit']     = (($projectDetails->estimate_profit ?? 0) * $summary['completePercent']) / 100;
+
+
+    //     $companyInfo = Company::latest('id')->first();
+    //     $project = Project::where('status', 'Active')->orderBy('name')->get();
+
+    //     return view('backend.pages.project.projectsummary', get_defined_vars());
+    // }
+
     public function show($id)
     {
-        $title = 'Project Invoice';
+        $title = 'Project Report';
 
-        $project_id = '';
-    
-            $projectDetails = '';
-            $projectExpense = '';
-            $productUses = '';
-            $productReturn = '';
-            $productIssue = '';
+        $project_id = $id ?? '';
+        $projectDetails = null;
 
-            $project_id = $id;
-            $projectDetails = Project::join('users', 'users.id', '=', 'projects.manager_id')
-                ->leftJoin('chart_of_accounts', 'chart_of_accounts.id', '=', 'projects.ledger_id')
-                ->leftJoin('customers', 'customers.id', '=', 'projects.customer_id')
-                ->where("projects.id", $project_id) // Specify the table name
-                ->first([
-                    'users.name as aname',
-                    'projects.budget',
-                    'projects.start_date',
-                    'projects.estimate_profit',
-                    'projects.condition',
-                    'projects.closing',
-                    'projects.end_date',
-                    'projects.name as pname',
-                    'users.phone as aphone',
-                    'projects.address',
-                    'projects.projectCode',
-                    'customers.name as customer_name',
-                    'chart_of_accounts.account_name as ledger_name'
-                ]);
-        // dd($projectDetails);
+        $summary = [
+            'productAmount'      => 0,
+            'ttlexpdirinc'       => 0, // Direct Income
+            'ttlexpindrinc'      => 0, // Indirect Income
+            'ttlexpdir'          => 0, // Direct Expense
+            'ttlexpind'          => 0, // Indirect Expense
+            'totalIncome'        => 0, // Budget + Direct + Indirect Income (sale-value based)
+            'currentIncome'      => 0, // Direct + Indirect Income + Money Received (actual cash-in)
+            'totalExpense'       => 0, // Current Expense
+            'totalProfit'        => 0,
+            'completePercent'    => 0, // vs Actual Cost Plan, uncapped (can exceed 100)
+            'completePercentBar' => 0, // capped at 100 for progress-bar width
+            'incompletePercent'  => 100,
+            'currentProfit'      => 0,
+            'estimateProfit'     => 0,
+            'actualCost'         => 0, // Actual Cost Plan = Budget - Estimate Profit
+            'isOverBudget'       => false,
+        ];
 
-                // dd($projectDetails);
-                // $productUses = ProductUse::join('product_use_details', 'product_use_details.product_use_id', '=', 'product_uses.id')
-                //     ->join('products', 'products.id', '=', 'product_use_details.product_id')
-                //     ->get(['products.name as pname', 'products.productCode as pcode', 'product_uses.invoice_no as in_no', 'product_use_details.updated_at as upDate', 'product_use_details.use_qty as uqty', 'products.purchases_price as purPrice', 'products.id as productId']);
-                
-                $accountsTrans = AccountTransaction::where('type', 5)->whereNull('credit')->where('project_id', $project_id)->get();
-                $productgoodreceive = Grn::with('details')->where('project_id', $project_id)->get();
-               
-               
-             $projectTransfer = ProjectTransfer::with('details')->where('project_id', $project_id)->get();
-             $projectMoney = ProjectMoney::where('project_id', $project_id)->sum('debit');
+        $productgoodreceive = collect();
+        $projectTransfer     = collect();
+        $directIncome        = collect();
+        $indirectIncome       = collect();
+        $directExpenses       = collect();
+        $indirectExpenses     = collect();
+        $projectMoney         = 0;
 
-           
+        $projectDetails = Project::join('users', 'users.id', '=', 'projects.manager_id')->where('projects.id', $project_id)->first([
+            'users.name as aname',
+            'projects.budget',
+            'projects.start_date',
+            'projects.estimate_profit',
+            'projects.condition',
+            'projects.closing',
+            'projects.end_date',
+            'projects.name as pname',
+            'users.phone as aphone',
+            'projects.address',
+            'projects.projectCode',
+        ]);
+
+        if (!$projectDetails) {
+            return Redirect::back()->withErrors(['msg' => 'Project not found!']);
+        }
+
+        $productgoodreceive = Grn::with('details.product')->where('project_id', $project_id)->get();
+        $projectTransfer     = ProjectTransfer::with('details.product')->where('project_id', $project_id)->get();
+        $projectMoney         = ProjectMoney::where('project_id', $project_id)->sum('debit');
 
 
-            $directIncome = AccountTransaction::whereIn('account_id', getOldAccount(24)->pluck("id"))->where('project_id', $project_id)->get();
-            $indirectIncome = AccountTransaction::whereIn('account_id', getOldAccount(25)->pluck("id"))->where('project_id', $project_id)->get();
-            $directExpenses = AccountTransaction::whereIn('account_id', getOldAccount(20)->pluck("id"))->where('project_id', $project_id)->get();
-            $indirectExpenses = AccountTransaction::whereIn('account_id', getOldAccount(21)->pluck("id"))->where('project_id', $project_id)->get();
+        $directIncome     = AccountTransaction::with('account')->whereIn('account_id', getOldAccount(24)->pluck('id'))->where('project_id', $project_id)->get();
+        $indirectIncome   = AccountTransaction::with('account')->whereIn('account_id', getOldAccount(25)->pluck('id'))->where('project_id', $project_id)->get();
+        $directExpenses   = AccountTransaction::with('account')->whereIn('account_id', getOldAccount(20)->pluck('id'))->where('project_id', $project_id)->get();
+        $indirectExpenses = AccountTransaction::with('account')->whereIn('account_id', getOldAccount(21)->pluck('id'))->where('project_id', $project_id)->get();
 
-            $invoice = Invoice::where('project_id', $project_id)->first();
-        
+        // --- Product consumption from GRN ---
+        foreach ($productgoodreceive as $val) {
+            foreach ($val->details as $eachuse) {
+                $summary['productAmount'] += $eachuse->unit_price * $eachuse->qty;
+            }
+        }
+
+        // --- Product consumption from Transfers (N+1 fixed: batch fetch latest purchase price) ---
+        $productIds = $projectTransfer->flatMap(fn($val) => $val->details->pluck('product_id'))->unique();
+        $latestPurchasePrices = PurchasesDetails::whereIn('product_id', $productIds)
+            ->orderByDesc('id')
+            ->get()
+            ->groupBy('product_id')
+            ->map(fn($rows) => $rows->first()->unit_price);
+
+        foreach ($projectTransfer as $val) {
+            foreach ($val->details as $eachuse) {
+                $unitPrice = $latestPurchasePrices[$eachuse->product_id] ?? 0;
+                $summary['productAmount'] += $unitPrice * $eachuse->qty;
+            }
+        }
+
+        $summary['ttlexpdirinc']  = (float) $directIncome->sum('credit');
+        $summary['ttlexpindrinc'] = (float) $indirectIncome->sum('credit');
+        $summary['ttlexpdir']     = (float) $directExpenses->sum('debit');
+        $summary['ttlexpind']     = (float) $indirectExpenses->sum('debit');
+
+        // --- Budget / Estimate Profit / Actual Cost Plan ---
+        $summary['estimateProfit'] = (float) ($projectDetails->estimate_profit ?? 0);
+        $summary['actualCost']     = (float) ($projectDetails->budget ?? 0) - $summary['estimateProfit'];
+
+        // --- Current Income / Current Expense ---
+        $summary['currentIncome'] = $summary['ttlexpdirinc'] + $summary['ttlexpindrinc'] + (float) $projectMoney;
+        $summary['totalExpense']  = $summary['ttlexpdir'] + $summary['ttlexpind'] + $summary['productAmount'];
+
+        $summary['totalIncome'] = ($projectDetails->budget ?? 0) + $summary['ttlexpdirinc'] + $summary['ttlexpindrinc'];
+        $summary['totalProfit'] = $summary['currentIncome'] - $summary['totalExpense'];
+
+        // --- Progress % — base is Actual Cost Plan (not budget/estimate target) ---
+        if ($summary['actualCost'] > 0) {
+            $summary['completePercent'] = round(($summary['totalExpense'] / $summary['actualCost']) * 100, 2);
+        } elseif ($summary['totalExpense'] > 0) {
+            // No actual-cost plan set but money already spent -> treat as fully over
+            $summary['completePercent'] = 100;
+        }
+
+        $summary['completePercent']   = max(0, $summary['completePercent']); // no negative %
+        $summary['isOverBudget']      = $summary['completePercent'] > 100;
+        $summary['completePercentBar'] = min(100, $summary['completePercent']); // capped, for bar width only
+        $summary['incompletePercent'] = max(0, 100 - $summary['completePercentBar']);
+
+        $summary['currentProfit'] = ($summary['estimateProfit'] * $summary['completePercentBar']) / 100;
 
         $companyInfo = Company::latest('id')->first();
-        $project = Project::where('status', 'Active')->get();
+        $project = Project::where('status', 'Active')->orderBy('name')->get();
 
-        // $invoice = project::with(['details.product.category', 'branch', 'customer'])->findOrFail($id);
-
-        $companyInfo = Company::latest('id')->first();
-
-        //Dashbord Data 
-        $totalBudget = $projectDetails->budget ?? 0;
-        $totalExpense = ($directExpenses->sum('debit') ?? 0)
-            + ($indirectExpenses->sum('debit') ?? 0)
-            + ($productgoodreceive->sum('total_price') ?? 0);
-
-        
-        $totalInvoice = $invoice ? $invoice->sum('total_amount') : 0;
-
-
-        $totalReceived = $projectMoney ?? 0;
-        $dueAmount = max(0, $totalBudget - $totalReceived);
-        $profit = ($totalBudget + ($directIncome->sum('credit') ?? 0) + ($indirectIncome->sum('credit') ?? 0))
-            - $totalExpense;
-
-        
-        return view('backend.pages.project.summary', get_defined_vars());
+        return view('backend.pages.project.projectsummary', get_defined_vars());
     }
 
     /**
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
+
     public function store(Request $request)
     {
-        
+
         try {
             $this->validate($request, $this->systemService->storeValidation($request));
         } catch (ValidationException $e) {
@@ -248,7 +474,7 @@ class ProjectController extends Controller
             'App\Models\Customer',
             'App\Models\Supplier'
         ])->get();
-        
+
         $managers = User::get()->whereNotIn('id', [1])->where('status', 'Active');
 
         return view('backend.pages.project.edit', get_defined_vars());

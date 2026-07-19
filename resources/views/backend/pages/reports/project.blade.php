@@ -324,7 +324,7 @@
 
 
                                     </table>
-                                    
+
                                     @if ($directIncome)
                                         <table class="table table-bordered">
 
@@ -451,11 +451,11 @@
                                                             Indirect Expense details
                                                         </b>
                                                     </td>
-                                                  <tr>
-                                                      <th>Date</th>
-                                                      <th>Category</th>
-                                                      <th>Amount</th>
-                                                  </tr>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Category</th>
+                                                    <th>Amount</th>
+                                                </tr>
                                                 </tr>
                                                 @php
                                                     $ttlexpind = 0;
@@ -703,15 +703,15 @@
             var datasets = [{
                 label: "Profit/Loss",
                 data: ["{{ $curentprofit ?? 0 }}", "{{ $buject ?? 0 }}"],
-                backgroundColor: ["#3F88C5"] 
+                backgroundColor: ["#3F88C5"]
             }];
 
-            
+
             for (var i = 0; i < datasets[0].data.length; i++) {
                 if (datasets[0].data[i] > 0) {
-                    datasets[0].backgroundColor[i] = "#3F88C5"; 
+                    datasets[0].backgroundColor[i] = "#3F88C5";
                 } else {
-                    datasets[0].backgroundColor[i] = "#FF5E5B"; 
+                    datasets[0].backgroundColor[i] = "#FF5E5B";
                 }
             }
 
