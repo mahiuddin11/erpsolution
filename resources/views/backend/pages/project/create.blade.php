@@ -258,39 +258,62 @@
                                 <div class="input-group">
                                     <div class="input-group-prepend"><span class="input-group-text">TK.</span></div>
                                     <input type="number" step="0.01" min="0" name="budget" class="form-control"
-                                        id="budget" placeholder="Project Total Budget" value="{{ old('budget') }}"
+                                        id="budget" data-number-words="budgetWords" value="{{ old('budget') }}"
                                         required>
                                 </div>
+
                                 @error('budget')
                                     <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror
+                                <small id="budgetWords" class="text-muted d-block mt-1"></small>
                             </div>
 
                             <div class="col-lg-4 col-md-6 col-12 mb-3">
                                 <label for="estimate_profit">Estimate Profit <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <div class="input-group-prepend"><span class="input-group-text">TK.</span></div>
-                                    <input type="number" step="0.01" name="estimate_profit" class="form-control"
-                                        id="estimate_profit" placeholder="Amount" value="{{ old('estimate_profit') }}"
-                                        required>
+                                    <input type="number" step="0.01" min="0" name="estimate_profit"
+                                        class="form-control" id="estimate_profit" data-number-words="estimateprofit"
+                                        value="{{ old('estimate_profit') }}" required>
+                                </div>
+
+                                @error('estimate_profit')
+                                    <span class="error text-red text-bold">{{ $message }}</span>
+                                @enderror
+                                <small id="estimateprofit" class="text-muted d-block mt-1"></small>
+                            </div>
+
+                            {{-- <div class="col-lg-4 col-md-6 col-12 mb-3">
+                                <label for="estimate_profit">Estimate Profit <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend"><span class="input-group-text">TK.</span></div>
+
+
+                                    <input type="number" step="0.01" min="0" name="estimate_profit"
+                                        class="form-control" id="estimate_profit" data-number-words="estimate_profit"
+                                        value="{{ old('estimate_profit') }}" required>
                                 </div>
                                 @error('estimate_profit')
                                     <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror
-                            </div>
+                                <small id="estimate_profit" class="text-muted d-block mt-1"></small>
+                            </div> --}}
 
                             <div class="col-lg-4 col-md-6 col-12 mb-3">
-                                <label for="actualCosting">Actual Costing (Auto-calculated)</label>
+                                <label for="actualCosting">Actual Costing Plan</label>
                                 <div class="input-group">
                                     <div class="input-group-prepend"><span class="input-group-text">TK.</span></div>
                                     <input type="number" step="0.01" name="actualCosting" class="form-control"
-                                        id="actualCosting" value="{{ old('actualCosting', 0) }}" readonly>
+                                        id="actualCosting" ata-number-words="actualCosting"
+                                        value="{{ old('actualCosting', 0) }}" readonly>
                                 </div>
+                                <small id="actualCosting" class="text-muted d-block mt-1"></small>
                                 <span id="actualCostingHint" class="text-success">Auto calculation will be done from
                                     Budget − Estimate Profit</span>
                                 @error('actualCosting')
                                     <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror
+
                             </div>
                         </div>
 
@@ -392,6 +415,22 @@
                     form.classList.add('was-validated');
                 }, false);
             });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const budgetInput = document.getElementById('budget');
+            const profitInput = document.getElementById('estimate_profit');
+            const costingInput = document.getElementById('actualCosting');
+            const costingWords = document.getElementById('costingWords');
+
+            function calculateActualCosting() {
+                const actual = (parseFloat(budgetInput.value) || 0) - (parseFloat(profitInput.value) || 0);
+                costingInput.value = actual.toFixed(2);
+                costingWords.textContent = actual > 0 ? numberToWords(actual) : '';
+            }
+
+            budgetInput.addEventListener('input', calculateActualCosting);
+            profitInput.addEventListener('input', calculateActualCosting);
         });
     </script>
 @endsection

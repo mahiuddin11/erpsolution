@@ -18,6 +18,9 @@ use App\Models\Invoice;
 use App\Models\Project;
 use App\Models\ProjectMoney;
 use App\Models\ProjectTransfer;
+use App\Models\PurchaseOrder;
+use App\Models\PurchaseRequisition;
+use App\Models\Purchases;
 use App\Models\PurchasesDetails;
 use App\Models\Supplier;
 use DB;
@@ -315,9 +318,30 @@ class ProjectController extends Controller
             'incompletePercent'  => 100,
             'currentProfit'      => 0,
             'estimateProfit'     => 0,
-            'actualCost'         => 0, // Actual Cost Plan = Budget - Estimate Profit
+            'countRequisition'   => 0,
+            'countOrder'         => 0,
+            'countVoucher'       => 0,
+            'countGrn'           => 0,
+            'countTransfer'      => 0,
+            'actualCost'         => 0,
             'isOverBudget'       => false,
         ];
+
+
+        // Adjust model name / relation name if your actual class differs
+        $purchaseRequisitions = PurchaseRequisition::with('details')->where('project_id', $project_id)->get();
+        $purchaseOrders       = PurchaseOrder::with('details')->where('project_id', $project_id)->get();
+        $purchaseVouchers     = Purchases::with('details')->where('project_id', $project_id)->get();
+        $productgoodreceive     = Grn::with('details')->where('project_id', $project_id)->get();
+        $projectTransfer     = ProjectTransfer::with('details')->where('project_id', $project_id)->get();
+
+        // Good Receive & Transfer already fetched above as $productgoodreceive / $projectTransfer — reused, no duplicate query
+
+        $summary['countRequisition'] = $purchaseRequisitions->count();
+        $summary['countOrder']       = $purchaseOrders->count();
+        $summary['countVoucher']     = $purchaseVouchers->count();
+        $summary['countGrn']         = $productgoodreceive->count();
+        $summary['countTransfer']    = $projectTransfer->count();
 
         $productgoodreceive = collect();
         $projectTransfer     = collect();

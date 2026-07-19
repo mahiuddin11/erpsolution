@@ -14,10 +14,7 @@
 
 <body class="sidebar-mini skin-purple-light sidebar-mini layout-fixed  text-sm">
     <?php
-    $companyDetails = DB::table('companies')
-        ->where('status', 'Active')
-        ->orderBy('id', 'DESC')
-        ->first();
+    $companyDetails = DB::table('companies')->where('status', 'Active')->orderBy('id', 'DESC')->first();
     ?>
     @include('backend.layouts.partials.alertmessage')
     @include('backend.layouts.partials.header')
@@ -37,6 +34,7 @@
     @include('backend.layouts.partials.alertmessage')
     @include('backend.layouts.partials.scripts')
     @include('backend.layouts.partials.messages')
+
     @yield('scripts')
 </body>
 

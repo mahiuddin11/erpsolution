@@ -866,6 +866,63 @@ function calculateBalance($accountId, $startDate, $endDate)
 //     return trim($result .' '. 'Taka Only');
 // }
 
+
+
+function checkLocation($latitude, $longitude, $type = 'check_in')
+{
+    if (!$latitude && !$longitude) {
+        return '<span class="badge badge-danger"><i class="fa fa-map-marker"></i> GPS OFF</span>';
+    }
+
+    $officeLat = config("officeLocation.latitude");
+    $officeLog = config("officeLocation.longitude");
+    if ($latitude == $officeLat && $longitude == $officeLog) {
+        return '<span class="badge badge-success"><i class="fa fa-building"></i> Office</span>';
+    }
+
+    $text = $type == 'check_out' ? 'Check Out Location' : 'Check In Location';
+    return '<a href="https://www.google.com/maps?q=' . $latitude . ',' . $longitude . '" target="_blank" class="badge badge-info"> <i class="fa fa-map-marker"></i> ' . $text . '</a>';
+}
+
+/**
+ * Cross Midnight Logic - Effective Date 
+ */
+function getEffectiveDate($datetime)
+{
+    $DAY_CUTOFF_TIME = '05:00:00';
+
+    $datetime = new \DateTime($datetime);
+    $timeOnly = $datetime->format('H:i:s');
+
+    // সকাল 5:০০ এর আগে হলে আগের দিন ধরবে
+    if ($timeOnly <  $DAY_CUTOFF_TIME) {
+        $datetime->modify('-1 day');
+    }
+
+    return $datetime->format('Y-m-d');
+}
+
+function getInventoryValueAsOf($date)
+{
+    $inRow  = ['Purchase', 'Opening', 'Transfer In', 'Project In', 'Gain'];
+    $outRow = ['Sale', 'Transfer Out', 'Project Out', 'Lost', 'Damage'];
+
+    $inValue = DB::table('stocks')
+        ->whereNull('deleted_at')
+        ->where('date', '<=', $date)
+        ->whereIn('status', $inRow)
+        ->sum(DB::raw('quantity * unit_price'));
+
+    $outValue = DB::table('stocks')
+        ->whereNull('deleted_at')
+        ->where('date', '<=', $date)
+        ->whereIn('status', $outRow)
+        ->sum(DB::raw('quantity * unit_price'));
+
+    return $inValue - $outValue;
+}
+
+
 function numberToWords($number)
 {
     $words = [
@@ -958,58 +1015,4 @@ function smartNumberFormat($num)
     }
 
     return $num;
-}
-
-function checkLocation($latitude, $longitude, $type = 'check_in')
-{
-    if (!$latitude && !$longitude) {
-        return '<span class="badge badge-danger"><i class="fa fa-map-marker"></i> GPS OFF</span>';
-    }
-
-    $officeLat = config("officeLocation.latitude");
-    $officeLog = config("officeLocation.longitude");
-    if ($latitude == $officeLat && $longitude == $officeLog) {
-        return '<span class="badge badge-success"><i class="fa fa-building"></i> Office</span>';
-    }
-
-    $text = $type == 'check_out' ? 'Check Out Location' : 'Check In Location';
-    return '<a href="https://www.google.com/maps?q=' . $latitude . ',' . $longitude . '" target="_blank" class="badge badge-info"> <i class="fa fa-map-marker"></i> ' . $text . '</a>';
-}
-
-/**
- * Cross Midnight Logic - Effective Date 
- */
-function getEffectiveDate($datetime)
-{
-    $DAY_CUTOFF_TIME = '05:00:00';
-
-    $datetime = new \DateTime($datetime);
-    $timeOnly = $datetime->format('H:i:s');
-
-    // সকাল 5:০০ এর আগে হলে আগের দিন ধরবে
-    if ($timeOnly <  $DAY_CUTOFF_TIME) {
-        $datetime->modify('-1 day');
-    }
-
-    return $datetime->format('Y-m-d');
-}
-
-function getInventoryValueAsOf($date)
-{
-    $inRow  = ['Purchase', 'Opening', 'Transfer In', 'Project In', 'Gain'];
-    $outRow = ['Sale', 'Transfer Out', 'Project Out', 'Lost', 'Damage'];
-
-    $inValue = DB::table('stocks')
-        ->whereNull('deleted_at')
-        ->where('date', '<=', $date)
-        ->whereIn('status', $inRow)
-        ->sum(DB::raw('quantity * unit_price'));
-
-    $outValue = DB::table('stocks')
-        ->whereNull('deleted_at')
-        ->where('date', '<=', $date)
-        ->whereIn('status', $outRow)
-        ->sum(DB::raw('quantity * unit_price'));
-
-    return $inValue - $outValue;
 }
