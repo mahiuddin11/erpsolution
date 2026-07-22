@@ -45,12 +45,12 @@ class AutoCloseAttendance extends Command
 
 
         // যাদের শুধু sign_in আছে, sign_out নেই এবং auto_checkout = true       
-        $openAttendances = Attendance::where('date' , $today)->whereNotNull('sign_in')->whereNull('sign_out')
-        ->whereHas('employe', function($q){
-            $q->where('auto_checkout', true);
-        })->get();
+        $openAttendances = Attendance::where('date', $today)->whereNotNull('sign_in')->whereNull('sign_out')
+            ->whereHas('employe', function ($q) {
+                $q->where('auto_checkout', true);
+            })->get();
 
-        foreach ($openAttendances as $attendance ) {
+        foreach ($openAttendances as $attendance) {
 
             try {
                 $shiftEndTime = '18:15:00';
@@ -61,13 +61,11 @@ class AutoCloseAttendance extends Command
                     'longitude_out' => config("officeLocation.longitude"),
                 ];
                 $attendance->update($data);
-
             } catch (\Exception $e) {
                 Log::error("Failed to auto close attendance for Employee ID: {$attendance->employee_id}", [
                     'error' => $e->getMessage()
                 ]);
             }
-
         }
 
 
@@ -78,7 +76,7 @@ class AutoCloseAttendance extends Command
 
         foreach ($employes as $employe) {
 
-           $attendance = Attendance::where('date' , $today)->where('emplyee_id', $employe->id)->first();
+            $attendance = Attendance::where('date', $today)->where('emplyee_id', $employe->id)->first();
 
             Attendance::firstOrCreate(
                 [
@@ -94,8 +92,7 @@ class AutoCloseAttendance extends Command
                     'latitude_out' => config("officeLocation.latitude"),
                     'longitude_out' => config("officeLocation.longitude"),
                 ]
-            );         
-           
+            );
         }
     }
 }

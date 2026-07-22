@@ -22,8 +22,9 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         Commands\navEmpty::class,
         \App\Console\Commands\SyncAttendanceFromApi::class,
-        \App\Console\Commands\AutoStoreAttendance::class, 
+        \App\Console\Commands\AutoStoreAttendance::class,
         \App\Console\Commands\AutoCloseAttendance::class,
+        \App\console\commands\DeleteActivityLogs::class,
     ];
     /**
      * Define the application's command schedule.
@@ -35,21 +36,12 @@ class Kernel extends ConsoleKernel
     {
 
 
-        // $schedule->command('attendance:sync')
-        //     ->everyFiveMinutes()
-        //     ->withoutOverlapping() 
-        //     ->runInBackground();
 
-        // $schedule->command('attendance:sync')
-        //  ->everyFiveMinutes()
-        //  ->withoutOverlapping() // আগের command শেষ না হলে নতুনটি run হবে না
-        //  ->runInBackground()    // background এ run করবে
-        //  ->appendOutputTo(storage_path('logs/attendance_sync.log'));
 
         $schedule->command('attendance:sync')->everyMinute();
 
-        $schedule->command('attendance:attendanceAutoclose')
-            ->dailyAt('22:00');
+        $schedule->command('attendance:attendanceAutoclose')->dailyAt('22:00');
+        $schedule->command('activitylogs:cleanup')->dailyAt('00:00');
 
         // $schedule->call(function () {
         //     try {
