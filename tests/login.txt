@@ -1,436 +1,3 @@
-<html>
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            outline: none;
-        }
-
-        :root {
-            --main-color: #fff;
-            --second-color: #347deb;
-            --box-shadow: 0 10px 10px rgba(0, 0, 0, 0.1);
-            --facebook-color: rgb(60, 90, 154);
-            --google-color: rgb(220, 74, 61);
-        }
-
-        html {
-            height: 100%;
-        }
-
-        body {
-            background-image: linear-gradient(310deg, #df98fa, #9055ff);
-            font-family: sans-serif;
-        }
-
-        #container {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            background-color: var(--main-color);
-            width: 828px;
-            height: 482px;
-            border-radius: 10px;
-            display: grid;
-            grid-template-columns: repeat(2, 50%);
-            box-shadow: var(--box-shadow);
-            transition-duration: 1s;
-        }
-
-        #left,
-        #right {
-            background: #fbfbfb;
-            margin: auto;
-            width: 95%;
-            height: 96%;
-            border-radius: 10px;
-        }
-
-        #left {
-            background-size: cover;
-            background-position: center;
-            box-shadow: var(--box-shadow);
-        }
-
-        #welcome,
-        #lorem {
-            margin: 20px;
-            text-shadow: var(--box-shadow);
-        }
-
-        #welcome {
-            font-size: 75px;
-            font-weight: 300;
-            margin-top: 330px;
-            text-shadow: var(--box-shadow);
-        }
-
-        #login {
-            padding-top: 35%;
-            text-align: center;
-            text-transform: uppercase;
-            font-weight: 100;
-            text-shadow: var(--box-shadow);
-        }
-
-        .client-info {
-            display: block;
-            margin: 20px auto;
-            width: 60%;
-            height: 50px;
-            border: solid #999 1px;
-            border-radius: 5px;
-            text-indent: 15px;
-            transition: all 200ms;
-            box-shadow: var(--box-shadow);
-        }
-
-        .client-info:focus {
-            width: 80%;
-        }
-
-        label {
-            position: absolute;
-            margin: -76px 130px;
-            font-size: 12px;
-            white-space: nowrap;
-            background: #fff;
-            padding: 0 5px;
-            color: #999;
-            transition: all 200ms;
-            text-shadow: var(--box-shadow);
-        }
-
-        #email:focus~label[for="email"] {
-            margin: -76px 70px;
-        }
-
-        #password:focus~label[for="password"] {
-            margin: -76px 70px;
-        }
-
-        #submit {
-            border: none;
-            background-color: #9055ff;
-            color: white;
-            width: 60%;
-        }
-
-        #submit:hover {
-            background-color: #df98fa;
-        }
-
-        .social {
-            background-color: #fff;
-            display: block;
-            margin: 10px auto;
-            width: 70%;
-            height: 50px;
-            border: none;
-            border-radius: 5px;
-            text-transform: uppercase;
-            transition-duration: 200ms;
-            box-shadow: var(--box-shadow);
-            text-shadow: var(--box-shadow);
-        }
-
-        #facebook {
-            border: solid var(--facebook-color) 1px;
-            color: var(--facebook-color);
-        }
-
-        #facebook:hover {
-            background-color: var(--facebook-color);
-            color: white;
-        }
-
-        #google {
-            border: solid var(--google-color) 1px;
-            color: var(--google-color);
-        }
-
-        #google:hover {
-            background-color: var(--google-color);
-            color: white;
-        }
-
-        @media (max-width: 750px) {
-
-            #container {
-                width: 600px;
-                display: block;
-            }
-
-            #left {
-                display: none;
-            }
-
-            #right {
-                margin-top: 16px;
-                background: #fbfbfb;
-                background-size: cover;
-                background-position: center;
-                box-shadow: var(--box-shadow);
-            }
-
-        }
-
-        /* Global styles remain the same */
-
-        @media (max-width: 750px) {
-            #container {
-                width: 90%;
-                display: block;
-                height: auto;
-                /* Allow height to adjust automatically */
-            }
-
-            #left {
-                display: block;
-                /* Make #left visible */
-                width: 100%;
-                margin: 0 auto 20px auto;
-                /* Add some spacing */
-                background: #fbfbfb;
-                background-size: cover;
-                background-position: center;
-                box-shadow: var(--box-shadow);
-                text-align: center;
-                /* Center align text */
-            }
-
-            #right {
-                width: 100%;
-                margin: 0 auto;
-                background: #fbfbfb;
-                background-size: cover;
-                background-position: center;
-                box-shadow: var(--box-shadow);
-            }
-
-            #login {
-                padding-top: 20px;
-            }
-
-            .client-info {
-                width: 80%;
-                /* Make input fields more flexible */
-                height: 45px;
-                /* Adjust height for smaller screens */
-            }
-
-            .password-container {
-                width: 80%;
-                /* Adjust width */
-            }
-
-            ul {
-                padding-left: 0;
-                /* Remove default padding */
-            }
-
-            li {
-                text-align: left;
-                padding-left: 20px;
-            }
-        }
-
-        @media (max-height: 850px) {
-            #container {
-                width: 90%;
-                height: auto;
-                /* Adjust height for smaller screens */
-            }
-
-            #login {
-                padding-top: 10%;
-            }
-
-            #welcome {
-                margin-top: 240px;
-                font-size: 40px;
-            }
-
-            #lorem {
-                font-size: 15px;
-            }
-
-            .client-info {
-                width: 90%;
-                /* Make input fields more flexible */
-            }
-        }
-
-
-        .invalid-feedback {
-            display: flex;
-            justify-content: center;
-            text-align: center;
-            font-size: 12px;
-            color: red;
-        }
-
-        .password-container {
-            position: relative;
-            width: 60%;
-            margin: 20px auto;
-            border: solid #999 1px;
-            border-radius: 5px;
-            box-shadow: var(--box-shadow);
-            transition: all 200ms;
-        }
-
-        .password-container input {
-            width: 100%;
-            height: 50px;
-            padding-left: 15px;
-            border: none;
-            border-radius: 5px;
-            outline: none;
-            box-shadow: none;
-        }
-
-        .password-container i {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: #999;
-        }
-
-        .password-container input:focus {
-            width: 100%;
-        }
-
-        .client-info {
-            position: relative;
-            padding-top: 20px;
-            /* Make space for the label */
-        }
-
-
-        table {
-            font-family: arial, sans-serif;
-            border-collapse: collapse;
-            width: 100%;
-        }
-
-        td,
-        th {
-            border: 1px solid #dddddd;
-            text-align: left;
-            padding: 8px;
-        }
-
-        tr:nth-child(even) {
-            background-color: #dddddd;
-        }
-    </style>
-</head>
-
-<!-- Change code below this line -->
-
-<body>
-    <div id="container">
-        <div id="left">
-            <img src="https://xtreem.linnasgroup.com/wp-content/uploads/2024/08/Xtreem_Logo-removebg-preview-1.png"
-                alt="" style="margin-left: 35px;">
-            <ul style="margin-left: 40px;margin-top: 62px;">
-                <li style="list-style-type: none;padding:15px">
-                    <i class="fas fa-phone" id="togglePassword"></i> +8801958-222208
-                </li>
-                <li style="list-style-type: none;padding:15px">
-                    <i class="fa fa-globe" id="togglePassword"></i> www.itwaybd.com
-                </li>
-                <li style="list-style-type: none;padding:15px">
-                    <i class="fa fa-envelope" id="togglePassword"></i> support@itwaybd.com
-                </li>
-                <li style="list-style-type: none; padding: 15px; display: flex; align-items: center;">
-                    <i class="fa fa-map-marker" id="togglePassword" style="margin-right: 10px;"></i>
-                    House-01, Road-1, Sector-5, Uttara, Dhaka
-                </li>
-            </ul>
-        </div>
-        <form method="POST" action="{{ route('login') }}">
-            @csrf
-            <div id="right">
-                @php
-                use App\Helpers\Helper;
-                $company = \App\Models\Company::where('status', 'Active')->first();
-                @endphp
-
-
-                @if (isset($company['logo']))
-                <img id="login" style="display: block;margin-left: auto;margin-right: auto;"
-                    src="{{ asset('/backend/logo/' . ($company['logo'] ?? 0)) }}" class="img-thumbnail "
-                    alt="Responsive image">
-                @else
-                <h6 id="login" style="color: red">
-                    ops! your logo missing
-                </h6>
-                @endif
-                <input type="email" id="email" name="email" class="client-info">
-                <label for="email">Email</label>
-                @error('email')
-                <span class="invalid-feedback" role="alert">
-                    <strong>{{ $message }}</strong>
-                </span>
-                @enderror
-                <input type="password" id="password" name="password" class="client-info">
-
-                <label for="password">Password</label>
-                @error('password')
-                <span class="invalid-feedback" role="alert">
-                    <strong>{{ $message }}</strong>
-                </span>
-                @enderror
-
-                <p style="text-align: center;">
-                    <a href="{{ route('password.request') }}">I forgot my password</a>
-                </p>
-                <input type="submit" id="submit" class="client-info" value="Submit">
-            </div>
-
-        </form>
-
-    </div>
-
-
-    <script>
-        /* Work in proggress */
-        document.getElementById('see-button').addEventListener('click', evt => {
-            document.getElementById('blur-work').style.display = 'none';
-        })
-
-        const togglePassword = document.getElementById('togglePassword');
-        const password = document.getElementById('password');
-
-        togglePassword.addEventListener('click', function() {
-            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-            password.setAttribute('type', type);
-            this.classList.toggle('fa-eye');
-            this.classList.toggle('fa-eye-slash');
-        });
-        /* Work in proggress */
-    </script>
-</body>
-<!-- Change code above this line -->
-
-
-</html>
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -458,7 +25,7 @@
         body {
             font-family: 'Roboto', sans-serif;
 
-            background: url('{{ asset(' backend/logo/finalbg.png') }}') no-repeat center center scroll;
+            background: url('{{ asset('backend/logo/finalbg.png') }}') no-repeat center center scroll;
             background-size: cover;
             min-height: 100vh;
             display: flex;
@@ -779,6 +346,64 @@
             }
         }
 
+        /* ===== Fish swimming layer ===== */
+        /* Added: 2026-07-19 */
+
+        .fish-wrapper {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 220px;
+            /* ^ আগের চেয়ে উঁচু area, কিন্তু fish গুলোকে JS দিয়ে এই box-এর নিচের অংশে (waterline এর নিচে) রাখা হবে */
+            overflow: hidden;
+            z-index: 0;
+            /* wave-wrapper (z-index:1) এর নিচে থাকবে, যাতে wave-এর নিচে/ভিতরে ডুবে থাকার illusion হয় */
+            pointer-events: none;
+        }
+
+        .fish {
+            position: absolute;
+            top: 0;
+            left: 0;
+            will-change: transform;
+        }
+
+        .fish svg {
+            display: block;
+            filter: drop-shadow(0 1px 2px rgba(0, 40, 60, 0.25));
+        }
+
+        .fish .fish-tail {
+            transform-box: fill-box;
+            transform-origin: right center;
+            animation: tailWag 0.9s ease-in-out infinite;
+        }
+
+        @keyframes tailWag {
+
+            0%,
+            100% {
+                transform: rotate(-16deg);
+            }
+
+            50% {
+                transform: rotate(16deg);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .fish-wrapper {
+                height: 160px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .fish-wrapper {
+                display: none;
+            }
+        }
+
         /* ===== Responsive ===== */
 
         @media (max-width: 1024px) {
@@ -846,13 +471,13 @@
         <div class="logo">
 
             @php
-            $company = \App\Models\Company::where('status', 'Active')->first();
+                $company = \App\Models\Company::where('status', 'Active')->first();
             @endphp
 
             @if (isset($company['logo']))
-            <img src="{{ asset('/backend/logo/' . $company['logo']) }}">
+                <img src="{{ asset('/backend/logo/' . $company['logo']) }}">
             @else
-            <h4 style="color:red">Logo Missing</h4>
+                <h4 style="color:red">Logo Missing</h4>
             @endif
 
         </div>
@@ -892,25 +517,28 @@
         </form>
 
         @if (env('APP_ENV') == 'local')
-        <table class="credentials-table">
+            <table class="credentials-table">
 
-            <tr>
-                <th>Email</th>
-                <th>Password</th>
-                <th>Role</th>
-            </tr>
+                <tr>
+                    <th>Email</th>
+                    <th>Password</th>
+                    <th>Role</th>
+                </tr>
 
-            <tr data-email="info@wtbl.com" data-password="12345678">
-                <td>info@wtbl.com</td>
-                <td>12345678</td>
-                <td>Admin</td>
-            </tr>
+                <tr data-email="info@wtbl.com" data-password="12345678">
+                    <td>info@wtbl.com</td>
+                    <td>12345678</td>
+                    <td>Admin</td>
+                </tr>
 
-        </table>
+            </table>
         @endif
 
     </div>
 
+    {{-- Fish swimming layer — wave-wrapper এর নিচে বসবে (z-index দিয়ে) --}}
+    {{-- Added: 2026-07-19 --}}
+    <div class="fish-wrapper" id="fishWrapper"></div>
 
     <div class="wave-wrapper" id="waveWrapper">
 
@@ -1141,6 +769,170 @@
                 tiltAnimationRunning = false;
             }
         }
+    </script>
+
+    {{-- ===== Fish swimming with mouse interaction ===== --}}
+    {{-- Added: 2026-07-19 --}}
+    <script>
+        (function() {
+            const prefersReducedMotionFish = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const fishWrapper = document.getElementById('fishWrapper');
+            if (!fishWrapper || prefersReducedMotionFish) return;
+
+            const FISH_COUNT = 6;
+            const fishColors = ['#ffd166', '#ff9f6e', '#f4f4f4', '#8fe3ff', '#ffc4de', '#c9f7ff'];
+            const fishes = [];
+
+            // simple fish shape: body (ellipse) + tail (triangle, wiggles via CSS)
+            function fishSVG(color) {
+                return `
+                    <svg width="46" height="26" viewBox="0 0 46 26" xmlns="http://www.w3.org/2000/svg">
+                        <g class="fish-tail">
+                            <path d="M16 13 L2 2 L2 24 Z" fill="${color}" opacity="0.85"></path>
+                        </g>
+                        <ellipse cx="27" cy="13" rx="15" ry="8" fill="${color}"></ellipse>
+                        <circle cx="37" cy="10" r="1.5" fill="#04324a"></circle>
+                    </svg>
+                `;
+            }
+
+            // ধরে নেওয়া হচ্ছে waterline = wrapper-এর উপরের প্রায় ৩৫% অংশ (waveline zone),
+            // বাকি নিচের অংশ = পানির গভীর অংশ। fish গুলোকে এই গভীর অংশে (waterline এর নিচে) রাখা হবে।
+            const WATERLINE_RATIO = 0.35;
+
+            function initFish() {
+                const wrapperHeight = fishWrapper.clientHeight;
+                const wrapperWidth = window.innerWidth;
+                const deepZoneStart = wrapperHeight * WATERLINE_RATIO;
+
+                for (let i = 0; i < FISH_COUNT; i++) {
+                    const el = document.createElement('div');
+                    el.className = 'fish';
+
+                    const scale = 0.55 + Math.random() * 0.9; // size variation = depth illusion
+                    const dir = Math.random() > 0.5 ? 1 : -1;
+                    const color = fishColors[i % fishColors.length];
+
+                    el.innerHTML = fishSVG(color);
+                    el.style.width = (46 * scale) + 'px';
+                    el.style.height = (26 * scale) + 'px';
+                    fishWrapper.appendChild(el);
+
+                    fishes.push({
+                        el: el,
+                        x: Math.random() * wrapperWidth,
+                        // fish শুধু waterline এর নিচের অংশেই থাকবে (deepZoneStart থেকে নিচ পর্যন্ত)
+                        baseY: deepZoneStart + Math.random() * (wrapperHeight - deepZoneStart - 20),
+                        driftY: 0,
+                        depth: scale, // বড় fish = কাছে = দ্রুত movement
+                        baseSpeed: (0.25 + Math.random() * 0.5) * dir,
+                        speedBoost: 1, // eased multiplier — normal অবস্থায় 1, mouse chase করলে বাড়বে
+                        dir: dir,
+                        phase: Math.random() * Math.PI * 2
+                    });
+                }
+            }
+
+            // raw (un-eased) mouse position — water zone-এ আছে কিনা সেটা তাৎক্ষণিকভাবে বুঝতে raw value লাগবে
+            let rawMouseX = window.innerWidth / 2;
+            let rawMouseY = 0;
+            let mouseInsideWindow = false;
+
+            // eased mouse position — smooth chasing motion-এর জন্য
+            let mouseX = rawMouseX;
+            let mouseY = window.innerHeight - 60;
+
+            document.addEventListener('mousemove', function(e) {
+                rawMouseX = e.clientX;
+                rawMouseY = e.clientY;
+                mouseInsideWindow = true;
+            }, {
+                passive: true
+            });
+
+            document.addEventListener('mouseleave', function() {
+                mouseInsideWindow = false;
+            }, {
+                passive: true
+            });
+
+            let fishTime = 0;
+
+            function animateFish() {
+                fishTime += 0.016;
+
+                const wrapperWidth = window.innerWidth;
+                const wrapperHeight = fishWrapper.clientHeight;
+                const waterTop = window.innerHeight - wrapperHeight;
+
+                // মাউস পয়েন্টার আসলেই পানির area-র ভিতরে আছে কিনা (waterline এর নিচে) — এটাই "focus" শর্ত
+                const isMouseInWater = mouseInsideWindow && rawMouseY >= waterTop;
+
+                // eased mouse follow (jerky না হয়ে smooth থাকার জন্য)
+                mouseX += (rawMouseX - mouseX) * 0.08;
+                mouseY += (rawMouseY - mouseY) * 0.08;
+
+                const mouseYInWrapper = mouseY - waterTop;
+                const mouseXInWrapper = mouseX;
+                const deepZoneStart = wrapperHeight * WATERLINE_RATIO; // waterline — এর উপরে fish যাবে না
+                const bottomLimit = wrapperHeight - 16; // একদম নিচের সীমা
+
+                fishes.forEach(function(f) {
+                    // চেজ মোডে speedBoost target বেশি, normal মোডে 1 — eased transition
+                    const targetBoost = isMouseInWater ? 2.4 : 1;
+                    f.speedBoost += (targetBoost - f.speedBoost) * 0.04;
+
+                    // gentle vertical bobbing (normal ambient movement)
+                    const bob = Math.sin(fishTime * 1.3 + f.phase) * 6;
+
+                    let facing = f.dir; // default: নিজের স্বাভাবিক direction
+
+                    if (isMouseInWater) {
+                        // ===== খাবারের লোভে fish সরাসরি pointer-এর দিকে ছুটবে =====
+                        // fish যেদিকেই মুখ করে থাকুক না কেন, এখন মাউসের দিকেই ঘুরে যাবে
+                        const dx = mouseXInWrapper - f.x;
+                        const dy = mouseYInWrapper - f.baseY;
+                        const dist = Math.max(Math.abs(dx), 1);
+
+                        // দূরত্ব অনুযায়ী গতি — কাছে এলে একটু কমে, দূরে থাকলে জোরে ছোটে
+                        const chaseSpeed = Math.min(dist * 0.06, 3.2) * f.depth * f.speedBoost;
+                        f.x += Math.sign(dx) * chaseSpeed;
+
+                        // y-অক্ষেও সরাসরি pointer-এর দিকে সরবে
+                        f.baseY += dy * 0.06 * f.depth;
+
+                        // মাউস যেদিকে, মাছের মুখও সেদিকে ঘুরে যাবে (খাবারের দিকে তাকানোর ভাব)
+                        facing = dx >= 0 ? 1 : -1;
+                        f.dir = facing; // মাউস সরে গেলে normal swim এই নতুন direction থেকেই শুরু হবে
+                    } else {
+                        // ===== স্বাভাবিক autonomous swim, wrap around edges =====
+                        f.x += f.baseSpeed * (0.6 + f.depth) * f.speedBoost;
+                        if (f.x > wrapperWidth + 40) f.x = -40;
+                        if (f.x < -40) f.x = wrapperWidth + 40;
+                        facing = f.baseSpeed >= 0 ? 1 : -1;
+                        f.dir = facing;
+                    }
+
+                    // waterline এর উপরে fish কখনো উঠবে না — নিচের সীমার মধ্যেও ক্ল্যাম্প করা
+                    f.baseY = Math.max(deepZoneStart, Math.min(bottomLimit, f.baseY));
+
+                    const targetDriftY = 0;
+                    f.driftY += (targetDriftY - f.driftY) * 0.05;
+
+                    const finalX = f.x;
+                    let finalY = f.baseY + bob + f.driftY;
+                    finalY = Math.max(deepZoneStart - 4, Math.min(bottomLimit, finalY));
+
+                    f.el.style.transform =
+                        `translate(${finalX.toFixed(1)}px, ${finalY.toFixed(1)}px) scaleX(${facing})`;
+                });
+
+                requestAnimationFrame(animateFish);
+            }
+
+            initFish();
+            requestAnimationFrame(animateFish);
+        })();
     </script>
 
 </body>

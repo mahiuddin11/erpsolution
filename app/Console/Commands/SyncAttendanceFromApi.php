@@ -49,18 +49,22 @@ class SyncAttendanceFromApi extends Command
             if ($response->successful()) {
                 $data = $response->json();
 
-                // dd($data);
+
+
                 if (!empty($data['data'])) {
                     $groupedPunches = [];
 
                     // Group punches by employee and date
                     foreach ($data['data'] as $punch) {
+
+
                         if (empty($punch['emp_code']) || empty($punch['punch_time'])) {
                             continue;
                         }
 
                         $employee = Employee::where("id_card", $punch['emp_code'])->first();
                         $employeeId = $employee->id ?? 0;
+
 
                         // ==================== CROSS MIDNIGHT  ====================
                         $date =  getEffectiveDate($punch['punch_time']);

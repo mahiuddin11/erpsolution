@@ -283,22 +283,6 @@
                                 <small id="estimateprofit" class="text-muted d-block mt-1"></small>
                             </div>
 
-                            {{-- <div class="col-lg-4 col-md-6 col-12 mb-3">
-                                <label for="estimate_profit">Estimate Profit <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend"><span class="input-group-text">TK.</span></div>
-
-
-                                    <input type="number" step="0.01" min="0" name="estimate_profit"
-                                        class="form-control" id="estimate_profit" data-number-words="estimate_profit"
-                                        value="{{ old('estimate_profit') }}" required>
-                                </div>
-                                @error('estimate_profit')
-                                    <span class="error text-red text-bold">{{ $message }}</span>
-                                @enderror
-                                <small id="estimate_profit" class="text-muted d-block mt-1"></small>
-                            </div> --}}
-
                             <div class="col-lg-4 col-md-6 col-12 mb-3">
                                 <label for="actualCosting">Actual Costing Plan</label>
                                 <div class="input-group">

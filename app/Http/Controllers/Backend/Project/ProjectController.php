@@ -23,9 +23,10 @@ use App\Models\PurchaseRequisition;
 use App\Models\Purchases;
 use App\Models\PurchasesDetails;
 use App\Models\Supplier;
-use DB;
+
 use App\Services\Project\ProjectService;
 use App\Transformers\ProjectTransformer;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Validation\ValidationException;
 
@@ -351,19 +352,25 @@ class ProjectController extends Controller
         $indirectExpenses     = collect();
         $projectMoney         = 0;
 
-        $projectDetails = Project::join('users', 'users.id', '=', 'projects.manager_id')->where('projects.id', $project_id)->first([
-            'users.name as aname',
-            'projects.budget',
-            'projects.start_date',
-            'projects.estimate_profit',
-            'projects.condition',
-            'projects.closing',
-            'projects.end_date',
-            'projects.name as pname',
-            'users.phone as aphone',
-            'projects.address',
-            'projects.projectCode',
-        ]);
+        $projectDetails = Project::query()
+            ->leftJoin('users', 'users.id', '=', 'projects.manager_id')
+            ->leftJoin('customers', 'customers.id', '=', 'projects.customer_id')
+            ->leftJoin('chart_of_accounts', 'chart_of_accounts.id', '=', 'projects.ledger_id')
+            ->where('projects.id', $project_id)
+            ->first([
+                'users.name as aname',
+                'users.phone as aphone',
+                'projects.budget',
+                'projects.start_date',
+                'projects.estimate_profit',
+                'projects.condition',
+                'projects.closing',
+                'projects.end_date',
+                'projects.name as pname',
+                'projects.address',
+                'projects.projectCode',
+                DB::raw('COALESCE(chart_of_accounts.account_name, customers.name) as client_name'),
+            ]);
 
         if (!$projectDetails) {
             return Redirect::back()->withErrors(['msg' => 'Project not found!']);
@@ -374,7 +381,12 @@ class ProjectController extends Controller
         $projectMoney         = ProjectMoney::where('project_id', $project_id)->sum('debit');
 
 
-        $directIncome     = AccountTransaction::with('account')->whereIn('account_id', getOldAccount(24)->pluck('id'))->where('project_id', $project_id)->get();
+        // $directIncome     = AccountTransaction::with('account')->whereIn('account_id', getOldAccount(24)->pluck('id'))->where('project_id', $project_id)->get();
+        $directIncome = AccountTransaction::with('account')
+            ->where('account_id', $projectDetails->ledger_id)
+            ->where('project_id', $project_id)
+            ->whereNotNull('credit')
+            ->get();
         $indirectIncome   = AccountTransaction::with('account')->whereIn('account_id', getOldAccount(25)->pluck('id'))->where('project_id', $project_id)->get();
         $directExpenses   = AccountTransaction::with('account')->whereIn('account_id', getOldAccount(20)->pluck('id'))->where('project_id', $project_id)->get();
         $indirectExpenses = AccountTransaction::with('account')->whereIn('account_id', getOldAccount(21)->pluck('id'))->where('project_id', $project_id)->get();
@@ -386,7 +398,7 @@ class ProjectController extends Controller
             }
         }
 
-        // --- Product consumption from Transfers (N+1 fixed: batch fetch latest purchase price) ---
+        // --- Product consumption from Tr  ansfers (N+1 fixed: batch fetch latest purchase price) ---
         $productIds = $projectTransfer->flatMap(fn($val) => $val->details->pluck('product_id'))->unique();
         $latestPurchasePrices = PurchasesDetails::whereIn('product_id', $productIds)
             ->orderByDesc('id')

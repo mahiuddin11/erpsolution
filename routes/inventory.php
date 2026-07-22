@@ -328,6 +328,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
 
         //stock transfer curd operation end
         Route::any('/inventory-currentStock-list', [StockReportController::class, 'index'])->name('inventorySetup.currentStock.index');
+        Route::get('/inventory-productledger-modal', [StockReportController::class, 'productLedgerModal'])->name('inventorySetup.productledger.modal');
 
 
         Route::get('/unit-price', [StockTransferController::class, 'unitPiceForSale'])->name('InventorySetup.unitPiceForSale');

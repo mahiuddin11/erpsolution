@@ -93,14 +93,14 @@
                             <div class="col-md-4 mb-3">
                                 <label>Project * :</label>
                                 <select class="form-control select2" id="project_id" name="project_id">
-                                    <option  selected default>--Select--</option>
+                                    <option selected default>--Select--</option>
                                 </select>
                                 @error('project_id')
                                     <span class=" error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <label>Supplier * :</label>
+                            <div class="col-md-4 mb-3 d-none">
+                                <label class="d-hidden">Supplier * :</label>
                                 <select class="form-control select2 supid" id="supplier_id" name="supplier_id">
                                     <option selected disabled value="">--Select Supplier--</option>
                                     @foreach ($supplier as $key => $value)
@@ -113,7 +113,7 @@
                                     <span class=" error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 d-none">
                                 <div class="form-group">
                                     <label>Payment Type * :</label>
                                     <select class="form-control select2 payment_type" name="payment_type">
@@ -127,6 +127,7 @@
                                     @enderror
                                 </div>
                             </div>
+
                             {{-- html load by js --}}
                             <div class="account-section col-md-12"></div>
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Backend\InventorySetup;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\SalesDetailsController;
+use App\Models\Branch;
 use App\Models\Category;
 use App\Models\Company;
 use App\Models\Product;
@@ -13,22 +14,55 @@ use App\Models\PurchasesDetails;
 use App\Models\sales_Details;
 use App\Models\Stock;
 use App\Models\StockSummary;
+use App\Services\InventorySetup\ProductLedgerService;
 use Illuminate\Support\Facades\DB;
 
 class StockReportController extends Controller
 {
+
+    protected $getProductLedger;
+
+    public function __construct(ProductLedgerService $getProductLedger)
+    {
+        $this->getProductLedger = $getProductLedger;
+    }
+
+    // public function index(Request $request)
+    // {
+    //     $title = 'Stock Summary';
+    //     $companyInfo = Company::latest('id')->first();
+
+    //     $currentSrock = Stock::orderBy('stocks.product_id', 'asc')
+    //         ->select('stocks.branch_id', 'stocks.product_id', 'stocks.total_price', 'stocks.quantity', 'stocks.status')
+    //         ->get();
+
+    //     $currentSrock = StockSummary::orderBy('stock_summaries.id', 'desc')
+    //         ->select('stock_summaries.*', 'stock_summaries.quantity as stock_qty')
+    //         ->orderBy("stock_summaries.product_id", "ASC");
+
+    //     if ($request->method() == "POST") {
+    //         if ($request->category_id != "all") {
+    //             $productid = Product::where('category_id', $request->category_id)->pluck('id');
+    //             $currentSrock = $currentSrock->whereIn('product_id', $productid);
+    //         }
+    //     }
+
+    //     $currentSrock = $currentSrock->get();
+
+    //     $categorys = Category::get();
+    //     // pops($currentSrock);
+    //     return view('backend.pages.reports.index', get_defined_vars());
+    // }
+
     public function index(Request $request)
     {
         $title = 'Stock Summary';
         $companyInfo = Company::latest('id')->first();
 
-        $currentSrock = Stock::orderBy('stocks.product_id', 'asc')
-            ->select('stocks.branch_id', 'stocks.product_id', 'stocks.total_price', 'stocks.quantity', 'stocks.status')
-            ->get();
-
+        // Modified: 2026-07-20 - removed dead/overwritten $currentSrock query (was unused, extra DB hit)
         $currentSrock = StockSummary::orderBy('stock_summaries.id', 'desc')
             ->select('stock_summaries.*', 'stock_summaries.quantity as stock_qty')
-            ->orderBy("stock_summaries.product_id", "ASC");
+            ->orderBy('stock_summaries.product_id', 'asc');
 
         if ($request->method() == "POST") {
             if ($request->category_id != "all") {
@@ -38,11 +72,38 @@ class StockReportController extends Controller
         }
 
         $currentSrock = $currentSrock->get();
-
         $categorys = Category::get();
-        // pops($currentSrock);
+
         return view('backend.pages.reports.index', get_defined_vars());
     }
+
+    public function productLedgerModal(Request $request)
+    {
+        $product_id = $request->product_id;
+        $branch_id  = $request->branch_id ?? 'all';
+        $from_date  = $request->from_date ?? '';
+        $to_date    = $request->to_date   ?? '';
+
+
+
+        if (!$product_id) {
+            return response('<div class="alert alert-danger m-3">Product ID missing.</div>');
+        }
+
+        $product = Product::find($product_id);
+
+        $datas = $this->getProductLedger->getProductLedgerData(
+            $product_id,
+            $branch_id,
+            $from_date,
+            $to_date
+        );
+
+
+
+        return view('backend.pages.reports.partials.productledger-content', get_defined_vars());
+    }
+
 
 
     public function productSummarayDemo(Request $request)

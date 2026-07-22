@@ -180,6 +180,90 @@
             }
         }
 
+        .project-header-card {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-left: 4px solid #17a2b8;
+            border-radius: 6px;
+            padding: 18px 20px;
+        }
+
+        .project-header-logo {
+            width: 100%;
+            max-width: 110px;
+        }
+
+        .project-code-chip {
+            font-size: 12px;
+            font-weight: 600;
+            background: #eef6f8;
+            color: #17a2b8;
+            padding: 2px 8px;
+            border-radius: 4px;
+            letter-spacing: .3px;
+        }
+
+        .project-meta {
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        .project-meta i {
+            width: 16px;
+            color: #adb5bd;
+        }
+
+        .project-header-stats {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .project-budget-box {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            line-height: 1.2;
+        }
+
+        .project-budget-box .stat-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: #adb5bd;
+        }
+
+        .project-budget-box .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #343a40;
+        }
+
+        .project-status-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .project-dates {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        /* ================= MOBILE ================= */
+        @media (max-width: 768px) {
+
+            .project-header-stats,
+            .project-budget-box,
+            .project-status-row {
+                align-items: flex-start;
+                justify-content: flex-start;
+            }
+        }
+
         @media (max-width: 480px) {
             .kpi-card .kpi-value {
                 font-size: 18px;
@@ -214,7 +298,7 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1 class="m-0">Project Ledger Report</h1>
+                    {{-- <h1 class="m-0">Project Ledger Report</h1> --}}
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
@@ -248,34 +332,69 @@
                     <div class="card-body invoice p-3">
 
                         {{-- Header / project info --}}
-                        <div class="row mb-3">
-                            <div class="col-md-2 text-center">
-                                @if (isset($companyInfo->logo))
-                                    <img width="140" src="{{ asset('/backend/logo/' . $companyInfo->logo) }}"
-                                        alt="">
-                                @endif
-                            </div>
-                            <div class="col-md-5">
-                                <h5>{{ $projectDetails->projectCode . ' - ' . $projectDetails->pname }}</h5>
-                                <p class="mb-1"><i class="fa fa-map-marker-alt text-muted"></i>
-                                    {{ $projectDetails->address }}</p>
-                                <p class="mb-1"><i class="fa fa-user text-muted"></i> {{ $projectDetails->aname }} &nbsp;
-                                    <i class="fa fa-phone text-muted"></i> {{ $projectDetails->aphone }}</p>
-                            </div>
-                            <div class="col-md-5">
-                                <p class="mb-1"><b>Budget:</b> TK. {{ number_format($projectDetails->budget ?? 0, 2) }}
-                                </p>
-                                <p class="mb-1"><b>Start:</b> {{ $projectDetails->start_date }} &nbsp; <b>End:</b>
-                                    @if ($projectDetails->closing > $projectDetails->end_date)
-                                        <span class="text-danger">{{ $projectDetails->closing }}</span>
-                                    @else
-                                        <span class="text-success">{{ $projectDetails->closing }}</span>
+                        <div class="project-header-card mb-4">
+                            <div class="row align-items-center">
+                                <div class="col-md-2 col-4 text-center">
+                                    @if (isset($companyInfo->logo))
+                                        <img class="project-header-logo"
+                                            src="{{ asset('/backend/logo/' . $companyInfo->logo) }}" alt="">
                                     @endif
-                                </p>
-                                <span
-                                    class="badge badge-{{ $projectDetails->condition == 'Complete' ? 'success' : 'warning' }} p-2">
-                                    {{ $projectDetails->condition }}
-                                </span>
+                                </div>
+
+                                <div class="col-md-6 col-8">
+                                    <div class="d-flex align-items-center flex-wrap mb-1">
+                                        <h5 class="mb-0 mr-2">{{ $projectDetails->pname }}</h5>
+                                        <span class="project-code-chip">{{ $projectDetails->projectCode }}</span>
+                                    </div>
+
+                                    <p class="mb-1 project-meta"><i class="fa fa-map-marker-alt"></i>Address :
+                                        {{ $projectDetails->address }}</p>
+
+
+                                    <p class="mb-1 project-meta">
+                                        <i class="fa fa-building"></i>Company : {{ $projectDetails->client_name ?? 'N/A' }}
+
+                                    </p>
+
+                                    <p class="mb-0 project-meta">
+                                        <i class="fa fa-user"></i> Project Manager: {{ $projectDetails->aname }}
+                                        {{-- <span class="mx-2">|</span>
+                                        <i class="fa fa-phone"></i> {{ $projectDetails->aphone }} --}}
+                                    </p>
+
+
+                                </div>
+
+                                <div class="col-md-4 col-12 mt-3 mt-md-0">
+                                    <div class="project-header-stats">
+                                        <div class="project-budget-box">
+                                            <span class="stat-label">Budget</span>
+                                            <span class="stat-value">TK.
+                                                {{ number_format($projectDetails->budget ?? 0, 2) }}</span>
+                                        </div>
+
+                                        <div class="project-status-row">
+                                            <span
+                                                class="badge badge-{{ $projectDetails->condition == 'Complete' ? 'success' : 'warning' }} p-2">
+                                                {{ $projectDetails->condition }}
+                                            </span>
+                                            <span class="project-dates">
+                                                <i class="fa fa-calendar-alt"></i> {{ $projectDetails->start_date }}
+                                                <i class="fa fa-arrow-right mx-1"></i>
+
+
+                                                @if ($projectDetails->closing > $projectDetails->end_date)
+                                                    <span class="text-danger">{{ $projectDetails->closing }}</span>
+                                                @else
+                                                    <span class="text-success">{{ $projectDetails->end_date }}</span>
+                                                @endif
+
+
+
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -784,7 +903,8 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Current Expense — All Transactions
-                            <small>{{ $projectDetails->projectCode }}</small></h5>
+                            <small>{{ $projectDetails->projectCode }}</small>
+                        </h5>
                         <button type="button" class="close" data-dismiss="modal">&times;</button>
                     </div>
                     <div class="modal-body">
@@ -849,7 +969,8 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Current Income — All Transactions
-                            <small>{{ $projectDetails->projectCode }}</small></h5>
+                            <small>{{ $projectDetails->projectCode }}</small>
+                        </h5>
                         <button type="button" class="close" data-dismiss="modal">&times;</button>
                     </div>
                     <div class="modal-body">
