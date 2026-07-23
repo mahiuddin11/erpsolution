@@ -36,12 +36,10 @@ class Kernel extends ConsoleKernel
     {
 
 
-
-
         $schedule->command('attendance:sync')->everyMinute();
-
         $schedule->command('attendance:attendanceAutoclose')->dailyAt('22:00');
         $schedule->command('activitylogs:cleanup')->dailyAt('00:00');
+
 
         // $schedule->call(function () {
         //     try {

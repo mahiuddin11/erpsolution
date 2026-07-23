@@ -187,7 +187,7 @@ SELECT
     pos.invoice_no
 FROM product_opening_stock_details posd
 JOIN product_opening_stocks pos ON pos.id = posd.product_opening_stock_id
-WHERE posd.product_id = 1235
+WHERE posd.product_id = 5216
 AND NOT EXISTS (
     SELECT 1
     FROM stocks s
@@ -237,7 +237,7 @@ SELECT
     pos.invoice_no
 FROM product_opening_stock_details posd
 JOIN product_opening_stocks pos ON pos.id = posd.product_opening_stock_id
-WHERE posd.product_id = 1233
+WHERE posd.product_id = 5216
 AND NOT EXISTS (
     SELECT 1
     FROM stocks s
@@ -312,7 +312,7 @@ SELECT
 FROM purchases_details pd
 JOIN purchases p ON p.id = pd.purchases_id
 WHERE pd.status = 'Active'
-  AND pd.product_id = 1237
+  AND pd.product_id = 5216
 AND NOT EXISTS (
     SELECT 1
     FROM stocks s
@@ -425,3 +425,87 @@ UNION ALL
 SELECT 'supplier_select_prices', 'supplier_id', id FROM supplier_select_prices WHERE supplier_id = (SELECT accountable_id FROM chart_of_accounts WHERE id = 1306)
 UNION ALL
 SELECT 'supplier_select_prices', 'account_id', id FROM supplier_select_prices WHERE account_id = (SELECT accountable_id FROM chart_of_accounts WHERE id = 1306);
+
+
+
+-- product id and product code missmatch issue check 
+SELECT
+    id,
+    name,
+    productCode AS old_productCode,
+    CONCAT('PR', LPAD(id, 5, '0')) AS new_productCode
+FROM products
+WHERE deleted_at IS NULL
+AND productCode <> CONCAT('PR', LPAD(id, 5, '0'))
+ORDER BY id;
+
+
+-- missmatch productcode update 
+UPDATE products
+SET productCode = CONCAT('PR', LPAD(id, 5, '0'))
+WHERE deleted_at IS NULL
+AND productCode <> CONCAT('PR', LPAD(id, 5, '0'));
+
+--verify 
+SELECT
+    id,
+    name,
+    productCode
+FROM products
+WHERE deleted_at IS NULL
+AND productCode <> CONCAT('PR', LPAD(id, 5, '0'));
+
+
+
+
+-- check all product related transaction
+SELECT
+    p.id,
+    p.name,
+    p.productCode
+FROM products p
+WHERE (p.productCode IS NULL OR p.productCode = '')
+AND NOT EXISTS (
+    SELECT 1 FROM purchases_details pd
+    WHERE pd.product_id = p.id
+)
+AND NOT EXISTS (
+    SELECT 1 FROM sales__details sd
+    WHERE sd.product_id = p.id
+)
+AND NOT EXISTS (
+    SELECT 1 FROM product_opening_stock_details osd
+    WHERE osd.product_id = p.id
+)
+AND NOT EXISTS (
+    SELECT 1 FROM stock_ajdustment_detailsts ad
+    WHERE ad.product_id = p.id
+)
+ORDER BY p.id;
+
+-- product name chara product golo delete  
+UPDATE products p
+SET
+    p.deleted_at = NOW(),
+    p.deleted_by = 1
+WHERE (p.productCode IS NULL OR p.productCode = '')
+AND NOT EXISTS (
+    SELECT 1
+    FROM purchases_details pd
+    WHERE pd.product_id = p.id
+)
+AND NOT EXISTS (
+    SELECT 1
+    FROM sales__details sd
+    WHERE sd.product_id = p.id
+)
+AND NOT EXISTS (
+    SELECT 1
+    FROM product_opening_stock_details osd
+    WHERE osd.product_id = p.id
+)
+AND NOT EXISTS (
+    SELECT 1
+    FROM stock_ajdustment_detailsts ad
+    WHERE ad.product_id = p.id
+);

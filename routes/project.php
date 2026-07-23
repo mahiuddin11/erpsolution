@@ -17,6 +17,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::post('/project-project-store', [ProjectController::class, 'store'])->name('project.project.store');
         Route::get('/project-project-edit/{id}', [ProjectController::class, 'edit'])->name('project.project.edit');
         Route::get('/project-project-show/{id}', [ProjectController::class, 'show'])->name('project.project.show');
+        Route::get('/project-transactions-feed/{id}', [ProjectController::class, 'transactionFeed'])->name('project.transactions.feed');
 
 
         Route::get('/project-project-loadmanager', [ProjectController::class, 'loadmanager'])->name('project.project.loadmanager');

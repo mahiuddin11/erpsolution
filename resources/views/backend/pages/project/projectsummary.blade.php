@@ -8,21 +8,21 @@
     <style>
         .kpi-card {
             border-radius: 10px;
-            padding: 18px 20px;
+            padding: 16px 18px;
             color: #fff;
             position: relative;
             transition: transform .15s ease, box-shadow .15s ease;
         }
 
         .kpi-card .kpi-label {
-            font-size: 13px;
+            font-size: 12px;
             opacity: .85;
             text-transform: uppercase;
             letter-spacing: .5px;
         }
 
         .kpi-card .kpi-value {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 700;
             margin-top: 4px;
         }
@@ -33,8 +33,8 @@
         }
 
         .kpi-card.clickable:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, .22);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, .2);
         }
 
         .kpi-card.clickable:active {
@@ -77,6 +77,14 @@
 
         .progress-bar {
             background: #fff;
+        }
+
+        .section-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: #9aa0a6;
+            margin: 4px 0 8px;
         }
 
         .empty-state {
@@ -140,44 +148,6 @@
         .kpi-mini-table th,
         .kpi-mini-table td {
             padding: 8px 10px;
-        }
-
-        @media (max-width: 1024px) {
-            .kpi-card .kpi-value {
-                font-size: 20px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .kpi-card {
-                margin-bottom: 4px;
-            }
-
-            .card-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .card-tools {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 6px;
-                margin-top: 10px;
-                width: 100%;
-            }
-
-            .card-tools .btn {
-                flex: 1 1 auto;
-                text-align: center;
-            }
-
-            .modal-dialog {
-                margin: 8px;
-            }
-
-            .modal-footer .btn {
-                flex: 1 1 auto;
-            }
         }
 
         .project-header-card {
@@ -253,8 +223,206 @@
             color: #6c757d;
         }
 
-        /* ================= MOBILE ================= */
+        /* ============ Unified Transaction Feed (Demo 2 style) ============ */
+        .txn-panel {
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .txn-tabs {
+            display: flex;
+            gap: 2px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            overflow-x: auto;
+            padding: 4px;
+        }
+
+        .txn-tab-btn {
+            border: none;
+            background: none;
+            padding: 8px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            color: #6c757d;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+
+        .txn-tab-btn.active {
+            background: #fff;
+            color: #17a2b8;
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .1);
+        }
+
+        .txn-list {
+            max-height: 480px;
+            overflow-y: auto;
+        }
+
+        .txn-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            border-bottom: 1px solid #f1f1f1;
+        }
+
+        .txn-row:last-child {
+            border-bottom: none;
+        }
+
+        .txn-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .txn-cash-in {
+            color: #00c853 !important;
+            transform: rotate(35deg);
+        }
+
+        .txn-cash-out {
+            color: #f44336 !important;
+            transform: rotate(35deg);
+        }
+
+
+        .txn-row:hover .txn-cash-in {
+            transform: rotate(40deg) scale(1.1);
+        }
+
+        .txn-row:hover .txn-cash-out {
+            transform: rotate(40deg) scale(1.1);
+        }
+
+        .txn-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .txn-desc {
+            font-size: 13px;
+            font-weight: 600;
+            color: #343a40;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .txn-meta {
+            font-size: 11px;
+            color: #9aa0a6;
+            margin-top: 2px;
+        }
+
+        .txn-amount {
+            font-size: 13px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .txn-amount.income {
+            color: #177852;
+        }
+
+        .txn-status {
+            font-size: 10px;
+            color: #adb5bd;
+        }
+
+        .sidebar-sticky {
+            position: sticky;
+            top: 15px;
+        }
+
+        .sidebar-card {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+        }
+
+        .sidebar-card .sc-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: #9aa0a6;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .sidebar-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .sidebar-row .label {
+            color: #6c757d;
+        }
+
+        .sidebar-row .value {
+            font-weight: 600;
+        }
+
+        .sidebar-row.total {
+            border-top: 1px solid #f1f1f1;
+            padding-top: 6px;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 1024px) {
+            .kpi-card .kpi-value {
+                font-size: 18px;
+            }
+        }
+
         @media (max-width: 768px) {
+            .kpi-card {
+                margin-bottom: 4px;
+            }
+
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .card-tools {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+                margin-top: 10px;
+                width: 100%;
+            }
+
+            .card-tools .btn {
+                flex: 1 1 auto;
+                text-align: center;
+            }
+
+            .modal-dialog {
+                margin: 8px;
+            }
+
+            .modal-footer .btn {
+                flex: 1 1 auto;
+            }
 
             .project-header-stats,
             .project-budget-box,
@@ -262,11 +430,15 @@
                 align-items: flex-start;
                 justify-content: flex-start;
             }
+
+            .sidebar-sticky {
+                position: static;
+            }
         }
 
         @media (max-width: 480px) {
             .kpi-card .kpi-value {
-                font-size: 18px;
+                font-size: 16px;
             }
 
             .kpi-card .kpi-label {
@@ -279,15 +451,9 @@
                 display: none !important;
             }
 
-            .nav-tabs .nav-link {
-                display: block !important;
-                opacity: 1 !important;
-            }
-
-            .tab-pane {
-                display: block !important;
-                opacity: 1 !important;
-                page-break-inside: avoid;
+            .txn-list {
+                max-height: none;
+                overflow: visible;
             }
         }
     </style>
@@ -297,9 +463,7 @@
     <div class="content-header">
         <div class="container-fluid">
             <div class="row mb-2">
-                <div class="col-sm-6">
-                    {{-- <h1 class="m-0">Project Ledger Report</h1> --}}
-                </div>
+                <div class="col-sm-6"></div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('home') }}">Dashboard</a></li>
@@ -350,27 +514,22 @@
                                     <p class="mb-1 project-meta"><i class="fa fa-map-marker-alt"></i>Address :
                                         {{ $projectDetails->address }}</p>
 
-
                                     <p class="mb-1 project-meta">
-                                        <i class="fa fa-building"></i>Company : {{ $projectDetails->client_name ?? 'N/A' }}
-
+                                        <i class="fa fa-building"></i>Company :
+                                        {{ $projectDetails->client_name ?? 'N/A' }}
                                     </p>
 
                                     <p class="mb-0 project-meta">
                                         <i class="fa fa-user"></i> Project Manager: {{ $projectDetails->aname }}
-                                        {{-- <span class="mx-2">|</span>
-                                        <i class="fa fa-phone"></i> {{ $projectDetails->aphone }} --}}
                                     </p>
-
-
                                 </div>
 
                                 <div class="col-md-4 col-12 mt-3 mt-md-0">
                                     <div class="project-header-stats">
                                         <div class="project-budget-box">
-                                            <span class="stat-label">Budget</span>
+                                            <span class="stat-label">Contract Value</span>
                                             <span class="stat-value">TK.
-                                                {{ number_format($projectDetails->budget ?? 0, 2) }}</span>
+                                                {{ number_format($summary['budget'], 2) }}</span>
                                         </div>
 
                                         <div class="project-status-row">
@@ -381,16 +540,11 @@
                                             <span class="project-dates">
                                                 <i class="fa fa-calendar-alt"></i> {{ $projectDetails->start_date }}
                                                 <i class="fa fa-arrow-right mx-1"></i>
-
-
                                                 @if ($projectDetails->closing > $projectDetails->end_date)
                                                     <span class="text-danger">{{ $projectDetails->closing }}</span>
                                                 @else
                                                     <span class="text-success">{{ $projectDetails->end_date }}</span>
                                                 @endif
-
-
-
                                             </span>
                                         </div>
                                     </div>
@@ -398,104 +552,30 @@
                             </div>
                         </div>
 
-                        {{-- Financial KPI cards — all clickable --}}
-                        <div class="row mb-2">
-                            <div class="col-lg-2 col-md-4 col-6 mb-3">
-                                <div class="kpi-card kpi-income clickable" data-toggle="modal" data-target="#modalBudget">
-                                    <i class="fa fa-chevron-right kpi-hint"></i>
-                                    <div class="kpi-label">Budget</div>
-                                    <div class="kpi-value">TK. {{ number_format($projectDetails->budget ?? 0, 0) }}</div>
-                                </div>
-                            </div>
-                            <div class="col-lg-2 col-md-4 col-6 mb-3">
-                                <div class="kpi-card kpi-income clickable" data-toggle="modal"
-                                    data-target="#modalEstimateProfit">
-                                    <i class="fa fa-chevron-right kpi-hint"></i>
-                                    <div class="kpi-label">Estimate Profit</div>
-                                    <div class="kpi-value">TK. {{ number_format($summary['estimateProfit'], 0) }}</div>
-                                </div>
-                            </div>
-                            <div class="col-lg-2 col-md-4 col-6 mb-3">
-                                <div class="kpi-card kpi-income clickable" data-toggle="modal"
-                                    data-target="#modalActualCost">
-                                    <i class="fa fa-chevron-right kpi-hint"></i>
-                                    <div class="kpi-label">Actual Cost Plan</div>
-                                    <div class="kpi-value">TK. {{ number_format($summary['actualCost'], 0) }}</div>
-                                </div>
-                            </div>
-                            <div class="col-lg-2 col-md-4 col-6 mb-3">
-                                <div class="kpi-card kpi-expense clickable" data-toggle="modal"
-                                    data-target="#modalCurrentExpense">
-                                    <i class="fa fa-chevron-right kpi-hint"></i>
-                                    <div class="kpi-label">Current Expense</div>
-                                    <div class="kpi-value">TK. {{ number_format($summary['totalExpense'], 0) }}</div>
-                                </div>
-                            </div>
-                            <div class="col-lg-2 col-md-4 col-6 mb-3">
-                                <div class="kpi-card kpi-income clickable" data-toggle="modal"
-                                    data-target="#modalCurrentIncome">
-                                    <i class="fa fa-chevron-right kpi-hint"></i>
-                                    <div class="kpi-label">Current Income</div>
-                                    <div class="kpi-value">TK. {{ number_format($summary['currentIncome'], 0) }}</div>
-                                </div>
-                            </div>
-                            <div class="col-lg-2 col-md-4 col-6 mb-3">
-                                <div class="kpi-card clickable {{ $summary['totalProfit'] >= 0 ? 'kpi-profit-pos' : 'kpi-profit-neg' }}"
-                                    data-toggle="modal" data-target="#modalNetProfit">
-                                    <i class="fa fa-chevron-right kpi-hint"></i>
-                                    <div class="kpi-label">{{ $summary['totalProfit'] >= 0 ? 'Net Profit' : 'Net Loss' }}
-                                    </div>
-                                    <div class="kpi-value">TK. {{ number_format(abs($summary['totalProfit']), 0) }}</div>
-                                </div>
-                            </div>
-                        </div>
 
-                        {{-- Progress bar --}}
-                        <div class="row mb-3">
-                            <div class="col-12">
-                                <div class="kpi-card {{ $summary['isOverBudget'] ? 'kpi-profit-neg' : 'kpi-progress' }}">
-                                    <div class="kpi-label">
-                                        Cost Progress (Expense vs Actual Cost Plan)
-                                        @if ($summary['isOverBudget'])
-                                            <span class="badge badge-light text-danger ml-1">Over Plan!</span>
-                                        @endif
-                                    </div>
-                                    <div class="kpi-value">{{ $summary['completePercent'] }}%</div>
-                                    <div class="progress">
-                                        <div class="progress-bar {{ $summary['isOverBudget'] ? 'bg-danger' : '' }}"
-                                            style="width: {{ $summary['completePercentBar'] }}%"></div>
-                                    </div>
-                                    <div class="mt-1" style="font-size:12px; opacity:.9;">
-                                        TK. {{ number_format($summary['totalExpense'], 0) }} spent of TK.
-                                        {{ number_format($summary['actualCost'], 0) }} planned
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Document / Process KPI cards --}}
+                        {{-- ============ Document / Process KPI cards ============ --}}
                         <div class="row mb-3 no-print">
                             <div class="col-lg-2 col-md-4 col-6 mb-2">
                                 <div class="kpi-card kpi-progress clickable" data-toggle="modal"
                                     data-target="#modalRequisition">
                                     <i class="fa fa-chevron-right kpi-hint"></i>
-                                    <div class="kpi-label"><i class="fa fa-file-alt"></i> Purchase Requisition</div>
+                                    <div class="kpi-label"><i class="fa fa-file-alt"></i> Requisition</div>
                                     <div class="kpi-value">{{ $summary['countRequisition'] }}</div>
                                 </div>
                             </div>
                             <div class="col-lg-2 col-md-4 col-6 mb-2">
-                                <div class="kpi-card kpi-progress clickable" data-toggle="modal"
-                                    data-target="#modalOrder">
+                                <div class="kpi-card kpi-progress clickable" data-toggle="modal" data-target="#modalOrder">
                                     <i class="fa fa-chevron-right kpi-hint"></i>
-                                    <div class="kpi-label"><i class="fa fa-file-invoice"></i> Purchase Order</div>
+                                    <div class="kpi-label"><i class="fa fa-file-invoice"></i> Order</div>
                                     <div class="kpi-value">{{ $summary['countOrder'] }}</div>
                                 </div>
                             </div>
+
                             <div class="col-lg-2 col-md-4 col-6 mb-2">
                                 <div class="kpi-card kpi-progress clickable" data-toggle="modal"
                                     data-target="#modalVoucher">
                                     <i class="fa fa-chevron-right kpi-hint"></i>
-                                    <div class="kpi-label"><i class="fa fa-receipt"></i> Purchase Voucher</div>
+                                    <div class="kpi-label"><i class="fa fa-receipt"></i> Voucher</div>
                                     <div class="kpi-value">{{ $summary['countVoucher'] }}</div>
                                 </div>
                             </div>
@@ -507,8 +587,7 @@
                                 </div>
                             </div>
                             <div class="col-lg-2 col-md-4 col-6 mb-2">
-                                <div class="kpi-card kpi-income clickable" data-toggle="modal"
-                                    data-target="#modalTransfer">
+                                <div class="kpi-card kpi-income clickable" data-toggle="modal" data-target="#modalTransfer">
                                     <i class="fa fa-chevron-right kpi-hint"></i>
                                     <div class="kpi-label"><i class="fa fa-exchange-alt"></i> Transfer</div>
                                     <div class="kpi-value">{{ $summary['countTransfer'] }}</div>
@@ -516,916 +595,1056 @@
                             </div>
                         </div>
 
-                        {{-- Detail tabs --}}
-                        <ul class="nav nav-tabs no-print" id="detailTabs" role="tablist">
-                            <li class="nav-item"><a class="nav-link active" data-toggle="tab"
-                                    href="#tab-products">Products Used</a></li>
-                            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-dinc">Direct
-                                    Income</a></li>
-                            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-iinc">Indirect
-                                    Income</a></li>
-                            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-dexp">Direct
-                                    Expense</a></li>
-                            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-iexp">Indirect
-                                    Expense</a></li>
-                        </ul>
-
-                        <div class="tab-content border border-top-0 p-3 mb-4">
-                            <div class="tab-pane fade show active" id="tab-products">
-                                @if ($productgoodreceive->isNotEmpty() || $projectTransfer->isNotEmpty())
-                                    <table class="table table-striped table-bordered" id="datatablexcel">
-                                        <thead>
-                                            <tr>
-                                                <th>Date</th>
-                                                <th>Invoice</th>
-                                                <th>Details</th>
-                                                <th>Qty</th>
-                                                <th class="amount-cell">Amount</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach ($productgoodreceive as $val)
-                                                @foreach ($val->details as $eachuse)
-                                                    <tr>
-                                                        <td>{{ $val->date }}</td>
-                                                        <td>{{ $val->invoice_no }}</td>
-                                                        <td>{{ ($eachuse->product->productCode ?? 'N/A') . ' - ' . ($eachuse->product->name ?? '') }}
-                                                        </td>
-                                                        <td>{{ $eachuse->qty }}</td>
-                                                        <td class="amount-cell">
-                                                            {{ number_format($eachuse->unit_price * $eachuse->qty, 2) }}
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                            @endforeach
-                                            <tr class="font-weight-bold">
-                                                <td colspan="4" class="text-center">Total Product Consumption</td>
-                                                <td class="amount-cell">{{ number_format($summary['productAmount'], 2) }}
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                @else
-                                    <div class="empty-state"><i class="fa fa-box-open"></i> No product usage recorded for
-                                        this project.</div>
-                                @endif
-                            </div>
-
-                            <div class="tab-pane fade" id="tab-dinc">
-                                @if ($directIncome->isNotEmpty())
-                                    <table class="table table-bordered">
-                                        <thead>
-                                            <tr>
-                                                <th>Date</th>
-                                                <th>Category</th>
-                                                <th class="amount-cell">Amount</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach ($directIncome as $row)
-                                                <tr>
-                                                    <td>{{ \Carbon\Carbon::parse($row->created_at)->format('Y-m-d') }}</td>
-                                                    <td>{{ $row->account->account_name ?? 'N/A' }}</td>
-                                                    <td class="amount-cell">{{ number_format($row->credit, 2) }}</td>
-                                                </tr>
-                                            @endforeach
-                                            <tr class="font-weight-bold">
-                                                <td colspan="2" class="text-center">Total</td>
-                                                <td class="amount-cell">{{ number_format($summary['ttlexpdirinc'], 2) }}
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                @else
-                                    <div class="empty-state"><i class="fa fa-inbox"></i> No direct income transactions.
+                        {{-- ============ MAIN: Transaction feed (left) + Sidebar summary (right) ============ --}}
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="txn-panel">
+                                    <div class="txn-tabs no-print" id="txnTabs">
+                                        <button class="txn-tab-btn active" data-tab="all">All</button>
+                                        <button class="txn-tab-btn" data-tab="requisition">Requisition</button>
+                                        <button class="txn-tab-btn" data-tab="order">Order</button>
+                                        <button class="txn-tab-btn" data-tab="voucher">Purchase</button>
+                                        <button class="txn-tab-btn" data-tab="grn">GRN</button>
+                                        <button class="txn-tab-btn" data-tab="transfer">Transfer</button>
+                                        <button class="txn-tab-btn" data-tab="expense">Expense</button>
+                                        <button class="txn-tab-btn" data-tab="income">Income</button>
+                                        @if ($projectMoney)
+                                            <button class="txn-tab-btn" data-tab="money">Money</button>
+                                        @endif
                                     </div>
-                                @endif
-                            </div>
 
-                            <div class="tab-pane fade" id="tab-iinc">
-                                @if ($indirectIncome->isNotEmpty())
-                                    <table class="table table-bordered">
-                                        <thead>
-                                            <tr>
-                                                <th>Date</th>
-                                                <th>Category</th>
-                                                <th class="amount-cell">Amount</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach ($indirectIncome as $row)
-                                                <tr>
-                                                    <td>{{ \Carbon\Carbon::parse($row->created_at)->format('Y-m-d') }}</td>
-                                                    <td>{{ $row->account->account_name ?? 'N/A' }}</td>
-                                                    <td class="amount-cell">{{ number_format($row->credit, 2) }}</td>
-                                                </tr>
-                                            @endforeach
-                                            <tr class="font-weight-bold">
-                                                <td colspan="2" class="text-center">Total</td>
-                                                <td class="amount-cell">{{ number_format($summary['ttlexpindrinc'], 2) }}
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                @else
-                                    <div class="empty-state"><i class="fa fa-inbox"></i> No indirect income transactions.
+                                    <div class="txn-list" id="txn-list">
+                                        @forelse ($firstPageTransactions as $row)
+                                            <div class="txn-row" data-type="{{ $row['type'] }}">
+                                                <div class="txn-icon">
+                                                    @switch($row['type'])
+                                                        @case('requisition')
+                                                            <i class="fa fa-file-alt text-primary"></i>
+                                                        @break
+
+                                                        @case('order')
+                                                            <i class="fa fa-file-invoice text-info"></i>
+                                                        @break
+
+                                                        @case('voucher')
+                                                            <i class="fa fa-file-invoice text-info"></i>
+                                                        @break
+
+                                                        @case('grn')
+                                                            <i class="fa fa-box text-success"></i>
+                                                        @break
+
+                                                        @case('transfer')
+                                                            <i class="fa fa-exchange-alt text-warning"></i>
+                                                        @break
+
+                                                        @case('income')
+                                                        @case('money')
+                                                            <i class="fa fa-arrow-down txn-cash-in"></i>
+                                                        @break
+
+                                                        @default
+                                                            <i class="fa fa-arrow-up txn-cash-out"></i>
+                                                    @endswitch
+                                                </div>
+
+                                                <div class="txn-main">
+                                                    <div class="txn-desc">{{ $row['desc'] }}</div>
+                                                    <div class="txn-meta">{{ $row['date'] }} &middot;
+                                                        {{ $row['invoice'] }}</div>
+                                                </div>
+
+                                                <div class="text-right">
+                                                    @if ($row['type'] === 'requisition')
+                                                        <div class="txn-amount">{{ number_format($row['amount'], 0) }}
+                                                            <small style="font-weight:400;">Qty</small>
+                                                        </div>
+                                                    @else
+                                                        <div
+                                                            class="txn-amount {{ in_array($row['type'], ['income', 'money']) ? 'income' : '' }}">
+                                                            {{ in_array($row['type'], ['income', 'money']) ? '+' : '' }}{{ number_format($row['amount'], 2) }}
+                                                        </div>
+                                                    @endif
+                                                    <div class="txn-status">{{ $row['status'] }}</div>
+                                                </div>
+                                                {{-- <div class="text-right">
+                                                    <div
+                                                        class="txn-amount {{ in_array($row['type'], ['income', 'money']) ? 'income' : '' }}">
+                                                        {{ in_array($row['type'], ['income', 'money']) ? '+' : '' }}{{ number_format($row['amount'], 2) }}
+                                                    </div>
+                                                    <div class="txn-status">{{ $row['status'] }}</div>
+                                                </div> --}}
+                                            </div>
+                                            @empty
+                                                <div class="empty-state"><i class="fa fa-inbox"></i> No transactions
+                                                    recorded for this project.</div>
+                                            @endforelse
+                                        </div>
+
+                                        <div id="txn-loading" style="text-align:center; padding: 14px; display:none;">
+                                            <i class="fa fa-spinner fa-spin"></i> Loading more...
+                                        </div>
+                                        <div id="txn-sentinel" style="height: 1px;"></div>
                                     </div>
-                                @endif
-                            </div>
+                                </div>
 
-                            <div class="tab-pane fade" id="tab-dexp">
-                                @if ($directExpenses->isNotEmpty())
-                                    <table class="table table-bordered">
-                                        <thead>
-                                            <tr>
-                                                <th>Date</th>
-                                                <th>Category</th>
-                                                <th class="amount-cell">Amount</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach ($directExpenses as $row)
-                                                <tr>
-                                                    <td>{{ \Carbon\Carbon::parse($row->created_at)->format('Y-m-d') }}</td>
-                                                    <td>{{ $row->account->account_name ?? 'N/A' }}</td>
-                                                    <td class="amount-cell">{{ number_format($row->debit, 2) }}</td>
-                                                </tr>
-                                            @endforeach
-                                            <tr class="font-weight-bold">
-                                                <td colspan="2" class="text-center">Total</td>
-                                                <td class="amount-cell">{{ number_format($summary['ttlexpdir'], 2) }}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                @else
-                                    <div class="empty-state"><i class="fa fa-inbox"></i> No direct expense transactions.
+                                <div class="col-md-4">
+                                    <div class="sidebar-sticky">
+                                        <div class="sidebar-card">
+                                            <div class="sc-title">Estimate</div>
+                                            <div class="sidebar-row">
+                                                <span class="label">Contract value</span>
+                                                <span class="value">{{ number_format($summary['budget'], 2) }}</span>
+                                            </div>
+                                            <div class="sidebar-row">
+                                                <span class="label">Estimated cost</span>
+                                                <span class="value">{{ number_format($summary['estimateCost'], 2) }}</span>
+                                            </div>
+                                            <div class="sidebar-row total">
+                                                <span class="label">Estimated profit</span>
+                                                <span
+                                                    class="value {{ $summary['estimateProfit'] >= 0 ? 'text-success' : 'text-danger' }}">{{ number_format($summary['estimateProfit'], 2) }}</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="sidebar-card">
+                                            <div class="sc-title">Progress</div>
+                                            <div class="d-flex justify-content-between align-items-baseline mb-1">
+                                                <span style="font-size:12px; color:#6c757d;">Cost progress</span>
+                                                <span
+                                                    style="font-size:18px; font-weight:700;">{{ $summary['completePercent'] }}%</span>
+                                            </div>
+                                            <div class="progress" style="background:#f1f3f5;">
+                                                <div class="progress-bar {{ $summary['isOverEstimate'] ? 'bg-danger' : 'bg-info' }}"
+                                                    style="width: {{ $summary['completePercentBar'] }}%"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="sidebar-card">
+                                            <div class="sc-title">Recognized (POC)</div>
+                                            <div class="sidebar-row">
+                                                <span class="label">Revenue</span>
+                                                <span
+                                                    class="value">{{ number_format($summary['recognizedRevenue'], 2) }}</span>
+                                            </div>
+                                            <div class="sidebar-row">
+                                                <span class="label">Profit</span>
+                                                <span
+                                                    class="value {{ $summary['recognizedProfit'] >= 0 ? 'text-success' : 'text-danger' }}">{{ number_format($summary['recognizedProfit'], 2) }}</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="sidebar-card">
+                                            <div class="sc-title">Actual (cash)</div>
+                                            <div class="sidebar-row">
+                                                <span class="label">Income</span>
+                                                <span class="value">{{ number_format($summary['actualIncome'], 2) }}</span>
+                                            </div>
+                                            <div class="sidebar-row">
+                                                <span class="label">Cost</span>
+                                                <span class="value">{{ number_format($summary['actualCost'], 2) }}</span>
+                                            </div>
+                                            <div class="sidebar-row total">
+                                                <span class="label">Profit / loss</span>
+                                                <span
+                                                    class="value {{ $summary['actualProfit'] >= 0 ? 'text-success' : 'text-danger' }}">{{ number_format($summary['actualProfit'], 2) }}</span>
+                                            </div>
+                                        </div>
+
+                                        @if ($summary['isOverEstimate'] || $summary['isExpectedLoss'])
+                                            <div class="sidebar-card" style="background:#fdecec; border-color:#f5c2c2;">
+                                                <div class="d-flex" style="gap:8px;">
+                                                    <i class="fa fa-exclamation-triangle text-danger mt-1"></i>
+                                                    <div style="font-size:12px; color:#a32d2d;">
+                                                        @if ($summary['isOverEstimate'])
+                                                            Over estimate by TK.
+                                                            {{ number_format($summary['overEstimateAmount'], 2) }}.
+                                                        @endif
+                                                        @if ($summary['isExpectedLoss'])
+                                                            Expected loss project — full loss recognized.
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
                                     </div>
-                                @endif
+                                </div>
                             </div>
 
-                            <div class="tab-pane fade" id="tab-iexp">
-                                @if ($indirectExpenses->isNotEmpty())
-                                    <table class="table table-bordered">
-                                        <thead>
-                                            <tr>
-                                                <th>Date</th>
-                                                <th>Category</th>
-                                                <th class="amount-cell">Amount</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach ($indirectExpenses as $row)
-                                                <tr>
-                                                    <td>{{ \Carbon\Carbon::parse($row->created_at)->format('Y-m-d') }}</td>
-                                                    <td>{{ $row->account->account_name ?? 'N/A' }}</td>
-                                                    <td class="amount-cell">{{ number_format($row->debit, 2) }}</td>
-                                                </tr>
-                                            @endforeach
-                                            <tr class="font-weight-bold">
-                                                <td colspan="2" class="text-center">Total</td>
-                                                <td class="amount-cell">{{ number_format($summary['ttlexpind'], 2) }}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                @else
-                                    <div class="empty-state"><i class="fa fa-inbox"></i> No indirect expense transactions.
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
+                            @if ($projectMoney)
+                                <p class="mt-3"><b>Project Money (net):</b> TK. {{ number_format($projectMoney, 2) }}
+                                </p>
+                            @endif
 
-                        @if ($projectMoney)
-                            <p><b>Project Money Received:</b> TK. {{ number_format($projectMoney, 2) }}</p>
-                        @endif
-
-                        <table class="table table-bordered">
-                            <tbody>
-                                <tr>
-                                    <td colspan="2"><b><i class="fa fa-bullseye"></i> Full Project Summary</b></td>
-                                </tr>
-                                <tr>
-                                    <td colspan="2"><b>A. Income</b></td>
-                                </tr>
-                                <tr>
-                                    <th>Sale Value</th>
-                                    <th class="amount-cell">{{ number_format($projectDetails->budget ?? 0, 2) }}</th>
-                                </tr>
-                                <tr>
-                                    <th>Indirect Income</th>
-                                    <th class="amount-cell">{{ number_format($summary['ttlexpindrinc'], 2) }}</th>
-                                </tr>
-                                <tr>
-                                    <th>Direct Income</th>
-                                    <th class="amount-cell">{{ number_format($summary['ttlexpdirinc'], 2) }}</th>
-                                </tr>
-                                <tr>
-                                    <td colspan="2"><b>B. Expenses</b></td>
-                                </tr>
-                                <tr>
-                                    <th>Direct Expenses</th>
-                                    <th class="amount-cell">{{ number_format($summary['ttlexpdir'], 2) }}</th>
-                                </tr>
-                                <tr>
-                                    <th>Indirect Expenses</th>
-                                    <th class="amount-cell">{{ number_format($summary['ttlexpind'], 2) }}</th>
-                                </tr>
-                                <tr>
-                                    <th>Total Product Consumption</th>
-                                    <th class="amount-cell">{{ number_format($summary['productAmount'], 2) }}</th>
-                                </tr>
-                                <tr class="{{ $summary['totalProfit'] >= 0 ? 'table-success' : 'table-danger' }}">
-                                    <th>Total Profit (A - B)</th>
-                                    <th class="amount-cell">{{ number_format($summary['totalProfit'], 2) }}</th>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        <div class="row mt-4">
-                            <div class="col-md-4">
-                                <p>Prepared By: _____________<br>Date: ____________________</p>
-                            </div>
-                            <div class="col-md-4"></div>
-                            <div class="col-md-4">
-                                <p>Approved By: ________________<br>Date: _________________</p>
-                            </div>
-                        </div>
-
-                        <div class="bg-success text-white text-center p-2">
-                            Thank you for choosing {{ $companyInfo->company_name ?? 'N/A' }} products. We believe you will
-                            be satisfied by our services.
-                        </div>
-                    </div>
-                </div>
-            @else
-                <div class="no-project-card no-print">
-                    <i class="fa fa-folder-open"></i>
-                    <h5>No Project Selected</h5>
-                    <p>Report দেখতে হলে উপরের Filter থেকে একটি Project সিলেক্ট করে "Generate Report" চাপুন।</p>
-                </div>
-            @endif
-        </div>
-    </div>
-
-    @if (isset($projectDetails) && $projectDetails)
-
-        {{-- ============ Budget Modal ============ --}}
-        <div class="modal fade" id="modalBudget" tabindex="-1">
-            <div class="modal-dialog modal-dialog-scrollable">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Budget Breakdown <small>{{ $projectDetails->projectCode }}</small></h5>
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <table class="table table-bordered kpi-mini-table" id="tblBudget">
-                            <tbody>
-                                <tr>
-                                    <th>Project Budget (Sale Value)</th>
-                                    <td class="amount-cell">{{ number_format($projectDetails->budget ?? 0, 2) }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Direct Income (extra)</th>
-                                    <td class="amount-cell">{{ number_format($summary['ttlexpdirinc'], 2) }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Indirect Income (extra)</th>
-                                    <td class="amount-cell">{{ number_format($summary['ttlexpindrinc'], 2) }}</td>
-                                </tr>
-                                <tr class="font-weight-bold table-success">
-                                    <th>Total Income</th>
-                                    <td class="amount-cell">{{ number_format($summary['totalIncome'], 2) }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-default" onclick="printModalTable('tblBudget','Budget Breakdown')"><i
-                                class="fa fa-print"></i> Print</button>
-                        <button class="btn btn-success"
-                            onclick="exportModalTableToExcel('tblBudget','budget_breakdown')"><i
-                                class="fa fa-file-excel"></i> Excel</button>
-                        <button class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- ============ Estimate Profit Modal ============ --}}
-        <div class="modal fade" id="modalEstimateProfit" tabindex="-1">
-            <div class="modal-dialog modal-dialog-scrollable">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Estimate Profit <small>{{ $projectDetails->projectCode }}</small></h5>
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <table class="table table-bordered kpi-mini-table" id="tblEstimateProfit">
-                            <tbody>
-                                <tr>
-                                    <th>Project Budget</th>
-                                    <td class="amount-cell">{{ number_format($projectDetails->budget ?? 0, 2) }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Estimate Profit (planned)</th>
-                                    <td class="amount-cell">{{ number_format($summary['estimateProfit'], 2) }}</td>
-                                </tr>
-                                <tr class="font-weight-bold">
-                                    <th>Actual Cost Plan (Budget − Estimate Profit)</th>
-                                    <td class="amount-cell">{{ number_format($summary['actualCost'], 2) }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Current Profit (at {{ $summary['completePercentBar'] }}% progress)</th>
-                                    <td class="amount-cell">{{ number_format($summary['currentProfit'], 2) }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-default"
-                            onclick="printModalTable('tblEstimateProfit','Estimate Profit')"><i class="fa fa-print"></i>
-                            Print</button>
-                        <button class="btn btn-success"
-                            onclick="exportModalTableToExcel('tblEstimateProfit','estimate_profit')"><i
-                                class="fa fa-file-excel"></i> Excel</button>
-                        <button class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- ============ Actual Cost Plan Modal ============ --}}
-        <div class="modal fade" id="modalActualCost" tabindex="-1">
-            <div class="modal-dialog modal-dialog-scrollable">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Actual Cost Plan <small>{{ $projectDetails->projectCode }}</small></h5>
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <table class="table table-bordered kpi-mini-table" id="tblActualCost">
-                            <tbody>
-                                <tr>
-                                    <th>Actual Cost Plan</th>
-                                    <td class="amount-cell">{{ number_format($summary['actualCost'], 2) }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Current Expense (spent so far)</th>
-                                    <td class="amount-cell">{{ number_format($summary['totalExpense'], 2) }}</td>
-                                </tr>
-                                <tr
-                                    class="font-weight-bold {{ $summary['isOverBudget'] ? 'table-danger' : 'table-success' }}">
-                                    <th>{{ $summary['isOverBudget'] ? 'Over Plan By' : 'Remaining Plan' }}</th>
-                                    <td class="amount-cell">
-                                        {{ number_format(abs($summary['actualCost'] - $summary['totalExpense']), 2) }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Progress</th>
-                                    <td class="amount-cell">{{ $summary['completePercent'] }}%</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-default" onclick="printModalTable('tblActualCost','Actual Cost Plan')"><i
-                                class="fa fa-print"></i> Print</button>
-                        <button class="btn btn-success"
-                            onclick="exportModalTableToExcel('tblActualCost','actual_cost_plan')"><i
-                                class="fa fa-file-excel"></i> Excel</button>
-                        <button class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- ============ Current Expense Modal (Direct+Indirect+Product) ============ --}}
-        <div class="modal fade" id="modalCurrentExpense" tabindex="-1">
-            <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Current Expense — All Transactions
-                            <small>{{ $projectDetails->projectCode }}</small>
-                        </h5>
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        @if ($directExpenses->isNotEmpty() || $indirectExpenses->isNotEmpty() || $summary['productAmount'] > 0)
-                            <table class="table table-bordered table-sm" id="tblCurrentExpense">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Type</th>
-                                        <th>Category</th>
-                                        <th class="amount-cell">Amount</th>
-                                    </tr>
-                                </thead>
+                            {{-- ============ Full Summary Table (Print) ============
+                            <table class="table table-bordered mt-4">
                                 <tbody>
-                                    @foreach ($directExpenses as $row)
-                                        <tr>
-                                            <td>{{ \Carbon\Carbon::parse($row->created_at)->format('Y-m-d') }}</td>
-                                            <td>Direct</td>
-                                            <td>{{ $row->account->account_name ?? 'N/A' }}</td>
-                                            <td class="amount-cell">{{ number_format($row->debit, 2) }}</td>
-                                        </tr>
-                                    @endforeach
-                                    @foreach ($indirectExpenses as $row)
-                                        <tr>
-                                            <td>{{ \Carbon\Carbon::parse($row->created_at)->format('Y-m-d') }}</td>
-                                            <td>Indirect</td>
-                                            <td>{{ $row->account->account_name ?? 'N/A' }}</td>
-                                            <td class="amount-cell">{{ number_format($row->debit, 2) }}</td>
-                                        </tr>
-                                    @endforeach
                                     <tr>
-                                        <td colspan="3">Product Consumption (GRN + Transfer)</td>
-                                        <td class="amount-cell">{{ number_format($summary['productAmount'], 2) }}</td>
+                                        <td colspan="2"><b><i class="fa fa-bullseye"></i> Full Project Summary</b></td>
                                     </tr>
-                                    <tr class="font-weight-bold table-danger">
-                                        <td colspan="3" class="text-center">Grand Total Expense</td>
-                                        <td class="amount-cell">{{ number_format($summary['totalExpense'], 2) }}</td>
+                                    <tr>
+                                        <td colspan="2"><b>A. Estimate</b></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Contract Value</th>
+                                        <th class="amount-cell">{{ number_format($summary['budget'], 2) }}</th>
+                                    </tr>
+                                    <tr>
+                                        <th>Estimated Cost</th>
+                                        <th class="amount-cell">{{ number_format($summary['estimateCost'], 2) }}</th>
+                                    </tr>
+                                    <tr>
+                                        <th>Estimated Profit</th>
+                                        <th class="amount-cell">{{ number_format($summary['estimateProfit'], 2) }}</th>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2"><b>B. Recognized (POC)</b></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Recognized Revenue</th>
+                                        <th class="amount-cell">{{ number_format($summary['recognizedRevenue'], 2) }}</th>
+                                    </tr>
+                                    <tr>
+                                        <th>Recognized Profit</th>
+                                        <th class="amount-cell">{{ number_format($summary['recognizedProfit'], 2) }}</th>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2"><b>C. Actual (Cash Basis)</b></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Direct Income</th>
+                                        <th class="amount-cell">{{ number_format($summary['ttlexpdirinc'], 2) }}</th>
+                                    </tr>
+                                    <tr>
+                                        <th>Indirect Income</th>
+                                        <th class="amount-cell">{{ number_format($summary['ttlexpindrinc'], 2) }}</th>
+                                    </tr>
+                                    <tr>
+                                        <th>Direct Expenses</th>
+                                        <th class="amount-cell">{{ number_format($summary['ttlexpdir'], 2) }}</th>
+                                    </tr>
+                                    <tr>
+                                        <th>Indirect Expenses</th>
+                                        <th class="amount-cell">{{ number_format($summary['ttlexpind'], 2) }}</th>
+                                    </tr>
+                                    <tr>
+                                        <th>Product Consumption</th>
+                                        <th class="amount-cell">{{ number_format($summary['productAmount'], 2) }}</th>
+                                    </tr>
+                                    <tr class="{{ $summary['actualProfit'] >= 0 ? 'table-success' : 'table-danger' }}">
+                                        <th>Actual Profit / Loss (Income − Cost)</th>
+                                        <th class="amount-cell">{{ number_format($summary['actualProfit'], 2) }}</th>
                                     </tr>
                                 </tbody>
-                            </table>
-                        @else
-                            <div class="empty-state"><i class="fa fa-inbox"></i> No expense recorded for this project.
+                            </table> --}}
+
+                            <div class="row mt-4">
+                                <div class="col-md-4">
+                                    <p>Prepared By: _____________<br>Date: ____________________</p>
+                                </div>
+                                <div class="col-md-4"></div>
+                                <div class="col-md-4">
+                                    <p>Approved By: ________________<br>Date: _________________</p>
+                                </div>
                             </div>
-                        @endif
+
+                            <div class="bg-success text-white text-center p-2">
+                                Thank you for choosing {{ $companyInfo->company_name ?? 'N/A' }} products. We believe
+                                you will be satisfied by our services.
+                            </div>
+                        </div>
                     </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-default"
-                            onclick="printModalTable('tblCurrentExpense','Current Expense')"><i class="fa fa-print"></i>
-                            Print</button>
-                        <button class="btn btn-success"
-                            onclick="exportModalTableToExcel('tblCurrentExpense','current_expense')"><i
-                                class="fa fa-file-excel"></i> Excel</button>
-                        <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                @else
+                    <div class="no-project-card no-print">
+                        <i class="fa fa-folder-open"></i>
+                        <h5>No Project Selected</h5>
+                        <p>Report দেখতে হলে উপরের Filter থেকে একটি Project সিলেক্ট করে "Generate Report" চাপুন।</p>
                     </div>
-                </div>
+                @endif
             </div>
         </div>
 
-        {{-- ============ Current Income Modal (Direct+Indirect+Project Money) ============ --}}
-        <div class="modal fade" id="modalCurrentIncome" tabindex="-1">
-            <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Current Income — All Transactions
-                            <small>{{ $projectDetails->projectCode }}</small>
-                        </h5>
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        @if ($directIncome->isNotEmpty() || $indirectIncome->isNotEmpty() || $projectMoney > 0)
-                            <table class="table table-bordered table-sm" id="tblCurrentIncome">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Type</th>
-                                        <th>Category</th>
-                                        <th class="amount-cell">Amount</th>
-                                    </tr>
-                                </thead>
+        @if (isset($projectDetails) && $projectDetails)
+
+            {{-- ============ Budget Modal ============ --}}
+            <div class="modal fade" id="modalBudget" tabindex="-1">
+                <div class="modal-dialog modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Contract Value Breakdown
+                                <small>{{ $projectDetails->projectCode }}</small>
+                            </h5>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <table class="table table-bordered kpi-mini-table" id="tblBudget">
                                 <tbody>
-                                    @foreach ($directIncome as $row)
-                                        <tr>
-                                            <td>{{ \Carbon\Carbon::parse($row->created_at)->format('Y-m-d') }}</td>
-                                            <td>Direct</td>
-                                            <td>{{ $row->account->account_name ?? 'N/A' }}</td>
-                                            <td class="amount-cell">{{ number_format($row->credit, 2) }}</td>
-                                        </tr>
-                                    @endforeach
-                                    @foreach ($indirectIncome as $row)
-                                        <tr>
-                                            <td>{{ \Carbon\Carbon::parse($row->created_at)->format('Y-m-d') }}</td>
-                                            <td>Indirect</td>
-                                            <td>{{ $row->account->account_name ?? 'N/A' }}</td>
-                                            <td class="amount-cell">{{ number_format($row->credit, 2) }}</td>
-                                        </tr>
-                                    @endforeach
                                     <tr>
-                                        <td colspan="3">Project Money Received</td>
-                                        <td class="amount-cell">{{ number_format($projectMoney, 2) }}</td>
+                                        <th>Contract Value (Budget)</th>
+                                        <td class="amount-cell">{{ number_format($summary['budget'], 2) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Direct Income (extra)</th>
+                                        <td class="amount-cell">{{ number_format($summary['ttlexpdirinc'], 2) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Indirect Income (extra)</th>
+                                        <td class="amount-cell">{{ number_format($summary['ttlexpindrinc'], 2) }}</td>
                                     </tr>
                                     <tr class="font-weight-bold table-success">
-                                        <td colspan="3" class="text-center">Grand Total Income</td>
-                                        <td class="amount-cell">{{ number_format($summary['currentIncome'], 2) }}</td>
+                                        <th>Total Income</th>
+                                        <td class="amount-cell">{{ number_format($summary['totalIncome'], 2) }}</td>
                                     </tr>
                                 </tbody>
                             </table>
-                        @else
-                            <div class="empty-state"><i class="fa fa-inbox"></i> No income recorded for this project.
-                            </div>
-                        @endif
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-default" onclick="printModalTable('tblCurrentIncome','Current Income')"><i
-                                class="fa fa-print"></i> Print</button>
-                        <button class="btn btn-success"
-                            onclick="exportModalTableToExcel('tblCurrentIncome','current_income')"><i
-                                class="fa fa-file-excel"></i> Excel</button>
-                        <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-default" onclick="printModalTable('tblBudget','Budget Breakdown')"><i
+                                    class="fa fa-print"></i> Print</button>
+                            <button class="btn btn-success"
+                                onclick="exportModalTableToExcel('tblBudget','budget_breakdown')"><i
+                                    class="fa fa-file-excel"></i> Excel</button>
+                            <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        {{-- ============ Net Profit/Loss Modal (Full Summary) ============ --}}
-        <div class="modal fade" id="modalNetProfit" tabindex="-1">
-            <div class="modal-dialog modal-dialog-scrollable">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">{{ $summary['totalProfit'] >= 0 ? 'Net Profit' : 'Net Loss' }} — Full
-                            Summary <small>{{ $projectDetails->projectCode }}</small></h5>
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <table class="table table-bordered kpi-mini-table" id="tblNetProfit">
-                            <tbody>
-                                <tr>
-                                    <td colspan="2"><b>A. Income</b></td>
-                                </tr>
-                                <tr>
-                                    <th>Sale Value</th>
-                                    <td class="amount-cell">{{ number_format($projectDetails->budget ?? 0, 2) }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Direct Income</th>
-                                    <td class="amount-cell">{{ number_format($summary['ttlexpdirinc'], 2) }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Indirect Income</th>
-                                    <td class="amount-cell">{{ number_format($summary['ttlexpindrinc'], 2) }}</td>
-                                </tr>
-                                <tr>
-                                    <td colspan="2"><b>B. Expenses</b></td>
-                                </tr>
-                                <tr>
-                                    <th>Direct Expenses</th>
-                                    <td class="amount-cell">{{ number_format($summary['ttlexpdir'], 2) }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Indirect Expenses</th>
-                                    <td class="amount-cell">{{ number_format($summary['ttlexpind'], 2) }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Product Consumption</th>
-                                    <td class="amount-cell">{{ number_format($summary['productAmount'], 2) }}</td>
-                                </tr>
-                                <tr
-                                    class="font-weight-bold {{ $summary['totalProfit'] >= 0 ? 'table-success' : 'table-danger' }}">
-                                    <th>{{ $summary['totalProfit'] >= 0 ? 'Net Profit' : 'Net Loss' }} (A − B)</th>
-                                    <td class="amount-cell">{{ number_format(abs($summary['totalProfit']), 2) }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-default"
-                            onclick="printModalTable('tblNetProfit','Net Profit Loss Summary')"><i
-                                class="fa fa-print"></i> Print</button>
-                        <button class="btn btn-success"
-                            onclick="exportModalTableToExcel('tblNetProfit','net_profit_loss')"><i
-                                class="fa fa-file-excel"></i> Excel</button>
-                        <button class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- ============ Purchase Requisition Modal ============ --}}
-        <div class="modal fade" id="modalRequisition" tabindex="-1">
-            <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Purchase Requisition <small>{{ $projectDetails->projectCode }}</small>
-                        </h5>
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        @if ($purchaseRequisitions->isNotEmpty())
-                            <table class="table table-bordered table-sm" id="tblRequisition">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Reference No</th>
-                                        <th>Status</th>
-                                        <th class="amount-cell">Amount</th>
-                                    </tr>
-                                </thead>
+            {{-- ============ Estimate Cost / Profit Modal ============ --}}
+            <div class="modal fade" id="modalEstimateProfit" tabindex="-1">
+                <div class="modal-dialog modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Estimate Breakdown <small>{{ $projectDetails->projectCode }}</small>
+                            </h5>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <table class="table table-bordered kpi-mini-table" id="tblEstimateProfit">
                                 <tbody>
-                                    @foreach ($purchaseRequisitions as $row)
+                                    <tr>
+                                        <th>Contract Value (Budget)</th>
+                                        <td class="amount-cell">{{ number_format($summary['budget'], 2) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Estimated Cost (input)</th>
+                                        <td class="amount-cell">{{ number_format($summary['estimateCost'], 2) }}</td>
+                                    </tr>
+                                    <tr class="font-weight-bold">
+                                        <th>Estimated Profit (Budget − Estimated Cost)</th>
+                                        <td class="amount-cell">{{ number_format($summary['estimateProfit'], 2) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Recognized Profit (at {{ $summary['completePercentBar'] }}% progress)</th>
+                                        <td class="amount-cell">{{ number_format($summary['recognizedProfit'], 2) }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-default"
+                                onclick="printModalTable('tblEstimateProfit','Estimate Breakdown')"><i
+                                    class="fa fa-print"></i>
+                                Print</button>
+                            <button class="btn btn-success"
+                                onclick="exportModalTableToExcel('tblEstimateProfit','estimate_breakdown')"><i
+                                    class="fa fa-file-excel"></i> Excel</button>
+                            <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ============ Actual Cost / POC Modal ============ --}}
+            <div class="modal fade" id="modalActualCost" tabindex="-1">
+                <div class="modal-dialog modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Progress & Recognized Revenue
+                                <small>{{ $projectDetails->projectCode }}</small>
+                            </h5>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <table class="table table-bordered kpi-mini-table" id="tblActualCost">
+                                <tbody>
+                                    <tr>
+                                        <th>Estimated Cost</th>
+                                        <td class="amount-cell">{{ number_format($summary['estimateCost'], 2) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Actual Cost (spent so far)</th>
+                                        <td class="amount-cell">{{ number_format($summary['actualCost'], 2) }}</td>
+                                    </tr>
+                                    <tr
+                                        class="font-weight-bold {{ $summary['isOverEstimate'] ? 'table-danger' : 'table-success' }}">
+                                        <th>{{ $summary['isOverEstimate'] ? 'Over Estimate By' : 'Remaining Estimate' }}
+                                        </th>
+                                        <td class="amount-cell">
+                                            {{ number_format(abs($summary['estimateCost'] - $summary['actualCost']), 2) }}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Progress</th>
+                                        <td class="amount-cell">{{ $summary['completePercent'] }}%</td>
+                                    </tr>
+                                    <tr class="font-weight-bold">
+                                        <th>Recognized Revenue (Budget × Progress)</th>
+                                        <td class="amount-cell">
+                                            {{ number_format($summary['recognizedRevenue'], 2) }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-default"
+                                onclick="printModalTable('tblActualCost','Progress and Recognized Revenue')"><i
+                                    class="fa fa-print"></i> Print</button>
+                            <button class="btn btn-success"
+                                onclick="exportModalTableToExcel('tblActualCost','progress_recognized_revenue')"><i
+                                    class="fa fa-file-excel"></i> Excel</button>
+                            <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ============ Current Expense Modal (Direct+Indirect+Product) ============ --}}
+            <div class="modal fade" id="modalCurrentExpense" tabindex="-1">
+                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Actual Cost — All Transactions
+                                <small>{{ $projectDetails->projectCode }}</small>
+                            </h5>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            @if ($directExpenses->isNotEmpty() || $indirectExpenses->isNotEmpty() || $summary['productAmount'] > 0)
+                                <table class="table table-bordered table-sm" id="tblCurrentExpense">
+                                    <thead>
                                         <tr>
-                                            <td>{{ \Carbon\Carbon::parse($row->created_at)->format('Y-m-d') }}</td>
-                                            <td>{{ $row->reference_no ?? ($row->requisition_no ?? 'N/A') }}</td>
-                                            <td>{{ $row->status ?? '-' }}</td>
-                                            <td class="amount-cell">
-                                                {{ number_format($row->details->sum(fn($d) => ($d->qty ?? 0) * ($d->unit_price ?? 0)), 2) }}
+                                            <th>Date</th>
+                                            <th>Type</th>
+                                            <th>Category</th>
+                                            <th class="amount-cell">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($directExpenses as $row)
+                                            <tr>
+                                                <td>{{ \Carbon\Carbon::parse($row->created_at)->format('Y-m-d') }}</td>
+                                                <td>Direct</td>
+                                                <td>{{ $row->account->account_name ?? 'N/A' }}</td>
+                                                <td class="amount-cell">{{ number_format($row->debit, 2) }}</td>
+                                            </tr>
+                                        @endforeach
+                                        @foreach ($indirectExpenses as $row)
+                                            <tr>
+                                                <td>{{ \Carbon\Carbon::parse($row->created_at)->format('Y-m-d') }}</td>
+                                                <td>Indirect</td>
+                                                <td>{{ $row->account->account_name ?? 'N/A' }}</td>
+                                                <td class="amount-cell">{{ number_format($row->debit, 2) }}</td>
+                                            </tr>
+                                        @endforeach
+                                        <tr>
+                                            <td colspan="3">Product Consumption (GRN + Transfer)</td>
+                                            <td class="amount-cell">{{ number_format($summary['productAmount'], 2) }}
                                             </td>
                                         </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        @else
-                            <div class="empty-state"><i class="fa fa-inbox"></i> No purchase requisition found.</div>
-                        @endif
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-default"
-                            onclick="printModalTable('tblRequisition','Purchase Requisition')"><i class="fa fa-print"></i>
-                            Print</button>
-                        <button class="btn btn-success"
-                            onclick="exportModalTableToExcel('tblRequisition','purchase_requisition')"><i
-                                class="fa fa-file-excel"></i> Excel</button>
-                        <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                        <tr class="font-weight-bold table-danger">
+                                            <td colspan="3" class="text-center">Grand Total Actual Cost</td>
+                                            <td class="amount-cell">{{ number_format($summary['actualCost'], 2) }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            @else
+                                <div class="empty-state"><i class="fa fa-inbox"></i> No expense recorded for this
+                                    project.
+                                </div>
+                            @endif
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-default" onclick="printModalTable('tblCurrentExpense','Actual Cost')"><i
+                                    class="fa fa-print"></i>
+                                Print</button>
+                            <button class="btn btn-success"
+                                onclick="exportModalTableToExcel('tblCurrentExpense','actual_cost')"><i
+                                    class="fa fa-file-excel"></i> Excel</button>
+                            <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        {{-- ============ Purchase Order Modal ============ --}}
-        <div class="modal fade" id="modalOrder" tabindex="-1">
-            <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Purchase Order <small>{{ $projectDetails->projectCode }}</small></h5>
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        @if ($purchaseOrders->isNotEmpty())
-                            <table class="table table-bordered table-sm" id="tblOrder">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Order No</th>
-                                        <th>Status</th>
-                                        <th class="amount-cell">Amount</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($purchaseOrders as $row)
+            {{-- ============ Current Income Modal (Direct+Indirect+Project Money) ============ --}}
+            <div class="modal fade" id="modalCurrentIncome" tabindex="-1">
+                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Actual Income — All Transactions
+                                <small>{{ $projectDetails->projectCode }}</small>
+                            </h5>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            @if ($directIncome->isNotEmpty() || $indirectIncome->isNotEmpty() || $projectMoney > 0)
+                                <table class="table table-bordered table-sm" id="tblCurrentIncome">
+                                    <thead>
                                         <tr>
-                                            <td>{{ \Carbon\Carbon::parse($row->created_at)->format('Y-m-d') }}</td>
-                                            <td>{{ $row->order_no ?? ($row->invoice_no ?? 'N/A') }}</td>
-                                            <td>{{ $row->status ?? '-' }}</td>
-                                            <td class="amount-cell">
-                                                {{ number_format($row->details->sum(fn($d) => ($d->qty ?? 0) * ($d->unit_price ?? 0)), 2) }}
+                                            <th>Date</th>
+                                            <th>Type</th>
+                                            <th>Category</th>
+                                            <th class="amount-cell">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($directIncome as $row)
+                                            <tr>
+                                                <td>{{ \Carbon\Carbon::parse($row->created_at)->format('Y-m-d') }}</td>
+                                                <td>Direct</td>
+                                                <td>{{ $row->account->account_name ?? 'N/A' }}</td>
+                                                <td class="amount-cell">{{ number_format($row->credit, 2) }}</td>
+                                            </tr>
+                                        @endforeach
+                                        @foreach ($indirectIncome as $row)
+                                            <tr>
+                                                <td>{{ \Carbon\Carbon::parse($row->created_at)->format('Y-m-d') }}</td>
+                                                <td>Indirect</td>
+                                                <td>{{ $row->account->account_name ?? 'N/A' }}</td>
+                                                <td class="amount-cell">{{ number_format($row->credit, 2) }}</td>
+                                            </tr>
+                                        @endforeach
+                                        <tr>
+                                            <td colspan="3">Project Money (net)</td>
+                                            <td class="amount-cell">{{ number_format($projectMoney, 2) }}</td>
+                                        </tr>
+                                        <tr class="font-weight-bold table-success">
+                                            <td colspan="3" class="text-center">Grand Total Actual Income</td>
+                                            <td class="amount-cell">{{ number_format($summary['actualIncome'], 2) }}
                                             </td>
                                         </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        @else
-                            <div class="empty-state"><i class="fa fa-inbox"></i> No purchase order found.</div>
-                        @endif
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-default" onclick="printModalTable('tblOrder','Purchase Order')"><i
-                                class="fa fa-print"></i> Print</button>
-                        <button class="btn btn-success" onclick="exportModalTableToExcel('tblOrder','purchase_order')"><i
-                                class="fa fa-file-excel"></i> Excel</button>
-                        <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                    </tbody>
+                                </table>
+                            @else
+                                <div class="empty-state"><i class="fa fa-inbox"></i> No income recorded for this
+                                    project.
+                                </div>
+                            @endif
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-default" onclick="printModalTable('tblCurrentIncome','Actual Income')"><i
+                                    class="fa fa-print"></i> Print</button>
+                            <button class="btn btn-success"
+                                onclick="exportModalTableToExcel('tblCurrentIncome','actual_income')"><i
+                                    class="fa fa-file-excel"></i> Excel</button>
+                            <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        {{-- ============ Purchase Voucher Modal ============ --}}
-        <div class="modal fade" id="modalVoucher" tabindex="-1">
-            <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Purchase Voucher <small>{{ $projectDetails->projectCode }}</small></h5>
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        @if ($purchaseVouchers->isNotEmpty())
-                            <table class="table table-bordered table-sm" id="tblVoucher">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Voucher No</th>
-                                        <th>Status</th>
-                                        <th class="amount-cell">Amount</th>
-                                    </tr>
-                                </thead>
+            {{-- ============ Net Profit/Loss Modal (Full Summary) ============ --}}
+            <div class="modal fade" id="modalNetProfit" tabindex="-1">
+                <div class="modal-dialog modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                {{ $summary['actualProfit'] >= 0 ? 'Actual Profit' : 'Actual Loss' }} — Full Summary
+                                <small>{{ $projectDetails->projectCode }}</small>
+                            </h5>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <table class="table table-bordered kpi-mini-table" id="tblNetProfit">
                                 <tbody>
-                                    @foreach ($purchaseVouchers as $row)
-                                        <tr>
-                                            <td>{{ \Carbon\Carbon::parse($row->created_at)->format('Y-m-d') }}</td>
-                                            <td>{{ $row->voucher_no ?? ($row->invoice_no ?? 'N/A') }}</td>
-                                            <td>{{ $row->status ?? '-' }}</td>
-                                            <td class="amount-cell">
-                                                {{ number_format($row->details->sum(fn($d) => ($d->qty ?? 0) * ($d->unit_price ?? 0)), 2) }}
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        @else
-                            <div class="empty-state"><i class="fa fa-inbox"></i> No purchase voucher found.</div>
-                        @endif
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-default" onclick="printModalTable('tblVoucher','Purchase Voucher')"><i
-                                class="fa fa-print"></i> Print</button>
-                        <button class="btn btn-success"
-                            onclick="exportModalTableToExcel('tblVoucher','purchase_voucher')"><i
-                                class="fa fa-file-excel"></i> Excel</button>
-                        <button class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- ============ Good Receive Modal ============ --}}
-        <div class="modal fade" id="modalGrn" tabindex="-1">
-            <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Good Receive <small>{{ $projectDetails->projectCode }}</small></h5>
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        @if ($productgoodreceive->isNotEmpty())
-                            <table class="table table-bordered table-sm" id="tblGrn">
-                                <thead>
                                     <tr>
-                                        <th>Date</th>
-                                        <th>Invoice</th>
-                                        <th>Items</th>
-                                        <th class="amount-cell">Amount</th>
+                                        <td colspan="2"><b>A. Actual Income</b></td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($productgoodreceive as $val)
-                                        <tr>
-                                            <td>{{ $val->date }}</td>
-                                            <td>{{ $val->invoice_no }}</td>
-                                            <td>{{ $val->details->count() }} item(s)</td>
-                                            <td class="amount-cell">
-                                                {{ number_format($val->details->sum(fn($d) => $d->qty * $d->unit_price), 2) }}
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        @else
-                            <div class="empty-state"><i class="fa fa-inbox"></i> No good receive found.</div>
-                        @endif
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-default" onclick="printModalTable('tblGrn','Good Receive')"><i
-                                class="fa fa-print"></i> Print</button>
-                        <button class="btn btn-success" onclick="exportModalTableToExcel('tblGrn','good_receive')"><i
-                                class="fa fa-file-excel"></i> Excel</button>
-                        <button class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- ============ Transfer Modal ============ --}}
-        <div class="modal fade" id="modalTransfer" tabindex="-1">
-            <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Transfer <small>{{ $projectDetails->projectCode }}</small></h5>
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        @if ($projectTransfer->isNotEmpty())
-                            <table class="table table-bordered table-sm" id="tblTransfer">
-                                <thead>
                                     <tr>
-                                        <th>Date</th>
-                                        <th>Invoice</th>
-                                        <th>Items</th>
+                                        <th>Direct Income</th>
+                                        <td class="amount-cell">{{ number_format($summary['ttlexpdirinc'], 2) }}</td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($projectTransfer as $val)
-                                        <tr>
-                                            <td>{{ $val->order_date }}</td>
-                                            <td>{{ $val->invoice_no }}</td>
-                                            <td>{{ $val->details->count() }} item(s)</td>
-                                        </tr>
-                                    @endforeach
+                                    <tr>
+                                        <th>Indirect Income</th>
+                                        <td class="amount-cell">{{ number_format($summary['ttlexpindrinc'], 2) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Project Money (net)</th>
+                                        <td class="amount-cell">{{ number_format($projectMoney, 2) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2"><b>B. Actual Cost</b></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Direct Expenses</th>
+                                        <td class="amount-cell">{{ number_format($summary['ttlexpdir'], 2) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Indirect Expenses</th>
+                                        <td class="amount-cell">{{ number_format($summary['ttlexpind'], 2) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Product Consumption</th>
+                                        <td class="amount-cell">{{ number_format($summary['productAmount'], 2) }}</td>
+                                    </tr>
+                                    <tr
+                                        class="font-weight-bold {{ $summary['actualProfit'] >= 0 ? 'table-success' : 'table-danger' }}">
+                                        <th>{{ $summary['actualProfit'] >= 0 ? 'Actual Profit' : 'Actual Loss' }} (A −
+                                            B)</th>
+                                        <td class="amount-cell">
+                                            {{ number_format(abs($summary['actualProfit']), 2) }}</td>
+                                    </tr>
                                 </tbody>
                             </table>
-                        @else
-                            <div class="empty-state"><i class="fa fa-inbox"></i> No transfer found.</div>
-                        @endif
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-default" onclick="printModalTable('tblTransfer','Transfer')"><i
-                                class="fa fa-print"></i> Print</button>
-                        <button class="btn btn-success" onclick="exportModalTableToExcel('tblTransfer','transfer')"><i
-                                class="fa fa-file-excel"></i> Excel</button>
-                        <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-default"
+                                onclick="printModalTable('tblNetProfit','Actual Profit Loss Summary')"><i
+                                    class="fa fa-print"></i> Print</button>
+                            <button class="btn btn-success"
+                                onclick="exportModalTableToExcel('tblNetProfit','actual_profit_loss')"><i
+                                    class="fa fa-file-excel"></i> Excel</button>
+                            <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-    @endif
-@endsection
+            {{-- ============ Purchase Requisition Modal ============ --}}
+            <div class="modal fade" id="modalRequisition" tabindex="-1">
+                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Purchase Requisition
+                                <small>{{ $projectDetails->projectCode }}</small>
+                            </h5>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            @if ($purchaseRequisitions->isNotEmpty())
+                                <table class="table table-bordered table-sm" id="tblRequisition">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Reference No</th>
+                                            <th>Status</th>
+                                            <th class="amount-cell">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($purchaseRequisitions as $row)
+                                            <tr>
+                                                <td>{{ \Carbon\Carbon::parse($row->created_at)->format('Y-m-d') }}</td>
+                                                <td>{{ $row->reference_no ?? ($row->requisition_no ?? 'N/A') }}</td>
+                                                <td>{{ $row->status ?? '-' }}</td>
+                                                <td class="amount-cell">
+                                                    {{ number_format($row->details->sum(fn($d) => ($d->qty ?? 0) * ($d->unit_price ?? 0)), 2) }}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            @else
+                                <div class="empty-state"><i class="fa fa-inbox"></i> No purchase requisition found.
+                                </div>
+                            @endif
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-default"
+                                onclick="printModalTable('tblRequisition','Purchase Requisition')"><i class="fa fa-print"></i>
+                                Print</button>
+                            <button class="btn btn-success"
+                                onclick="exportModalTableToExcel('tblRequisition','purchase_requisition')"><i
+                                    class="fa fa-file-excel"></i> Excel</button>
+                            <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-@section('scripts')
-    <script>
-        $(function() {
-            $('.select2').select2({
-                width: '100%'
+            {{-- ============ Purchase Order Modal ============ --}}
+            <div class="modal fade" id="modalOrder" tabindex="-1">
+                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Purchase Order <small>{{ $projectDetails->projectCode }}</small>
+                            </h5>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            @if ($purchaseOrders->isNotEmpty())
+                                <table class="table table-bordered table-sm" id="tblOrder">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Order No</th>
+                                            <th>Status</th>
+                                            <th class="amount-cell">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($purchaseOrders as $row)
+                                            <tr>
+                                                <td>{{ \Carbon\Carbon::parse($row->created_at)->format('Y-m-d') }}</td>
+                                                <td>{{ $row->order_no ?? ($row->invoice_no ?? 'N/A') }}</td>
+                                                <td>{{ $row->status ?? '-' }}</td>
+                                                <td class="amount-cell">
+                                                    {{ number_format($row->details->sum(fn($d) => ($d->qty ?? 0) * ($d->unit_price ?? 0)), 2) }}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            @else
+                                <div class="empty-state"><i class="fa fa-inbox"></i> No purchase order found.</div>
+                            @endif
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-default" onclick="printModalTable('tblOrder','Purchase Order')"><i
+                                    class="fa fa-print"></i> Print</button>
+                            <button class="btn btn-success" onclick="exportModalTableToExcel('tblOrder','purchase_order')"><i
+                                    class="fa fa-file-excel"></i> Excel</button>
+                            <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ============ Purchase Voucher Modal ============ --}}
+            <div class="modal fade" id="modalVoucher" tabindex="-1">
+                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Purchase Voucher <small>{{ $projectDetails->projectCode }}</small>
+                            </h5>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            @if ($purchaseVouchers->isNotEmpty())
+                                <table class="table table-bordered table-sm" id="tblVoucher">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Voucher No</th>
+                                            <th>Status</th>
+                                            <th class="amount-cell">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($purchaseVouchers as $row)
+                                            <tr>
+                                                <td>{{ \Carbon\Carbon::parse($row->created_at)->format('Y-m-d') }}</td>
+                                                <td>{{ $row->voucher_no ?? ($row->invoice_no ?? 'N/A') }}</td>
+                                                <td>{{ $row->status ?? '-' }}</td>
+                                                <td class="amount-cell">
+                                                    {{ number_format($row->details->sum(fn($d) => ($d->qty ?? 0) * ($d->unit_price ?? 0)), 2) }}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            @else
+                                <div class="empty-state"><i class="fa fa-inbox"></i> No purchase voucher found.</div>
+                            @endif
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-default" onclick="printModalTable('tblVoucher','Purchase Voucher')"><i
+                                    class="fa fa-print"></i> Print</button>
+                            <button class="btn btn-success"
+                                onclick="exportModalTableToExcel('tblVoucher','purchase_voucher')"><i
+                                    class="fa fa-file-excel"></i> Excel</button>
+                            <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ============ Good Receive Modal ============ --}}
+            <div class="modal fade" id="modalGrn" tabindex="-1">
+                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Good Receive <small>{{ $projectDetails->projectCode }}</small></h5>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            @if ($productgoodreceive->isNotEmpty())
+                                <table class="table table-bordered table-sm" id="tblGrn">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Invoice</th>
+                                            <th>Items</th>
+                                            <th class="amount-cell">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($productgoodreceive as $val)
+                                            <tr>
+                                                <td>{{ $val->date }}</td>
+                                                <td>{{ $val->invoice_no }}</td>
+                                                <td>{{ $val->details->count() }} item(s)</td>
+                                                <td class="amount-cell">
+                                                    {{ number_format($val->details->sum(fn($d) => $d->qty * $d->unit_price), 2) }}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            @else
+                                <div class="empty-state"><i class="fa fa-inbox"></i> No good receive found.</div>
+                            @endif
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-default" onclick="printModalTable('tblGrn','Good Receive')"><i
+                                    class="fa fa-print"></i> Print</button>
+                            <button class="btn btn-success" onclick="exportModalTableToExcel('tblGrn','good_receive')"><i
+                                    class="fa fa-file-excel"></i> Excel</button>
+                            <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ============ Transfer Modal ============ --}}
+            <div class="modal fade" id="modalTransfer" tabindex="-1">
+                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Transfer <small>{{ $projectDetails->projectCode }}</small></h5>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            @if ($projectTransfer->isNotEmpty())
+                                <table class="table table-bordered table-sm" id="tblTransfer">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Invoice</th>
+                                            <th>Items</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($projectTransfer as $val)
+                                            <tr>
+                                                <td>{{ $val->order_date }}</td>
+                                                <td>{{ $val->invoice_no }}</td>
+                                                <td>{{ $val->details->count() }} item(s)</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            @else
+                                <div class="empty-state"><i class="fa fa-inbox"></i> No transfer found.</div>
+                            @endif
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-default" onclick="printModalTable('tblTransfer','Transfer')"><i
+                                    class="fa fa-print"></i> Print</button>
+                            <button class="btn btn-success" onclick="exportModalTableToExcel('tblTransfer','transfer')"><i
+                                    class="fa fa-file-excel"></i> Excel</button>
+                            <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        @endif
+    @endsection
+
+    @section('scripts')
+        <script>
+            $(function() {
+                $('.select2').select2({
+                    width: '100%'
+                });
             });
 
-            // Guarded chart init — charts are currently disabled (canvas removed from view),
-            // this prevents a console error if/when charts are re-enabled without matching canvas.
-            var pieCanvas = document.getElementById('pieChart');
-            var barCanvas = document.getElementById('myChart');
-
+            // ============ Unified Transaction Feed — lazy load / infinite scroll ============
             @if (isset($projectDetails) && $projectDetails)
-                if (pieCanvas) {
-                    new Chart(pieCanvas.getContext('2d'), {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['Complete', 'Incomplete'],
-                            datasets: [{
-                                data: [{{ $summary['completePercentBar'] ?? 0 }},
-                                    {{ $summary['incompletePercent'] ?? 100 }}
-                                ],
-                                backgroundColor: ['#00a65a', '#f56954']
-                            }]
+                (function() {
+                    const projectId = {{ $projectDetails->id }};
+                    const listEl = document.getElementById('txn-list');
+                    const loadingEl = document.getElementById('txn-loading');
+                    const sentinel = document.getElementById('txn-sentinel');
+                    const hasFirstPageMore = {{ $firstPageHasMore ? 'true' : 'false' }};
+
+                    let currentPage = 1;
+                    let hasMore = hasFirstPageMore;
+                    let isLoading = false;
+                    let activeType = 'all';
+
+                    const iconMap = {
+                        requisition: {
+                            icon: 'fa-file-alt',
+                            cls: 'text-primary'
                         },
-                        options: {
-                            maintainAspectRatio: false,
-                            responsive: true
-                        }
-                    });
-                }
-                if (barCanvas) {
-                    var profit = {{ $summary['currentProfit'] ?? 0 }};
-                    new Chart(barCanvas, {
-                        type: 'bar',
-                        data: {
-                            labels: ["{{ $projectDetails->pname ?? '' }}"],
-                            datasets: [{
-                                label: 'Profit/Loss vs Budget',
-                                data: [profit, {{ $projectDetails->budget ?? 0 }}],
-                                backgroundColor: profit >= 0 ? ['#3F88C5', '#3F88C5'] : ['#FF5E5B',
-                                    '#3F88C5'
-                                ]
-                            }]
+                        order: {
+                            icon: 'fa-file-invoice',
+                            cls: 'text-info'
                         },
-                        options: {
-                            maintainAspectRatio: false,
-                            responsive: true
+                        purchase: {
+                            icon: 'fa-file-invoice',
+                            cls: 'text-info'
+                        },
+                        voucher: {
+                            icon: 'fa-file-invoice',
+                            cls: 'text-info'
+                        },
+                        grn: {
+                            icon: 'fa-box',
+                            cls: 'text-success'
+                        },
+                        transfer: {
+                            icon: 'fa-exchange-alt',
+                            cls: 'text-warning'
+                        },
+                        income: {
+                            icon: 'fa-arrow-down',
+                            cls: 'txn-cash-in'
+                        },
+                        money: {
+                            icon: 'fa-arrow-down',
+                            cls: 'txn-cash-in'
+                        },
+                        expense: {
+                            icon: 'fa-arrow-up',
+                            cls: 'txn-cash-out'
+                        },
+                    };
+
+                    function renderRow(row) {
+                        const div = document.createElement('div');
+                        div.className = 'txn-row';
+                        div.dataset.type = row.type;
+
+                        const isIncomeLike = row.type === 'income' || row.type === 'money';
+                        const isRequisition = row.type === 'requisition';
+                        const meta = iconMap[row.type] || {
+                            icon: 'fa-file',
+                            cls: ''
+                        };
+
+                        let amountHtml;
+                        if (isRequisition) {
+                            amountHtml =
+                                `<div class="txn-amount">${Number(row.amount).toLocaleString(undefined, {maximumFractionDigits: 0})} <small style="font-weight:400;">QTY</small></div>`;
+                        } else {
+                            amountHtml =
+                                `<div class="txn-amount ${isIncomeLike ? 'income' : ''}">${isIncomeLike ? '+' : ''}${Number(row.amount).toLocaleString(undefined, {minimumFractionDigits: 2})}</div>`;
                         }
+
+                        div.innerHTML = `
+        <div class="txn-icon"><i class="fa ${meta.icon} ${meta.cls}"></i></div>
+        <div class="txn-main">
+            <div class="txn-desc">${row.desc}</div>
+            <div class="txn-meta">${row.date} &middot; ${row.invoice}</div>
+        </div>
+        <div class="text-right">
+            ${amountHtml}
+            <div class="txn-status">${row.status}</div>
+        </div>
+    `;
+                        return div;
+                    }
+
+
+                    const baseUrl = "{{ route('project.transactions.feed', ['id' => $projectDetails->id]) }}";
+
+
+                    function loadNextPage() {
+                        if (isLoading || !hasMore) return;
+                        isLoading = true;
+                        loadingEl.style.display = 'block';
+
+                        const nextPage = currentPage + 1;
+
+                        const url = `${baseUrl}?page=${nextPage}&type=${activeType}`;
+
+                        fetch(url)
+                            .then(res => res.json())
+                            .then(json => {
+                                json.data.forEach(row => listEl.appendChild(renderRow(row)));
+                                hasMore = json.has_more;
+                                currentPage = nextPage;
+                                if (json.data.length === 0 && currentPage === 1) {
+                                    listEl.innerHTML =
+                                        '<div class="empty-state"><i class="fa fa-inbox"></i> No transactions found.</div>';
+                                }
+                            })
+                            .catch(err => console.error('Transaction load failed:', err))
+                            .finally(() => {
+                                isLoading = false;
+                                loadingEl.style.display = 'none';
+                            });
+                    }
+
+                    const observer = new IntersectionObserver((entries) => {
+                        if (entries[0].isIntersecting) loadNextPage();
+                    }, {
+                        rootMargin: '200px'
                     });
-                }
+                    observer.observe(sentinel);
+
+                    document.querySelectorAll('.txn-tab-btn').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            document.querySelectorAll('.txn-tab-btn').forEach(b => b.classList.remove(
+                                'active'));
+                            btn.classList.add('active');
+                            activeType = btn.dataset.tab;
+                            currentPage = 0;
+                            hasMore = true;
+                            listEl.innerHTML = '';
+                            loadNextPage();
+                        });
+                    });
+                })();
             @endif
-        });
 
-        // Opens a clean print-window containing only the modal's table
-        function printModalTable(tableId, title) {
-            var tableHtml = document.getElementById(tableId).outerHTML;
-            var win = window.open('', '_blank', 'width=900,height=650');
-            win.document.write(
-                '<html><head><title>' + title + '</title>' +
-                '<style>' +
-                'body{font-family:Arial,sans-serif;padding:16px;}' +
-                'table{width:100%;border-collapse:collapse;font-size:13px;}' +
-                'th,td{border:1px solid #333;padding:6px 8px;}' +
-                'th{background:#f1f1f1;text-align:left;}' +
-                '.amount-cell{text-align:right;}' +
-                '</style></head><body>' +
-                '<h3>' + title + '</h3>' + tableHtml +
-                '</body></html>'
-            );
-            win.document.close();
-            win.focus();
-            setTimeout(function() {
-                win.print();
-                win.close();
-            }, 300);
-        }
+            // Opens a clean print-window containing only the modal's table
+            function printModalTable(tableId, title) {
+                var tableHtml = document.getElementById(tableId).outerHTML;
+                var win = window.open('', '_blank', 'width=900,height=650');
+                win.document.write(
+                    '<html><head><title>' + title + '</title>' +
+                    '<style>' +
+                    'body{font-family:Arial,sans-serif;padding:16px;}' +
+                    'table{width:100%;border-collapse:collapse;font-size:13px;}' +
+                    'th,td{border:1px solid #333;padding:6px 8px;}' +
+                    'th{background:#f1f1f1;text-align:left;}' +
+                    '.amount-cell{text-align:right;}' +
+                    '</style></head><body>' +
+                    '<h3>' + title + '</h3>' + tableHtml +
+                    '</body></html>'
+                );
+                win.document.close();
+                win.focus();
+                setTimeout(function() {
+                    win.print();
+                    win.close();
+                }, 300);
+            }
 
-        // Exports the modal's table as an Excel-readable .xls file (no external library needed)
-        function exportModalTableToExcel(tableId, filename) {
-            var tableHtml = document.getElementById(tableId).outerHTML;
-            var template =
-                '<html xmlns:o="urn:schemas-microsoft-com:office:office" ' +
-                'xmlns:x="urn:schemas-microsoft-com:office:excel" ' +
-                'xmlns="http://www.w3.org/TR/REC-html40">' +
-                '<head><meta charset="UTF-8"></head><body>' + tableHtml + '</body></html>';
+            // Exports the modal's table as an Excel-readable .xls file (no external library needed)
+            function exportModalTableToExcel(tableId, filename) {
+                var tableHtml = document.getElementById(tableId).outerHTML;
+                var template =
+                    '<html xmlns:o="urn:schemas-microsoft-com:office:office" ' +
+                    'xmlns:x="urn:schemas-microsoft-com:office:excel" ' +
+                    'xmlns="http://www.w3.org/TR/REC-html40">' +
+                    '<head><meta charset="UTF-8"></head><body>' + tableHtml + '</body></html>';
 
-            var blob = new Blob(['\ufeff', template], {
-                type: 'application/vnd.ms-excel'
-            });
-            var link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = (filename || 'export') + '_' + new Date().toISOString().slice(0, 10) + '.xls';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-    </script>
-    @include('backend.pages.reports.excel')
-@endsection
+                var blob = new Blob(['\ufeff', template], {
+                    type: 'application/vnd.ms-excel'
+                });
+                var link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = (filename || 'export') + '_' + new Date().toISOString().slice(0, 10) + '.xls';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        </script>
+        @include('backend.pages.reports.excel')
+    @endsection
