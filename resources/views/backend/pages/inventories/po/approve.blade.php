@@ -290,105 +290,7 @@
                                                 </td>
                                             </tr>
                                         </tfoot>
-                                        {{-- <tbody>
-                                            @php
-                                                $totalQty = 0;
-                                                $totalUp = 0;
-                                                $totalPrice = 0;
-                                                $supplierTotals = []; // Initialize supplier totals array
-                                                $overallTotal = 0; // Initialize overall total for all rows
-                                            @endphp
 
-                                            @foreach ($purchaseorder->details as $detail)
-                                                @php
-                                                    $totalQty += $detail->qty;
-                                                    $totalUp += $detail->unit_price;
-                                                    $totalPrice += $detail->total_price;
-                                                    $rowTotal = 0; // Initialize row total for each product
-                                                @endphp
-
-                                                <tr>
-                                                    <td>{{ $loop->iteration }}</td>
-                                                    <td>{{ $detail->product->productCode ?? 'N/A' }} -
-                                                        {{ $detail->product->name ?? 'N/A' }}</td>
-                                                    <td class="text-right">{{ $detail->purchasetype ?? 'N/A' }}</td>
-                                                    <td class="text-right">{{ $detail->qty ?? 'N/A' }}</td>
-
-                                                    @foreach ($suppliers as $supplier)
-                                                        <td class="text-right">
-                                                            @php
-                                                                $supplierPriceFound = false; // To check if supplier price exists
-                                                            @endphp
-                                                            @foreach ($supplierSelectedPrices as $supplierPrice)
-                                                                @if ($supplier->id == $supplierPrice->supplier_id && $detail->id == $supplierPrice->purchase_order_id)
-                                                                    @php
-                                                                        $supplierPriceFound = true; // Mark that supplier price is found
-
-                                                                        // Initialize supplier total if not already set
-                                                                        if (!isset($supplierTotals[$supplier->id])) {
-                                                                            $supplierTotals[$supplier->id] = 0;
-                                                                        }
-
-                                                                        // Add supplier price to the total only if checked
-                                                                        if ($supplierPrice->purchases_price > 0) {
-                                                                            $supplierTotals[$supplier->id] +=
-                                                                                $supplierPrice->purchases_price;
-                                                                        }
-
-                                                                        // Calculate row total for checked items (Qty * Price)
-                                                                        if ($supplierPrice->status == 1) {
-                                                                            $rowTotal +=
-                                                                                $detail->qty *
-                                                                                $supplierPrice->purchases_price;
-                                                                        }
-                                                                    @endphp
-                                                                    <span class="mr-2">
-                                                                        <input type="checkbox"
-                                                                            onclick="unCheck({{ $detail->id }})"
-                                                                            class="checked-input{{ $detail->id }}"
-                                                                            {{ $supplierPrice->status == 1 ? 'checked' : '' }}
-                                                                            value="{{ $supplierPrice->id }}"
-                                                                            name="suplirePrice[]">
-                                                                    </span>
-
-                                                                    {{ $supplierPrice->purchases_price }}
-                                                                @endif
-                                                            @endforeach
-
-                                                            @if (!$supplierPriceFound)
-                                                                <span>N/A</span>
-                                                            @endif
-                                                        </td>
-                                                    @endforeach
-                                                    <td class="text-right">
-                                                        <strong>{{ number_format($rowTotal, 2) }}</strong>
-                                                    </td>
-                                                    <!-- Display row total -->
-                                                    @php
-                                                        $overallTotal += $rowTotal; // Add row total to the overall total
-                                                    @endphp
-                                                </tr>
-                                            @endforeach
-                                        </tbody> --}}
-                                        {{-- <tfoot>
-                                            <tr>
-                                                <td colspan="3" class="text-right"><strong>Total:</strong></td>
-                                                <td class="text-right"><strong>{{ $totalQty }}</strong></td>
-                                                @foreach ($suppliers as $supplier)
-                                                    <td class="text-right">
-                                                        <strong>{{ number_format($supplierTotals[$supplier->id] ?? 0, 2) }}</strong>
-                                                    </td>
-                                                @endforeach
-                                                <td class="text-right">
-                                                    <strong>{{ number_format($overallTotal, 2) }}</strong>
-                                                </td>
-                                                <!-- Total sum of all row totals -->
-                                            </tr>
-                                            <tr>
-                                                <td colspan="{{ count($suppliers) + 5 }}">Narration:
-                                                    {{ $purchaseorder->note ?? 'N/A' }}</td>
-                                            </tr>
-                                        </tfoot> --}}
                                     </table>
 
 
@@ -400,22 +302,6 @@
                                 </div>
 
 
-                                {{-- <div class="col-md-4 text-center float-left">
-                                    <br>
-                                    <br>
-    
-                                    <p>Received by:_____________<br />
-                                        Date:____________________
-                                    </p>
-                                </div>
-                                <div class="col-md-4 text-center">
-                                </div>
-                                <div class="col-md-4 text-center float-right">
-                                    <br>
-                                    <br>
-                                    <p>Authorized by:________________<br />
-                                        Date:_________________</p>
-                                </div> --}}
 
                                 <hr>
 

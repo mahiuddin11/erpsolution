@@ -94,23 +94,76 @@ class PurchaseOrderController extends Controller
         return view('backend.pages.inventories.po.approve', get_defined_vars());
     }
 
+    // public function supplierPurchaseApprove(Request $request)
+    // {
+
+
+
+    //     $request->validate(([
+    //         'suplirePrice' => 'required'
+    //     ]));
+
+
+
+    //     try {
+
+    //         $oldData = PurchaseOrder::find($request->purchase_order)?->toArray() ?? [];
+    //         $purchaseorder['approved_by'] = Auth::user()->id;
+    //         $purchaseorder['approved_at'] = date('Y-m-d');
+    //         $purchaseorder['status'] = 'Accepted';
+    //         PurchaseOrder::where('id', $request->purchase_order)->update($purchaseorder);
+    //         $suppliersPrices =   SupplierSelectPrice::whereIn('id', $request->suplirePrice)->update(['status' => 1]);
+
+    //         $invoiceNo = $oldData['invoice_no'] ?? 'N/A';
+
+
+    //         activity_log(
+    //             'aprove',
+    //             'purchase_order_aprove',
+    //             array_merge($purchaseorder, ['id' => $request->purchase_order]),
+    //             $oldData,
+    //             "Purchase Order approved (Invoice: {$invoiceNo}) — Status: {$oldData['status']} → Accepted"
+    //         );
+    //     } catch (Exception $e) {
+    //         session()->flash('error', 'Something was wrong!!');
+    //         return redirect()->back();
+    //     }
+
+    //     session()->flash('success', 'Approve Successfully!!');
+    //     return redirect()->back();
+    // }
+
     public function supplierPurchaseApprove(Request $request)
     {
-
-        $request->validate(([
+        $request->validate([
             'suplirePrice' => 'required'
-        ]));
-        try {
+        ]);
 
+        try {
             $oldData = PurchaseOrder::find($request->purchase_order)?->toArray() ?? [];
+
             $purchaseorder['approved_by'] = Auth::user()->id;
             $purchaseorder['approved_at'] = date('Y-m-d');
-            $purchaseorder['status'] = 'Accepted';
+            $purchaseorder['status']      = 'Accepted';
             PurchaseOrder::where('id', $request->purchase_order)->update($purchaseorder);
-            $suppliersPrices =   SupplierSelectPrice::whereIn('id', $request->suplirePrice)->update(['status' => 1]);
+
+
+            SupplierSelectPrice::whereIn('id', $request->suplirePrice)->update(['status' => 1]);
+
+            $approvedPrices = SupplierSelectPrice::whereIn('id', $request->suplirePrice)->get();
+
+            foreach ($approvedPrices as $price) {
+                $detail = PurchaseOrderDetail::find($price->purchase_order_id); // detail.id
+
+                if ($detail) {
+                    $detail->unit_price        = $price->purchases_price;
+                    $detail->total_price       = $detail->qty * $price->purchases_price;
+                    $detail->supplier_ledger_id = $price->id; // requirement অনুযায়ী — approved price row এর নিজস্ব id
+                    $detail->save();
+                }
+            }
 
             $invoiceNo = $oldData['invoice_no'] ?? 'N/A';
-
 
             activity_log(
                 'aprove',

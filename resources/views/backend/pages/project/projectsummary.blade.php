@@ -776,67 +776,71 @@
                                 </p>
                             @endif
 
-                            {{-- ============ Full Summary Table (Print) ============
-                            <table class="table table-bordered mt-4">
-                                <tbody>
-                                    <tr>
-                                        <td colspan="2"><b><i class="fa fa-bullseye"></i> Full Project Summary</b></td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="2"><b>A. Estimate</b></td>
-                                    </tr>
-                                    <tr>
-                                        <th>Contract Value</th>
-                                        <th class="amount-cell">{{ number_format($summary['budget'], 2) }}</th>
-                                    </tr>
-                                    <tr>
-                                        <th>Estimated Cost</th>
-                                        <th class="amount-cell">{{ number_format($summary['estimateCost'], 2) }}</th>
-                                    </tr>
-                                    <tr>
-                                        <th>Estimated Profit</th>
-                                        <th class="amount-cell">{{ number_format($summary['estimateProfit'], 2) }}</th>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="2"><b>B. Recognized (POC)</b></td>
-                                    </tr>
-                                    <tr>
-                                        <th>Recognized Revenue</th>
-                                        <th class="amount-cell">{{ number_format($summary['recognizedRevenue'], 2) }}</th>
-                                    </tr>
-                                    <tr>
-                                        <th>Recognized Profit</th>
-                                        <th class="amount-cell">{{ number_format($summary['recognizedProfit'], 2) }}</th>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="2"><b>C. Actual (Cash Basis)</b></td>
-                                    </tr>
-                                    <tr>
-                                        <th>Direct Income</th>
-                                        <th class="amount-cell">{{ number_format($summary['ttlexpdirinc'], 2) }}</th>
-                                    </tr>
-                                    <tr>
-                                        <th>Indirect Income</th>
-                                        <th class="amount-cell">{{ number_format($summary['ttlexpindrinc'], 2) }}</th>
-                                    </tr>
-                                    <tr>
-                                        <th>Direct Expenses</th>
-                                        <th class="amount-cell">{{ number_format($summary['ttlexpdir'], 2) }}</th>
-                                    </tr>
-                                    <tr>
-                                        <th>Indirect Expenses</th>
-                                        <th class="amount-cell">{{ number_format($summary['ttlexpind'], 2) }}</th>
-                                    </tr>
-                                    <tr>
-                                        <th>Product Consumption</th>
-                                        <th class="amount-cell">{{ number_format($summary['productAmount'], 2) }}</th>
-                                    </tr>
-                                    <tr class="{{ $summary['actualProfit'] >= 0 ? 'table-success' : 'table-danger' }}">
-                                        <th>Actual Profit / Loss (Income − Cost)</th>
-                                        <th class="amount-cell">{{ number_format($summary['actualProfit'], 2) }}</th>
-                                    </tr>
-                                </tbody>
-                            </table> --}}
+                            {{-- <div class="col-md-12">
+                                <div class="txn-panel mb-3">
+                                    <div class="d-flex justify-content-between align-items-center p-2 no-print"
+                                        style="background:#f8f9fa; border-bottom:1px solid #e9ecef;">
+                                        <span style="font-size:13px; font-weight:600; padding-left:6px;"><i
+                                                class="fa fa-file-invoice-dollar"></i> Project Bills</span>
+                                        <button class="btn btn-sm btn-primary" data-toggle="modal"
+                                            data-target="#modalCreateBill">
+                                            <i class="fa fa-plus"></i> Create Bill
+                                        </button>
+                                    </div>
+
+                                    <div class="txn-tabs no-print" id="billTabs">
+                                        <button class="txn-tab-btn active" data-status="all">All</button>
+                                        <button class="txn-tab-btn" data-status="Draft">Draft</button>
+                                        <button class="txn-tab-btn" data-status="Submitted">Submitted</button>
+                                        <button class="txn-tab-btn" data-status="Approved">Approved</button>
+                                        <button class="txn-tab-btn" data-status="Paid">Paid</button>
+                                    </div>
+
+                                    <div class="txn-list" id="bill-list">
+                                        <div class="empty-state"><i class="fa fa-spinner fa-spin"></i> Loading bills...</div>
+                                    </div>
+                                </div>
+                            </div> --}}
+
+                            {{-- ============ Create Bill Modal ============ --}}
+                            {{-- <div class="modal fade" id="modalCreateBill" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Create Bill
+                                                <small>{{ $projectDetails->projectCode }}</small>
+                                            </h5>
+                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form id="formCreateBill">
+                                                <input type="hidden" name="project_id" value="{{ $projectDetails->id }}">
+                                                <div class="form-group">
+                                                    <label>Milestone / Description</label>
+                                                    <input type="text" name="milestone_name" class="form-control"
+                                                        placeholder="e.g. Foundation completion 25%">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Billing Date</label>
+                                                    <input type="date" name="billing_date" class="form-control"
+                                                        value="{{ date('Y-m-d') }}" required>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Amount</label>
+                                                    <input type="number" step="0.01" name="amount" class="form-control"
+                                                        required>
+                                                </div>
+                                            </form>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                            <button class="btn btn-primary" id="btnSaveBill">Save Bill</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div> --}}
+
+
 
                             <div class="row mt-4">
                                 <div class="col-md-4">
@@ -853,6 +857,10 @@
                                 you will be satisfied by our services.
                             </div>
                         </div>
+
+
+
+
                     </div>
                 @else
                     <div class="no-project-card no-print">
@@ -1646,5 +1654,136 @@
                 document.body.removeChild(link);
             }
         </script>
+
+        {{-- <script>
+            (function() {
+                const projectId = {{ $projectDetails->id }};
+                const listEl = document.getElementById('bill-list');
+                let activeStatus = 'all';
+
+                const statusColor = {
+                    Draft: 'secondary',
+                    Submitted: 'info',
+                    Approved: 'warning',
+                    Paid: 'success'
+                };
+
+                const nextAction = {
+                    Draft: {
+                        label: 'Submit',
+                        next: 'Submitted'
+                    },
+                    Submitted: {
+                        label: 'Approve',
+                        next: 'Approved'
+                    },
+                    Approved: {
+                        label: 'Mark Paid',
+                        next: 'Paid'
+                    },
+                };
+
+                const billUrl = "{{ route('project.bill.feed', ['id' => $projectDetails->id]) }}";
+
+                function renderBill(bill) {
+                    const action = nextAction[bill.status];
+                    const div = document.createElement('div');
+                    div.className = 'txn-row';
+                    div.dataset.status = bill.status;
+                    div.innerHTML = `
+            <div class="txn-icon"><i class="fa fa-file-invoice-dollar text-${statusColor[bill.status]}"></i></div>
+            <div class="txn-main">
+                <div class="txn-desc">${bill.milestone_name || 'Bill'} — ${bill.invoice_no}</div>
+                <div class="txn-meta">${bill.billing_date} &middot; <span class="badge badge-${statusColor[bill.status]}">${bill.status}</span></div>
+            </div>
+            <div class="text-right">
+                <div class="txn-amount">${Number(bill.amount).toLocaleString(undefined,{minimumFractionDigits:2})}</div>
+                ${action ? `<button class="btn btn-xs btn-outline-${statusColor[action.next]} btn-advance" data-id="${bill.id}" data-next="${action.next}" style="margin-top:4px; font-size:11px;">${action.label}</button>` : ''}
+            </div>
+        `;
+                    return div;
+                }
+
+
+                function loadBills() {
+                    listEl.innerHTML = '<div class="empty-state"><i class="fa fa-spinner fa-spin"></i> Loading...</div>';
+                    fetch(billUrl)
+                        .then(res => res.json())
+                        .then(json => {
+                            listEl.innerHTML = '';
+                            const filtered = activeStatus === 'all' ? json.data : json.data.filter(b => b.status ===
+                                activeStatus);
+                            if (filtered.length === 0) {
+                                listEl.innerHTML =
+                                    '<div class="empty-state"><i class="fa fa-inbox"></i> No bills found.</div>';
+                                return;
+                            }
+                            filtered.forEach(b => listEl.appendChild(renderBill(b)));
+                        });
+                }
+
+                document.querySelectorAll('#billTabs .txn-tab-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('#billTabs .txn-tab-btn').forEach(b => b.classList.remove(
+                            'active'));
+                        btn.classList.add('active');
+                        activeStatus = btn.dataset.status;
+                        loadBills();
+                    });
+                });
+
+                listEl.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('btn-advance')) {
+                        const id = e.target.dataset.id;
+                        const next = e.target.dataset.next;
+                        if (!confirm(`Status "${next}" এ পরিবর্তন করবেন?`)) return;
+
+                        fetch(billUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({
+                                    status: next
+                                })
+                            })
+                            .then(res => res.json())
+                            .then(json => {
+                                if (!json.success) {
+                                    alert(json.message || 'Error');
+                                    return;
+                                }
+                                loadBills();
+                            });
+                    }
+                });
+
+                document.getElementById('btnSaveBill').addEventListener('click', function() {
+                    const form = document.getElementById('formCreateBill');
+                    const formData = new FormData(form);
+                    const payload = Object.fromEntries(formData.entries());
+
+                    fetch("{{ route('project.bill.store') }}", {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify(payload)
+                        })
+                        .then(res => res.json())
+                        .then(json => {
+                            if (json.success) {
+                                $('#modalCreateBill').modal('hide');
+                                form.reset();
+                                loadBills();
+                            }
+                        });
+                });
+
+                loadBills();
+            })();
+        </script> --}}
         @include('backend.pages.reports.excel')
     @endsection

@@ -328,6 +328,8 @@ class PurchaseOrderRepositories
 
     public function store($request)
     {
+
+
         DB::beginTransaction();
 
         try {

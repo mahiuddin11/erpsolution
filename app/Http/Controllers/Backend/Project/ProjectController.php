@@ -446,6 +446,7 @@ class ProjectController extends Controller
         $summary['estimateCost']    = (float) ($projectDetails->estimate_cost ?? 0);
         $summary['estimateProfit']  = $summary['budget'] - $summary['estimateCost'];
 
+        // dd($project_id, $summary['budget'], $summary['estimateCost'], $summary['estimateProfit']);
         // =========================================================
         // 2. ACTUAL COST TO DATE (Requirement #2 — expense = actual cost)
         // =========================================================
@@ -504,6 +505,16 @@ class ProjectController extends Controller
         $project = Project::where('status', 'Active')->orderBy('name')->get();
 
         return view('backend.pages.project.projectsummary', get_defined_vars());
+    }
+
+    public function billStor(Request $request)
+    {
+        return 'bill';
+    }
+
+    public function billFeed(Request $request, $id)
+    {
+        return 'bill not found';
     }
 
     public function transactionFeed(Request $request, $id)

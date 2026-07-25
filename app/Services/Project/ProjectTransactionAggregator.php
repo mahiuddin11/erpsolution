@@ -10,6 +10,7 @@ use App\Models\PurchaseRequisition;
 use App\Models\PurchaseOrder;
 use App\Models\Purchases;
 use App\Models\PurchasesDetails;
+use App\Models\SupplierSelectPrice;
 use Illuminate\Support\Collection;
 
 class ProjectTransactionAggregator
@@ -75,9 +76,6 @@ class ProjectTransactionAggregator
             ->map(function ($row) {
 
                 $amount = $row->total_qty ?? 0;
-                // $amount = $row->details->sum(function ($d) {
-                //     return $d->total_qty;
-                // });
 
 
                 return [
@@ -98,21 +96,22 @@ class ProjectTransactionAggregator
             ->where('project_id', $this->projectId)
             ->get()
             ->map(function ($row) {
-                $amount = $row->details->sum(function ($d) {
-                    return ($d->qty ?? 0) * ($d->unit_price ?? 0);
-                });
+
+                $amount = $row->details->sum('total_price');
 
                 return [
-                    'date'   => $row->order_date ?? '-',
-                    'type'   => 'order',
-                    'invoice'    => $row->invoice_no ?? 'N/A',
-                    'desc'   => 'Purchase Order',
-                    'amount' => (float) $amount,
-                    'status' => $row->status ?? '-',
-                    'id'     => $row->id,
+                    'date'    => $row->order_date ?? '-',
+                    'type'    => 'order',
+                    'invoice' => $row->invoice_no ?? 'N/A',
+                    'desc'    => 'Purchase Order',
+                    'amount'  => (float) $amount,
+                    'status'  => $row->status ?? '-',
+                    'id'      => $row->id,
                 ];
             });
     }
+
+
 
     protected function mapPurchaseVouchers()
     {

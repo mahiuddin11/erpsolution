@@ -21,12 +21,12 @@
             margin-top: 0;
         }
 
-        #actualCosting {
+        #estimate_profit {
             background-color: #f4f6f8;
             font-weight: 600;
         }
 
-        #actualCostingHint {
+        #estimate_profitHint {
             font-size: 12px;
             display: block;
             margin-top: 4px;
@@ -271,30 +271,30 @@
                             </div>
 
                             <div class="col-lg-4 col-md-6 col-12 mb-3">
-                                <label for="estimate_profit">Estimate Profit <span class="text-danger">*</span></label>
+                                <label for="estimate_cost">Estimate Cost <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <div class="input-group-prepend"><span class="input-group-text">TK.</span></div>
-                                    <input type="number" step="0.01" name="estimate_profit" class="form-control"
-                                        id="estimate_profit" placeholder="Estimate Profit"
-                                        value="{{ old('estimate_profit', $editInfo->estimate_profit) }}" required>
+                                    <input type="number" step="0.01" name="estimate_cost" class="form-control"
+                                        id="estimate_cost" placeholder="Estimate Cost"
+                                        value="{{ old('estimate_cost', $editInfo->estimate_cost) }}" required>
                                 </div>
-                                @error('estimate_profit')
+                                @error('estimate_cost')
                                     <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
 
                             <div class="col-lg-4 col-md-6 col-12 mb-3">
-                                <label for="actualCosting">Actual Costing (Auto-calculated)</label>
+                                <label for="estimate_profit">Estimate Cost (Auto-calculated)</label>
                                 <div class="input-group">
                                     <div class="input-group-prepend"><span class="input-group-text">TK.</span></div>
-                                    <input type="number" step="0.01" name="actualCosting" class="form-control"
-                                        id="actualCosting"
-                                        value="{{ old('actualCosting', $editInfo->actualCosting ?? $editInfo->budget - $editInfo->estimate_profit) }}"
+                                    <input type="number" step="0.01" name="estimate_profit" class="form-control"
+                                        id="estimate_profit"
+                                        value="{{ old('estimate_profit', $editInfo->estimate_profit ?? $editInfo->budget - $editInfo->estimate_cost) }}"
                                         readonly>
                                 </div>
-                                <span id="actualCostingHint" class="text-success">Budget − Estimate Profit থেকে অটো হিসাব
+                                <span id="estimate_profitHint" class="text-success">Budget − Estimate Cost থেকে অটো হিসাব
                                     হবে</span>
-                                @error('actualCosting')
+                                @error('estimate_profit')
                                     <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -362,25 +362,25 @@
                 dropdownAutoWidth: true
             });
 
-            // --- Auto-calculate Actual Costing = Budget - Estimate Profit ---
+            // --- Auto-calculate Actual Costing = Budget - Estimate Cost ---
             function calculateActualCosting() {
                 var budget = parseFloat($('#budget').val()) || 0;
-                var estimateProfit = parseFloat($('#estimate_profit').val()) || 0;
-                var actualCosting = budget - estimateProfit;
+                var estimateProfit = parseFloat($('#estimate_cost').val()) || 0;
+                var estimate_profit = budget - estimateProfit;
 
-                $('#actualCosting').val(actualCosting.toFixed(2));
+                $('#estimate_profit').val(estimate_profit.toFixed(2));
 
-                if (actualCosting < 0) {
-                    $('#actualCostingHint')
+                if (estimate_profit < 0) {
+                    $('#estimate_profitHint')
                         .removeClass('text-success').addClass('text-danger')
                         .text('Warning: Estimated Profit Exceeds Budget!');
                 } else {
-                    $('#actualCostingHint')
+                    $('#estimate_profitHint')
                         .removeClass('text-danger').addClass('text-success')
-                        .text('Auto calculated from Budget − Estimate Profit');
+                        .text('Auto calculated from Budget − Estimate Cost');
                 }
             }
-            $('#budget, #estimate_profit').on('input', calculateActualCosting);
+            $('#budget, #estimate_cost').on('input', calculateActualCosting);
             calculateActualCosting(); // load-e existing value diye recalc
 
             // --- Party select (customer/ledger) sync into hidden fields ---
