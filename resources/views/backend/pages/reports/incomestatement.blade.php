@@ -298,11 +298,30 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="groupItemsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="groupItemsModalTitle">Voucher Details</h5>
+                    <button type="button" class="btn btn-success btn-sm no-print mr-1" onclick="exportGroupToExcel()">
+                        <i class="fa fa-file-excel"></i> Excel
+                    </button>
+                    <button type="button" class="btn btn-default btn-sm no-print" onclick="printGroupModal()">
+                        <i class="fa fa-print"></i> Print
+                    </button>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body" id="groupItemsModalBody"></div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('scripts')
     <script>
         $(document).ready(function() {
+            // Main summary modal open kora — category wise (revenue/cogs/opex/nonop)
             $('.details-btn').on('click', function() {
                 var category = $(this).data('category');
                 var fromDate = $('#from_date').val();
@@ -332,8 +351,50 @@
                     }
                 });
             });
+
+            // Added: 2026-07-25 — group row e click korle 2nd modal e voucher-wise item dekhabe
+            $(document).on('click', '.group-header', function() {
+                var accountName = $(this).data('account');
+                var items = $(this).data('items'); // jQuery auto JSON parse kore
+                var debitTotal = $(this).data('debit-total');
+                var creditTotal = $(this).data('credit-total');
+
+                $('#groupItemsModalTitle').text(accountName + ' — Voucher Details');
+
+                var rows = '';
+                if (!items || items.length === 0) {
+                    rows = '<tr><td colspan="5" class="text-center text-muted">NO Record Found</td></tr>';
+                } else {
+                    $.each(items, function(i, item) {
+                        rows += '<tr>' +
+                            '<td>' + item.date + '</td>' +
+                            '<td>' + accountName + '</td>' +
+                            '<td>' + item.voucher + '</td>' +
+                            '<td class="text-right">' + item.debit + '</td>' +
+                            '<td class="text-right">' + item.credit + '</td>' +
+                            '</tr>';
+                    });
+                }
+
+                var tableHtml = '<table class="table table-bordered table-sm" id="groupExportTable">' +
+                    '<thead><tr style="background:#343a40; color:#fff;">' +
+                    '<th>Date</th><th>Account Name</th><th>Voucher No</th>' +
+                    '<th class="text-right">Debit</th><th class="text-right">Credit</th>' +
+                    '</tr></thead>' +
+                    '<tbody>' + rows + '</tbody>' +
+                    '<tfoot><tr style="background:#e9ecef; font-weight:600;">' +
+                    '<td colspan="3">Net Total</td>' +
+                    '<td class="text-right">' + debitTotal + '</td>' +
+                    '<td class="text-right">' + creditTotal + '</td>' +
+                    '</tr></tfoot>' +
+                    '</table>';
+
+                $('#groupItemsModalBody').html(tableHtml);
+                $('#groupItemsModal').modal('show');
+            });
         });
 
+        // Main summary modal print
         function printModal() {
             var printContents = document.getElementById('detailsModalBody').innerHTML;
             var originalContents = document.body.innerHTML;
@@ -342,6 +403,33 @@
             document.body.innerHTML = originalContents;
             location.reload();
         }
+
+        // Added: 2026-07-25 — 2nd modal (voucher detail) print
+        function printGroupModal() {
+            var printContents = document.getElementById('groupItemsModalBody').innerHTML;
+            var originalContents = document.body.innerHTML;
+            document.body.innerHTML = printContents;
+            window.print();
+            document.body.innerHTML = originalContents;
+            location.reload();
+        }
+
+        // Added: 2026-07-25 — group-wise voucher detail Excel export
+        function exportGroupToExcel() {
+            var table = document.getElementById('groupExportTable');
+            if (!table || typeof XLSX === 'undefined') {
+                alert(
+                    'Excel export library load hoyni. backend.pages.reports.excel partial e SheetJS include ache kina check korun.'
+                );
+                return;
+            }
+            var wb = XLSX.utils.table_to_book(table, {
+                sheet: 'Details'
+            });
+            var titleText = $('#groupItemsModalTitle').text().trim().replace(/[\\\/:*?"<>|]/g, '') || 'Voucher_Details';
+            XLSX.writeFile(wb, titleText + '.xlsx');
+        }
     </script>
+
     @include('backend.pages.reports.excel')
 @endsection

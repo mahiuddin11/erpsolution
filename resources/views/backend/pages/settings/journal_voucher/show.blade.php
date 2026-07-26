@@ -59,7 +59,7 @@
                                                 Phone : <strong>{{ $companyInfo->phone ?? 'N/A' }}</strong><br>
                                                 Address : <strong><em>{{ $companyInfo->address ?? 'N/A' }}</em></strong><br>
                                             </address>
-                                            <h4 style="margin-top: -20px">Payment Voucher</h4>
+                                            <h4 style="margin-top: -20px">Journal Voucher</h4>
                                             <div class="row">
                                                 <div class="col-md-6 text-left">No:
                                                     {{ $journalVoucher->voucher_no ?? '' }}

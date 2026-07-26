@@ -29,53 +29,42 @@
             <div class="card card-default">
                 <div class="card-body">
                     <form method="GET" action="{{ route('report.group-ledger-list') }}">
+
+                        <div class="row mt-2">
+                            <div class="col-md-3 col-sm-6">
+                                <label>Start Date</label>
+                                <input type="date" name="start_date" class="form-control"
+                                    value="{{ request('start_date') }}">
+                            </div>
+
+                            <div class="col-md-3 col-sm-6">
+                                <label>End Date</label>
+                                <input type="date" name="end_date" class="form-control"
+                                    value="{{ request('end_date') }}">
+                            </div>
+                            <div class="col-md-2 mt-4">
+                                <button class="btn btn-primary">Search</button>
+                            </div>
+                        </div>
+
                         <div class="row" id="group-select-wrapper">
+
+
                             <div class="col-md-3 col-sm-6 mb-2">
                                 <label>Select Group</label>
-
                                 <select name="account_id" id="main_group" class="form-control select2">
-
                                     <option value="">-- Select Group --</option>
-
                                     @foreach ($mainGroups as $group)
                                         <option value="{{ $group->id }}">
                                             {{ $group->accountCode }} - {{ $group->account_name }}
                                         </option>
                                     @endforeach
-
                                 </select>
-
                             </div>
 
                         </div>
 
-                        <div class="row mt-2">
 
-                            <div class="col-md-3 col-sm-6">
-
-                                <label>Start Date</label>
-
-                                <input type="date" name="start_date" class="form-control"
-                                    value="{{ request('start_date') }}">
-
-                            </div>
-
-                            <div class="col-md-3 col-sm-6">
-
-                                <label>End Date</label>
-
-                                <input type="date" name="end_date" class="form-control"
-                                    value="{{ request('end_date') }}">
-
-                            </div>
-
-                            <div class="col-md-2 mt-4">
-
-                                <button class="btn btn-primary">Search</button>
-
-                            </div>
-
-                        </div>
 
                     </form>
                 </div>
@@ -141,8 +130,8 @@
                                     </thead>
                                     <tbody id="ledger-table-body">
                                         <tr>
-                                            <td colspan="6" class="text-center text-muted">Please select a group to
-                                                view data</td>
+                                            <td colspan="6" class="text-center text-muted">Please select a group to view
+                                                data</td>
                                         </tr>
                                     </tbody>
 
@@ -232,7 +221,7 @@
 
 
                     //date change dinamic
-                  
+
 
                     // Sub group dropdown load
                     $.ajax({
@@ -266,9 +255,9 @@
 
 
             $(document).on('change', 'input[name="start_date"], input[name="end_date"]', function() {
-                  $('#display-start-date').text($('input[name="start_date"]').val());
-                  $('#display-end-date').text($('input[name="end_date"]').val());
-                    
+                $('#display-start-date').text($('input[name="start_date"]').val());
+                $('#display-end-date').text($('input[name="end_date"]').val());
+
                 let account_id = getSelectedAccountId();
                 if (account_id) loadLedgerTable(account_id);
             });
@@ -323,7 +312,8 @@
                         // Summary row
                         rows += `
                 <tr class="table-active fw-bold">
-                    <td colspan="3"><strong>Group Total</strong></td>
+                    <td colspan="2"><strong>Group Total</strong></td>
+                    <td class="text-right"><strong>${formatNumber(data.summary.total_opening_blance)}</strong></td>
                     <td class="text-right"><strong>${formatNumber(data.summary.total_debit)}</strong></td>
                     <td class="text-right"><strong>${formatNumber(data.summary.total_credit)}</strong></td>
                     <td class="text-right"><strong>${formatNumber(data.summary.total_debit - data.summary.total_credit)}</strong></td>
