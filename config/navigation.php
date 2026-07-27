@@ -3,6 +3,45 @@
 $parent_menu = array(
 
     (object) array(
+        'label' => 'Dashboard',
+        'route' => null,
+        'uniqueName' => "dashboard",
+        'icon' => 'fa fa-sitemap',
+        'parent_id' => 0,
+        'submenu' => (object) array(
+
+
+            (object) array(
+                'label' => 'Hrm Dashbord',
+                'route' => null,
+                'uniqueName' => "hrmdashbord",
+                'icon' => 'fa fa-th-large',
+                'parent_id' => null,
+                'childMenu' => (object) array(
+                    (object) array('label' => 'Hrm Dashbord', 'route' => 'home', 'icon' => 'fa fa-dashboard', 'navigate_status' => 1),
+
+                )
+            ),
+
+            (object) array(
+                'label' => 'POS Dashbord',
+                'route' => null,
+                'uniqueName' => "posdashbord",
+                'icon' => 'fa fa-home',
+                'parent_id' => null,
+                'childMenu' => (object) array(
+                    (object) array('label' => 'All Product', 'route' => 'inventorySetup.product.index', 'icon' => 'fa fa-dashboard', 'navigate_status' => 1),
+                    (object) array('label' => 'Add New Product', 'route' => 'inventorySetup.product.create', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
+                    (object) array('label' => 'Edit Product', 'route' => 'inventorySetup.product.edit', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
+                    (object) array('label' => 'Show Product', 'route' => 'inventorySetup.product.show', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
+                    (object) array('label' => 'Destroy Product', 'route' => 'inventorySetup.product.destroy', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
+                )
+            ),
+
+        )
+    ),
+
+    (object) array(
         'label' => 'Inventory Setup',
         'route' => null,
         'uniqueName' => "Inventory",

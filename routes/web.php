@@ -617,7 +617,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::post('/settings-journal-voucher-update/{id}', [JournalVoucherController::class, 'update'])->name('settings.journal.voucher.update');
         Route::get('/settings-journal-voucher-delete/{id}', [JournalVoucherController::class, 'destroy'])->name('settings.journal.voucher.destroy');
         Route::get('/settings-journal-voucher-singledestroy/{id}', [JournalVoucherController::class, 'singledestroy'])->name('settings.journal.voucher.singledestroy');
-        Route::get('/settings-journal-voucher-status/{id}/{status}', [JournalVoucherController::class, 'statusUpdate'])->name('settings.contra.voucher.status');
+        Route::get('/settings-journal-voucher-status/{id}/{status}', [JournalVoucherController::class, 'statusUpdate'])->name('settings.journal.voucher.status');
         Route::get('/getSubCategory', [JournalVoucherController::class, 'getSubCategory'])->name('settings.contra.voucher.getSubCategory');
         //Contra Voicher operation end
 

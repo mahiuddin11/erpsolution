@@ -185,14 +185,16 @@
                 data-accordion="false">
                 <!-- Add icons to the links using the .nav-icon class
                with font-awesome or any other icon font library -->
-                <li class="nav-item">
+
+
+                {{-- <li class="nav-item">
                     <a href="{{ route('home') }}" class="nav-link">
                         <i style="color: rgb(9, 250, 101)" class="fas fa-border-all"></i>
                         <p>
                             Dashboard
                         </p>
                     </a>
-                </li>
+                </li> --}}
 
                 @foreach ($allNavigations as $key => $value)
                     @if (in_array($value->uniqueName, $accessmainmenu))

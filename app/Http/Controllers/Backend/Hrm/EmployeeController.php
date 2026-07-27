@@ -77,6 +77,13 @@ class EmployeeController extends Controller
         $branchs = Branch::where('status', 'Active')->get();
         $positions = Position::get();
 
+        $lastEmid = Employee::latest('id')->value('id_card');
+
+        $newEmId = $lastEmid + 1;
+        while (Employee::where('id_card', $newEmId)->exists()) {
+            $newEmId++;
+        }
+
         return view('backend.pages.hrm.employee.create', get_defined_vars());
     }
 

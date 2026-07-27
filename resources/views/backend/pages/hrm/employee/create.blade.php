@@ -250,8 +250,8 @@
                                     <div class="col-12 col-sm-6 col-lg-4 ecf-field">
                                         <label>Employee ID <span class="text-danger">*</span></label>
                                         <input type="text" class="form-control @error('id_card') is-invalid @enderror"
-                                            value="{{ old('id_card') }}" name="id_card" placeholder="Example: WTBL-1024"
-                                            required>
+                                            value="{{ old('id_card', $newEmId) }}" name="id_card"
+                                            placeholder="Example: 1024" required>
                                         @error('id_card')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
