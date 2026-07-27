@@ -23,6 +23,14 @@ use Rats\Zkteco\Lib\ZKTeco;
 use App\Jobs\ZktecoSetUser;
 use Illuminate\Support\Facades\DB;
 
+use App\Http\Controllers\Backend\Dashboard\HrmDashboardController;
+use App\Http\Controllers\Backend\Dashboard\FinanceDashboardController;
+use App\Http\Controllers\Backend\Dashboard\HomeController;
+use App\Http\Controllers\Backend\Dashboard\StoreDashboardController;
+use App\Http\Controllers\Backend\Dashboard\ProcurementDashboardController;
+use App\Http\Controllers\Backend\Dashboard\ProjectDashboardController;
+use App\Http\Controllers\Backend\Dashboard\ManagementDashboardController;
+
 //use App\Http\Controllers\AttendanceController;
 
 /*
@@ -383,7 +391,14 @@ Route::get('/attendance/reset/{id?}', 'ZktecoController@reset');
 Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
 
     Route::group(['middleware' => ['web', 'auth'], 'namespace' => 'Dashboard'], function () {
-        Route::get('/home', 'HomeController@index')->name('home');
+        // Route::get('/home', 'HomeController@index')->name('home');
+        Route::get('/dashboard/hrm', [HrmDashboardController::class, 'index'])->name('dashboard.hrm');
+        Route::get('/dashboard/finance', [FinanceDashboardController::class, 'index'])->name('dashboard.finance');
+        Route::get('/dashboard/store', [StoreDashboardController::class, 'index'])->name('dashboard.store');
+        Route::get('/dashboard/procurement', [ProcurementDashboardController::class, 'index'])->name('dashboard.procurement');
+        Route::get('/dashboard/project', [ProjectDashboardController::class, 'index'])->name('dashboard.project');
+        // Route::get('/dashboard/management', [ManagementDashboardController::class, 'index'])->name('dashboard.management');
+        Route::get('/home', [HomeController::class, 'index'])->name('home');
     });
 
     Route::group(['middleware' => ['web', 'auth'], 'namespace' => 'Backend\ActivityLog'], function () {

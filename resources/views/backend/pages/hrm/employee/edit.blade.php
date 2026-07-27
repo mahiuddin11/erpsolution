@@ -599,10 +599,14 @@
                                         <select name="position_id"
                                             class="form-control select2 @error('position_id') is-invalid @enderror"
                                             required>
+
                                             <option value="" disabled>Select Position</option>
+
                                             @foreach ($positions as $value)
-                                                <option value="{{ $value->id }}">
-                                                    {{ $value->name }}</option>
+                                                <option value="{{ $value->id }}"
+                                                    {{ old('position_id', $editInfo->position_id) == $value->id ? 'selected' : '' }}>
+                                                    {{ $value->name }}
+                                                </option>
                                             @endforeach
                                         </select>
                                         @error('position_id')

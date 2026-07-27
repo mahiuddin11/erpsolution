@@ -162,6 +162,7 @@ class EmployeeController extends Controller
         $branchs = Branch::where('status', 'Active')->get();
         $positions = Position::get();
 
+
         return view('backend.pages.hrm.employee.edit', get_defined_vars());
     }
 

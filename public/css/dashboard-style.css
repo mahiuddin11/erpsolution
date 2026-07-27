@@ -1,0 +1,532 @@
+/* ==========================================================================
+   COMMON DASHBOARD STYLE (shared by HRM, Finance, Store, Procurement,
+   Project, Management dashboards)
+
+   Ei file ta "public/css/dashboard-style.css" e rakhte hobe.
+   Ei file plain CSS (Blade file na), tai Blade compiler ei file ke
+   kokhono touch/parse korbe na - tai @media, comma-selector niye
+   kono "unexpected token" error ashbe na.
+
+   Protita dashboard blade file e wrapper hisebe <div class="dashboard-wrap">
+   use korte hobe (department-specific naam na diye, sob dashboard e
+   ei ekই class name use hobe).
+   ========================================================================== */
+
+.dashboard-wrap {
+    --blue-50: #eff6ff;
+    --blue-100: #dbeafe;
+    --blue-200: #bfdbfe;
+    --blue-600: #2563eb;
+    --blue-700: #1d4ed8;
+    --blue-900: #1e3a8a;
+    --green-50: #f0fdf4;
+    --green-100: #dcfce7;
+    --green-200: #bbf7d0;
+    --green-600: #16a34a;
+    --green-700: #15803d;
+    --green-900: #14532d;
+    --red-50: #fef2f2;
+    --red-100: #fee2e2;
+    --red-200: #fecaca;
+    --red-600: #dc2626;
+    --red-700: #b91c1c;
+    --red-900: #7f1d1d;
+    --purple-50: #faf5ff;
+    --purple-100: #f3e8ff;
+    --purple-200: #e9d5ff;
+    --purple-600: #9333ea;
+    --purple-700: #7e22ce;
+    --purple-900: #581c87;
+    --teal-50: #f0fdfa;
+    --teal-100: #ccfbf1;
+    --teal-200: #99f6e4;
+    --teal-600: #0d9488;
+    --teal-700: #0f766e;
+    --teal-900: #134e4a;
+    --indigo-50: #eef2ff;
+    --indigo-100: #e0e7ff;
+    --indigo-200: #c7d2fe;
+    --indigo-600: #4f46e5;
+    --indigo-700: #4338ca;
+    --indigo-900: #312e81;
+    --emerald-50: #ecfdf5;
+    --emerald-100: #d1fae5;
+    --emerald-200: #a7f3d0;
+    --emerald-600: #059669;
+    --emerald-700: #047857;
+    --emerald-900: #064e3b;
+    --rose-50: #fff1f2;
+    --rose-100: #ffe4e6;
+    --rose-200: #fecdd3;
+    --rose-600: #e11d48;
+    --rose-700: #be123c;
+    --rose-900: #881337;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-900: #111827;
+
+    font-family: 'Inter', sans-serif;
+    color: var(--gray-900);
+    padding: 10px;
+    margin: 0 auto;
+}
+
+.dashboard-wrap .page-header h1 {
+    font-weight: 800;
+    font-size: 1.4rem;
+    letter-spacing: -0.01em;
+    margin-bottom: 2px;
+}
+
+.dashboard-wrap .page-header p {
+    color: var(--gray-500);
+    font-size: .9rem;
+}
+
+/* ---- Metric Card (KPI box) ---- */
+.dashboard-wrap .metric-card {
+    border: 1px solid transparent;
+    border-radius: 14px;
+    padding: 18px 20px;
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease;
+    height: 100%;
+}
+
+.dashboard-wrap .metric-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px -12px rgba(0, 0, 0, .25);
+}
+
+.dashboard-wrap .metric-card .metric-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.dashboard-wrap .metric-card .metric-title {
+    font-size: .8rem;
+    font-weight: 600;
+}
+
+.dashboard-wrap .metric-card .metric-value {
+    font-size: 1.9rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.dashboard-wrap .metric-card .metric-sub {
+    font-size: .75rem;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ---- Theme colors (reusable by any department dashboard) ---- */
+.dashboard-wrap .card-blue {
+    background: linear-gradient(135deg, var(--blue-50), var(--blue-100));
+    border-color: var(--blue-200);
+}
+
+.dashboard-wrap .card-blue .metric-title,
+.dashboard-wrap .card-blue .metric-sub {
+    color: var(--blue-700);
+}
+
+.dashboard-wrap .card-blue .metric-value {
+    color: var(--blue-900);
+}
+
+.dashboard-wrap .card-blue .metric-icon {
+    color: var(--blue-600);
+}
+
+.dashboard-wrap .card-green {
+    background: linear-gradient(135deg, var(--green-50), var(--green-100));
+    border-color: var(--green-200);
+}
+
+.dashboard-wrap .card-green .metric-title,
+.dashboard-wrap .card-green .metric-sub {
+    color: var(--green-700);
+}
+
+.dashboard-wrap .card-green .metric-value {
+    color: var(--green-900);
+}
+
+.dashboard-wrap .card-green .metric-icon {
+    color: var(--green-600);
+}
+
+.dashboard-wrap .card-red {
+    background: linear-gradient(135deg, var(--red-50), var(--red-100));
+    border-color: var(--red-200);
+}
+
+.dashboard-wrap .card-red .metric-title,
+.dashboard-wrap .card-red .metric-sub {
+    color: var(--red-700);
+}
+
+.dashboard-wrap .card-red .metric-value {
+    color: var(--red-900);
+}
+
+.dashboard-wrap .card-red .metric-icon {
+    color: var(--red-600);
+}
+
+.dashboard-wrap .card-purple {
+    background: linear-gradient(135deg, var(--purple-50), var(--purple-100));
+    border-color: var(--purple-200);
+}
+
+.dashboard-wrap .card-purple .metric-title,
+.dashboard-wrap .card-purple .metric-sub {
+    color: var(--purple-700);
+}
+
+.dashboard-wrap .card-purple .metric-value {
+    color: var(--purple-900);
+}
+
+.dashboard-wrap .card-purple .metric-icon {
+    color: var(--purple-600);
+}
+
+.dashboard-wrap .card-teal {
+    background: linear-gradient(135deg, var(--teal-50), var(--teal-100));
+    border-color: var(--teal-200);
+}
+
+.dashboard-wrap .card-teal .metric-title,
+.dashboard-wrap .card-teal .metric-sub {
+    color: var(--teal-700);
+}
+
+.dashboard-wrap .card-teal .metric-value {
+    color: var(--teal-900);
+}
+
+.dashboard-wrap .card-teal .metric-icon {
+    color: var(--teal-600);
+}
+
+.dashboard-wrap .card-indigo {
+    background: linear-gradient(135deg, var(--indigo-50), var(--indigo-100));
+    border-color: var(--indigo-200);
+}
+
+.dashboard-wrap .card-indigo .metric-title,
+.dashboard-wrap .card-indigo .metric-sub {
+    color: var(--indigo-700);
+}
+
+.dashboard-wrap .card-indigo .metric-value {
+    color: var(--indigo-900);
+}
+
+.dashboard-wrap .card-indigo .metric-icon {
+    color: var(--indigo-600);
+}
+
+.dashboard-wrap .card-emerald {
+    background: linear-gradient(135deg, var(--emerald-50), var(--emerald-100));
+    border-color: var(--emerald-200);
+}
+
+.dashboard-wrap .card-emerald .metric-title,
+.dashboard-wrap .card-emerald .metric-sub {
+    color: var(--emerald-700);
+}
+
+.dashboard-wrap .card-emerald .metric-value {
+    color: var(--emerald-900);
+}
+
+.dashboard-wrap .card-emerald .metric-icon {
+    color: var(--emerald-600);
+}
+
+.dashboard-wrap .card-rose {
+    background: linear-gradient(135deg, var(--rose-50), var(--rose-100));
+    border-color: var(--rose-200);
+}
+
+.dashboard-wrap .card-rose .metric-title,
+.dashboard-wrap .card-rose .metric-sub {
+    color: var(--rose-700);
+}
+
+.dashboard-wrap .card-rose .metric-value {
+    color: var(--rose-900);
+}
+
+.dashboard-wrap .card-rose .metric-icon {
+    color: var(--rose-600);
+}
+
+/* ---- Panel (card container for lists/charts) ---- */
+.dashboard-wrap .panel {
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: 14px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .03);
+}
+
+.dashboard-wrap .panel-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--gray-100);
+    font-weight: 600;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dashboard-wrap .panel-body {
+    padding: 18px 20px;
+}
+
+.dashboard-wrap .scroll-box {
+    height: 320px;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.dashboard-wrap .scroll-box::-webkit-scrollbar {
+    width: 6px;
+}
+
+.dashboard-wrap .scroll-box::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 8px;
+}
+
+/* ---- Distribution / progress row (department, category, stock etc.) ---- */
+.dashboard-wrap .dept-row .dept-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: .85rem;
+    margin-bottom: 4px;
+}
+
+.dashboard-wrap .dept-row .progress {
+    height: 8px;
+    border-radius: 8px;
+    background: var(--gray-200);
+}
+
+/* ---- Quick action button ---- */
+.dashboard-wrap .quick-btn {
+    width: 100%;
+    text-align: left;
+    border: 1px solid var(--gray-200);
+    background: #fff;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    font-size: .9rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--gray-700);
+    transition: .15s;
+}
+
+.dashboard-wrap .quick-btn:hover {
+    background: var(--gray-50);
+    border-color: var(--gray-500);
+}
+
+.dashboard-wrap .quick-btn i {
+    font-size: 1rem;
+    color: var(--gray-600);
+}
+
+/* ---- Person/Item row (employee, customer, supplier, project etc.) ---- */
+.dashboard-wrap .person-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+}
+
+.dashboard-wrap .avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 600;
+    font-size: .85rem;
+}
+
+.dashboard-wrap .person-name {
+    font-size: .85rem;
+    font-weight: 600;
+    margin-bottom: 1px;
+}
+
+.dashboard-wrap .person-sub {
+    font-size: .75rem;
+    color: var(--gray-500);
+}
+
+/* ---- Empty state ---- */
+.dashboard-wrap .empty-state {
+    height: 280px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray-500);
+}
+
+.dashboard-wrap .empty-state i {
+    font-size: 2.2rem;
+    color: var(--gray-200);
+    margin-bottom: 8px;
+}
+
+/* ---- Status badge (Pending/Approved/Rejected ba je kono status) ---- */
+.dashboard-wrap .status-badge {
+    font-size: .72rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+}
+
+.dashboard-wrap .status-pending {
+    background: #fef9c3;
+    color: #854d0e;
+}
+
+.dashboard-wrap .status-approved {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.dashboard-wrap .status-rejected {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* ---- Small round icon (leave, announcement, notification etc.) ---- */
+.dashboard-wrap .leave-icon,
+.dashboard-wrap .ann-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: .75rem;
+    flex-shrink: 0;
+}
+
+/* ---- Calendar (event/holiday/schedule dashboard e use hobe) ---- */
+.dashboard-wrap .calendar-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.dashboard-wrap .calendar-head .btn {
+    padding: 4px 10px;
+}
+
+.dashboard-wrap .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+}
+
+.dashboard-wrap .cal-dow {
+    text-align: center;
+    font-size: .72rem;
+    font-weight: 600;
+    color: var(--gray-500);
+    padding-bottom: 4px;
+}
+
+.dashboard-wrap .cal-cell {
+    min-height: 64px;
+    border: 1px solid var(--gray-100);
+    border-radius: 8px;
+    padding: 6px;
+    font-size: .72rem;
+    background: #fbfbfc;
+}
+
+.dashboard-wrap .cal-cell.muted {
+    color: #c9ccd1;
+    background: #f8f9fb;
+}
+
+.dashboard-wrap .cal-cell .cal-date {
+    font-weight: 600;
+    color: var(--gray-700);
+}
+
+.dashboard-wrap .cal-evt {
+    margin-top: 3px;
+    padding: 1px 5px;
+    border-radius: 5px;
+    font-size: .65rem;
+    color: #fff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---- Bootstrap 4 (AdminLTE) compatibility shim
+       Bootstrap 5 er 'g-3'/'gap-*' na thakle egulo diye kaj chalano jabe ---- */
+.dashboard-wrap .row.g-3>[class*="col-"] {
+    padding: 8px;
+}
+
+.dashboard-wrap .row.g-3 {
+    margin: -8px;
+}
+
+.dashboard-wrap .gap-2>* {
+    margin-right: 8px;
+}
+
+.dashboard-wrap .gap-3>* {
+    margin-right: 12px;
+}
+
+.dashboard-wrap .d-flex.flex-column.gap-3>* {
+    margin-right: 0;
+    margin-bottom: 12px;
+}
+
+.dashboard-wrap .d-flex.flex-column.gap-3>*:last-child {
+    margin-bottom: 0;
+}
+
+@media (max-width:576px) {
+    .dashboard-wrap {
+        padding: 0;
+    }
+}

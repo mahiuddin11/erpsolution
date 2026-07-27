@@ -6,37 +6,80 @@ $parent_menu = array(
         'label' => 'Dashboard',
         'route' => null,
         'uniqueName' => "dashboard",
-        'icon' => 'fa fa-sitemap',
+        'icon' => 'fa fa-home',
         'parent_id' => 0,
         'submenu' => (object) array(
 
 
             (object) array(
-                'label' => 'Hrm Dashbord',
+                'label' => 'HRM Dashboard',
                 'route' => null,
                 'uniqueName' => "hrmdashbord",
-                'icon' => 'fa fa-th-large',
+                'icon' => 'fa fa-users',
                 'parent_id' => null,
                 'childMenu' => (object) array(
-                    (object) array('label' => 'Hrm Dashbord', 'route' => 'home', 'icon' => 'fa fa-dashboard', 'navigate_status' => 1),
+                    (object) array('label' => 'HRM Dashboard', 'route' => 'dashboard.hrm', 'icon' => 'fa fa-users', 'navigate_status' => 1),
+
+                )
+            ),
+            (object) array(
+                'label' => 'Finance Dashboard',
+                'route' => null,
+                'uniqueName' => "financedashbord",
+                'icon' => 'fa fa-users',
+                'parent_id' => null,
+                'childMenu' => (object) array(
+                    (object) array('label' => 'Finance Dashboard', 'route' => 'home', 'icon' => 'fa fa-users', 'navigate_status' => 1),
+
+                )
+            ),
+            (object) array(
+                'label' => 'Store Dashboard',
+                'route' => null,
+                'uniqueName' => "storedeshbord",
+                'icon' => 'fa fa-users',
+                'parent_id' => null,
+                'childMenu' => (object) array(
+                    (object) array('label' => 'Store Dashboard', 'route' => 'home', 'icon' => 'fa fa-users', 'navigate_status' => 1),
+
+                )
+            ),
+            (object) array(
+                'label' => 'Procurement Dashboard',
+                'route' => null,
+                'uniqueName' => "procurementdashbord",
+                'icon' => 'fa fa-users',
+                'parent_id' => null,
+                'childMenu' => (object) array(
+                    (object) array('label' => 'Procurement Dashboard', 'route' => 'home', 'icon' => 'fa fa-users', 'navigate_status' => 1),
 
                 )
             ),
 
             (object) array(
-                'label' => 'POS Dashbord',
+                'label' => 'Project Dashboard',
                 'route' => null,
-                'uniqueName' => "posdashbord",
-                'icon' => 'fa fa-home',
+                'uniqueName' => "storedeshbord",
+                'icon' => 'fa fa-users',
                 'parent_id' => null,
                 'childMenu' => (object) array(
-                    (object) array('label' => 'All Product', 'route' => 'inventorySetup.product.index', 'icon' => 'fa fa-dashboard', 'navigate_status' => 1),
-                    (object) array('label' => 'Add New Product', 'route' => 'inventorySetup.product.create', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
-                    (object) array('label' => 'Edit Product', 'route' => 'inventorySetup.product.edit', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
-                    (object) array('label' => 'Show Product', 'route' => 'inventorySetup.product.show', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
-                    (object) array('label' => 'Destroy Product', 'route' => 'inventorySetup.product.destroy', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
+                    (object) array('label' => 'Project Dashboard', 'route' => 'home', 'icon' => 'fa fa-users', 'navigate_status' => 1),
+
                 )
             ),
+            (object) array(
+                'label' => 'Management Dashboard',
+                'route' => null,
+                'uniqueName' => "managenentdeshboard",
+                'icon' => 'fa fa-users',
+                'parent_id' => null,
+                'childMenu' => (object) array(
+                    (object) array('label' => 'Management Dashboard', 'route' => 'home', 'icon' => 'fa fa-users', 'navigate_status' => 1),
+
+                )
+            ),
+
+
 
         )
     ),
