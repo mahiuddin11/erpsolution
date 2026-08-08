@@ -701,6 +701,8 @@
     </style>
 @endsection
 
+
+
 @section('admin-content')
     <div class="main-wrapper ">
         <main class="col-12 mt-2">

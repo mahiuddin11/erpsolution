@@ -299,11 +299,17 @@
                                         <label>Gender <span class="text-danger">*</span></label>
                                         <select name="gender" class="form-control @error('gender') is-invalid @enderror"
                                             required>
-                                            <option value="" disabled>Select</option>
-                                            <option value="male">Male
+
+                                            <option value="male"
+                                                {{ old('gender', $editInfo->gender) == 'male' ? 'selected' : '' }}>
+                                                Male
                                             </option>
-                                            <option value="female">
-                                                Female</option>
+
+                                            <option value="female"
+                                                {{ old('gender', $editInfo->gender) == 'female' ? 'selected' : '' }}>
+                                                Female
+                                            </option>
+
                                         </select>
                                         @error('gender')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -313,10 +319,17 @@
                                         <label>Marital Status</label>
                                         <select name="marital_status"
                                             class="form-control @error('marital_status') is-invalid @enderror">
-                                            <option value="married">
-                                                Married</option>
-                                            <option value="unmarried">
-                                                Unmarried</option>
+
+                                            <option value="married"
+                                                {{ old('marital_status', $editInfo->marital_status) == 'married' ? 'selected' : '' }}>
+                                                Married
+                                            </option>
+
+                                            <option value="unmarried"
+                                                {{ old('marital_status', $editInfo->marital_status) == 'unmarried' ? 'selected' : '' }}>
+                                                Unmarried
+                                            </option>
+
                                         </select>
                                         @error('marital_status')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -345,8 +358,10 @@
                                             class="form-control @error('blood_group') is-invalid @enderror">
                                             <option value="">Select</option>
                                             @foreach (['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as $bg)
-                                                <option value="{{ $bg }}">
-                                                    {{ $bg }}</option>
+                                                <option value="{{ $bg }}"
+                                                    {{ old('blood_group', $editInfo->blood_group) == $bg ? 'selected' : '' }}>
+                                                    {{ $bg }}
+                                                </option>
                                             @endforeach
                                         </select>
                                         @error('blood_group')
@@ -620,8 +635,10 @@
                                             <option value="0">No
                                                 Applicable</option>
                                             @foreach ($branchs as $value)
-                                                <option value="{{ $value->id }}">
-                                                    {{ $value->name }}</option>
+                                                <option value="{{ $value->id }}"
+                                                    {{ old('branch_id', $editInfo->branch_id) == $value->id ? 'selected' : '' }}>
+                                                    {{ $value->name }}
+                                                </option>
                                             @endforeach
                                         </select>
                                         @error('branch_id')
@@ -666,10 +683,15 @@
                                         <label>Overtime</label>
                                         <select name="over_time_is"
                                             class="form-control @error('over_time_is') is-invalid @enderror">
-                                            <option value="yes">
-                                                Yes</option>
-                                            <option value="no">
-                                                No</option>
+                                            <option value="yes"
+                                                {{ old('over_time_is', $editInfo->over_time_is) == 'yes' ? 'selected' : '' }}>
+                                                Yes
+                                            </option>
+
+                                            <option value="no"
+                                                {{ old('over_time_is', $editInfo->over_time_is) == 'no' ? 'selected' : '' }}>
+                                                No
+                                            </option>
                                         </select>
                                         @error('over_time_is')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -679,10 +701,15 @@
                                         <label>Status <span class="text-danger">*</span></label>
                                         <select name="status" class="form-control @error('status') is-invalid @enderror"
                                             required>
-                                            <option value="present">
-                                                Present</option>
-                                            <option value="left">
-                                                Left</option>
+                                            <option value="present"
+                                                {{ old('status', $editInfo->status) == 'present' ? 'selected' : '' }}>
+                                                Present
+                                            </option>
+
+                                            <option value="left"
+                                                {{ old('status', $editInfo->status) == 'left' ? 'selected' : '' }}>
+                                                Left
+                                            </option>
                                         </select>
                                         @error('status')
                                             <div class="invalid-feedback">{{ $message }}</div>

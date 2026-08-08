@@ -2,6 +2,8 @@
 
 // use Illuminate\Support\Facades\Artisan;
 
+use App\Http\Controllers\Api\HrmDashboardApiController;
+use App\Http\Controllers\Api\HrmDashboardApiController as ApiHrmDashboardApiController;
 use App\Http\Controllers\Backend\ActivityLogs\ActivityLogsController;
 use App\Http\Controllers\Backend\Hrm\AttendanceController;
 use App\Http\Controllers\Backend\InventorySetup\StockReportController;
@@ -358,7 +360,8 @@ Route::match(['get', 'post'], '/cleare-data', function () {
 
 
 
-Route::resource('attends',  AttendanceController::class);
+// Route::resource('attends',  AttendanceController::class);
+Route::resource('attends', '\\' . AttendanceController::class);
 // Route::get('/attends', [AttendanceController::class], 'index');
 
 // Route::get('/lenk', function () {
@@ -391,10 +394,10 @@ Route::get('/attendance/reset/{id?}', 'ZktecoController@reset');
 Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
 
     Route::group(['middleware' => ['web', 'auth'], 'namespace' => 'Dashboard'], function () {
-        // Route::get('/home', 'HomeController@index')->name('home');
+
         Route::get('/dashboard/hrm', [HrmDashboardController::class, 'index'])->name('dashboard.hrm');
+        Route::get('/dashboard/inventory', [StoreDashboardController::class, 'index'])->name('dashboard.inventory');
         Route::get('/dashboard/finance', [FinanceDashboardController::class, 'index'])->name('dashboard.finance');
-        Route::get('/dashboard/store', [StoreDashboardController::class, 'index'])->name('dashboard.store');
         Route::get('/dashboard/procurement', [ProcurementDashboardController::class, 'index'])->name('dashboard.procurement');
         Route::get('/dashboard/project', [ProjectDashboardController::class, 'index'])->name('dashboard.project');
         // Route::get('/dashboard/management', [ManagementDashboardController::class, 'index'])->name('dashboard.management');
@@ -737,3 +740,15 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         return view('debug');
     });
 });
+
+// Route::middleware('auth')->prefix('api/hrm-dashboard')->group(function () {
+//     Route::get('kpis', [HrmDashboardApiController::class, 'kpis']);
+//     Route::get('department-distribution', [HrmDashboardApiController::class, 'departmentDistribution']);
+//     Route::get('quick-actions', [HrmDashboardApiController::class, 'quickActions']);
+//     Route::get('employees-on-leave', [HrmDashboardApiController::class, 'employeesOnLeave']);
+//     Route::get('attendance-list', [HrmDashboardApiController::class, 'attendanceList']);
+//     Route::get('employee-options', [HrmDashboardApiController::class, 'employeeOptions']);
+//     Route::get('calendar-events', [HrmDashboardApiController::class, 'calendarEvents']);
+//     Route::get('recent-leave-applications', [HrmDashboardApiController::class, 'recentLeaveApplications']);
+//     Route::get('announcements', [HrmDashboardApiController::class, 'announcements']);
+// });

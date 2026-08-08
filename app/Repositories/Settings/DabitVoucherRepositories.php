@@ -170,7 +170,8 @@ class DabitVoucherRepositories
 
             for ($i = 0; $i < count($request->account_id); $i++) {
                 $dabitvoucherdetails = new DabitVoucherDetails();
-                $dabitvoucherdetails->payment_invoice = $request->payment_invoice[$i] ?? null;
+                // $dabitvoucherdetails->payment_invoice = $request->payment_invoice[$i] ?? null;
+                $dabitvoucherdetails->payment_invoice =  null;
                 $dabitvoucherdetails->dabit_voucher_id = $dabitvoucher->id;
 
                 if ($request->cost_center_type[$i] == "project") {
@@ -216,7 +217,7 @@ class DabitVoucherRepositories
         if (!empty($request->debit) || !empty($request->credit)) {
             for ($i = 0; $i < count($request->account_id); $i++) {
                 $dabitvoucherdetails = new DabitVoucherDetails();
-                $dabitvoucherdetails->payment_invoice = $request->payment_invoice[$i] ?? "";
+                $dabitvoucherdetails->payment_invoice = $request->payment_invoice[$i] ?? null;
                 $dabitvoucherdetails->dabit_voucher_id = $dabitvoucher->id;
 
                 if ($request->cost_center_type[$i] == "project") {
@@ -267,12 +268,12 @@ class DabitVoucherRepositories
 
             DB::beginTransaction();
             $debitVoucher = DabitVoucher::findOrFail($id);
-            $debitVoucherDetails = DabitVoucherDetails::where('dabit_voucher_id', $id)->get();
 
+            $debitVoucherDetails = DabitVoucherDetails::where('dabit_voucher_id', $id)->get();
 
             foreach ($debitVoucherDetails as  $debitVoucherDetail) {
                 $transaction['branch_id'] = $debitVoucherDetail->branch_id;
-                $transaction['payment_invoice'] = $debitVoucherDetail->payment_invoice;
+                $transaction['payment_invoice'] = $debitVoucherDetail->payment_invoice ?? null;
                 $transaction['invoice'] = $debitVoucher->voucher_no;
                 $transaction['table_id'] = $debitVoucher->id;
                 $transaction['account_id'] = $debitVoucherDetail->account_id;

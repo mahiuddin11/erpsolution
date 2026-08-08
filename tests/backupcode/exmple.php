@@ -170,7 +170,7 @@
     }
  */
 
-    public function prstore($request)
+    public function prstore($request) 
     {
         DB::beginTransaction();
 

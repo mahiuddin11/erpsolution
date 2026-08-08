@@ -50,7 +50,7 @@ class PaySheetController extends Controller
                 return redirect()->route('hrm.paysheet.index', ['month' => $month, 'employee_id' => $request->employee_id]);
             }
 
-            $takeEmployee = Employee::where('employee_status', 'present');
+            $takeEmployee = Employee::where('employee_status', 'present')->orderBy('id_card', 'asc');
 
             if ($request->employee_id && $request->employee_id !== 'all') {
                 $takeEmployee->where('id', $request->employee_id);
@@ -75,8 +75,8 @@ class PaySheetController extends Controller
                     'employee_paid_leave'    => PAID_LEAVE_COUNT($emp, $month),
                     'holiday'                => count(GET_HOLIDAYS($month)),
                     'totalPayableDays'       => TOTALPAYABLEDAYS($emp->id, $month),
-                    'overtime_houre'         => OVERTIME_HOURE($emp),
-                    'overtime_salary'        => OVERTIME_SALARY($emp),
+                    'overtime_houre'         => OVERTIME_HOURE($emp, $month),
+                    'overtime_salary'        => OVERTIME_SALARY($emp, $month),
                     'loan_adjustment'        => loadAdjustment($emp->id, $month),
                     'employee_payable_salary' => EMPLOYEE_PAYABLE_SALARY($emp, $month),
                     'status'                 => 'unpaid',
@@ -93,7 +93,11 @@ class PaySheetController extends Controller
 
             if ($request->method() == "GET") {
 
-                $MonthlyPaySheetscheck = MonthlyPayableSalary::whereMonth('date', date('m', strtotime($request->month)))->exists();
+                $searchMonth = $request->month ?? now()->format('Y-m');
+
+                $MonthlyPaySheetscheck = MonthlyPayableSalary::whereYear('date', Carbon::parse($searchMonth)->year)
+                    ->whereMonth('date', Carbon::parse($searchMonth)->month)
+                    ->exists();
 
                 if (!$MonthlyPaySheetscheck) {
                     $tables = [];
@@ -102,7 +106,7 @@ class PaySheetController extends Controller
                     if ($request->employee_id && $request->employee_id != "all") {
                         $takeEmployee = $takeEmployee->where("id", $request->employee_id);
                     }
-                    $takeEmployee = $takeEmployee->where("employee_status", "present")->get();
+                    $takeEmployee = $takeEmployee->where("employee_status", "present")->orderBy('id_card', 'asc')->get();
 
                     foreach ($takeEmployee as $employee) {
 
@@ -117,18 +121,18 @@ class PaySheetController extends Controller
                             // "travel_allowance" =>  $employee->salary * 0.125,
                             // "working_day" =>  MONTH_WORKING_DAY($request->month),
                             "daily_rate" =>  Daily_Rate($employee->salary),
-                            "employee_presence_day" =>  EMPLOYEE_PRESENCE_DAY($employee->id, $request->month ?? now()->format('Y-m')),
-                            "employee_absence_day" =>  EMPLOYEE_ABSENCE_DAY($employee->id, $request->month  ?? now()->format('Y-m')),
-                            "absence_deduction" =>  ABSENCE_DEDUCTION($employee->id, $request->month  ?? now()->format('Y-m'), $employee->salary),
-                            "employee_late" => LATE_DAYS($employee, $request->month  ?? now()->format('Y-m')),
-                            "employee_deducton" => LATE_DAYS_SALARY_DEDUCT($employee, $request->month  ?? now()->format('Y-m')),
-                            "employee_paid_leave" => PAID_LEAVE_COUNT($employee, $request->month  ?? now()->format('Y-m')),
-                            "holiday" => count(GET_HOLIDAYS($request->month  ?? now()->format('Y-m'))),
+                            "employee_presence_day" =>  EMPLOYEE_PRESENCE_DAY($employee->id, $searchMonth),
+                            "employee_absence_day" =>  EMPLOYEE_ABSENCE_DAY($employee->id, $searchMonth),
+                            "absence_deduction" =>  ABSENCE_DEDUCTION($employee->id, $searchMonth, $employee->salary),
+                            "employee_late" => LATE_DAYS($employee, $searchMonth),
+                            "employee_deducton" => LATE_DAYS_SALARY_DEDUCT($employee, $searchMonth),
+                            "employee_paid_leave" => PAID_LEAVE_COUNT($employee, $searchMonth),
+                            "holiday" => count(GET_HOLIDAYS($searchMonth)),
                             // "employee_unpaid_leave" => UNPAID_LEAVE_COUNT($employee),
-                            'totalPayableDays' => TOTALPAYABLEDAYS($employee->id, $request->month  ?? now()->format('Y-m')),
-                            "overtime_houre" => OVERTIME_HOURE($employee),
-                            "overtime_salary" => OVERTIME_SALARY($employee),
-                            "employee_payable_salary" =>  EMPLOYEE_PAYABLE_SALARY($employee, $request->month ?? $request->month  ?? now()->format('Y-m')),
+                            'totalPayableDays' => TOTALPAYABLEDAYS($employee->id, $searchMonth),
+                            "overtime_houre" => OVERTIME_HOURE($employee, $searchMonth),
+                            "overtime_salary" => OVERTIME_SALARY($employee, $searchMonth),
+                            "employee_payable_salary" =>  EMPLOYEE_PAYABLE_SALARY($employee, $searchMonth),
                             "created_at" => now(),
                             "updated_at" => now()
                         ];
@@ -139,7 +143,9 @@ class PaySheetController extends Controller
                         $MonthlyPaySheets = $MonthlyPaySheets->where('employee_id', $request->employee_id);
                     }
                     if ($request->month) {
-                        $MonthlyPaySheets = $MonthlyPaySheets->whereMonth('date', date("m", strtotime($request->month)));
+                        $MonthlyPaySheets = $MonthlyPaySheets
+                            ->whereYear('date', Carbon::parse($searchMonth)->year)
+                            ->whereMonth('date', Carbon::parse($searchMonth)->month);
                     }
                     $MonthlyPaySheets = $MonthlyPaySheets->get();
                 }

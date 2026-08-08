@@ -72,42 +72,41 @@ class SaleController extends Controller
 
     public function quiceAddCustomer(Request $request)
     {
-            $customertLastData = Customer::latest('id')->first();
-            if ($customertLastData) :
-                $customerData = $customertLastData->id + 1;
-            else :
-                $customerData = 1;
-            endif;
-            $customerCode = 'CU' . str_pad($customerData, 5, "0", STR_PAD_LEFT);
+        $customertLastData = Customer::latest('id')->first();
+        if ($customertLastData) :
+            $customerData = $customertLastData->id + 1;
+        else :
+            $customerData = 1;
+        endif;
+        $customerCode = 'CU' . str_pad($customerData, 5, "0", STR_PAD_LEFT);
 
-            $customer = new Customer();
-            $customer->customergroup_id = $request->customergroup_id;
-            $customer->name = $request->name;
-            $customer->email = $request->email;
-            $customer->phone = $request->phone;
-            $customer->address = $request->address;
-            $customer->bin = $request->bin;
-            $customer->co_name = $request->co_name;
-            $customer->customerCode = $customerCode;
-            $customer->status = 'Active';
-            $customer->created_by = Auth::user()->id;
-            $customer->save();
+        $customer = new Customer();
+        $customer->customergroup_id = $request->customergroup_id;
+        $customer->name = $request->name;
+        $customer->email = $request->email;
+        $customer->phone = $request->phone;
+        $customer->address = $request->address;
+        $customer->bin = $request->bin;
+        $customer->co_name = $request->co_name;
+        $customer->customerCode = $customerCode;
+        $customer->status = 'Active';
+        $customer->created_by = Auth::user()->id;
+        $customer->save();
 
-            $Accounts = new Accounts();
-            $Accounts->account_name = $request->co_name;
-            $Accounts->parent_id = 5;
-            $Accounts->accountable_id = $customer->id;
-            $Accounts->accountable_type = "App\Models\Customer";
-            $Accounts->bill_by_bill = 1;
-            $Accounts->status = 'Active';
-            $Accounts->created_by = Auth::user()->id;
-            $Accounts->save();
+        $Accounts = new Accounts();
+        $Accounts->account_name = $request->co_name;
+        $Accounts->parent_id = 5;
+        $Accounts->accountable_id = $customer->id;
+        $Accounts->accountable_type = "App\Models\Customer";
+        $Accounts->bill_by_bill = 1;
+        $Accounts->status = 'Active';
+        $Accounts->created_by = Auth::user()->id;
+        $Accounts->save();
 
-            return response()->json([
-                'success' => true,
-                'accounts' => $Accounts,
-            ]);
-
+        return response()->json([
+            'success' => true,
+            'accounts' => $Accounts,
+        ]);
     }
 
     /**
@@ -117,7 +116,7 @@ class SaleController extends Controller
     {
         $title = 'Add New sale';
 
-      
+
         $category_info = Category::get()->where('status', 'Active');
         $customer = Customer::get()->where('status', 'Active');
         $ledgers = ChartOfAccount::whereIn('id', [getAccountByUniqueID(5)->id, getAccountByUniqueID(16)->id])->get();
@@ -151,7 +150,7 @@ class SaleController extends Controller
 
     public function show(Request $request, $id)
     {
-       
+
         $title = 'Sale Invoice';
 
         $invoice = Sale::with(['details.product.category', 'branch', 'customer'])->findOrFail($id);
@@ -299,19 +298,30 @@ class SaleController extends Controller
 
     public function getProductListForSale(Request $request)
     {
-        // dd($request->all());
+
         $cat_id = $request->cat_id;
-        $productList = Product::get()->where('category_id', $cat_id);
+        $productList = Product::where('category_id', $cat_id)->get();
         $add = '';
         if (!empty($productList)) :
             $add .= "<option value=''>Select Product</option>";
 
             foreach ($productList as $key => $value) :
                 // $stocksummerylst = StockSummary::where('branch_id', $request->branch_id)->where('product_id', $value->id)->first();
-                $add .= '<option proName="' . $value->name . '"   value="' . $value->id . '">' . $value->name . '</option>';
+                $add .= '<option
+    value="' . $value->id . '"
+    proName="' . $value->name . '"
+    proCode="' . $value->productCode . '">
+    ' . $value->productCode . ' - ' . $value->name . '
+</option>';
+
                 if (!$value->subproduct->isEmpty()) {
                     foreach ($value->subproduct as $key => $itel) :
-                        $add .= '<option proName="' . $itel->name . '"   value="' . $itel->id . '">- ' . $itel->name . '</option>';
+                        $add .= '<option
+    value="' . $itel->id . '"
+    proName="' . $itel->name . '"
+    proCode="' . $itel->productCode . '">
+    ' . $itel->productCode . ' - ' . $itel->name . '
+</option>';
                     endforeach;
                 }
             endforeach;
@@ -322,6 +332,7 @@ class SaleController extends Controller
             die;
         endif;
     }
+
 
     public function getCustomerBalance(Request $request)
     {

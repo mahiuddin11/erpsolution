@@ -426,7 +426,7 @@ class DabitVoucherController extends Controller
             return response()->json(['bill_by_bill' => false, 'payment_invoices' => []]);
         }
 
-        // balance_type দিয়ে original bill side নির্ধারণ
+
         $type        = $account->balance_type ?? 'credit'; // supplier=credit, customer=debit
         $anotherType = $type == 'credit' ? 'debit' : 'credit';
 
@@ -437,7 +437,7 @@ class DabitVoucherController extends Controller
             ->whereNotNull('invoice')
             ->where('invoice', '!=', '')
             ->whereNull('payment_invoice')
-            ->whereRaw('(COALESCE(credit, 0) + COALESCE(debit, 0)) > 0') // যেকোনো side এ value আছে
+            ->whereRaw('(COALESCE(credit, 0) + COALESCE(debit, 0)) > 0') // side এ value
             ->selectRaw("
             invoice,
             MIN(created_at) as created_at,

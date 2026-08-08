@@ -74,8 +74,11 @@ class StockReportController extends Controller
         $currentSrock = $currentSrock->get();
         $categorys = Category::get();
 
+
         return view('backend.pages.reports.index', get_defined_vars());
     }
+
+
 
     public function productLedgerModal(Request $request)
     {

@@ -279,6 +279,7 @@
     border: 1px solid var(--gray-200);
     border-radius: 14px;
     box-shadow: 0 1px 2px rgba(0, 0, 0, .03);
+    transition: all .35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .dashboard-wrap .panel-header {
@@ -525,8 +526,341 @@
     margin-bottom: 0;
 }
 
-@media (max-width:576px) {
+/* Department Distribution -- circular card design */
+.dept-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.dept-card {
+    background: #f8f9fb;
+    border: 1px solid #eef0f3;
+    border-radius: 14px;
+    padding: 12px 10px 10px;
+    text-align: center;
+    transition: box-shadow .15s ease, transform .15s ease;
+    min-width: 0;
+}
+
+.dept-card:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .08);
+    transform: translateY(-2px);
+}
+
+.dept-circle {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    margin: 0 auto 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dept-circle-inner {
+    width: 52px;
+    height: 52px;
+    background: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13.5px;
+    color: #111827;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .03);
+}
+
+.dept-card-name {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dept-card-sub {
+    font-size: 11px;
+    color: #6b7280;
+}
+
+@media (max-width: 768px) {
     .dashboard-wrap {
         padding: 0;
+    }
+
+    .dept-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+
+    .dept-circle {
+        width: 56px;
+        height: 56px;
+    }
+
+    .dept-circle-inner {
+        width: 42px;
+        height: 42px;
+        font-size: 11.5px;
+    }
+
+    .dept-card {
+        padding: 10px 6px 8px;
+    }
+
+    .dept-card-name {
+        font-size: 11px;
+    }
+
+    .dept-card-sub {
+        font-size: 10px;
+    }
+}
+
+/* ==========================================================================
+   Panel Fullscreen Expand (smooth animation)
+   panel-header e expand icon click korle panel pura viewport cover kore
+   fullscreen hoye jabe, smooth transition-e. Kono notun page/route lagbe
+   na, shudhu CSS class toggle.
+   ========================================================================== */
+.dashboard-wrap .panel.panel-fullscreen {
+    position: fixed;
+    inset: 16px;
+    z-index: 1050;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .25);
+    animation: panelExpand .35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes panelExpand {
+    from {
+        opacity: 0;
+        transform: scale(.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.dashboard-wrap .panel.panel-fullscreen .panel-body {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.dashboard-wrap .panel.panel-fullscreen .scroll-box {
+    height: 100%;
+}
+
+.dashboard-wrap .panel-fullscreen-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, .45);
+    z-index: 1049;
+    opacity: 0;
+    animation: backdropFade .25s ease forwards;
+}
+
+@keyframes backdropFade {
+    to {
+        opacity: 1;
+    }
+}
+
+/* Fixed: 2026-08-02 -- ager hardcoded emerald color soriye neutral kora holo */
+.dashboard-wrap .panel-expand-btn {
+    background: transparent;
+    border: none;
+    color: var(--emerald-600);
+    font-size: 1rem;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: .15s;
+}
+
+.dashboard-wrap .panel-expand-btn:hover {
+    background: var(--gray-100);
+    color: var(--gray-900);
+}
+
+.dashboard-wrap .txn-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.dashboard-wrap .txn-filter-bar .form-control {
+    flex: 1 1 140px;
+    min-width: 0;
+}
+
+.dashboard-wrap .txn-table-header {
+    display: none;
+    grid-template-columns: 40px 2fr 1fr 90px 130px;
+    gap: 12px;
+    padding: 0 14px 8px;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--gray-500);
+    border-bottom: 1px solid var(--gray-200);
+    margin-bottom: 6px;
+}
+
+.dashboard-wrap .txn-row {
+    display: grid;
+    grid-template-columns: 40px 2fr 1fr 90px 130px;
+    align-items: center;
+    gap: 12px;
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    transition: .15s;
+}
+
+.dashboard-wrap .txn-row:hover {
+    border-color: var(--gray-500);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
+}
+
+.dashboard-wrap .txn-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    flex-shrink: 0;
+    font-size: .9rem;
+}
+
+.dashboard-wrap .txn-title {
+    font-size: .84rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 3px;
+}
+
+.dashboard-wrap .txn-sub {
+    font-size: .72rem;
+    color: var(--gray-500);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.dashboard-wrap .txn-voucher {
+    font-size: .68rem;
+    font-weight: 600;
+    background: var(--gray-100);
+    color: var(--gray-700);
+    padding: 1px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.dashboard-wrap .txn-branch {
+    font-size: .78rem;
+    color: var(--gray-700);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dashboard-wrap .txn-qty {
+    font-size: .85rem;
+    font-weight: 700;
+    text-align: right;
+}
+
+.dashboard-wrap .txn-date {
+    font-size: .72rem;
+    color: var(--gray-500);
+    text-align: right;
+    white-space: nowrap;
+}
+
+.dashboard-wrap .txn-field-label {
+    display: none;
+    font-size: .65rem;
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: .02em;
+}
+
+/* Desktop (>768px): header row dekhabe, .txn-top er child gulo shorashori
+   grid column-e boshbe (display:contents diye wrapper-take "invisible"
+   kora hoy, jate icon o title alada column e boshte pare) */
+@media (min-width: 769px) {
+    .dashboard-wrap .txn-table-header {
+        display: grid;
+    }
+
+    .dashboard-wrap .txn-row .txn-top {
+        display: contents;
+    }
+}
+
+/* Tablet (577-768px): branch column hide kore compact rakha */
+@media (max-width: 768px) {
+    .dashboard-wrap .txn-row {
+        grid-template-columns: 36px 1.6fr 80px 110px;
+    }
+
+    .dashboard-wrap .txn-branch {
+        display: none;
+    }
+}
+
+/* Mobile (<=576px): full card-stack layout, protita field alada line-e,
+   field-label dekhabe jate value gulo bujhte shubidha hoy */
+@media (max-width: 576px) {
+    .dashboard-wrap .txn-row {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        padding: 12px;
+    }
+
+    .dashboard-wrap .txn-row .txn-top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .dashboard-wrap .txn-row .txn-meta-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        padding-top: 8px;
+        border-top: 1px solid var(--gray-100);
+    }
+
+    .dashboard-wrap .txn-field-label {
+        display: block;
+    }
+
+    .dashboard-wrap .txn-branch,
+    .dashboard-wrap .txn-qty,
+    .dashboard-wrap .txn-date {
+        display: block;
+        text-align: left;
+        white-space: normal;
     }
 }

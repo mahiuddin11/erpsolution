@@ -18,10 +18,24 @@ $parent_menu = array(
                 'icon' => 'fa fa-users',
                 'parent_id' => null,
                 'childMenu' => (object) array(
-                    (object) array('label' => 'HRM Dashboard', 'route' => 'dashboard.hrm', 'icon' => 'fa fa-users', 'navigate_status' => 1),
+                    (object) array('label' => 'HRM Dashboard', 'route' => 'home', 'icon' => 'fa fa-users', 'navigate_status' => 1),
 
                 )
             ),
+
+
+
+            (object) array(
+                'label' => 'Inventory Dashboard',
+                'route' => null,
+                'uniqueName' => "inventorydeshbord",
+                'icon' => 'fa fa-users',
+                'parent_id' => null,
+                'childMenu' => (object) array(
+                    (object) array('label' => 'Inventory Dashboard', 'route' => 'dashboard.inventory', 'icon' => 'fa fa-users', 'navigate_status' => 1),
+                )
+            ),
+
             (object) array(
                 'label' => 'Finance Dashboard',
                 'route' => null,
@@ -29,55 +43,45 @@ $parent_menu = array(
                 'icon' => 'fa fa-users',
                 'parent_id' => null,
                 'childMenu' => (object) array(
-                    (object) array('label' => 'Finance Dashboard', 'route' => 'home', 'icon' => 'fa fa-users', 'navigate_status' => 1),
-
-                )
-            ),
-            (object) array(
-                'label' => 'Store Dashboard',
-                'route' => null,
-                'uniqueName' => "storedeshbord",
-                'icon' => 'fa fa-users',
-                'parent_id' => null,
-                'childMenu' => (object) array(
-                    (object) array('label' => 'Store Dashboard', 'route' => 'home', 'icon' => 'fa fa-users', 'navigate_status' => 1),
-
-                )
-            ),
-            (object) array(
-                'label' => 'Procurement Dashboard',
-                'route' => null,
-                'uniqueName' => "procurementdashbord",
-                'icon' => 'fa fa-users',
-                'parent_id' => null,
-                'childMenu' => (object) array(
-                    (object) array('label' => 'Procurement Dashboard', 'route' => 'home', 'icon' => 'fa fa-users', 'navigate_status' => 1),
+                    (object) array('label' => 'Finance Dashboard', 'route' => 'dashboard.finance', 'icon' => 'fa fa-users', 'navigate_status' => 1),
 
                 )
             ),
 
-            (object) array(
-                'label' => 'Project Dashboard',
-                'route' => null,
-                'uniqueName' => "storedeshbord",
-                'icon' => 'fa fa-users',
-                'parent_id' => null,
-                'childMenu' => (object) array(
-                    (object) array('label' => 'Project Dashboard', 'route' => 'home', 'icon' => 'fa fa-users', 'navigate_status' => 1),
+            // (object) array(
+            //     'label' => 'Procurement Dashboard',
+            //     'route' => null,
+            //     'uniqueName' => "procurementdashbord",
+            //     'icon' => 'fa fa-users',
+            //     'parent_id' => null,
+            //     'childMenu' => (object) array(
+            //         (object) array('label' => 'Procurement Dashboard', 'route' => '#', 'icon' => 'fa fa-users', 'navigate_status' => 1),
 
-                )
-            ),
-            (object) array(
-                'label' => 'Management Dashboard',
-                'route' => null,
-                'uniqueName' => "managenentdeshboard",
-                'icon' => 'fa fa-users',
-                'parent_id' => null,
-                'childMenu' => (object) array(
-                    (object) array('label' => 'Management Dashboard', 'route' => 'home', 'icon' => 'fa fa-users', 'navigate_status' => 1),
+            //     )
+            // ),
 
-                )
-            ),
+            // (object) array(
+            //     'label' => 'Project Dashboard',
+            //     'route' => null,
+            //     'uniqueName' => "storedeshbord",
+            //     'icon' => 'fa fa-users',
+            //     'parent_id' => null,
+            //     'childMenu' => (object) array(
+            //         (object) array('label' => 'Project Dashboard', 'route' => '#', 'icon' => 'fa fa-users', 'navigate_status' => 1),
+
+            //     )
+            // ),
+            // (object) array(
+            //     'label' => 'Management Dashboard',
+            //     'route' => null,
+            //     'uniqueName' => "managenentdeshboard",
+            //     'icon' => 'fa fa-users',
+            //     'parent_id' => null,
+            //     'childMenu' => (object) array(
+            //         (object) array('label' => 'Management Dashboard', 'route' => '#', 'icon' => 'fa fa-users', 'navigate_status' => 1),
+
+            //     )
+            // ),
 
 
 

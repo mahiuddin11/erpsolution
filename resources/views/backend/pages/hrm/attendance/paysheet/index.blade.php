@@ -207,7 +207,7 @@
                                     <th>Overtime Salary (OS)</th>
                                     <th>Lone Adjustment </th>
                                     @if (isset($MonthlyPaySheets))
-                                     <th>bonus</th>   
+                                        <th>bonus</th>
                                     @endif
                                     <th>Payable Salary</th>
                                     <th>Status</th>
@@ -215,10 +215,28 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @php $employee_payable_salary = 0; @endphp
+                                @php
+                                    $employee_payable_salary = 0;
+                                    $total_gross_salary = 0;
+                                    $total_absent_deduction = 0;
+                                    $total_late_deduction = 0;
+                                    $total_overtime_salary = 0;
+                                    $total_loan_adjustment = 0;
+                                @endphp
 
                                 @if (isset($MonthlyPaySheets))
                                     @foreach ($MonthlyPaySheets as $key => $MonthlyPaySheet)
+                                        @php
+                                            $employee_payable_salary += $MonthlyPaySheet->employee_payable_salary;
+                                            $total_gross_salary += $MonthlyPaySheet->total_salary;
+                                            $total_absent_deduction += $MonthlyPaySheet->absence_deduction;
+                                            $total_late_deduction +=
+                                                floor($MonthlyPaySheet->employee_late / 3) == 0
+                                                    ? 0
+                                                    : $MonthlyPaySheet->employee_deducton;
+                                            $total_overtime_salary += $MonthlyPaySheet->overtime_salary;
+                                            $total_loan_adjustment += $MonthlyPaySheet->loan_adjustment ?? 0;
+                                        @endphp
                                         <tr>
                                             <td>{{ $key + 1 }}</td>
                                             <td>{{ $MonthlyPaySheet->name }}</td>
@@ -268,10 +286,10 @@
                                             <td>{{ $MonthlyPaySheet->loan_adjustment ?? 0 }}</td>
                                             @if (isset($MonthlyPaySheets))
                                                 <td>
-                                                    {{$MonthlyPaySheet->festival_bonus ?? 0 }}
+                                                    {{ $MonthlyPaySheet->festival_bonus ?? 0 }}
                                                 </td>
                                             @endif
-                                            <td >{{ $MonthlyPaySheet->employee_payable_salary }}</td>
+                                            <td>{{ $MonthlyPaySheet->employee_payable_salary }}</td>
                                             <td>
                                                 @if ($MonthlyPaySheet->status == 'paid')
                                                     <b class="text-success">Paid</b>
@@ -283,30 +301,27 @@
                                             <td>
                                                 <div class="d-flex  gap-2 justify-content-center">
 
-                                                    
+
 
 
                                                     <!-- Status ভিত্তিক Button -->
                                                     @if ($MonthlyPaySheet->status == 'paid')
-
-                                                         <a href="{{ route('hrm.paysheet.paidslip.check', $MonthlyPaySheet->id) }}"
+                                                        <a href="{{ route('hrm.paysheet.paidslip.check', $MonthlyPaySheet->id) }}"
                                                             class="btn btn-success btn-sm">
-                                                             <i class="fas fa-check"></i>
+                                                            <i class="fas fa-check"></i>
                                                         </a>
-
                                                     @elseif($MonthlyPaySheet->status == 'unpaid')
-
                                                         {{-- <button class="paynow btn btn-warning btn-sm"
                                                             data-url="{{ route('hrm.paysheet.empPayDetailsStore', $MonthlyPaySheet->id) }}"
                                                             data-toggle="modal" data-target="#exampleModal">
                                                             <i class="fas fa-money-bill"></i>
                                                         </button> --}}
                                                         @if (App\Helpers\Helper::roleAccess('hrm.paysheet.review'))
-                                                        <a href="{{ route('hrm.paysheet.review', $MonthlyPaySheet->id) }}"
-                                                            class="btn btn-info btn-sm">
-                                                            <i class="fas fa-eye"></i>
-                                                        </a>
-                                                      @endif
+                                                            <a href="{{ route('hrm.paysheet.review', $MonthlyPaySheet->id) }}"
+                                                                class="btn btn-info btn-sm">
+                                                                <i class="fas fa-eye"></i>
+                                                            </a>
+                                                        @endif
 
                                                         <a href="{{ route('hrm.paysheet.payslip', $MonthlyPaySheet->id) }}"
                                                             class="paynow btn btn-warning btn-sm">
@@ -374,7 +389,14 @@
                                             <td><b class="text-danger">Unpaid</b></td>
                                             <td></td>
                                         </tr>
-                                        @php $employee_payable_salary += $table['employee_payable_salary']; @endphp
+                                        @php
+                                            $employee_payable_salary += $table['employee_payable_salary'];
+                                            $total_gross_salary += $table['total_salary'];
+                                            $total_absent_deduction += $table['absence_deduction'];
+                                            $total_late_deduction += $days != 0 ? $amt : 0;
+                                            $total_overtime_salary += $table['overtime_salary'];
+                                            $total_loan_adjustment += $loanAdjustment->amount ?? 0;
+                                        @endphp
                                     @endforeach
                                 @else
                                     <tr>
@@ -384,12 +406,33 @@
                             </tbody>
                             <tfoot>
                                 <tr>
-                                    <td colspan="7" class="text-success">
+                                    <td colspan="2" class="text-right font-weight-bold">Total:</td>
+                                    <td class="font-weight-bold">{{ number_format($total_gross_salary, 2) }}</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td class="text-danger font-weight-bold">
+                                        {{ number_format($total_absent_deduction, 2) }}</td>
+                                    <td></td>
+                                    <td class="text-danger font-weight-bold">{{ number_format($total_late_deduction, 2) }}
+                                    </td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td class="font-weight-bold">{{ number_format($total_overtime_salary, 2) }}</td>
+                                    <td class="font-weight-bold">{{ number_format($total_loan_adjustment, 2) }}</td>
+                                    @if (isset($MonthlyPaySheets))
+                                        <td></td>
+                                    @endif
+                                    <td class="font-weight-bold">{{ number_format($employee_payable_salary, 2) }}</td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="{{ isset($MonthlyPaySheets) ? 19 : 18 }}" class="text-success">
                                         In Word: {{ numberToWords($employee_payable_salary) }}
                                     </td>
-                                    <td colspan="9" class="text-right font-weight-bold">{{ $employee_payable_salary }}
-                                    </td>
-                                    <td colspan="2"></td>
                                 </tr>
                             </tfoot>
                         </table>

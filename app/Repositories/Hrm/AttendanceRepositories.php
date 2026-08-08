@@ -143,6 +143,8 @@ class AttendanceRepositories
 
         return $json_data;
     }
+
+
     /**
      * @param $request
      * @return mixed

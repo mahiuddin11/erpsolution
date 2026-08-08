@@ -50,6 +50,11 @@ class AccountTransaction extends Model
         return $this->belongsTo(Project::class, 'project_id', 'id');
     }
 
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id', 'id');
+    }
+
     // public function resellerBill()
     // {
     //     return $this->belongsTo(BandwidthSaleInvoice::class, 'table_id', 'id');

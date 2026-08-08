@@ -59,20 +59,7 @@ class HolidayController extends Controller
         return response()->json(['success' => true, 'holidays' => $holidays]);
     }
 
-    /* ══════════════════════════════════════════════
-     | API: Save holidays for a month
-     | POST /hrm/holiday/save
-     |
-     | Body (JSON):
-     | {
-     |   year:  2026,
-     |   month: 4,
-     |   dates: [
-     |     { date: '2026-04-12', note: 'Independence Day' },
-     |     { date: '2026-04-14', note: '' },
-     |   ]
-     | }
-     ══════════════════════════════════════════════ */
+   
     public function save(Request $request)
     {
         $request->validate([

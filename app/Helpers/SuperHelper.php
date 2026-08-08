@@ -267,9 +267,18 @@ function EMPLOYEE_HOUSE_RENT_SALARY($EMPLOYEE_SALARY)
     return round($HOUSE_RENT);
 }
 
-function OVERTIME_HOURE($EMPLOYEE)
+function OVERTIME_HOURE($EMPLOYEE, $month = null)
 {
-    $ATTENDANCES = DB::table('attendances')->where('emplyee_id', $EMPLOYEE->id)->whereMonth('date', date('m'))->get();
+    $month = $month ?? date('Y-m');
+
+    $ATTENDANCES = DB::table('attendances')
+        ->where('emplyee_id', $EMPLOYEE->id)
+        ->whereBetween('date', [
+            Carbon::parse($month)->startOfMonth(),
+            Carbon::parse($month)->endOfMonth()
+        ])
+        ->get();
+
     $HOURE = 0;
     foreach ($ATTENDANCES as $ATTENDANCE) {
         if (strtotime($ATTENDANCE->sign_in) < strtotime($EMPLOYEE->last_in_time)) {
@@ -294,14 +303,25 @@ function OVERTIME_HOURE($EMPLOYEE)
     return round($HOURE);
 }
 
-function OVERTIME_SALARY($EMPLOYEE)
+function OVERTIME_SALARY($EMPLOYEE, $month = null)
 {
+    $month = $month ?? date('Y-m');
+    $TOTAL_OVERTIME = 0;
+
     if ($EMPLOYEE->over_time_is == "yes") {
-        $ATTENDANCES = DB::table('attendances')->where('emplyee_id', $EMPLOYEE->id)->whereMonth('date', date('m'))->get();
+        $ATTENDANCES = DB::table('attendances')
+            ->where('emplyee_id', $EMPLOYEE->id)
+            ->whereBetween('date', [
+                Carbon::parse($month)->startOfMonth(),
+                Carbon::parse($month)->endOfMonth()
+            ])
+            ->get();
+
         $EMPLOYEE_BASIC_SALARY = EMPLOYEE_BASIC_SALARY($EMPLOYEE->salary)['half_salary'];
         $ONE_DAY_SALARY = $EMPLOYEE_BASIC_SALARY / 26;
         $ONE_DAY_SALARY_DOUBLE = $ONE_DAY_SALARY * 2;
         $HOURE = 0;
+
         foreach ($ATTENDANCES as $ATTENDANCE) {
             if (strtotime($ATTENDANCE->sign_in) < strtotime($EMPLOYEE->last_in_time)) {
                 $in = Carbon::parse($EMPLOYEE->last_in_time);
@@ -323,7 +343,7 @@ function OVERTIME_SALARY($EMPLOYEE)
         $TOTAL_OVERTIME = $ONE_DAY_SALARY_DOUBLE * $HOURE;
     }
 
-    return round($TOTAL_OVERTIME ?? 0);
+    return round($TOTAL_OVERTIME);
 }
 
 //GET EMPLOYEE LATE DAYS
@@ -421,7 +441,8 @@ function EMPLOYEE_PAYABLE_SALARY($EMPLOYEE, $month)
     $payable_day =  TOTALPAYABLEDAYS($EMPLOYEE->id, $month);
     $oneDaySalary = (float) str_replace(',', '', Daily_Rate($EMPLOYEE->salary));
     $adblance = loadAdjustment($EMPLOYEE->id, $month);
-    $payable_salary = ($payable_day *  $oneDaySalary) - $adblance;
+    $overtimeSalary  = OVERTIME_SALARY($EMPLOYEE, $month);
+    $payable_salary = ($payable_day *  $oneDaySalary) + $overtimeSalary - $adblance;
 
     return round($payable_salary);
 }

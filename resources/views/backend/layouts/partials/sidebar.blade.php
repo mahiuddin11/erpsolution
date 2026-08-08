@@ -196,6 +196,8 @@
                     </a>
                 </li> --}}
 
+                {{-- @dd($allNavigations); --}}
+
                 @foreach ($allNavigations as $key => $value)
                     @if (in_array($value->uniqueName, $accessmainmenu))
                         @php

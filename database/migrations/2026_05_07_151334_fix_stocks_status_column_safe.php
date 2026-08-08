@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -35,15 +36,9 @@ return new class extends Migration
         ");
     }
 
-    /**
-     * Rollback — নতুন যোগ করা values সরিয়ে আগের enum এ ফেরত।
-     * 'Sale Return' বা 'Purchase Return' যদি কোনো row তে থাকে
-     * তাহলে rollback fail করবে — তাই নিচে warning দেওয়া আছে।
-     */
     public function down()
     {
-        // ⚠️ rollback এর আগে নিশ্চিত করুন কোনো row তে
-        // 'Sale Return' বা 'Purchase Return' নেই।
+
         DB::statement("
             ALTER TABLE `stocks`
             MODIFY COLUMN `status` ENUM(
