@@ -24,7 +24,6 @@ $parent_menu = array(
             ),
 
 
-
             (object) array(
                 'label' => 'Inventory Dashboard',
                 'route' => null,
@@ -33,6 +32,17 @@ $parent_menu = array(
                 'parent_id' => null,
                 'childMenu' => (object) array(
                     (object) array('label' => 'Inventory Dashboard', 'route' => 'dashboard.inventory', 'icon' => 'fa fa-users', 'navigate_status' => 1),
+                )
+            ),
+
+            (object) array(
+                'label' => 'POS Dashboard',
+                'route' => null,
+                'uniqueName' => "posdeshbord",
+                'icon' => 'fa fa-users',
+                'parent_id' => null,
+                'childMenu' => (object) array(
+                    (object) array('label' => 'POS Dashboard', 'route' => 'dashboard.pos', 'icon' => 'fa fa-users', 'navigate_status' => 1),
                 )
             ),
 

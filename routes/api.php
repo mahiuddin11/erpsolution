@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\FinancialDashboardApiController;
 use App\Http\Controllers\Api\HrmDashboardApiController;
 use App\Http\Controllers\Api\StoreDashboardApiController;
+use App\Http\Controllers\Api\PosDashboardApiController;
 use Illuminate\Support\Facades\Route;
 
 // 'web' ekhon RouteServiceProvider theke ashche, tai shudhu 'auth' likhle hobe
@@ -27,8 +28,6 @@ Route::middleware('auth')->prefix('hrm-dashboard')->group(function () {
     Route::put('announcements/{id}', [HrmDashboardApiController::class, 'updateAnnouncement']);
 });
 
-
-
 Route::middleware('auth')->prefix('store-dashboard')->group(function () {
     Route::get('kpis', [StoreDashboardApiController::class, 'kpis']);
     Route::get('kpi-details', [StoreDashboardApiController::class, 'kpiDetails']);
@@ -49,6 +48,17 @@ Route::middleware('auth')->prefix('financial-dashboard')->group(function () {
     Route::get('revenue-comparison', [FinancialDashboardApiController::class, 'revenueComparison']);
     Route::get('transactions', [FinancialDashboardApiController::class, 'transactions']);
     Route::get('invoices', [FinancialDashboardApiController::class, 'invoices']);
+});
+
+// Added: 2025-08-08 -- POS Dashboard API routes (single controller, App\Http\Controllers\Api namespace)
+Route::middleware('auth')->prefix('pos-dashboard')->group(function () {
+    Route::get('kpis', [PosDashboardApiController::class, 'kpis']);
+    Route::get('sales-trend', [PosDashboardApiController::class, 'salesTrend']);
+    Route::get('top-products', [PosDashboardApiController::class, 'topProducts']);
+    Route::get('payment-breakdown', [PosDashboardApiController::class, 'paymentBreakdown']);
+    Route::get('recent-transactions', [PosDashboardApiController::class, 'recentTransactions']);
+    Route::get('cashier-performance', [PosDashboardApiController::class, 'cashierPerformance']);
+    Route::get('top-due-customers', [PosDashboardApiController::class, 'topDueCustomers']);
 });
 
 // Route::middleware('auth:api')->get('/user', function (Request $request) {

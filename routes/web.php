@@ -32,6 +32,7 @@ use App\Http\Controllers\Backend\Dashboard\StoreDashboardController;
 use App\Http\Controllers\Backend\Dashboard\ProcurementDashboardController;
 use App\Http\Controllers\Backend\Dashboard\ProjectDashboardController;
 use App\Http\Controllers\Backend\Dashboard\ManagementDashboardController;
+use App\Http\Controllers\Backend\Dashboard\PosDashboardController;
 
 //use App\Http\Controllers\AttendanceController;
 
@@ -398,6 +399,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/dashboard/hrm', [HrmDashboardController::class, 'index'])->name('dashboard.hrm');
         Route::get('/dashboard/inventory', [StoreDashboardController::class, 'index'])->name('dashboard.inventory');
         Route::get('/dashboard/finance', [FinanceDashboardController::class, 'index'])->name('dashboard.finance');
+        Route::get('/dashboard/pos', [PosDashboardController::class, 'index'])->name('dashboard.pos');
         Route::get('/dashboard/procurement', [ProcurementDashboardController::class, 'index'])->name('dashboard.procurement');
         Route::get('/dashboard/project', [ProjectDashboardController::class, 'index'])->name('dashboard.project');
         // Route::get('/dashboard/management', [ManagementDashboardController::class, 'index'])->name('dashboard.management');
