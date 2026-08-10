@@ -76,6 +76,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/project-transferproject-delete/{id}', [ProjectTransferController::class, 'destroy'])->name('project.transferproject.destroy');
         Route::get('/project-transferproject-filterproduct', [ProjectTransferController::class, 'filterproduct'])->name('project.transferproject.filterproduct');
         Route::get('/project-transferproject-invoice/{id}', [ProjectTransferController::class, 'invoice'])->name('project.transferproject.invoice');
+        Route::get('project-transfer/get-warehouses', [ProjectTransferController::class, 'getWarehouses'])->name('project.transferproject.getWarehouses');
         //transferproject  crud operation end
 
         //project requisition approve crud operation start

@@ -15,9 +15,6 @@
             --tt-radius: 10px;
         }
 
-        /* ============================================================
-               STEP LAYOUT
-               ============================================================ */
         .section-title {
             font-weight: 600;
             font-size: 14px;
@@ -50,9 +47,6 @@
             color: #dc3545;
         }
 
-        /* ============================================================
-               TRANSFER TYPE SELECTOR
-               ============================================================ */
         .transfer-type-wrap {
             display: flex;
             gap: 15px;
@@ -71,7 +65,6 @@
             background: #fff;
             margin: 0;
             min-height: 44px;
-            /* touch target */
         }
 
         .transfer-type-card:hover {
@@ -115,7 +108,6 @@
             margin-bottom: 3px;
             color: var(--tt-text);
             padding-right: 28px;
-            /* keep clear of radio */
         }
 
         .transfer-type-card .tt-sub {
@@ -148,9 +140,6 @@
             color: #155724;
         }
 
-        /* ============================================================
-               STEP 2: TRANSFER DETAILS PANEL
-               ============================================================ */
         .details-panel {
             background: #fff;
             border: 1px solid var(--tt-border);
@@ -178,7 +167,6 @@
             color: #495057;
         }
 
-        /* From -> To visual route */
         .route-visual {
             display: flex;
             align-items: stretch;
@@ -246,7 +234,6 @@
             }
         }
 
-        /* Bigger, comfortable tap targets on all inputs */
         .form-control,
         .select2-container .select2-selection--single {
             min-height: 42px;
@@ -265,9 +252,23 @@
             box-shadow: 0 0 0 .2rem rgba(0, 123, 255, .18);
         }
 
-        /* ============================================================
-               STEP 3: PRODUCTS PANEL
-               ============================================================ */
+        .route-resolved-box {
+            display: flex;
+            align-items: center;
+            min-height: 42px;
+            background: #fff;
+            border: 1px solid var(--tt-border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 14px;
+            color: var(--tt-text);
+        }
+
+        .route-resolved-box .route-resolved-text.text-muted {
+            color: var(--tt-muted);
+            font-style: italic;
+        }
+
         .products-panel {
             background: #fff;
             border: 1px solid var(--tt-border);
@@ -275,35 +276,23 @@
             padding: 16px;
         }
 
-        .products-locked-note {
+        /* 10-Aug-2026: lock-warning note-এর জায়গায় তথ্যমূলক নোট — এখন আর কোনো row
+                                       lock হয় না, item delete করে বা qty কমিয়ে partial transfer করা যায়। */
+        .products-info-note {
             display: none;
             align-items: center;
             gap: 8px;
-            background: #fff8e6;
-            color: #8a6d1d;
-            border: 1px solid #f5deA0;
+            background: #eef7ff;
+            color: #0c5aa6;
+            border: 1px solid #bfe0ff;
             border-radius: 8px;
             padding: 10px 14px;
             font-size: 13px;
             margin-bottom: 14px;
         }
 
-        .products-locked-note.show {
+        .products-info-note.show {
             display: flex;
-        }
-
-        #productRows tr.row-locked .select2-container,
-        #productRows tr.row-locked select.purchasetype-select {
-            pointer-events: none;
-            background: #f4f5f7;
-        }
-
-        #productRows tr.row-locked .select2-selection {
-            background: #f4f5f7 !important;
-        }
-
-        #productRows tr.row-locked .remove-cell {
-            visibility: hidden;
         }
 
         .product-count-badge {
@@ -361,9 +350,6 @@
             font-weight: 700;
         }
 
-        /* ============================================================
-               PRODUCT TABLE (desktop) / STACKED CARDS (mobile)
-               ============================================================ */
         #productTable {
             margin-bottom: 0;
         }
@@ -419,12 +405,19 @@
             color: #dc3545;
         }
 
+
+        .remaining-hint {
+            font-size: 11px;
+            color: #868e96;
+            display: block;
+            margin-top: 2px;
+        }
+
         .product-row-loading {
             opacity: .6;
             pointer-events: none;
         }
 
-        /* ---- Mobile: convert table rows to stacked cards ---- */
         @media (max-width: 767.98px) {
             #productTable thead {
                 display: none;
@@ -481,9 +474,6 @@
             }
         }
 
-        /* ============================================================
-               FOOTER ACTIONS
-               ============================================================ */
         .card-footer {
             gap: 10px;
             flex-wrap: wrap;
@@ -589,22 +579,22 @@
 
                         <div class="details-panel">
                             <div class="form-row">
-                                <div class="col-md-3 col-sm-6 form-group">
+                                <div class="col-lg-2 col-md-4 col-sm-6 form-group">
                                     <label>Date <span class="required-star">*</span></label>
                                     <input type="date" name="date" class="form-control" value="{{ date('Y-m-d') }}"
                                         required>
                                 </div>
 
-                                <div class="col-md-3 col-sm-6 form-group">
+                                <div class="col-lg-2 col-md-4 col-sm-6 form-group">
                                     <label>Invoice / Reference No</label>
                                     <input type="text" class="form-control" value="{{ $transferCode ?? '' }}" readonly>
                                 </div>
 
-                                {{-- Requisition (only branch_to_project) --}}
-                                <div class="col-md-3 col-sm-6 form-group route-fields rf-requisition">
+                                <div class="col-lg-3 col-md-4 col-sm-6 form-group route-fields rf-requisition"
+                                    data-rule="branch_to_project,project_to_project">
                                     <label>Purchase Requisition <span class="required-star">*</span></label>
                                     <select name="purchase_requisition" class="form-control select2 rf-input"
-                                        data-rule="branch_to_project">
+                                        data-rule="branch_to_project,project_to_project">
                                         <option value="">-- Select Requisition --</option>
                                         @foreach ($purchaserequisitions as $pr)
                                             <option value="{{ $pr->id }}">{{ $pr->invoice_no }}</option>
@@ -612,26 +602,73 @@
                                     </select>
                                     <small class="text-muted">Only <b>Accepted</b> requisitions are shown.</small>
                                 </div>
+
+                                <div class="col-lg-3 col-md-6 col-sm-6 form-group route-fields rf-source-branch"
+                                    data-rule="branch_to_project">
+                                    <label>Source Branch <span class="required-star">*</span></label>
+                                    <select class="form-control select2 branch-picker" data-target="from_branch_id"
+                                        data-rule="branch_to_project">
+                                        <option value="">-- Select Branch --</option>
+                                        @foreach ($branchs->where('parent_id', 0) as $branch)
+                                            <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                        @endforeach
+                                    </select>
+
+                                    <input type="hidden" name="from_branch_id" class="rf-input"
+                                        data-rule="branch_to_project">
+                                </div>
+
+                                <div class="col-lg-2 col-md-6 col-sm-6 form-group route-fields rf-source-warehouse"
+                                    data-rule="branch_to_project">
+                                    <label>Warehouse <span class="text-muted">(optional)</span></label>
+                                    <div class="warehouse-wrap" data-target="from_branch_id" style="display:none">
+                                        <select class="form-control select2 warehouse-picker"
+                                            data-target="from_branch_id">
+                                            <option value="">-- Use Branch itself --</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-3 col-md-6 col-sm-6 form-group route-fields rf-dest-branch"
+                                    data-rule="project_to_branch">
+                                    <label>Destination Branch <span class="required-star">*</span></label>
+                                    <select class="form-control select2 branch-picker" data-target="to_branch_id"
+                                        data-rule="project_to_branch">
+                                        <option value="">-- Select Branch --</option>
+                                        @foreach ($branchs->where('parent_id', 0) as $branch)
+                                            <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                        @endforeach
+                                    </select>
+
+                                    <input type="hidden" name="to_branch_id" class="rf-input"
+                                        data-rule="project_to_branch">
+                                </div>
+
+                                <div class="col-lg-2 col-md-6 col-sm-6 form-group route-fields rf-dest-warehouse"
+                                    data-rule="project_to_branch">
+                                    <label>Warehouse <span class="text-muted">(optional)</span></label>
+                                    <div class="warehouse-wrap" data-target="to_branch_id" style="display:none">
+                                        <select class="form-control select2 warehouse-picker" data-target="to_branch_id">
+                                            <option value="">-- Use Branch itself --</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
 
-                            {{-- Visual From -> To route --}}
                             <div class="route-visual">
                                 <div class="route-node route-node-from">
                                     <span class="route-node-tag"><i class="fas fa-upload"></i> FROM</span>
 
-                                    {{-- FROM: Branch (branch_to_project) --}}
-                                    <div class="form-group route-fields rf-branch-from">
-                                        <label>Branch / Warehouse <span class="required-star">*</span></label>
-                                        <select name="from_branch_id" class="form-control select2 rf-input"
-                                            data-rule="branch_to_project">
-                                            <option value="">-- Select Branch --</option>
-                                            @foreach ($branchs as $branch)
-                                                <option value="{{ $branch->id }}">{{ $branch->name }}</option>
-                                            @endforeach
-                                        </select>
+                                    <div class="form-group route-fields rf-branch-from-display"
+                                        data-rule="branch_to_project">
+                                        <label class="mb-1">Source</label>
+                                        <div class="route-resolved-box">
+                                            <i class="fas fa-warehouse mr-2 text-muted"></i>
+                                            <span class="route-resolved-text text-muted" data-target="from_branch_id">--
+                                                Select branch above --</span>
+                                        </div>
                                     </div>
 
-                                    {{-- FROM: Project (project_to_project, project_to_branch) --}}
                                     <div class="form-group route-fields rf-project-from">
                                         <label>Project <span class="required-star">*</span></label>
                                         <select name="from_project_id" class="form-control select2 rf-input"
@@ -651,7 +688,6 @@
                                 <div class="route-node route-node-to">
                                     <span class="route-node-tag"><i class="fas fa-flag-checkered"></i> TO</span>
 
-                                    {{-- TO: Project (branch_to_project) --}}
                                     <div class="form-group route-fields rf-project-to">
                                         <label>Project <span class="required-star">*</span></label>
                                         <select name="to_project_id_a" class="form-control select2 rf-input"
@@ -663,7 +699,6 @@
                                         </select>
                                     </div>
 
-                                    {{-- TO: Project (project_to_project) --}}
                                     <div class="form-group route-fields rf-project-to2">
                                         <label>Project <span class="required-star">*</span></label>
                                         <select name="to_project_id_b" class="form-control select2 rf-input"
@@ -675,17 +710,16 @@
                                         </select>
                                     </div>
 
-                                    {{-- TO: Branch (project_to_branch) --}}
-                                    <div class="form-group route-fields rf-branch-to">
-                                        <label>Branch / Warehouse <span class="required-star">*</span></label>
-                                        <select name="to_branch_id" class="form-control select2 rf-input"
-                                            data-rule="project_to_branch">
-                                            <option value="">-- Select Branch --</option>
-                                            @foreach ($branchs as $branch)
-                                                <option value="{{ $branch->id }}">{{ $branch->name }}</option>
-                                            @endforeach
-                                        </select>
+                                    <div class="form-group route-fields rf-branch-to-display"
+                                        data-rule="project_to_branch">
+                                        <label class="mb-1">Destination</label>
+                                        <div class="route-resolved-box">
+                                            <i class="fas fa-building mr-2 text-muted"></i>
+                                            <span class="route-resolved-text text-muted" data-target="to_branch_id">--
+                                                Select branch above --</span>
+                                        </div>
                                     </div>
+
                                 </div>
                             </div>
 
@@ -706,10 +740,14 @@
                         </div>
 
                         <div class="products-panel">
-                            <div class="products-locked-note" id="productsLockedNote">
-                                <i class="fas fa-lock"></i>
-                                Products are loaded from the selected requisition. Remove the requisition to add
-                                products manually.
+                            {{-- 10-Aug-2026: আগে এখানে "products are locked" সতর্কবার্তা ছিল।
+                                 এখন row আর লক হয় না — এটা শুধু জানানোর জন্য যে remaining qty
+                                 auto-fill হয়েছে, চাইলে কমানো/মুছে ফেলা যাবে। --}}
+                            <div class="products-info-note" id="productsInfoNote">
+                                <i class="fas fa-info-circle"></i>
+                                নির্বাচিত Requisition থেকে বাকি থাকা (remaining) কোয়ান্টিটি auto-fill হয়েছে। স্টক না
+                                থাকলে সেই Qty কমিয়ে দিন অথবা row মুছে দিয়ে Transfer চালিয়ে যান — বাকি অংশ পরে আবার
+                                একই Requisition থেকে transfer করা যাবে।
                             </div>
 
                             <div class="table-responsive">
@@ -717,11 +755,12 @@
                                     <thead>
                                         <tr>
                                             <th style="width:5%">#</th>
-                                            <th style="width:20%">Category</th>
-                                            <th style="width:24%">Product</th>
-                                            <th style="width:15%">Purchase Type</th>
+                                            <th style="width:17%">Category</th>
+                                            <th style="width:20%">Product</th>
+                                            <th style="width:12%">Purchase Type</th>
+
                                             <th style="width:14%">Available Stock</th>
-                                            <th style="width:12%">Qty</th>
+                                            <th style="width:15%">Qty</th>
                                             <th style="width:8%"></th>
                                         </tr>
                                     </thead>
@@ -764,6 +803,7 @@
 
     {{-- Hidden template row --}}
     <table style="display:none">
+
         <tbody id="rowTemplate">
             <tr>
                 <td class="row-index-cell"><span class="row-badge row-index"></span></td>
@@ -790,13 +830,17 @@
                     <input type="text" class="form-control stock-display" value="-" readonly>
                 </td>
                 <td data-label="Qty">
-                    <input type="number" name="qty[]" min="1" class="form-control qty-input" required>
+                    <input type="number" name="qty[]" min="0.01" step="0.01" class="form-control qty-input"
+                        required>
+                    <span class="remaining-hint"></span>
                     <div class="stock-hint"></div>
                 </td>
                 <td class="text-center remove-cell">
                     <i class="fas fa-trash text-danger remove-row-btn" title="Remove row" role="button"
                         tabindex="0"></i>
                 </td>
+                {{-- requested_qty শুধু ব্যাকগ্রাউন্ড ভ্যালিডেশনের জন্য, UI-তে দেখানো হয় না --}}
+                <input type="hidden" name="requested_qty[]" value="">
             </tr>
         </tbody>
     </table>
@@ -807,9 +851,6 @@
     <script>
         $(function() {
 
-            /* Guard: some layouts auto-init `.select2` globally on page load, which
-               can double-wrap the hidden template row before we clone it. Strip
-               any pre-existing instance so our own init below is the only one. */
             $('#rowTemplate .select2').each(function() {
                 var $el = $(this);
                 if ($el.hasClass('select2-hidden-accessible')) {
@@ -826,22 +867,32 @@
                 $('.rf-input').prop('required', false);
 
                 $('.route-fields').each(function() {
-                    var input = $(this).find('.rf-input');
-                    var rules = (input.data('rule') || '').toString().split(',');
+                    var $field = $(this);
+                    var input = $field.find('.rf-input');
+                    var ruleAttr = input.length ? input.data('rule') : $field.data('rule');
+                    var rules = (ruleAttr || '').toString().split(',');
                     if (rules.indexOf(type) !== -1) {
-                        $(this).addClass('show').show();
+                        $field.addClass('show').show();
                         input.prop('required', true);
                     }
                 });
 
-                if (type !== 'branch_to_project') {
+                if (type !== 'branch_to_project' && type !== 'project_to_project') {
                     var $req = $('select[name=purchase_requisition]');
                     if ($req.val()) {
                         $req.val(null).trigger('change');
-                    } else if ($('#productRows tr.row-locked').length) {
-                        unlockAndResetProducts();
+                    } else {
+                        resetToSingleEmptyRow();
                     }
                 }
+
+                $('.branch-picker').each(function() {
+                    var $bp = $(this);
+                    var rule = ($bp.data('rule') || '').toString();
+                    if (rule && rule !== type && $bp.val()) {
+                        $bp.val(null).trigger('change');
+                    }
+                });
             }
 
             $('input[name=transfer_type]').on('change', function() {
@@ -901,8 +952,11 @@
             }
 
             $('#addRowBtn').on('click', addRow);
-            addRow(); // start with 1 row
+            addRow();
 
+            /* 10-Aug-2026: এখন প্রতিটা row-ই মুছে ফেলা যাবে, requisition থেকে
+               auto-loaded হোক বা ম্যানুয়ালি যোগ করা হোক — আর কোনো row-locked
+               চেক নেই। */
             $('#productRows').on('click keypress', '.remove-row-btn', function(e) {
                 if (e.type === 'keypress' && e.which !== 13 && e.which !== 32) return;
                 if ($('#productRows tr').length > 1) {
@@ -938,13 +992,12 @@
                     });
             });
 
-            /* Product + From-source -> Available stock check */
             function currentFromKey() {
                 var type = $('input[name=transfer_type]:checked').val();
                 if (type === 'branch_to_project') {
                     return {
                         type: 'branch',
-                        id: $('select[name=from_branch_id]').val()
+                        id: $('input[name=from_branch_id]').val()
                     };
                 }
                 return {
@@ -986,7 +1039,15 @@
             function validateQty($row) {
                 var available = $row.data('available');
                 var qty = parseFloat($row.find('.qty-input').val()) || 0;
+                var requested = parseFloat($row.find('input[name="requested_qty[]"]').val()) || 0;
                 var $hint = $row.find('.stock-hint');
+                var $remainingHint = $row.find('.remaining-hint');
+
+                if (requested > 0 && qty > requested) {
+                    $remainingHint.text('Requested qty (' + requested + ') exceeded!').css('color', '#dc3545');
+                } else {
+                    $remainingHint.text('');
+                }
 
                 if (available === undefined) {
                     $hint.text('');
@@ -994,39 +1055,31 @@
                 }
 
                 if (qty > available) {
-                    $hint.removeClass('ok').addClass('low').text('Exceeds available stock (' + available + ')');
+                    $hint.removeClass('ok').addClass('low').text(
+                        'Stock নেই (Available: ' + available + '). Qty কমান অথবা row মুছে দিন।'
+                    );
                 } else {
                     $hint.removeClass('low').addClass('ok').text('OK');
                 }
             }
 
-            /* Re-check stock whenever the "from" source changes */
             $(document).on('change',
-                'select[name=from_branch_id], select[name=from_project_id], input[name=transfer_type]',
+                'input[name=from_branch_id], select[name=from_project_id], input[name=transfer_type]',
                 function() {
                     $('#productRows tr').each(function() {
                         $(this).find('.product-select').trigger('change');
                     });
                 });
 
-            /* ---------------- Purchase Requisition -> auto-fill products ---------------- */
-            function lockProductsPanel(locked) {
-                $('#addRowBtn').toggle(!locked);
-                $('#productsLockedNote').toggleClass('show', locked);
-            }
+            /* ---------------- Purchase Requisition -> auto-fill remaining products ---------------- */
 
             function resetToSingleEmptyRow() {
                 $('#productRows').empty();
                 rowCount = 0;
+                $('#productsInfoNote').removeClass('show');
                 addRow();
             }
 
-            function unlockAndResetProducts() {
-                lockProductsPanel(false);
-                resetToSingleEmptyRow();
-            }
-
-            /* Parse the "prdetails" HTML returned by searchpr() into plain line items */
             function parsePrDetailsHtml(html) {
                 var items = [];
                 $('<table><tbody>' + (html || '') + '</tbody></table>').find('tr').each(function() {
@@ -1034,26 +1087,27 @@
                     var categoryId = $tr.find('input[name="category_nm[]"]').val();
                     var productId = $tr.find('input[name="product_nm[]"]').val();
                     var purchaseType = $tr.find('input[name="purchasetype[]"]').val();
-                    var qty = $tr.find('input[name="qty[]"]').val();
+                    var qty = $tr.find('input[name="qty[]"]').val(); // backend থেকে remaining qty আসে
+                    var requestedQty = $tr.find('input[name="requested_qty[]"]').val();
                     if (categoryId && productId) {
                         items.push({
                             category_id: categoryId,
                             product_id: productId,
                             purchasetype: purchaseType || 'local',
-                            qty: qty || 1
+                            qty: qty || 1,
+                            requested_qty: requestedQty || null
                         });
                     }
                 });
                 return items;
             }
 
-            /* Build one locked row from a requisition line item */
+
             function addRequisitionRow(item) {
                 rowCount++;
                 var $row = $('#rowTemplate tr').clone();
                 $('#productRows').append($row);
                 initSelect2($row);
-                $row.addClass('row-locked');
 
                 $row.find('.category-select').val(item.category_id).trigger('change.select2');
 
@@ -1067,7 +1121,12 @@
                         });
                         $row.find('.product-select').html(options);
                         $row.find('.purchasetype-select').val(item.purchasetype);
-                        $row.find('.qty-input').val(item.qty);
+
+                        var $qty = $row.find('.qty-input');
+                        $qty.val(item.qty);
+
+
+
                         $row.find('.product-select').val(item.product_id).trigger('change');
                     });
             }
@@ -1078,7 +1137,7 @@
                         data: {
                             id: reqId
                         },
-                        dataType: 'json' // force JSON parsing even if the server sends text/html
+                        dataType: 'json'
                     })
                     .done(function(res) {
                         if (typeof res === 'string') {
@@ -1098,7 +1157,8 @@
 
                         if (!items.length) {
                             console.warn('searchpr returned no matching product rows.', res);
-                            lockProductsPanel(false);
+                            $('#productsInfoNote').removeClass('show');
+                            alert('এই Requisition-এর সব পণ্য ইতিমধ্যে সম্পূর্ণভাবে Transfer করা হয়ে গেছে।');
                             addRow();
                             return;
                         }
@@ -1114,7 +1174,7 @@
                             updateProductsSummary();
                         });
 
-                        lockProductsPanel(true);
+                        $('#productsInfoNote').addClass('show');
                     })
                     .fail(function(xhr) {
                         console.error('searchpr request failed:', xhr.status, xhr.responseText);
@@ -1129,21 +1189,38 @@
                 if (reqId) {
                     loadRequisitionProducts(reqId);
                 } else {
-                    unlockAndResetProducts();
+                    resetToSingleEmptyRow();
                 }
             });
 
             /* ---------------- Submit guard ---------------- */
             $('#transferForm').on('submit', function(e) {
                 var blocked = false;
+                var overRequested = false;
+
                 $('#productRows tr').each(function() {
-                    var available = $(this).data('available');
-                    var qty = parseFloat($(this).find('.qty-input').val()) || 0;
+                    var $row = $(this);
+                    var available = $row.data('available');
+                    var qty = parseFloat($row.find('.qty-input').val()) || 0;
+                    var requested = parseFloat($row.find('input[name="requested_qty[]"]').val()) ||
+                        0;
+
                     if (available !== undefined && qty > available) blocked = true;
+                    if (requested > 0 && qty > requested) overRequested = true;
                 });
+
                 if (blocked) {
                     e.preventDefault();
-                    alert('One or more rows exceed available stock. Please correct before submitting.');
+                    alert(
+                        'One or more rows exceed available stock. Please reduce qty or remove the row before submitting.'
+                    );
+                    return;
+                }
+                if (overRequested) {
+                    e.preventDefault();
+                    alert(
+                        'One or more rows exceed the originally requested quantity. Please correct before submitting.'
+                    );
                     return;
                 }
 
@@ -1151,6 +1228,87 @@
                     .html('<i class="fas fa-spinner fa-spin"></i> Submitting...');
             });
 
+        });
+
+
+        /* ---------------- Branch -> Warehouse cascading ---------------- */
+        function resolveRouteNode(target) {
+            return target === 'to_branch_id' ? $('.route-node-to') : $('.route-node-from');
+        }
+
+        function updateRouteLabel(target, text) {
+            var $node = resolveRouteNode(target);
+            $node.find('.route-node-selected').text(text ? '· ' + text : '');
+            var $resolved = $node.find('.route-resolved-text[data-target="' + target + '"]');
+            if ($resolved.length) {
+                $resolved.text(text || '-- Select branch above --')
+                    .toggleClass('text-muted', !text);
+            }
+        }
+
+        function branchPickerFor(target) {
+            return $('.branch-picker[data-target="' + target + '"]');
+        }
+
+        function warehouseWrapFor(target) {
+            return $('.warehouse-wrap[data-target="' + target + '"]');
+        }
+
+        function hiddenInputFor(target) {
+            return $('input[type=hidden][name="' + target + '"]');
+        }
+
+        $(document).on('change', '.branch-picker', function() {
+            var $picker = $(this);
+            var target = $picker.data('target');
+            var $wrap = warehouseWrapFor(target);
+            var $wh = $wrap.find('.warehouse-picker');
+            var $hidden = hiddenInputFor(target);
+            var branchId = $picker.val();
+            var branchTxt = $picker.find('option:selected').text();
+
+            $hidden.val(branchId).trigger('change');
+            updateRouteLabel(target, branchId ? branchTxt : '');
+
+            if (!branchId) {
+                $wrap.hide();
+                $wh.val(null).html('<option value="">-- Use Branch itself --</option>');
+                return;
+            }
+
+            $.get("{{ route('project.transferproject.getWarehouses') }}", {
+                    branch_id: branchId
+                })
+                .done(function(res) {
+                    if (res.length > 0) {
+                        var options = '<option value="">-- Use Branch itself --</option>';
+                        $.each(res, function(i, w) {
+                            options += '<option value="' + w.id + '">' + w.name + '</option>';
+                        });
+                        $wh.html(options).trigger('change.select2');
+                        $wrap.show();
+                    } else {
+                        $wrap.hide();
+                    }
+                });
+        });
+
+        $(document).on('change', '.warehouse-picker', function() {
+            var $picker = $(this);
+            var target = $picker.data('target');
+            var $hidden = hiddenInputFor(target);
+            var whId = $picker.val();
+            var whTxt = $picker.find('option:selected').text();
+            var branchTxt = branchPickerFor(target).find('option:selected').text();
+
+            if (whId) {
+                $hidden.val(whId).trigger('change');
+                updateRouteLabel(target, whTxt);
+            } else {
+                var branchId = branchPickerFor(target).val();
+                $hidden.val(branchId).trigger('change');
+                updateRouteLabel(target, branchTxt);
+            }
         });
     </script>
 @endsection

@@ -232,4 +232,12 @@ class ProjectTransferController extends Controller
 
         return response()->json(['quantity' => (float) ($qty ?? 0)]);
     }
+
+    public function getWarehouses(Request $request)
+    {
+        $warehouses = Branch::where('parent_id', $request->branch_id)
+            ->get(['id', 'name']);
+
+        return response()->json($warehouses);
+    }
 }
