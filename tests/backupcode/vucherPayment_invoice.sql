@@ -509,3 +509,16 @@ AND NOT EXISTS (
     FROM stock_ajdustment_detailsts ad
     WHERE ad.product_id = p.id
 );
+
+
+-- left user check 
+SELECT 
+    u.id AS user_id,
+    u.name,
+    u.email,
+    u.employee_id,
+    u.status,
+    e.employee_status
+FROM users u
+INNER JOIN employees e ON e.id = u.employee_id
+WHERE e.employee_status = 'left';

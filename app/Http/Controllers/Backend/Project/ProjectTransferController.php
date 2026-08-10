@@ -10,8 +10,10 @@ use App\Models\PurchaseRequisition;
 use App\Models\Supplier;
 use App\Models\Company;
 use App\Models\PrDetails;
+use App\Models\Product;
 use App\Models\Project;
 use App\Models\ProjectTransfer;
+use App\Models\StockSummary;
 use App\Services\InventorySetup\PurchaseOrderService;
 use App\Services\Project\ProjectTransferService;
 use App\Transformers\ProjectTransformer;
@@ -50,27 +52,57 @@ class ProjectTransferController extends Controller
     /**
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
+    // old funtion
+    // public function create()
+    // {
+    //     $title = 'Add New Project Transfer';
+    //     $category_info = Category::where('status', 'Active')->get();
+    //     $PurchaseOrder = PurchaseOrder::latest('id')->first();
+
+    //     if ($PurchaseOrder) :
+    //         $requisitionCode = $PurchaseOrder->id + 1;
+    //     else :
+    //         $requisitionCode = 1;
+    //     endif;
+
+    //     $requisitionCode = 'PT' . str_pad($requisitionCode, 5, "0", STR_PAD_LEFT);
+
+    //     $purchaserequisitions = PurchaseRequisition::whereIn('status', ['Accepted'])->get();
+
+    //     $suppliers = Supplier::where('status', 'Active')->get();
+    //     $projects = Project::where('condition', 'One Going')->get();
+    //     $branchs = Branch::get();
+    //     return view('backend.pages.inventories.project_transfer.create', get_defined_vars());
+    // }
+
+
+
+    // new funciton
     public function create()
     {
         $title = 'Add New Project Transfer';
+
         $category_info = Category::where('status', 'Active')->get();
-        $PurchaseOrder = PurchaseOrder::latest('id')->first();
 
-        if ($PurchaseOrder) :
-            $requisitionCode = $PurchaseOrder->id + 1;
-        else :
-            $requisitionCode = 1;
-        endif;
+        $lastTransfer   = ProjectTransfer::latest('id')->first();
+        $nextId         = $lastTransfer ? $lastTransfer->id + 1 : 1;
+        $transferCode   = 'PT' . str_pad($nextId, 5, "0", STR_PAD_LEFT);
 
-        $requisitionCode = 'PT' . str_pad($requisitionCode, 5, "0", STR_PAD_LEFT);
+        // Only show requisitions that are Accepted AND not already consumed by a transfer
+        // (PrDetails.status = 'Transfer' means the requisition's line items were already used).
+        $usedRequisitionIds = PrDetails::where('status', 'Transfer')->pluck('pr_id')->unique();
 
-        $purchaserequisitions = PurchaseRequisition::whereIn('status', ['Accepted'])->get();
+        $purchaserequisitions = PurchaseRequisition::where('status', 'Accepted')
+            ->whereNotIn('id', $usedRequisitionIds)
+            ->get();
 
         $suppliers = Supplier::where('status', 'Active')->get();
-        $projects = Project::where('condition', 'One Going')->get();
-        $branchs = Branch::get();
+        $projects  = Project::where('condition', 'One Going')->get();
+        $branchs   = Branch::get();
+
         return view('backend.pages.inventories.project_transfer.create', get_defined_vars());
     }
+
     public function invoice(Request $request, $id)
     {
         $title = 'Project Transfer Invoice';
@@ -169,5 +201,35 @@ class ProjectTransferController extends Controller
         if ($deleteInfo) {
             return response()->json($this->systemTransformer->delete($deleteInfo), 200);
         }
+    }
+
+    public function filterproduct(Request $request)
+    {
+        $products = Product::where('category_id', $request->category_id)
+            ->where('status', 'Active')
+            ->get(['id', 'name', 'productCode']); //  productCode column name
+
+        return response()->json($products->map(function ($p) {
+            return ['id' => $p->id, 'name' => ($p->productCode ?? '') . ' - ' . $p->name];
+        }));
+    }
+
+    public function availableStock(Request $request)
+    {
+        $type = $request->source_type === 'project' ? 'Project' : 'Branch';
+
+        $query = StockSummary::where([
+            'branch_id'  => $request->source_id,
+            'product_id' => $request->product_id,
+            'type'       => $type,
+        ]);
+
+        if ($request->filled('purchase_type')) {
+            $query->where('purchasetype', $request->purchase_type);
+        }
+
+        $qty = $query->value('quantity');
+
+        return response()->json(['quantity' => (float) ($qty ?? 0)]);
     }
 }

@@ -31,18 +31,19 @@ Route::middleware('auth')->prefix('hrm-dashboard')->group(function () {
 Route::middleware('auth')->prefix('store-dashboard')->group(function () {
     Route::get('kpis', [StoreDashboardApiController::class, 'kpis']);
     Route::get('kpi-details', [StoreDashboardApiController::class, 'kpiDetails']);
-    Route::get('branch-distribution', [StoreDashboardApiController::class, 'branchDistribution']);
     Route::get('quick-actions', [StoreDashboardApiController::class, 'quickActions']);
     Route::get('low-stock-items', [StoreDashboardApiController::class, 'lowStockItems']);
     Route::get('stock-movement', [StoreDashboardApiController::class, 'stockMovement']);
-    Route::get('branch-options', [StoreDashboardApiController::class, 'branchOptions']);
     Route::get('recent-transactions', [StoreDashboardApiController::class, 'recentTransactions']);
-    Route::get('branch-stock-details', [StoreDashboardApiController::class, 'branchStockDetails']);
+    Route::get('warehouse-distribution', [StoreDashboardApiController::class, 'warehouseDistribution']);
+    Route::get('warehouse-stock-details', [StoreDashboardApiController::class, 'warehouseStockDetails']);
+    Route::get('warehouse-options', [StoreDashboardApiController::class, 'warehouseOptions']);
+    Route::get('branch-distribution', [StoreDashboardApiController::class, 'branchDistribution']);
 });
 
 Route::middleware('auth')->prefix('financial-dashboard')->group(function () {
     Route::get('kpis', [FinancialDashboardApiController::class, 'kpis']);
-    Route::get('kpi-details', [FinancialDashboardApiController::class, 'kpiDetails']); // NEW -- KPI card drill-down modal
+    Route::get('kpi-details', [FinancialDashboardApiController::class, 'kpiDetails']);
     Route::get('cash-flow', [FinancialDashboardApiController::class, 'cashFlow']);
     Route::get('expense-breakdown', [FinancialDashboardApiController::class, 'expenseBreakdown']);
     Route::get('revenue-comparison', [FinancialDashboardApiController::class, 'revenueComparison']);
@@ -50,15 +51,24 @@ Route::middleware('auth')->prefix('financial-dashboard')->group(function () {
     Route::get('invoices', [FinancialDashboardApiController::class, 'invoices']);
 });
 
-// Added: 2025-08-08 -- POS Dashboard API routes (single controller, App\Http\Controllers\Api namespace)
+
 Route::middleware('auth')->prefix('pos-dashboard')->group(function () {
+    Route::get('quick-actions', [PosDashboardApiController::class, 'quickActions']);
     Route::get('kpis', [PosDashboardApiController::class, 'kpis']);
-    Route::get('sales-trend', [PosDashboardApiController::class, 'salesTrend']);
-    Route::get('top-products', [PosDashboardApiController::class, 'topProducts']);
+    Route::get('sales-purchase-trend', [PosDashboardApiController::class, 'salesPurchaseTrend']);
     Route::get('payment-breakdown', [PosDashboardApiController::class, 'paymentBreakdown']);
+    Route::get('top-products', [PosDashboardApiController::class, 'topProducts']);
+    Route::get('product-invoices/{productId}', [PosDashboardApiController::class, 'productInvoices']);
+    Route::get('sale-invoice/{saleId}', [PosDashboardApiController::class, 'saleInvoiceDetail']);
     Route::get('recent-transactions', [PosDashboardApiController::class, 'recentTransactions']);
-    Route::get('cashier-performance', [PosDashboardApiController::class, 'cashierPerformance']);
-    Route::get('top-due-customers', [PosDashboardApiController::class, 'topDueCustomers']);
+    Route::get('product-consumption', [PosDashboardApiController::class, 'productConsumption']);
+    Route::get('project-options', [PosDashboardApiController::class, 'projectOptions']);
+    Route::get('product-options', [PosDashboardApiController::class, 'productOptions']);
+    Route::get('sales-performance', [PosDashboardApiController::class, 'salesPerformance']);
+    Route::get('top-receivables', [PosDashboardApiController::class, 'topReceivables']);
+    Route::get('receivable-invoices/{accountId}', [PosDashboardApiController::class, 'receivableInvoices']);
+    Route::get('supplier-due', [PosDashboardApiController::class, 'supplierDue']);
+    Route::get('supplier-due-invoices/{supplierId}', [PosDashboardApiController::class, 'supplierDueInvoices']);
 });
 
 // Route::middleware('auth:api')->get('/user', function (Request $request) {

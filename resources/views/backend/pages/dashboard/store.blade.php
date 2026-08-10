@@ -7,6 +7,13 @@
 <link rel="stylesheet"
     href="{{ asset('css/dashboard-style.css') }}?v={{ filemtime(public_path('css/dashboard-style.css')) }}">
 
+<style>
+    .dashboard-wrap .scroll-box {
+        height: auto !important;
+        overflow-y: auto;
+        padding-right: 6px;
+    }
+</style>
 @section('navbar-content')
     <div class="content-header">
         <div class="container-fluid">
@@ -32,9 +39,14 @@
         <div class="row g-3 mb-4">
             <div class="col-lg-6">
                 <div class="panel h-100">
-                    <div class="panel-header"><i class="bi bi-building"></i> Branch-wise Stock Value</div>
+                    <div class="panel-header"><i class="bi bi-building"></i> Warehouse-wise Stock Value</div>
                     <div class="panel-body">
-                        <div class="scroll-box" id="branchDistribution"></div>
+                        <div class="scroll-box" id="warehouseDistribution"></div>
+                    </div>
+                    <hr class="my-2">
+                    <div class="panel-header"><i class="bi bi-diagram-3"></i> Branch-wise Stock Value</div>
+                    <div class="panel-body">
+                        <div class="scroll-box" id="branchWiseDistribution"></div>
                     </div>
                 </div>
             </div>
@@ -174,9 +186,9 @@
                     const body = document.getElementById('kpiDetailModalBody');
                     body.innerHTML = rows.length ?
                         `<ul class="list-group">${rows.map(r => `
-                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                        <span>${r.title}</span><span class="text-muted small">${r.subtitle}</span>
-                                                    </li>`).join('')}</ul>` :
+                                                                                                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                                                                                                        <span>${r.title}</span><span class="text-muted small">${r.subtitle}</span>
+                                                                                                                                    </li>`).join('')}</ul>` :
                         `<div class="empty-state"><i class="bi bi-inbox"></i><p>No records found</p></div>`;
                 })
                 .catch(() => {
@@ -231,12 +243,18 @@
                     type: 'out_of_stock'
                 }),
                 metricCard({
-                    title: 'Pending PR',
-                    value: k.pending_pr,
-                    sub: 'Awaiting approval',
-                    icon: 'bi-file-earmark-text',
+                    title: 'Branches',
+                    value: k.branchs,
+                    icon: 'bi-diagram-3',
                     theme: 'indigo',
-                    type: ''
+                    type: 'branches'
+                }),
+                metricCard({
+                    title: 'Warehouses',
+                    value: k.warehouses,
+                    icon: 'bi-building',
+                    theme: 'indigo',
+                    type: 'warehouses'
                 }),
             ].join('');
             bindKpiClicks();
@@ -245,26 +263,40 @@
                 `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load KPI data</p></div>`;
         });
 
-        /* ---- Point 2: Branch Distribution ---- */
-        fetch(`${API_BASE}/branch-distribution`).then(r => r.json()).then(data => {
-            const box = document.getElementById('branchDistribution');
-            box.innerHTML = data.length ? `<div class="dept-grid">${data.map(d => {
-                const color = d.present_percent >= 40 ? '#16a34a' : d.present_percent >= 15 ? '#f59e0b' : '#94a3b8';
-                return `<div class="dept-card dept-card-clickable" style="cursor:pointer" data-branch-id="${d.id}" title="${d.name}: ৳${Number(d.total).toLocaleString()}">
-                                            <div class="dept-circle" style="background:conic-gradient(${color} ${d.present_percent}%, #e5e7eb ${d.present_percent}% 100%);">
-                                                <div class="dept-circle-inner">${d.present_percent}%</div>
-                                            </div>
-                                            <div class="dept-card-name">${d.name}</div>
-                                            <div class="dept-card-sub">৳${Number(d.total).toLocaleString()}</div>
-                                        </div>`;
-            }).join('')}</div>` :
-                `<div class="empty-state"><i class="bi bi-building"></i><p>No branch data found</p></div>`;
+        /* ---- Point 2: Warehouse Distribution ---- */
+        /* ---- Point 2: Warehouse & Branch Distribution ---- */
+        function renderDistribution(containerId, apiPath) {
+            fetch(`${API_BASE}/${apiPath}`).then(r => r.json()).then(data => {
+                const box = document.getElementById(containerId);
+                box.innerHTML = data.length ? `<div class="dept-grid">${data.map(d => {
+            const color = d.present_percent >= 40 ? '#16a34a' : d.present_percent >= 15 ? '#f59e0b' : '#94a3b8';
+            return `<div class="dept-card dept-card-clickable" style="cursor:pointer" data-branch-id="${d.id}" title="${d.name}: ৳${Number(d.total).toLocaleString()}">
+                                    <div class="dept-circle" style="background:conic-gradient(${color} ${d.present_percent}%, #e5e7eb ${d.present_percent}% 100%);">
+                                        <div class="dept-circle-inner">${d.present_percent}%</div>
+                                    </div>
+                                    <div class="dept-card-name">${d.name}</div>
+                                    <div class="dept-card-sub">৳${Number(d.total).toLocaleString()}</div>
+                                </div>`;
+        }).join('')}</div>` :
+                    `<div class="empty-state"><i class="bi bi-building"></i><p>No data found</p></div>`;
 
-            bindBranchCardClicks();
-        }).catch(() => {
-            document.getElementById('branchDistribution').innerHTML =
-                `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load</p></div>`;
-        });
+                bindBranchCardClicks(containerId);
+            }).catch(() => {
+                document.getElementById(containerId).innerHTML =
+                    `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load</p></div>`;
+            });
+        }
+
+        function bindBranchCardClicks(containerId) {
+            document.querySelectorAll(`#${containerId} .dept-card-clickable`).forEach(el => {
+                el.addEventListener('click', () => {
+                    openBranchStockModal(el.dataset.branchId);
+                });
+            });
+        }
+
+        renderDistribution('warehouseDistribution', 'warehouse-distribution');
+        renderDistribution('branchWiseDistribution', 'branch-distribution');
 
         function bindBranchCardClicks() {
             document.querySelectorAll('.dept-card-clickable').forEach(el => {
@@ -280,17 +312,17 @@
         let currentPage = 1;
         const PAGE_SIZE = 100;
 
-        function openBranchStockModal(branchId) {
+        function openBranchStockModal(warehouseId) {
             document.getElementById('branchStockModalBody').innerHTML =
                 `<div class="text-center text-muted py-3">Loading...</div>`;
             $('#branchStockModal').modal('show');
 
-            fetch(`${API_BASE}/branch-stock-details?branch_id=${branchId}`)
+            fetch(`${API_BASE}/warehouse-stock-details?warehouse_id=${warehouseId}`)
                 .then(r => r.json())
                 .then(data => {
                     currentBranchRows = data.rows;
                     filteredBranchRows = data.rows;
-                    currentBranchTitle = data.branch_name + ' - Stock Breakdown';
+                    currentBranchTitle = data.warehouse_name + ' - Stock Breakdown';
                     currentPage = 1;
 
                     document.getElementById('branchStockModalTitle').textContent = currentBranchTitle;
@@ -368,14 +400,14 @@
                         </thead>
                         <tbody>
                             ${pageRows.map(r => `
-                                                        <tr>
-                                                            <td>${r.product_code}</td>
-                                                            <td>${r.product}</td>
-                                                            <td>${r.category}</td>
-                                                            <td class="text-right">${r.qty}</td>
-                                                            <td class="text-right">${Number(r.avg_price).toLocaleString()}</td>
-                                                            <td class="text-right">${Number(r.total).toLocaleString()}</td>
-                                                        </tr>`).join('')}
+                                                                                                                                        <tr>
+                                                                                                                                            <td>${r.product_code}</td>
+                                                                                                                                            <td>${r.product}</td>
+                                                                                                                                            <td>${r.category}</td>
+                                                                                                                                            <td class="text-right">${r.qty}</td>
+                                                                                                                                            <td class="text-right">${Number(r.avg_price).toLocaleString()}</td>
+                                                                                                                                            <td class="text-right">${Number(r.total).toLocaleString()}</td>
+                                                                                                                                        </tr>`).join('')}
                         </tbody>
                         <tfoot>
                             <tr>
@@ -469,14 +501,14 @@
                         </thead>
                         <tbody>
                             ${rows.map(r => `
-                                                        <tr>
-                                                            <td>${r.product_code}</td>
-                                                            <td>${r.product}</td>
-                                                            <td>${r.category}</td>
-                                                            <td class="text-right">${r.qty}</td>
-                                                            <td class="text-right">${Number(r.avg_price).toLocaleString()}</td>
-                                                            <td class="text-right">${Number(r.total).toLocaleString()}</td>
-                                                        </tr>`).join('')}
+                                                                                                                                        <tr>
+                                                                                                                                            <td>${r.product_code}</td>
+                                                                                                                                            <td>${r.product}</td>
+                                                                                                                                            <td>${r.category}</td>
+                                                                                                                                            <td class="text-right">${r.qty}</td>
+                                                                                                                                            <td class="text-right">${Number(r.avg_price).toLocaleString()}</td>
+                                                                                                                                            <td class="text-right">${Number(r.total).toLocaleString()}</td>
+                                                                                                                                        </tr>`).join('')}
                         </tbody>
                         <tfoot>
                             <tr><th colspan="5" class="text-right">Total</th><th class="text-right">৳ ${total.toLocaleString()}</th></tr>
@@ -585,7 +617,7 @@
         loadStockMovement();
 
         if (isAdmin) {
-            fetch(`${API_BASE}/branch-options`).then(r => r.json()).then(branches => {
+            fetch(`${API_BASE}/warehouse-options`).then(r => r.json()).then(branches => {
                 const filterHtml = `<div class="d-flex gap-2 mb-2">
                     <select id="movBranch" class="form-control form-control-sm">
                         <option value="">All Branches</option>
@@ -596,7 +628,7 @@
                 document.getElementById('stockMovement').insertAdjacentHTML('beforebegin', filterHtml);
 
                 const applyFilter = () => loadStockMovement({
-                    branch_id: document.getElementById('movBranch').value,
+                    warehouse_id: document.getElementById('movBranch').value,
                     search: document.getElementById('movSearch').value
                 });
                 document.getElementById('movBranch').addEventListener('change', applyFilter);

@@ -126,6 +126,8 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::post('/project-invoiceCreate-update/{id}', 'InvoiceController@update')->name('project.invoiceCreate.update');
         Route::get('/project-invoiceCreate-delete/{id}', 'InvoiceController@destroy')->name('project.invoiceCreate.destroy');
         Route::get('/project-invoiceCreate-status/{id}/{status}', 'InvoiceController@statusUpdate')->name('project.invoiceCreate.status');
+        Route::get('/project-transferproject-filterproduct', [ProjectTransferController::class, 'filterproduct'])->name('project.transferproject.filterproduct');
+        Route::get('/project-transferproject-availablestock', [ProjectTransferController::class, 'availableStock'])->name('project.transferproject.availableStock');
         //project incoive crud operation end
     });
 });

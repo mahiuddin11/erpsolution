@@ -768,17 +768,17 @@
 
                     $("#show_item tbody").append('<tr class="new_item' + proId +
                         '">\n\
-                                                                                                                                                                                                                                                                                                                            <td style="padding-left:15px;">' +
+                                                                                                                                                                                                                                                                                                                                            <td style="padding-left:15px;">' +
                         catName +
                         '<input type="hidden" name="catName[]" value="' +
                         catId +
                         '"></td>\n\
-                                                                                                                                                                                                                                                                                                                            <td align="right">' +
+                                                                                                                                                                                                                                                                                                                                            <td align="right">' +
                         proName +
                         '<input type="hidden" class="add_quantity" name="proName[]" value="' +
                         proId +
                         '"></td>\n\
-                                                                                                                                                                                                                                                                                                                            <td align="right">' +
+                                                                                                                                                                                                                                                                                                                                            <td align="right">' +
                         purchasetypetext +
                         '<input type="hidden" class="add_quantity" name="purchasetype[]" value="' +
                         purchasetypeval +
@@ -791,14 +791,14 @@
                         '<input type="hidden" class="ttlunitprice unitparice" name="unitprice[]" value="' +
                         unitprice +
                         '"></td>\n\
-                                                                                                                                                                                                                                                                                                                            <td align="right">' +
+                                                                                                                                                                                                                                                                                                                                            <td align="right">' +
                         total +
                         '<input type="hidden" class="grandtotal" name="total[]" value="' +
                         total +
                         '"></td>\n\
-                                                                                                                                                                                                                                                                                                                            \n\
-                                                                                                                                                                                                                                                                                                                            \n\
-                                                                                                                                                                                                                                                                                                                            <td><a del_id="' +
+                                                                                                                                                                                                                                                                                                                                            \n\
+                                                                                                                                                                                                                                                                                                                                            \n\
+                                                                                                                                                                                                                                                                                                                                            <td><a del_id="' +
                         proId +
                         '" class="delete_item btn form-control btn-danger" href="javascript:;" title=""><i class="fa fa-times"></i></a></td></tr>'
                     );
@@ -982,7 +982,6 @@
         }
 
         function getProductList(cat_id) {
-
             var branch_id = $('#branch_id').val();
 
             if (branch_id == null) {
@@ -1000,33 +999,40 @@
                     branch_id: branch_id
                 },
                 success: function(data) {
+
+                    if ($('#productID').hasClass('select2-hidden-accessible')) {
+                        $('#productID').select2('destroy');
+                    }
+
+                    $('#productID').empty().append(data);
+
+
                     $('#productID').select2({
                         matcher: function(params, data) {
-
                             if ($.trim(params.term) === '') {
                                 return data;
                             }
-                            if (typeof data.text === 'undefined') {
+                            if (typeof data.text === 'undefined' || !data.id) {
                                 return null;
                             }
+
                             let term = params.term.toLowerCase().trim();
-                            let code = ($(data.element).attr('proCode') || '').toLowerCase();
-                            let name = ($(data.element).attr('proName') || '').toLowerCase();
+                            let code = ($(data.element).attr('procode') || '').toLowerCase();
+                            let name = ($(data.element).attr('proname') || data.text || '')
+                                .toLowerCase();
                             let numericCode = code.replace(/[^0-9]/g, '');
                             let numericTerm = term.replace(/[^0-9]/g, '');
+
                             if (
                                 code.includes(term) ||
                                 name.includes(term) ||
-                                numericCode.includes(numericTerm)
+                                (numericTerm !== '' && numericCode.includes(numericTerm))
                             ) {
                                 return data;
                             }
                             return null;
                         }
                     });
-                    $('#productID option').remove();
-                    $('#productID').append($(data));
-                    $("#productID").trigger("select2:updated");
                 }
             });
         }

@@ -274,9 +274,9 @@
 
     <script>
         /* =========================================================================
-                                                                                                                                       Shob data API theke fetch kora hoy -- future e React/Flutter theke-o
-                                                                                                                                       ei same endpoint reuse kora jabe
-                                                                                                                                       ========================================================================= */
+                                                                                                                                           Shob data API theke fetch kora hoy -- future e React/Flutter theke-o
+                                                                                                                                           ei same endpoint reuse kora jabe
+                                                                                                                                           ========================================================================= */
 
         const isAdmin = @json($isAdmin);
         const API_BASE = '/api/hrm-dashboard';
@@ -381,24 +381,24 @@
                         // Point: Check-in, Check-in Location, Check-out, Check-out Location -- structured
                         body.innerHTML =
                             `<ul class="list-group">${rows.map(r => `
-                                                                                                                                                        <li class="list-group-item">
-                                                                                                                                                            <div class="fw-bold mb-2">${r.title}</div>
-                                                                                                                                                            <div class="d-flex justify-content-between align-items-center small mb-1">
-                                                                                                                                                                <span class="text-muted">Check-in: ${r.sign_in ?? '-'}</span>
-                                                                                                                                                                ${locationBadge(r.in_lat, r.in_lng)}
-                                                                                                                                                            </div>
-                                                                                                                                                            <div class="d-flex justify-content-between align-items-center small">
-                                                                                                                                                                <span class="text-muted">Check-out: ${r.sign_out ?? 'Not yet'}</span>
-                                                                                                                                                                ${r.sign_out ? locationBadge(r.out_lat, r.out_lng) : '<span class="badge badge-secondary">Pending</span>'}
-                                                                                                                                                            </div>
-                                                                                                                                                        </li>`).join('')}</ul>`;
+                                                                                                                                                            <li class="list-group-item">
+                                                                                                                                                                <div class="fw-bold mb-2">${r.title}</div>
+                                                                                                                                                                <div class="d-flex justify-content-between align-items-center small mb-1">
+                                                                                                                                                                    <span class="text-muted">Check-in: ${r.sign_in ?? '-'}</span>
+                                                                                                                                                                    ${locationBadge(r.in_lat, r.in_lng)}
+                                                                                                                                                                </div>
+                                                                                                                                                                <div class="d-flex justify-content-between align-items-center small">
+                                                                                                                                                                    <span class="text-muted">Check-out: ${r.sign_out ?? 'Not yet'}</span>
+                                                                                                                                                                    ${r.sign_out ? locationBadge(r.out_lat, r.out_lng) : '<span class="badge badge-secondary">Pending</span>'}
+                                                                                                                                                                </div>
+                                                                                                                                                            </li>`).join('')}</ul>`;
                     } else {
                         body.innerHTML =
                             `<ul class="list-group">${rows.map(r => `
-                                                                                                                                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                                                                                                                            <span>${r.title}</span>
-                                                                                                                                                            <span class="text-muted small">${r.subtitle}</span>
-                                                                                                                                                        </li>`).join('')}</ul>`;
+                                                                                                                                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                                                                                                                                <span>${r.title}</span>
+                                                                                                                                                                <span class="text-muted small">${r.subtitle}</span>
+                                                                                                                                                            </li>`).join('')}</ul>`;
                     }
                 })
                 .catch(() => {
@@ -452,14 +452,14 @@
                     ].join('');
 
                     document.getElementById('secondaryMetrics').innerHTML = [
-                        metricCard({
-                            title: 'Total Branch',
-                            value: kpi.total_branches,
-                            sub: 'Active branches',
-                            icon: 'bi-building',
-                            theme: 'teal',
-                            type: 'total_branches'
-                        }),
+                        // metricCard({
+                        //     title: 'Total Branch',
+                        //     value: kpi.total_branches,
+                        //     sub: 'Active branches',
+                        //     icon: 'bi-building',
+                        //     theme: 'teal',
+                        //     type: 'total_branches'
+                        // }),
 
                         metricCard({
                             title: 'New Employee',
@@ -538,13 +538,13 @@
                         // Percent onujayi color: high present = green, medium = amber, kom = red
                         const ringColor = d.present_percent >= 75 ? '#22c55e' : d.present_percent >= 40 ? '#f59e0b' : '#ef4444';
                         return `
-                                                                                                                                <div class="dept-card" title="${d.name}: ${d.present}/${d.total} present">
-                                                                                                                                  <div class="dept-circle" style="background: conic-gradient(${ringColor} ${d.present_percent}%, #e5e7eb ${d.present_percent}% 100%);">
-                                                                                                                                    <div class="dept-circle-inner">${d.present_percent}%</div>
-                                                                                                                                  </div>
-                                                                                                                                  <div class="dept-card-name">${d.name}</div>
-                                                                                                                                  <div class="dept-card-sub">${d.present}/${d.total} present</div>
-                                                                                                                                </div>`;
+                                                                                                                                    <div class="dept-card" title="${d.name}: ${d.present}/${d.total} present">
+                                                                                                                                      <div class="dept-circle" style="background: conic-gradient(${ringColor} ${d.present_percent}%, #e5e7eb ${d.present_percent}% 100%);">
+                                                                                                                                        <div class="dept-circle-inner">${d.present_percent}%</div>
+                                                                                                                                      </div>
+                                                                                                                                      <div class="dept-card-name">${d.name}</div>
+                                                                                                                                      <div class="dept-card-sub">${d.present}/${d.total} present</div>
+                                                                                                                                    </div>`;
                     }).join('')}</div>`;
                 } else {
                     deptBox.innerHTML =
@@ -567,13 +567,13 @@
                 const ringColor = d.present_percent >= 75 ? '#22c55e' : d.present_percent >= 40 ? '#f59e0b' : '#ef4444';
                
                 return `
-                                                                                                        <div class="dept-card dept-card-clickable" style="cursor:pointer" data-position-id="${d.position_id}" title="${d.name}: ${d.present}/${d.total} present">
-                                                                                                          <div class="dept-circle" style="background: conic-gradient(${ringColor} ${d.present_percent}%, #e5e7eb ${d.present_percent}% 100%);">
-                                                                                                            <div class="dept-circle-inner">${d.present_percent}%</div>
-                                                                                                          </div>
-                                                                                                          <div class="dept-card-name">${d.name}</div>
-                                                                                                          <div class="dept-card-sub">${d.present}/${d.total} present</div>
-                                                                                                        </div>`;
+                                                                                                            <div class="dept-card dept-card-clickable" style="cursor:pointer" data-position-id="${d.position_id}" title="${d.name}: ${d.present}/${d.total} present">
+                                                                                                              <div class="dept-circle" style="background: conic-gradient(${ringColor} ${d.present_percent}%, #e5e7eb ${d.present_percent}% 100%);">
+                                                                                                                <div class="dept-circle-inner">${d.present_percent}%</div>
+                                                                                                              </div>
+                                                                                                              <div class="dept-card-name">${d.name}</div>
+                                                                                                              <div class="dept-card-sub">${d.present}/${d.total} present</div>
+                                                                                                            </div>`;
             }).join('')}</div>`;
 
                     // Added: 2026-08-02 -- render hobar por click bind kora hocche
@@ -619,10 +619,10 @@
                     // Added: 2026-08-02 -- present/absent onujayi badge color
                     body.innerHTML =
                         `<ul class="list-group">${rows.map(r => `
-                                                                                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                                                                            <span>${r.title}</span>
-                                                                                                            <span class="badge ${r.status === 'present' ? 'badge-success' : 'badge-danger'}">${r.subtitle}</span>
-                                                                                                        </li>`).join('')}</ul>`;
+                                                                                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                                                                                <span>${r.title}</span>
+                                                                                                                <span class="badge ${r.status === 'present' ? 'badge-success' : 'badge-danger'}">${r.subtitle}</span>
+                                                                                                            </li>`).join('')}</ul>`;
                 })
                 .catch(() => {
                     document.getElementById('kpiDetailModalBody').innerHTML =

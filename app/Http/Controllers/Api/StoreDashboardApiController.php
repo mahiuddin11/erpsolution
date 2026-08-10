@@ -41,9 +41,20 @@ class StoreDashboardApiController extends Controller
     ];
 
     // ---------------------------------------------------------------
-    // Shared helper: branch-wise stock_summaries theke product-wise
-    // total quantity ber kora (DB-level GROUP BY, N+1 avoid kora holo)
+    // Branch / Warehouse আলাদা করার জন্য centralized scope
+    // parent_id = 0        -> আসল Branch
+    // parent_id != 0       -> Warehouse (sub-location)
     // ---------------------------------------------------------------
+    private function branchQuery()
+    {
+        return Branch::where('parent_id', 0);
+    }
+
+    private function warehouseQuery()
+    {
+        return Branch::where('parent_id', '!=', 0);
+    }
+
     private function branchStockByProduct()
     {
         return StockSummary::where('type', 'Branch')
@@ -63,10 +74,8 @@ class StoreDashboardApiController extends Controller
             ->mergeBindings($union)
             ->select('product_id', DB::raw('AVG(unit_price) as avg_price'))
             ->groupBy('product_id')
-            ->pluck('avg_price', 'product_id'); // [product_id => avg_price]
+            ->pluck('avg_price', 'product_id');
     }
-
-
 
     public function kpis()
     {
@@ -76,7 +85,6 @@ class StoreDashboardApiController extends Controller
         $priceByProduct = $this->avgPriceByProduct();
 
         $totalSku = Product::where('status', 'Active')->count();
-
 
         $totalStockValue = 0;
         foreach ($stockByProduct as $productId => $qty) {
@@ -112,6 +120,10 @@ class StoreDashboardApiController extends Controller
             $pendingPr = \App\Models\PurchaseRequisition::where('status', 'pending')->count();
         }
 
+        // ফিক্স: আগে এই দুটো কলামেই ভুলবশত $pendingPr বসানো ছিল
+        $totalBranches   = $this->branchQuery()->where('status', 'Active')->count();
+        $totalWarehouses = $this->warehouseQuery()->where('status', 'Active')->count();
+
         return response()->json([
             'visible'            => true,
             'total_sku'          => $totalSku,
@@ -120,12 +132,14 @@ class StoreDashboardApiController extends Controller
             'out_of_stock_count' => $outOfStockCount,
             'stock_in_today'     => $stockInToday,
             'stock_out_today'    => $stockOutToday,
-            'pending_pr'         => $pendingPr,
+            'branchs'            => $totalBranches,
+            'warehouses'         => $totalWarehouses,
+            'pending_pr'         => $pendingPr, // ভবিষ্যতে দরকার হলে আলাদা KPI card এ ব্যবহার করা যাবে
         ]);
     }
+
     // ---------------------------------------------------------------
     // Point 1 (drill-down): KPI click -> detail list
-    // ?type= low_stock | out_of_stock | stock_in_today | stock_out_today
     // ---------------------------------------------------------------
     public function kpiDetails(Request $request)
     {
@@ -142,8 +156,8 @@ class StoreDashboardApiController extends Controller
                     ->get(['id', 'name', 'low_stock'])
                     ->map(function ($p) use ($stockByProduct) {
                         return [
-                            'name'     => $p->name,
-                            'qty'      => $stockByProduct[$p->id] ?? 0,
+                            'name'      => $p->name,
+                            'qty'       => $stockByProduct[$p->id] ?? 0,
                             'low_stock' => $p->low_stock,
                         ];
                     })
@@ -166,21 +180,32 @@ class StoreDashboardApiController extends Controller
                     ->map(fn($s) => ['title' => optional($s->product)->name ?? 'N/A', 'subtitle' => $s->status . ' - ' . (optional($s->branch)->name ?? 'N/A')]);
                 break;
 
+            case 'branches':
+                $rows = $this->branchQuery()->where('status', 'Active')
+                    ->get(['id', 'name'])
+                    ->map(fn($b) => ['title' => $b->name, 'subtitle' => 'Branch']);
+                break;
+
+            case 'warehouses':
+                $rows = $this->warehouseQuery()->where('status', 'Active')
+                    ->get(['id', 'name'])
+                    ->map(fn($w) => ['title' => $w->name, 'subtitle' => 'Warehouse']);
+                break;
+
             default:
                 return response()->json(['error' => 'Invalid type'], 400);
         }
 
         return response()->json($rows);
     }
-
-    // ---------------------------------------------------------------
-    // Point 2: Branch-wise Stock Value % (circular card)
-    // ---------------------------------------------------------------
     public function branchDistribution()
     {
-        $priceByProduct = $this->avgPriceByProduct(); // Modified: 2026-08-02
+        $priceByProduct = $this->avgPriceByProduct();
+
+        $branchIds = $this->branchQuery()->pluck('id');
 
         $rows = StockSummary::where('type', 'Branch')
+            ->whereIn('branch_id', $branchIds)
             ->select('branch_id', 'product_id', DB::raw('SUM(quantity) as qty'))
             ->groupBy('branch_id', 'product_id')
             ->having('qty', '>', 0)
@@ -195,7 +220,7 @@ class StoreDashboardApiController extends Controller
 
         $grandTotal = array_sum($valueByBranch);
 
-        $data = Branch::where('status', 'Active')->get(['id', 'name'])
+        $data = $this->branchQuery()->where('status', 'Active')->get(['id', 'name'])
             ->map(function ($b) use ($valueByBranch, $grandTotal) {
                 $val = $valueByBranch[$b->id] ?? 0;
                 return [
@@ -209,15 +234,51 @@ class StoreDashboardApiController extends Controller
         return response()->json($data);
     }
 
-
-    public function branchStockDetails(Request $request)
+    public function warehouseDistribution()
     {
-        $branchId = $request->input('branch_id');
+        $priceByProduct = $this->avgPriceByProduct();
+
+
+        $warehouseIds = $this->warehouseQuery()->pluck('id');
+
+        $rows = StockSummary::where('type', 'Branch')
+            ->whereIn('branch_id', $warehouseIds)
+            ->select('branch_id', 'product_id', DB::raw('SUM(quantity) as qty'))
+            ->groupBy('branch_id', 'product_id')
+            ->having('qty', '>', 0)
+            ->get();
+
+        $valueByWarehouse = [];
+        foreach ($rows as $r) {
+            $avgPrice = $priceByProduct[$r->product_id] ?? 0;
+            $value = round($avgPrice * $r->qty, 2);
+            $valueByWarehouse[$r->branch_id] = ($valueByWarehouse[$r->branch_id] ?? 0) + $value;
+        }
+
+        $grandTotal = array_sum($valueByWarehouse);
+
+        $data = $this->warehouseQuery()->where('status', 'Active')->get(['id', 'name'])
+            ->map(function ($w) use ($valueByWarehouse, $grandTotal) {
+                $val = $valueByWarehouse[$w->id] ?? 0;
+                return [
+                    'id'              => $w->id,
+                    'name'            => $w->name,
+                    'total'           => round($val, 2),
+                    'present_percent' => $grandTotal > 0 ? round(($val / $grandTotal) * 100, 1) : 0,
+                ];
+            });
+
+        return response()->json($data);
+    }
+
+    public function warehouseStockDetails(Request $request)
+    {
+        $warehouseId = $request->input('warehouse_id');
 
         $priceByProduct = $this->avgPriceByProduct();
 
-        $rows = StockSummary::with('products.category') // Modified: 2026-08-02 -- category relation eager load
-            ->where('branch_id', $branchId)
+        $rows = StockSummary::with('products.category')
+            ->where('branch_id', $warehouseId)
             ->where('type', 'Branch')
             ->select('product_id', DB::raw('SUM(quantity) as qty'))
             ->groupBy('product_id')
@@ -229,7 +290,6 @@ class StoreDashboardApiController extends Controller
                 return [
                     'product'      => optional($r->products)->getRawOriginal('name') ?? 'N/A',
                     'product_code' => optional($r->products)->getRawOriginal('productCode') ?? '',
-                    // Added: 2026-08-02 -- category name, product er pashe dekhanor jonno
                     'category'     => optional(optional($r->products)->category)->name ?? 'N/A',
                     'qty'          => $r->qty,
                     'avg_price'    => round($avgPrice, 2),
@@ -239,19 +299,17 @@ class StoreDashboardApiController extends Controller
             ->sortByDesc('total')
             ->values();
 
-        $branchName = optional(Branch::find($branchId))->name ?? 'N/A';
+        $warehouseName = optional($this->warehouseQuery()->find($warehouseId))->name ?? 'N/A';
         $grandTotal = round($rows->sum('total'), 2);
 
         return response()->json([
-            'branch_name' => $branchName,
-            'rows'        => $rows,
-            'grand_total' => $grandTotal,
+            'warehouse_name' => $warehouseName,
+            'rows'           => $rows,
+            'grand_total'    => $grandTotal,
         ]);
     }
 
-    // ---------------------------------------------------------------
-    // Point 3: Quick Actions
-    // ---------------------------------------------------------------
+
     public function quickActions()
     {
         $actions = [
@@ -272,9 +330,7 @@ class StoreDashboardApiController extends Controller
         return response()->json($allowed);
     }
 
-    // ---------------------------------------------------------------
-    // Point 4: Low Stock Items list panel
-    // ---------------------------------------------------------------
+
     public function lowStockItems()
     {
         $stockByProduct = $this->branchStockByProduct();
@@ -298,9 +354,7 @@ class StoreDashboardApiController extends Controller
         return response()->json($data);
     }
 
-    // ---------------------------------------------------------------
-    // Point 5: Stock Movement -- Admin: today, Store-user: last 30 days
-    // ---------------------------------------------------------------
+
     public function stockMovement(Request $request)
     {
         $user    = Auth::user();
@@ -311,8 +365,8 @@ class StoreDashboardApiController extends Controller
 
         if ($isAdmin) {
             $query->whereDate('date', $today);
-            if ($request->filled('branch_id')) {
-                $query->where('branch_id', $request->branch_id);
+            if ($request->filled('warehouse_id')) {
+                $query->where('branch_id', $request->warehouse_id);
             }
             if ($request->filled('search')) {
                 $search = $request->search;
@@ -326,7 +380,7 @@ class StoreDashboardApiController extends Controller
 
         $data = $query->latest('date')->take(50)->get()->map(fn($s) => [
             'product'   => optional($s->product)->name ?? 'N/A',
-            'branch'    => optional($s->branch)->name ?? 'N/A',
+            'branch'    => optional($s->branch)->name ?? 'N/A', // এখানে branch relation টা আসলে warehouse row রিটার্ন করবে, নাম ঠিকই আসবে
             'status'    => $s->status,
             'direction' => in_array($s->status, self::IN_STATUSES) ? 'in' : (in_array($s->status, self::OUT_STATUSES) ? 'out' : 'other'),
             'quantity'  => $s->quantity,
@@ -336,13 +390,15 @@ class StoreDashboardApiController extends Controller
         return response()->json($data);
     }
 
-    public function branchOptions()
+    public function warehouseOptions()
     {
-        return response()->json(Branch::where('status', 'Active')->select('id', 'name')->orderBy('name')->get());
+        return response()->json(
+            $this->warehouseQuery()->where('status', 'Active')->select('id', 'name')->orderBy('name')->get()
+        );
     }
 
     // ---------------------------------------------------------------
-    // Point 6: Recent Transactions feed (Calendar-er jaygay)
+    // Point 6: Recent Transactions -- অপরিবর্তিত
     // ---------------------------------------------------------------
     public function recentTransactions(Request $request)
     {
@@ -369,7 +425,6 @@ class StoreDashboardApiController extends Controller
         }
 
         $data = $query->latest('created_at')->take(200)->get()->map(fn($s) => [
-
             'title'     => optional($s->product)->name ?? 'N/A',
             'voucher'   => $s->invoice_no ?? '-',
             'status'    => $s->status,
