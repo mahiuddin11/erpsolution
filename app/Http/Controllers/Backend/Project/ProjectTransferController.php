@@ -13,6 +13,7 @@ use App\Models\PrDetails;
 use App\Models\Product;
 use App\Models\Project;
 use App\Models\ProjectTransfer;
+use App\Models\ProjectTransferDetails;
 use App\Models\StockSummary;
 use App\Services\InventorySetup\PurchaseOrderService;
 use App\Services\Project\ProjectTransferService;
@@ -44,8 +45,10 @@ class ProjectTransferController extends Controller
         $title = 'Project Transfer List';
         return view('backend.pages.inventories.project_transfer.index', get_defined_vars());
     }
+
     public function dataProcessing(Request $request)
     {
+
         $json_data = $this->systemService->getList($request);
         return json_encode($this->systemTransformer->dataTable($json_data));
     }
@@ -88,12 +91,15 @@ class ProjectTransferController extends Controller
         $nextId         = $lastTransfer ? $lastTransfer->id + 1 : 1;
         $transferCode   = 'PT' . str_pad($nextId, 5, "0", STR_PAD_LEFT);
 
-        // Only show requisitions that are Accepted AND not already consumed by a transfer
-        // (PrDetails.status = 'Transfer' means the requisition's line items were already used).
-        $usedRequisitionIds = PrDetails::where('status', 'Transfer')->pluck('pr_id')->unique();
+        $prIdsWithRemaining = PrDetails::where(function ($q) {
+            $q->where('remaining_qty', '>', 0)
+                ->orWhereNull('remaining_qty');
+        })
+            ->pluck('pr_id')
+            ->unique();
 
         $purchaserequisitions = PurchaseRequisition::where('status', 'Accepted')
-            ->whereNotIn('id', $usedRequisitionIds)
+            ->whereIn('id', $prIdsWithRemaining)
             ->get();
 
         $suppliers = Supplier::where('status', 'Active')->get();
@@ -110,50 +116,136 @@ class ProjectTransferController extends Controller
         $companyInfo = Company::latest('id')->first();
         return view('backend.pages.inventories.project_transfer.invoice', get_defined_vars());
     }
-    /**
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
+
     public function store(Request $request)
     {
-        // dd($request->all());
         try {
             $this->validate($request, $this->systemService->storeValidation($request));
         } catch (ValidationException $e) {
             session()->flash('error', 'Validation error !!');
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
-        $this->systemService->store($request);
+
+        $businessError = $this->systemService->storeBusinessRules($request);
+
+        if ($businessError) {
+            session()->flash('error', $businessError);
+            return redirect()->back()->withInput();
+        }
+
+        $result =  $this->systemService->store($request);
+
+
         session()->flash('success', 'Data successfully save!!');
         return redirect()->route('project.transferproject.index');
     }
-    /**
-     * @param $slug
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
-     */
+
+    // public function edit($id)
+    // {
+    //     if (!is_numeric($id)) {
+    //         session()->flash('error', 'Edit id must be numeric!!');
+    //         return redirect()->back();
+    //     }
+    //     $editInfo = $this->systemService->details($id)->load('details');
+    //     if (!$editInfo) {
+    //         session()->flash('error', 'Edit info is invalid!!');
+    //         return redirect()->back();
+    //     }
+    //     $title = 'Edit Project Tranfer';
+    //     $category_info = Category::where('status', 'Active')->get();
+    //     $purchaserequisitions = PurchaseRequisition::where('status', 'Pending')->orWhere('id', $editInfo->purchase_requisition_id)->get();
+    //     $prDetails = PrDetails::where('pr_id', $editInfo->purchase_requisition_id)->get();
+    //     $branchs = Branch::get();
+    //     return view('backend.pages.inventories.project_transfer.edit', get_defined_vars());
+    // }
+
     public function edit($id)
     {
         if (!is_numeric($id)) {
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
         }
-        $editInfo = $this->systemService->details($id)->load('details');
+
+        $editInfo = $this->systemService->details($id);
         if (!$editInfo) {
             session()->flash('error', 'Edit info is invalid!!');
             return redirect()->back();
         }
-        $title = 'Edit Project Tranfer';
+
+        $details = ProjectTransferDetails::where('project_transfer_id', $id)->get();
+
+        // Live editable max per line:
+        // - requisition-linked lines (requested_qty is not null): max = CURRENT pr_details.remaining_qty + this line's own qty
+        //   (adding back this line's own qty because it will be "released" before being re-applied on update)
+        // - manual lines (requested_qty is null): no PR-based cap, only stock-limited client-side
+        $lineMax = [];
+        if ($editInfo->purchase_requisition_id) {
+            foreach ($details as $d) {
+                if ($d->requested_qty !== null) {
+                    $prDetail = PrDetails::where('pr_id', $editInfo->purchase_requisition_id)
+                        ->where('product_id', $d->product_id)
+                        ->first();
+
+                    $liveRemaining = $prDetail
+                        ? ($prDetail->remaining_qty !== null ? (float) $prDetail->remaining_qty : (float) $prDetail->qty)
+                        : 0;
+
+                    $lineMax[$d->id] = $liveRemaining + (float) $d->qty;
+                }
+            }
+        }
+
+        $title = 'Edit Project Transfer';
         $category_info = Category::where('status', 'Active')->get();
-        $purchaserequisitions = PurchaseRequisition::where('status', 'Pending')->orWhere('id', $editInfo->purchase_requisition_id)->get();
-        $prDetails = PrDetails::where('pr_id', $editInfo->purchase_requisition_id)->get();
-        $branchs = Branch::get();
+
+        $purchaserequisitions = PurchaseRequisition::where('status', 'Accepted')
+            ->orWhere('id', $editInfo->purchase_requisition_id)
+            ->get();
+
+        // Remaining requisition products NOT yet used in THIS transfer — lets the user
+        // add more lines from the same requisition without leaving the edit page.
+        $remainingPrProducts = collect();
+        if ($editInfo->purchase_requisition_id && in_array($editInfo->transfer_type, ['branch_to_project', 'project_to_project'])) {
+            $usedProductIds = $details->pluck('product_id')->all();
+
+            $remainingPrProducts = PrDetails::where('pr_id', $editInfo->purchase_requisition_id)
+                ->whereNotIn('product_id', $usedProductIds)
+                ->where(function ($q) {
+                    $q->where('remaining_qty', '>', 0)->orWhereNull('remaining_qty');
+                })
+                ->get()
+                ->map(function ($pd) {
+                    return [
+                        'product_id'    => $pd->product_id,
+                        'category_id'   => $pd->category_id,
+                        'product_name'  => optional($pd->product)->name,
+                        'purchasetype'  => $pd->purchasetype,
+                        'remaining_qty' => $pd->remaining_qty !== null ? (float) $pd->remaining_qty : (float) $pd->qty,
+                    ];
+                })
+                ->values();
+        }
+
+        $suppliers = Supplier::where('status', 'Active')->get();
+        $projects  = Project::where('condition', 'One Going')->get();
+        $branchs   = Branch::get();
+
         return view('backend.pages.inventories.project_transfer.edit', get_defined_vars());
     }
+
+
     public function searchpr(Request $request)
     {
         $purchase = $this->systemService->getprList($request);
         echo json_encode($purchase);
     }
+
+    public function pr_voucher_product(Request $request)
+    {
+        $purchase = $this->systemService->getprProduct($request);
+        echo json_encode($purchase);
+    }
+
     /**
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -216,7 +308,10 @@ class ProjectTransferController extends Controller
 
     public function availableStock(Request $request)
     {
+
         $type = $request->source_type === 'project' ? 'Project' : 'Branch';
+
+
 
         $query = StockSummary::where([
             'branch_id'  => $request->source_id,
@@ -228,6 +323,7 @@ class ProjectTransferController extends Controller
             $query->where('purchasetype', $request->purchase_type);
         }
 
+
         $qty = $query->value('quantity');
 
         return response()->json(['quantity' => (float) ($qty ?? 0)]);
@@ -238,6 +334,8 @@ class ProjectTransferController extends Controller
         $warehouses = Branch::where('parent_id', $request->branch_id)
             ->get(['id', 'name']);
 
+
+        // dd($warehouses);
         return response()->json($warehouses);
     }
 }

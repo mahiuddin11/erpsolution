@@ -1,663 +1,1329 @@
 @extends('backend.layouts.master')
-
 @section('title')
-Inventorie - {{ $title }}
+    inventory - {{ $title }}
 @endsection
+
+@section('styles')
+    <link rel="stylesheet" href="{{ asset('backend/plugins/select2/css/select2.min.css') }}">
+    <style>
+        :root {
+            --tt-primary: #007bff;
+            --tt-primary-soft: #f0f7ff;
+            --tt-border: #dee2e6;
+            --tt-muted: #868e96;
+            --tt-text: #343a40;
+            --tt-radius: 10px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+            color: #495057;
+            border-bottom: 2px solid #f1f1f1;
+            padding-bottom: 8px;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .section-title .step-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--tt-primary);
+            color: #fff;
+            font-size: 12px;
+            flex: 0 0 auto;
+        }
+
+        .required-star {
+            color: #dc3545;
+        }
+
+        .transfer-type-wrap {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+        }
+
+        .transfer-type-card {
+            flex: 1 1 250px;
+            border: 2px solid var(--tt-border);
+            border-radius: var(--tt-radius);
+            padding: 16px 15px;
+            position: relative;
+            background: #fff;
+            margin: 0;
+            min-height: 44px;
+        }
+
+        .transfer-type-card.active {
+            border-color: var(--tt-primary);
+            background: var(--tt-primary-soft);
+            box-shadow: 0 2px 8px rgba(0, 123, 255, .15);
+        }
+
+        .transfer-type-card input[type=radio] {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 20px;
+            height: 20px;
+            margin: 0;
+        }
+
+        .transfer-type-card .tt-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: #6c757d;
+        }
+
+        .transfer-type-card.active .tt-icon {
+            color: var(--tt-primary);
+        }
+
+        .transfer-type-card .tt-title {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 3px;
+            color: var(--tt-text);
+            padding-right: 28px;
+        }
+
+        .transfer-type-card .tt-sub {
+            font-size: 12.5px;
+            color: var(--tt-muted);
+        }
+
+        .transfer-type-card .tt-badge {
+            display: inline-block;
+            font-size: 10.5px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 10px;
+            margin-top: 8px;
+        }
+
+        .badge-req {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-noreq {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .details-panel {
+            background: #fff;
+            border: 1px solid var(--tt-border);
+            border-radius: var(--tt-radius);
+            padding: 18px 18px 4px;
+            margin-bottom: 22px;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            font-size: 13.5px;
+            color: #495057;
+        }
+
+        .route-visual {
+            display: flex;
+            align-items: stretch;
+            gap: 14px;
+            margin: 4px 0 18px;
+        }
+
+        .route-node {
+            flex: 1 1 0;
+            min-width: 0;
+            background: #f8f9fb;
+            border: 1px dashed var(--tt-border);
+            border-radius: var(--tt-radius);
+            padding: 14px 16px;
+        }
+
+        .route-node-from {
+            background: #f4f9ff;
+            border-color: #bcdcff;
+        }
+
+        .route-node-to {
+            background: #f3faf4;
+            border-color: #bfe6c6;
+        }
+
+        .route-node-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .5px;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+
+        .route-node-from .route-node-tag {
+            color: #0d6efd;
+        }
+
+        .route-node-to .route-node-tag {
+            color: #28a745;
+        }
+
+        .route-arrow {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            font-size: 20px;
+            color: #adb5bd;
+        }
+
+        @media (max-width: 767.98px) {
+            .route-visual {
+                flex-direction: column;
+            }
+
+            .route-arrow {
+                width: auto;
+                height: 22px;
+                transform: rotate(90deg);
+            }
+        }
+
+        .form-control,
+        .select2-container .select2-selection--single {
+            min-height: 42px;
+        }
+
+        .select2-container .select2-selection--single .select2-selection__rendered {
+            line-height: 40px;
+        }
+
+        .select2-container .select2-selection--single .select2-selection__arrow {
+            height: 40px;
+        }
+
+        .route-resolved-box {
+            display: flex;
+            align-items: center;
+            min-height: 42px;
+            background: #fff;
+            border: 1px solid var(--tt-border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 14px;
+            color: var(--tt-text);
+        }
+
+        .products-panel {
+            background: #fff;
+            border: 1px solid var(--tt-border);
+            border-radius: var(--tt-radius);
+            padding: 16px;
+        }
+
+        .product-count-badge {
+            background: #eef2f7;
+            color: #495057;
+            font-weight: 600;
+            font-size: 12px;
+            padding: 5px 11px;
+            border-radius: 20px;
+        }
+
+        .products-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid #f1f1f1;
+        }
+
+        .products-summary {
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        .products-summary strong {
+            color: var(--tt-text);
+        }
+
+        .products-empty {
+            display: none;
+            text-align: center;
+            padding: 30px 10px;
+            color: #adb5bd;
+        }
+
+        .products-empty i {
+            font-size: 26px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .row-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: #eef2f7;
+            color: #495057;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        #productTable {
+            margin-bottom: 0;
+        }
+
+        #productTable thead th {
+            font-size: 12.5px;
+            text-transform: uppercase;
+            color: #6c757d;
+            white-space: nowrap;
+        }
+
+        #productTable td {
+            vertical-align: middle;
+        }
+
+        .remove-row-btn {
+            cursor: pointer;
+            font-size: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+        }
+
+        .remove-row-btn:hover {
+            background: #fdeaea;
+        }
+
+        .stock-hint {
+            font-size: 12px;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .stock-hint.ok {
+            color: #28a745;
+        }
+
+        .stock-hint.low {
+            color: #dc3545;
+        }
+
+        .remaining-display {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .pr-add-panel {
+            background: #eef7ff;
+            border: 1px solid #bfe0ff;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 14px;
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .pr-add-panel .form-group {
+            margin-bottom: 0;
+            flex: 1 1 260px;
+        }
+
+        .pr-add-panel small {
+            display: block;
+            color: #0c5aa6;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 767.98px) {
+            #productTable thead {
+                display: none;
+            }
+
+            #productTable,
+            #productTable tbody,
+            #productTable tr,
+            #productTable td {
+                display: block;
+                width: 100% !important;
+            }
+
+            #productTable {
+                border: none;
+            }
+
+            #productTable tbody tr {
+                border: 1px solid var(--tt-border);
+                border-radius: var(--tt-radius);
+                padding: 14px 14px 10px;
+                margin-bottom: 14px;
+                position: relative;
+                background: #fff;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+            }
+
+            #productTable td {
+                border: none !important;
+                padding: 8px 0;
+            }
+
+            #productTable td[data-label]::before {
+                content: attr(data-label);
+                display: block;
+                font-size: 11px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: .3px;
+                color: #868e96;
+                margin-bottom: 4px;
+            }
+
+            #productTable td.remove-cell {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                width: auto !important;
+                padding: 0;
+            }
+        }
+
+        .card-footer {
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 575.98px) {
+            .card-footer {
+                flex-direction: column-reverse;
+            }
+
+            .card-footer a,
+            .card-footer button {
+                width: 100%;
+            }
+        }
+    </style>
+@endsection
+
+@php
+
+    $resolveBranchWarehouse = function ($storedId) use ($branchs) {
+        if (!$storedId) {
+            return ['branch_id' => null, 'warehouse_id' => null];
+        }
+        $row = $branchs->firstWhere('id', $storedId);
+        if (!$row) {
+            return ['branch_id' => null, 'warehouse_id' => null];
+        }
+        if ((int) $row->parent_id === 0) {
+            return ['branch_id' => $row->id, 'warehouse_id' => null];
+        }
+        return ['branch_id' => $row->parent_id, 'warehouse_id' => $row->id];
+    };
+
+    $sourceResolved = $resolveBranchWarehouse(
+        $editInfo->transfer_type === 'branch_to_project' ? $editInfo->branch_id : null,
+    );
+    $destResolved = $resolveBranchWarehouse(
+        $editInfo->transfer_type === 'project_to_branch' ? $editInfo->branch_id : null,
+    );
+@endphp
+
 @section('navbar-content')
-<div class="content-header">
-    <div class="container-fluid">
-        <div class="row mb-2">
-            <div class="col-sm-6">
-                <h1 class="m-0"> Inventorie </h1>
-            </div><!-- /.col -->
-            <div class="col-sm-6">
-                <ol class="breadcrumb float-sm-right">
-                    <li class="breadcrumb-item"><a href="{{ route('home') }}">Dashboard</a></li>
-                    @if (helper::roleAccess('project.transferproject.index'))
-                    <li class="breadcrumb-item"><a href="{{ route('project.transferproject.index') }}">Project 
-                        </a></li>
-                    @endif
-                    <li class="breadcrumb-item active"><span>Edit Transfer</span></li>
-                </ol>
-            </div><!-- /.col -->
-        </div><!-- /.row -->
-    </div><!-- /.container-fluid -->
-</div>
-@endsection
-
-@section('admin-content')
-
-<div class="row">
-    <div class="col-md-12">
-        <div class="card card-default">
-            <div class="card-header">
-                <h3 class="card-title">Edit Project Transfer</h3>
-                <div class="card-tools">
-                    @if (helper::roleAccess('project.transferproject.list'))
-                    <a class="btn btn-default" href="{{ route('project.transferproject.list') }}"><i
-                            class="fa fa-list"></i>
-                            Project Transfer List</a>
-                    @endif
-                    <span id="buttons"></span>
-                    <a class="btn btn-tool btn-default" data-card-widget="collapse">
-                        <i class="fas fa-minus"></i>
-                    </a>
-                    <a class="btn btn-tool btn-default" data-card-widget="remove">
-                        <i class="fas fa-times"></i>
-                    </a>
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">{{ $title }}</h1>
                 </div>
-            </div>
-            <!-- /.card-header -->
-            <div class="card-body">
-                <form class="needs-validation" method="POST"
-                    action="{{ route('project.transferproject.update',$editInfo->id) }}" novalidate>
-                    @csrf
-                    <div class="form-row">
-                        <div class="col-md-12 mb-3">
-                            <span class="bg-green" style="padding: 5px; font-weight : bold"
-                                for="validationCustom01">Purchase Order Code * : {{ $editInfo->invoice_no }}</span>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="col-md-6 mb-3">
-                            <label>Date:</label>
-                            <div class="input-group date" id="reservationdate" data-target-input="nearest">
-                                <input type="text" name="date" data-toggle="datetimepicker"
-                                    value="{{ $editInfo->order_date }}" class="form-control datetimepicker-input"
-                                    data-target="#reservationdate" />
-                                <div class="input-group-append" data-target="#reservationdate"
-                                    data-toggle="datetimepicker">
-                                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
-                                </div>
-                            </div>
-                            @error('date')
-                            <span class=" error text-red text-bold">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label for="validationCustom01">Purchase Requisition * :</label>
-                            <select class="form-control select2" id="purreq" name="purchase_requisition">
-                                <option selected disabled value="">--Select--</option>
-                                @foreach ($purchaserequisitions as $key => $value)
-                                <option {{ $editInfo->purchase_requisition_id == $value->id ? 'selected' : '' }}
-                                    value="{{ $value->id }}">
-                                    {{ $value->invoice_no }}
-                                </option>
-                                @endforeach
-                            </select>
-                            @error('purchase_requisition')
-                            <span class=" error text-red text-bold">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
-                    <div class="form-row">
-                      <div class="col-md-6 mb-3">
-                            <label for="validationCustom01">Branch * :</label>
-                            <select class="form-control select2 branch_id" onchange="checkstock(this.value)" name="branch_id">
-                                <option selected disabled value="">--Select--</option>
-                                @foreach ($branchs as $key => $value)
-                                <option {{$value->id == $editInfo->branch_id ? "selected":"" }} value="{{ $value->id }}">
-                                    {{ $value->branchCode . ' - ' . $value->name }}
-                                </option>
-                                @endforeach
-                            </select>
-                            @error('branch_id')
-                            <span class=" error text-red text-bold">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label for="validationCustom01">Project * :</label>
-                            <select readonly id="project_id" class="form-control select2" name="project_id">
-                                <option selected value="{{ $editInfo->project_id }}">{{ $editInfo->project->name ?? "N/A" }}
-                                </option>
-                            </select>
-                            @error('project_id')
-                            <span class=" error text-red text-bold">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                    </div>
-
-
-                    <table class="table table-bordered table-hover" id="show_item">
-                        <thead>
-                            <tr>
-                                <th colspan="8">Select Product Item</th>
-                            </tr>
-                            <tr>
-                                <td class="text-center"><strong>Category</strong></td>
-                                <td class="text-center"><strong>Product</strong></td>
-                                <td class="text-center"><strong>Quantity</strong></td>
-                                <td class="text-center"><strong>Action</strong></td>
-                            </tr>
-                        </thead>
-                        <tbody id="main-table">
-                            <tr>
-                                <td>
-                                    <select onchange="getProductList(this.value)"
-                                        class="select2 form-control catName reset" id="form-field-select-3"
-                                        data-placeholder="Search Category">
-                                        <option disabled selected>---Select Category---</option>
-                                        <?php
-                                        foreach ($category_info as $eachInfo) :
-                                            ?>
-                                        <option catName="{{ $eachInfo->name }}" value="{{ $eachInfo->id }}">
-                                            {{ $eachInfo->name }}</option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </td>
-                                <td>
-                                    <select class="select2 form-control proName reset" id="productID"
-                                        data-placeholder="Search Product" onchange="getUnitPrice(this.value)">
-                                        <option disabled selected>---Select Product---</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <input type="number" step="any" class="form-control text-right qty reset_qty"
-                                        placeholder="Qty" min="0">
-                                </td>
-
-                                <td>
-                                    <a id="add_item" class="btn btn-info" style="white-space: nowrap"
-                                        href="javascript:;" title="Add Item">
-                                        <i class="fa fa-plus"></i>
-                                        Add Item
-                                    </a>
-                                </td>
-                            </tr>
-                            @php
-                            $qty = 0;
-                            $unitprice = 0;
-                            $totalprice = 0;
-                            @endphp
-
-                            @foreach ($editInfo->details as $value)
-
-                            @php
-                            $qty += $value->qty;
-                            $unitprice += $value->unit_price;
-                            $totalprice +=$value->total_price;
-                            @endphp
-
-                            <tr class="delrow new_item{{ $value->product_id }}">
-                                <td>
-                                    {{ $value->category->name }}
-                                    <input type="hidden" name="category_nm[]" value=" {{ $value->category_id }}">
-                                </td>
-                                <td class="text-right"> {{ $value->product->name }} <input type="hidden"
-                                        name="product_nm[]" value=" {{ $value->product_id }}"></td>
-                                <td class="text-right"> <input class="ttlqty qnty form-control" type="number"
-                                        name="qty[]" value="{{ $value->qty }}"></td>
-                                <td>
-                                    <a del_id="  {{ $value->product_id }}"
-                                        class="delete_item btn form-control btn-danger" href="javascript:;" title="">
-                                        <i class="fa fa-times"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-
-                        <tfoot>
-
-                            <tr>
-                                <td class="
-                                            text-right">
-                                    <strong>Sub-Total(BDT)</strong>
-                                </td>
-                                <td class="text-right"><strong class=""></strong></td>
-                                <td class="text-right"><strong class="ttlqty">{{$qty}}</strong>
-                                </td>
-                                <td class="text-right"><strong class=""></strong></td>
-                            </tr>
-                        </tfoot>
-                    </table>
-
-                    <div class="
-                        form-row form-group">
-                        <div class="col-md-12">
-                            <label for="">Note</label>
-                            <textarea name="note" class="form-control" name="note" id="" cols="10" rows="4"></textarea>
-                        </div>
-                        {{-- <div class="col-md-4">
-
-                            <table class="table table-bordered table-hover" id="cart_output">
-                                <tr>
-                                    <th><span>Total</span></th>
-                                    <th class="text-right"><span class="grandtotal fixedtotal">{{$totalprice}}</span>
-                                    </th>
-                                </tr>
-           
-                                @php
-                                $total = $totalprice - $editInfo->advance_payment;
-                                @endphp
-                                <tr>
-                                    <th><span>Total Due</span></th>
-                                    <th class="text-right"><span class="cart_due">{{$total}}</span>
-                                    </th>
-                                </tr>
-                            </table>
-                        </div> --}}
-                    </div>
-                    @if($editInfo->status !== "Accepted")
-                    <button class="btn btn-info" type="submit"><i class="fa fa-save"></i> &nbsp;Update</button>
-                    @endif
-                </form>
-            </div>
-            <!-- /.card-body -->
-            <div class="card-footer">
-
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{{ route('home') }}">Dashboard</a></li>
+                        @if (helper::roleAccess('project.transferproject.index'))
+                            <li class="breadcrumb-item"><a href="{{ route('project.transferproject.index') }}">Project
+                                    Transfer</a></li>
+                        @endif
+                        <li class="breadcrumb-item active"><span>Edit</span></li>
+                    </ol>
+                </div>
             </div>
         </div>
     </div>
-    <!-- /.col-->
-</div>
-
-<script type="text/javascript">
-    $(document).ready(function () {
-
-
-
-        $('#purreq').on('change', function () {
-            let id = $(this).val();
-
-            $.ajax({
-                url: "{{ route('project.transferproject.searchpr') }}",
-                method: 'GET',
-                data: {
-                    "_token": "{{ csrf_token() }}",
-                    id: id
-                },
-                dataType: 'json',
-                success: function (data) {
-
-                    $('.delrow').remove();
-                    $('#main-table').append(data.prdetails);
-                    $('#project_id').html(data.branch);
-                    $('.reset_unitprice').val('');
-                    $('.reset_qty').val('');
-                    $('.reset_total').val('');
-                    $(".reset").val(null).trigger("change");
-                    $('.paid_amount').removeAttr('readonly');
-                    $('.paid_amount').val('')
-                    $('.cart_due').text('');
-                    findqtyamoun();
-                    findunitamount();
-                    findgrandtottal();
-
-                }
-            })
-        });
-
-
-        var grandtotal = $('.fixedtotal').text();
-        $('.paid_amount').on('keyup change', function () {
-            var grandtotal = $('.fixedtotal').text();
-            let number = $(this).val();
-            var total = grandtotal - number;
-
-            if (number <= parseInt(grandtotal)) {
-                $('.cart_due').text(total);
-            } else {
-                $(this).val('')
-                $('.cart_due').text('');
-                // alert('You can ');
-            }
-
-        })
-
-        var findqtyamoun = function () {
-            var ttlqty = 0;
-            $.each($('.ttlqty'), function () {
-                console.log($(this).val());
-                qty = number_format($(this).val());
-                ttlqty += qty;
-            });
-            $('.ttlqty').text(number_format(ttlqty));
-
-        };
-
-        var findunitamount = function () {
-            var ttlunitprice = 0;
-            $.each($('.ttlunitprice'), function () {
-                unitprice = number_format($(this).val());
-                ttlunitprice += unitprice;
-            });
-            $('.ttlunitprice').text(number_format(ttlunitprice));
-        };
-
-        var findgrandtottal = function () {
-            var grandtotal = 0;
-
-            $.each($('.total'), function (index, item) {
-
-                total = number_format($(item).val());
-                grandtotal += total;
-            });
-            $('.cart_due').text(parseInt(grandtotal));
-            // let vatE = $('.vat');
-            let discountE = $('.discount');
-            let paidAmountE = $('.paid_amount');
-
-            let vat = 0; //number_format(vatE.val());
-            let discount = number_format(discountE.val());
-            let paidAmount = number_format(paidAmountE.val());
-
-            //calculate discount
-            let cal_vat = percentageCalculate(grandtotal, vat);
-
-            let cal_grandtotal = grandTotalCalculate(grandtotal, discount, cal_vat);
-            let cal_due = dueCalculate(cal_grandtotal, paidAmount);
-
-            let cart_net_total = $('.cart_net_total');
-
-            $('.grandtotal').text(number_format(grandtotal));
-            cart_net_total.text(cal_grandtotal);
-            cart_due.text(cal_due);
-
-
-            $('.input_vat').val(cal_vat);
-            $('.input_net_total').val(cal_grandtotal);
-            $('.input_due').val(cal_due);
-
-
-        };
-
-
-
-        $(document).on('click', '#add_item', function () {
-
-            var parent = $(this).parents('tr');
-
-            var supid = $('.supid').val();
-            var catId = $('.catName').val();
-
-            var catName = $(".catName").find('option:selected').attr('catName');
-
-
-            var proId = $('.proName').val();
-            var proName = $(".proName").find('option:selected').attr('proName');
-
-            var qty = number_format(parent.find('.qty').val());
-
-
-
-            var unitprice = number_format(parent.find('.unitprice').val());
-
-
-            if (qty == '' || qty == null || qty == 0) {
-
-                return false;
-            } else {
-                var total = qty * unitprice;
-                const row = `
-                    <tr class="new_item${proId}">
-                        <td style="padding-left:15px;">${catName}<input type="hidden" name="category_nm[]" value="${catId}"></td>
-                        <td class="text-right">${proName}<input type="hidden" class="add_quantity" name="product_nm[]" value="${proId}"></td>
-                        <td class="text-right"><input type="number" class="form-control ttlqty qnty" name="qty[]" value="${qty}"></td>
-                        <td>
-                            <a del_id="${proId}" class="delete_item btn form-control btn-danger" href="javascript:;" title="">
-                                <i class="fa fa-times"></i>
-                            </a>
-                        </td>
-                    </tr>
-                `;
-                $("#show_item tbody").append(row);
-            }
-
-            $('.reset_unitprice').val('');
-            $('.reset_qty').val('');
-            $('.reset_total').val('');
-            $(".reset").val(null).trigger("change");
-
-            findqtyamoun();
-            findunitamount();
-            findgrandtottal();
-        });
-
-        $(document).on('click', '.delete_item', function () {
-            // if (confirm("Are you sure?")) {
-            //     $(this).parents('tr').remove();
-            //     findqtyamoun();
-            //     findunitamount();
-            //     findgrandtottal();
-            // }
-
-            let deleteitem = () => {
-                $(this).parents('tr').remove();
-                findqtyamoun();
-                findunitamount();
-                findgrandtottal();
-            }
-
-            alertMessage.confirm('You want to remove this', deleteitem);
-        });
-
-        // check payment type by joy
-        $(document).on('change', '.payment_type', function () {
-            const self = $(this);
-            const val = self.val();
-
-            if (val == '' || val == null || val == 0) {
-                return false;
-            }
-            checkTypeAndGetAccountInfo(val);
-
-        });
-
-        // get account balance and show by html
-        $(document).on('change', '.accounts', function () {
-            // settings.transfer.checkBalance
-            const self = $(this);
-            const val = self.val();
-
-            if (val == '' || val == null || val == 0) {
-                return false;
-            }
-            getBalance(val);
-        });
-
-        // Quantity price calculate
-        $(document).on('input', '.qty', function () {
-            let self = $(this);
-            let parent = self.parents('tr');
-            let qty = number_format(self.val());
-
-            if (qty == '' || qty == null) {
-                $(this).val(1);
-                qty = 1;
-            }
-
-            let unitPrice = number_format(parent.find('.unitprice').val());
-
-            let total = number_format(unitPrice * qty);
-
-            parent.find('.total').val(number_format(total));
-        });
-
-        $(document).on('input', '.qnty', function () {
-            let self = $(this);
-            let parent = self.parents('tr');
-            let qty = number_format(self.val());
-
-            if (qty == '' || qty == null) {
-                $(this).val(1);
-                qty = 1;
-            }
-
-            let unitPrice = number_format(parent.find('.unitprice').val());
-
-            let total = number_format(unitPrice * qty);
-
-            parent.find('.total').val(number_format(total));
-
-            findqtyamoun();
-            findunitamount();
-            findgrandtottal();
-        });
-
-        $(document).on('input', '.input-checker', function () {
-            var grandtotal = $('.grandtotal').text();
-            grandtotal = Number(grandtotal);
-
-            if (isNaN(grandtotal) || grandtotal < 1) {
-                // lert('Please Add some item first.');
-                alertMessage.error('Please Add some item first.');
-                return false;
-            }
-            findgrandtottal();
-
-        });
-
-
-    });
-
-    function dueCalculate(amount, paid_amount) {
-        return number_format(number_format(amount) - number_format(paid_amount));
-    }
-
-    function grandTotalCalculate(total, discount = 0, vat = 0, result = 0) {
-        result = (total + vat) - discount;
-        return number_format(result);
-
-    }
-
-    function percentageCalculate(amount, disc) {
-        return number_format(amount * disc * .01);
-    }
-
-    function number_format(number, decimal = 2) {
-        number = Number(number);
-        return Number(parseFloat(number).toFixed(decimal));
-    }
-
-    function getProductList(cat_id) {
-        if (cat_id == '' || cat_id == null || cat_id == 0) {
-            return false;
-        }
-        $.ajax({
-            "url": "{{ route('inventorySetup.purchase.getProductList') }}",
-            "type": "GET",
-            cache: false,
-            data: {
-                "_token": "{{ csrf_token() }}",
-                cat_id: cat_id
-            },
-            success: function (data) {
-                $('#productID').select2();
-                $('#productID option').remove();
-                $('#productID').append($(data));
-                $("#productID").trigger("select2:updated");
-            }
-        });
-    }
-
-    function getUnitPrice(productId) {
-
-        if (productId == '' || productId == null || productId == 0) {
-            return false;
-        }
-
-        $.ajax({
-            "url": "{{ route('inventorySetup.purchase.unitPice') }}",
-            "type": "GET",
-            cache: false,
-            data: {
-                "_token": "{{ csrf_token() }}",
-                productId: productId
-            },
-            success: function (data) {
-                $("#unitprice").val(data);
-            }
-        });
-    }
-
-    // 
-    function checkTypeAndGetAccountInfo(type) {
-        if (type == "cash") {
-            $.ajax({
-                "url": "{{ route('inventorySetup.purchase.accounts') }}",
-                "type": "GET",
-                cache: false,
-                data: {
-                    "_token": "{{ csrf_token() }}"
-                },
-                success: function (data) {
-                    let html = `
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Account</label>
-                                <select name="chart_of_account_id" class="form-control select2 accounts">
-                                    ${data}
-                                </select>
+@endsection
+
+@section('admin-content')
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card card-default">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-exchange-alt mr-2"></i>Edit Project Transfer —
+                        {{ $editInfo->invoice_no }}</h3>
+                </div>
+
+                <form action="{{ route('project.transferproject.update', $editInfo->id) }}" method="POST"
+                    id="transferForm">
+                    @csrf
+                    <div class="card-body">
+
+                        @if ($errors->any())
+                            <div class="alert alert-danger">
+                                <ul class="mb-0">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
+                        <div class="section-title"><span class="step-num">1</span> Transfer Type
+                            <span class="badge badge-secondary ml-2" style="font-size:11px;"><i class="fas fa-lock"></i>
+                                Locked after creation</span>
+                        </div>
+
+                        <div class="transfer-type-wrap" style="pointer-events:none; opacity:.85;">
+                            <label
+                                class="transfer-type-card{{ $editInfo->transfer_type === 'branch_to_project' ? ' active' : '' }}">
+                                <input type="radio" value="branch_to_project"
+                                    {{ $editInfo->transfer_type === 'branch_to_project' ? 'checked' : '' }} disabled>
+                                <div class="tt-icon"><i class="fas fa-warehouse"></i></div>
+                                <div class="tt-title">Branch / Warehouse &rarr; Project</div>
+                                <div class="tt-sub">Issue material from stock to a running project</div>
+                                <span class="tt-badge badge-req"><i class="fas fa-file-alt"></i> Requisition required</span>
+                            </label>
+                            <label
+                                class="transfer-type-card{{ $editInfo->transfer_type === 'project_to_project' ? ' active' : '' }}">
+                                <input type="radio" value="project_to_project"
+                                    {{ $editInfo->transfer_type === 'project_to_project' ? 'checked' : '' }} disabled>
+                                <div class="tt-icon"><i class="fas fa-people-arrows"></i></div>
+                                <div class="tt-title">Project &rarr; Project</div>
+                                <div class="tt-sub">Move surplus material between two projects</div>
+                                <span class="tt-badge badge-req"><i class="fas fa-file-alt"></i> Requisition required</span>
+                            </label>
+                            <label
+                                class="transfer-type-card{{ $editInfo->transfer_type === 'project_to_branch' ? ' active' : '' }}">
+                                <input type="radio" value="project_to_branch"
+                                    {{ $editInfo->transfer_type === 'project_to_branch' ? 'checked' : '' }} disabled>
+                                <div class="tt-icon"><i class="fas fa-undo-alt"></i></div>
+                                <div class="tt-title">Project &rarr; Branch / Warehouse</div>
+                                <div class="tt-sub">Return unused material back to stock</div>
+                                <span class="tt-badge badge-noreq"><i class="fas fa-check"></i> No requisition needed</span>
+                            </label>
+                        </div>
+                        <input type="hidden" name="transfer_type" value="{{ $editInfo->transfer_type }}">
+
+                        <hr>
+
+                        <div class="section-title"><span class="step-num">2</span> Transfer Details</div>
+
+                        <div class="details-panel">
+                            <div class="form-row">
+                                <div class="col-lg-2 col-md-4 col-sm-6 form-group">
+                                    <label>Date <span class="required-star">*</span></label>
+                                    <input type="date" name="date" class="form-control"
+                                        value="{{ $editInfo->order_date }}" required>
+                                </div>
+
+                                <div class="col-lg-2 col-md-4 col-sm-6 form-group">
+                                    <label>Invoice / Reference No</label>
+                                    <input type="text" class="form-control" value="{{ $editInfo->invoice_no }}"
+                                        readonly>
+                                </div>
+
+                                {{-- @if (in_array($editInfo->transfer_type, ['branch_to_project', 'project_to_project']))
+                                    <div class="col-lg-3 col-md-4 col-sm-6 form-group">
+                                        <label>Purchase Requisition <span class="required-star">*</span></label>
+                                        <select name="purchase_requisition" class="form-control select2" @readonly(true)
+                                            required>
+                                            <option value="">-- Select Requisition --</option>
+                                            @foreach ($purchaserequisitions as $pr)
+                                                <option value="{{ $pr->id }}"
+                                                    {{ $pr->id == $editInfo->purchase_requisition_id ? 'selected' : '' }}>
+                                                    {{ $pr->invoice_no }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                @endif --}}
+
+                                @if (in_array($editInfo->transfer_type, ['branch_to_project', 'project_to_project']))
+                                    <div class="col-lg-3 col-md-4 col-sm-6 form-group">
+                                        <label>
+                                            Purchase Requisition <span class="required-star">*</span>
+                                        </label>
+
+                                        <select class="form-control select2" disabled>
+                                            <option value="">-- Select Requisition --</option>
+
+                                            @foreach ($purchaserequisitions as $pr)
+                                                <option value="{{ $pr->id }}"
+                                                    {{ $pr->id == $editInfo->purchase_requisition_id ? 'selected' : '' }}>
+                                                    {{ $pr->invoice_no }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+
+                                        <input type="hidden" name="purchase_requisition"
+                                            value="{{ $editInfo->purchase_requisition_id }}">
+                                    </div>
+                                @endif
+
+                                @if ($editInfo->transfer_type === 'branch_to_project')
+                                    <div class="col-lg-3 col-md-6 col-sm-6 form-group">
+                                        <label>
+                                            Source Branch <span class="required-star">*</span>
+                                        </label>
+
+                                        <select class="form-control select2 branch-picker" data-target="from_branch_id"
+                                            data-preselect-warehouse="{{ $sourceResolved['warehouse_id'] }}" disabled>
+
+                                            <option value="">-- Select Branch --</option>
+
+                                            @foreach ($branchs->where('parent_id', 0) as $branch)
+                                                <option value="{{ $branch->id }}"
+                                                    {{ $branch->id == $sourceResolved['branch_id'] ? 'selected' : '' }}>
+                                                    {{ $branch->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+
+                                        {{-- Backend-এ Branch ID পাঠানোর জন্য --}}
+                                        <input type="hidden" name="from_branch_id"
+                                            value="{{ $sourceResolved['branch_id'] }}">
+                                    </div>
+
+
+                                    <div class="col-lg-2 col-md-6 col-sm-6 form-group">
+                                        <label>
+                                            Warehouse <span class="text-muted">(optional)</span>
+                                        </label>
+
+                                        <div class="warehouse-wrap" data-target="from_branch_id"
+                                            style="display:{{ $sourceResolved['warehouse_id'] ? 'block' : 'none' }}">
+
+                                            <select class="form-control select2 warehouse-picker"
+                                                data-target="from_branch_id" disabled>
+
+                                                <option value="">-- Warehouse --</option>
+
+                                                @foreach ($warehouses ?? [] as $warehouse)
+                                                    <option value="{{ $warehouse->id }}"
+                                                        {{ $warehouse->id == $sourceResolved['warehouse_id'] ? 'selected' : '' }}>
+                                                        {{ $warehouse->name }}
+                                                    </option>
+                                                @endforeach
+
+                                            </select>
+
+                                        </div>
+
+                                        {{-- Backend-এ Warehouse ID পাঠানোর জন্য --}}
+                                        <input type="hidden" name="from_warehouse_id"
+                                            value="{{ $sourceResolved['warehouse_id'] }}">
+                                    </div>
+                                @endif
+
+                                @if ($editInfo->transfer_type === 'project_to_branch')
+                                    <div class="col-lg-3 col-md-6 col-sm-6 form-group">
+                                        <label>Destination Branch <span class="required-star">*</span></label>
+                                        <select class="form-control select2 branch-picker" data-target="to_branch_id"
+                                            data-preselect-warehouse="{{ $destResolved['warehouse_id'] }}">
+                                            <option value="">-- Select Branch --</option>
+                                            @foreach ($branchs->where('parent_id', 0) as $branch)
+                                                <option value="{{ $branch->id }}"
+                                                    {{ $branch->id == $destResolved['branch_id'] ? 'selected' : '' }}>
+                                                    {{ $branch->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <input type="hidden" name="to_branch_id" value="{{ $editInfo->branch_id }}">
+                                    </div>
+
+                                    <div class="col-lg-2 col-md-6 col-sm-6 form-group">
+                                        <label>Warehouse <span class="text-muted">(optional)</span></label>
+                                        <div class="warehouse-wrap" data-target="to_branch_id"
+                                            style="display:{{ $destResolved['warehouse_id'] ? 'block' : 'none' }}">
+                                            <select class="form-control select2 warehouse-picker"
+                                                data-target="to_branch_id">
+                                                <option value="">-- Warehouse --</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="route-visual">
+                                <div class="route-node route-node-from">
+                                    <span class="route-node-tag"><i class="fas fa-upload"></i> FROM</span>
+                                    @if ($editInfo->transfer_type === 'branch_to_project')
+                                        <div class="form-group">
+                                            <label class="mb-1">Source</label>
+                                            <div class="route-resolved-box">
+                                                <i class="fas fa-warehouse mr-2 text-muted"></i>
+                                                <span class="route-resolved-text" data-target="from_branch_id">
+                                                    {{ optional($branchs->firstWhere('id', $editInfo->branch_id))->name ?? '-' }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <div class="form-group">
+                                            <label>Project <span class="required-star">*</span></label>
+                                            <select name="from_project_id" class="form-control select2" required>
+                                                <option value="">-- Select Project --</option>
+                                                @foreach ($projects as $project)
+                                                    <option value="{{ $project->id }}"
+                                                        {{ $project->id == $editInfo->project_id ? 'selected' : '' }}>
+                                                        {{ $project->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    @endif
+                                </div>
+
+                                <div class="route-arrow" aria-hidden="true"><i class="fas fa-long-arrow-alt-right"></i>
+                                </div>
+
+                                <div class="route-node route-node-to">
+                                    <span class="route-node-tag"><i class="fas fa-flag-checkered"></i> TO</span>
+                                    @if ($editInfo->transfer_type === 'branch_to_project')
+                                        <div class="form-group">
+                                            <label>Project <span class="required-star">*</span></label>
+                                            <select name="to_project_id_a" class="form-control select2" required>
+                                                <option value="">-- Select Project --</option>
+                                                @foreach ($projects as $project)
+                                                    <option value="{{ $project->id }}"
+                                                        {{ $project->id == $editInfo->project_id ? 'selected' : '' }}>
+                                                        {{ $project->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    @elseif ($editInfo->transfer_type === 'project_to_project')
+                                        <div class="form-group">
+                                            <label>Project <span class="required-star">*</span></label>
+                                            <select name="to_project_id_b" class="form-control select2" required>
+                                                <option value="">-- Select Project --</option>
+                                                @foreach ($projects as $project)
+                                                    <option value="{{ $project->id }}"
+                                                        {{ $project->id == $editInfo->to_project_id ? 'selected' : '' }}>
+                                                        {{ $project->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    @else
+                                        <div class="form-group">
+                                            <label class="mb-1">Destination</label>
+                                            <div class="route-resolved-box">
+                                                <i class="fas fa-building mr-2 text-muted"></i>
+                                                <span class="route-resolved-text" data-target="to_branch_id">
+                                                    {{ optional($branchs->firstWhere('id', $editInfo->branch_id))->name ?? '-' }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="col-md-12 form-group">
+                                    <label>Note</label>
+                                    <textarea name="note" class="form-control" rows="2">{{ $editInfo->note }}</textarea>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Balance</label>
-                                <input name="balance" type="text" class="form-control balance" placeholder="Ex:31424" readonly />
+
+                        <hr>
+
+                        <div class="section-title justify-content-between">
+                            <span><span class="step-num">3</span> Products to Transfer</span>
+                            <span class="product-count-badge" id="productCountBadge">{{ $details->count() }} items</span>
+                        </div>
+
+                        <div class="products-panel">
+
+                            {{-- NEW: Add another item straight from this Requisition's remaining balance --}}
+                            @if ($remainingPrProducts->isNotEmpty())
+                                <div class="pr-add-panel">
+                                    <div class="form-group">
+                                        <label class="mb-1">Add another item from this Requisition</label>
+                                        <select id="prRemainingSelect" class="form-control select2">
+                                            <option value="">-- Select remaining item --</option>
+                                            @foreach ($remainingPrProducts as $rp)
+                                                <option value="{{ $rp['product_id'] }}"
+                                                    data-category="{{ $rp['category_id'] }}"
+                                                    data-purchasetype="{{ $rp['purchasetype'] }}"
+                                                    data-remaining="{{ $rp['remaining_qty'] }}"
+                                                    data-name="{{ $rp['product_name'] }}">{{ $rp['product_name'] }}
+                                                    (remaining: {{ $rp['remaining_qty'] }})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <small>Requisition-এ বাকি থাকা আইটেম — এখান থেকে সিলেক্ট করলে নতুন row auto-add হবে,
+                                            remaining দিয়েই qty prefill হবে।</small>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" id="addFromPrBtn">
+                                        <i class="fas fa-plus"></i> Add
+                                    </button>
+                                </div>
+                            @endif
+
+                            <div class="table-responsive">
+                                <table class="table table-bordered" id="productTable">
+                                    <thead>
+                                        <tr>
+                                            <th style="width:5%">#</th>
+                                            <th style="width:16%">Category</th>
+                                            <th style="width:20%">Product</th>
+                                            <th style="width:12%">Purchase Type</th>
+                                            <th style="width:12%">Available Stock</th>
+                                            <th style="width:11%">Qty</th>
+                                            <th style="width:12%">Remaining</th>
+                                            <th style="width:6%"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="productRows">
+                                        @foreach ($details as $d)
+                                            <tr>
+                                                <td class="row-index-cell"><span
+                                                        class="row-badge row-index">{{ $loop->iteration }}</span></td>
+                                                <td data-label="Category">
+                                                    <select name="category_nm[]"
+                                                        class="form-control select2 category-select" required>
+                                                        <option value="">-- Category --</option>
+                                                        @foreach ($category_info as $cat)
+                                                            <option value="{{ $cat->id }}"
+                                                                {{ $cat->id == $d->category_id ? 'selected' : '' }}>
+                                                                {{ $cat->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </td>
+                                                <td data-label="Product">
+                                                    <select name="product_nm[]"
+                                                        class="form-control select2 product-select"
+                                                        data-preselect="{{ $d->product_id }}" required>
+                                                        <option value="{{ $d->product_id }}" selected>
+                                                            {{ optional($d->product)->name ?? 'Product #' . $d->product_id }}
+                                                        </option>
+                                                    </select>
+                                                </td>
+                                                <td data-label="Purchase Type">
+                                                    <select name="purchasetype[]" class="form-control purchasetype-select"
+                                                        required>
+                                                        <option value="local"
+                                                            {{ $d->purchasetype == 'local' ? 'selected' : '' }}>Local
+                                                        </option>
+                                                        <option value="imported"
+                                                            {{ $d->purchasetype == 'imported' ? 'selected' : '' }}>Imported
+                                                        </option>
+                                                    </select>
+                                                </td>
+                                                <td data-label="Available Stock">
+                                                    <input type="text" class="form-control stock-display"
+                                                        value="-" readonly>
+                                                </td>
+                                                <td data-label="Qty">
+                                                    {{-- FIX: max is now the live remaining-plus-own-qty computed in the Controller,
+                                                     not the old (wrong) requested_qty + qty formula. --}}
+                                                    <input type="number" name="qty[]" min="0.01" step="0.01"
+                                                        class="form-control qty-input" value="{{ $d->qty }}"
+                                                        @if (isset($lineMax[$d->id])) max="{{ $lineMax[$d->id] }}" @endif
+                                                        required>
+                                                    <div class="stock-hint"></div>
+                                                </td>
+                                                <td data-label="Remaining" class="text-center">
+                                                    <span class="remaining-display text-muted">-</span>
+                                                </td>
+                                                <td class="text-center remove-cell">
+                                                    <i class="fas fa-trash text-danger remove-row-btn" title="Remove row"
+                                                        role="button" tabindex="0"></i>
+                                                </td>
+                                                <input type="hidden" name="requested_qty[]"
+                                                    value="{{ isset($lineMax[$d->id]) ? $lineMax[$d->id] : '' }}">
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="products-empty" id="productsEmptyHint" style="display:none">
+                                <i class="fas fa-box-open"></i>
+                                No products added yet. Use "Add Product Row" to start.
+                            </div>
+
+                            <div class="products-toolbar">
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="addRowBtn">
+                                    <i class="fas fa-plus"></i> Add Product Row (manual)
+                                </button>
+                                <div class="products-summary">
+                                    <strong id="totalRowsText">{{ $details->count() }} rows</strong> &middot;
+                                    Total qty: <strong id="totalQtyText">{{ $details->sum('qty') }}</strong>
+                                </div>
                             </div>
                         </div>
+
                     </div>
-                    `;
-                    $('.account-section').html(html);
-                    $('.accounts').select2();
-                }
-            });
-        } else if (type == "check") {
-            let html = `<div class="row">
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label>Account Number</label>
-                        <input name="account_number" type="text" class="form-control" placeholder="Ex:1234234" />
+
+                    <div class="card-footer d-flex justify-content-between">
+                        <a href="{{ route('project.transferproject.index') }}" class="btn btn-default"><i
+                                class="fas fa-arrow-left"></i> Cancel</a>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Update
+                            Transfer</button>
                     </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label>Check Number</label>
-                        <input name="check_number" type="text" class="form-control" placeholder="Ex:31424" />
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label>Bank Name</label>
-                        <input name="bank" type="text" class="form-control" placeholder="Ex:Bank Of Asia" />
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label>Bank Branch Name</label>
-                        <input name="bank_branch" type="text" class="form-control" placeholder="Ex:Dhaka" />
-                    </div>
-                </div>
+                </form>
             </div>
-            `;
-            $('.account-section').html(html);
-        } else {
-            let html = '';
-            $('.account-section').html(html);
-        }
-    }
+        </div>
+    </div>
 
-    //get balance of selected account
-    function getBalance(account_id) {
-        $.ajax({
-            "url": "{{ route('settings.transfer.checkBalance') }}",
-            "type": "GET",
-            cache: false,
-            data: {
-                // "_token": "{{ csrf_token() }}",
-                account_id: account_id
-            },
-            success: function (data) {
-                $('.balance').val(data);
+    {{-- Hidden template row (fully manual add — no requisition cap) --}}
+    <table style="display:none">
+        <tbody id="rowTemplate">
+            <tr>
+                <td class="row-index-cell"><span class="row-badge row-index"></span></td>
+                <td data-label="Category">
+                    <select name="category_nm[]" class="form-control select2 category-select" required>
+                        <option value="">-- Category --</option>
+                        @foreach ($category_info as $cat)
+                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                        @endforeach
+                    </select>
+                </td>
+                <td data-label="Product">
+                    <select name="product_nm[]" class="form-control select2 product-select" required>
+                        <option value="">-- Select category first --</option>
+                    </select>
+                </td>
+                <td data-label="Purchase Type">
+                    <select name="purchasetype[]" class="form-control purchasetype-select" required>
+                        <option value="local">Local</option>
+                        <option value="imported">Imported</option>
+                    </select>
+                </td>
+                <td data-label="Available Stock"><input type="text" class="form-control stock-display" value="-"
+                        readonly></td>
+                <td data-label="Qty">
+                    <input type="number" name="qty[]" min="0.01" step="0.01" class="form-control qty-input"
+                        required>
+                    <div class="stock-hint"></div>
+                </td>
+                <td data-label="Remaining" class="text-center"><span class="remaining-display text-muted">-</span></td>
+                <td class="text-center remove-cell"><i class="fas fa-trash text-danger remove-row-btn" title="Remove row"
+                        role="button" tabindex="0"></i></td>
+                <input type="hidden" name="requested_qty[]" value="">
+            </tr>
+        </tbody>
+    </table>
+
+    {{-- Hidden template for a row added from the Requisition remaining list --}}
+    <table style="display:none">
+        <tbody id="prRowTemplate">
+            <tr>
+                <td class="row-index-cell"><span class="row-badge row-index"></span></td>
+                <td data-label="Category">
+                    <select name="category_nm[]" class="form-control select2 category-select" required>
+                        <option value="">-- Category --</option>
+                        @foreach ($category_info as $cat)
+                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                        @endforeach
+                    </select>
+                </td>
+                <td data-label="Product">
+                    <select name="product_nm[]" class="form-control select2 product-select" required>
+                        <option value="">-- Select category first --</option>
+                    </select>
+                </td>
+                <td data-label="Purchase Type">
+                    <select name="purchasetype[]" class="form-control purchasetype-select" required>
+                        <option value="local">Local</option>
+                        <option value="imported">Imported</option>
+                    </select>
+                </td>
+                <td data-label="Available Stock"><input type="text" class="form-control stock-display" value="-"
+                        readonly></td>
+                <td data-label="Qty">
+                    <input type="number" name="qty[]" min="0.01" step="0.01" class="form-control qty-input"
+                        required>
+                    <div class="stock-hint"></div>
+                </td>
+                <td data-label="Remaining" class="text-center"><span class="remaining-display text-muted">-</span></td>
+                <td class="text-center remove-cell"><i class="fas fa-trash text-danger remove-row-btn" title="Remove row"
+                        role="button" tabindex="0"></i></td>
+                <input type="hidden" name="requested_qty[]" value="">
+            </tr>
+        </tbody>
+    </table>
+@endsection
+
+@section('scripts')
+    <script src="{{ asset('backend/plugins/select2/js/select2.full.min.js') }}"></script>
+    <script>
+        $(function() {
+
+            function initSelect2(scope) {
+                scope.find('.select2').each(function() {
+                    var $el = $(this);
+                    if ($el.hasClass('select2-hidden-accessible')) $el.select2('destroy');
+                    $el.select2({
+                        width: '100%',
+                        dropdownAutoWidth: true
+                    });
+                });
             }
+            initSelect2($('body'));
+
+            function updateRemainingDisplay($row) {
+                var requested = parseFloat($row.find('input[name="requested_qty[]"]').val());
+                var $display = $row.find('.remaining-display');
+                if (!requested && requested !== 0) {
+                    $display.text('-').removeClass('text-danger text-success').addClass('text-muted');
+                    return;
+                }
+                var qty = parseFloat($row.find('.qty-input').val()) || 0;
+                var remaining = requested - qty;
+                $display.text(remaining.toFixed(2)).removeClass('text-muted');
+                $display.toggleClass('text-danger', remaining < 0).toggleClass('text-success', remaining >= 0);
+            }
+
+            /* Existing rows: load correct product list per category and preselect */
+            $('#productRows tr').each(function() {
+                var $row = $(this);
+                var categoryId = $row.find('.category-select').val();
+                var preselectId = $row.find('.product-select').data('preselect');
+
+                if (categoryId) {
+                    $.get("{{ route('project.transferproject.filterproduct') }}", {
+                            category_id: categoryId
+                        })
+                        .done(function(res) {
+                            var options = '<option value="">-- Select Product --</option>';
+                            $.each(res, function(i, p) {
+                                var sel = (p.id == preselectId) ? 'selected' : '';
+                                options += '<option value="' + p.id + '" ' + sel + '>' + p
+                                    .name + '</option>';
+                            });
+                            $row.find('.product-select').html(options).trigger('change.select2');
+                            $row.find('.product-select').trigger('change');
+                        });
+                }
+                updateRemainingDisplay($row);
+            });
+
+            /* Branch -> Warehouse preselect for header fields */
+            $('.branch-picker').each(function() {
+                var $picker = $(this);
+                var target = $picker.data('target');
+                var branchId = $picker.val();
+                var preselectWarehouseId = $picker.data('preselect-warehouse');
+                if (!branchId) return;
+
+                var $wrap = $('.warehouse-wrap[data-target="' + target + '"]');
+                var $wh = $wrap.find('.warehouse-picker');
+
+                $.get("{{ route('project.transferproject.getWarehouses') }}", {
+                        branch_id: branchId
+                    })
+                    .done(function(res) {
+                        if (res.length > 0) {
+                            var options = '<option value="">-- Warehouse --</option>';
+                            $.each(res, function(i, w) {
+                                var sel = (preselectWarehouseId && w.id ==
+                                    preselectWarehouseId) ? 'selected' : '';
+                                options += '<option value="' + w.id + '" ' + sel + '>' + w
+                                    .name + '</option>';
+                            });
+                            $wh.html(options).trigger('change.select2');
+                            $wrap.show();
+                        } else {
+                            $wrap.hide();
+                        }
+                    });
+            });
+
+            var rowCount = {{ $details->count() }};
+
+            function renumberRows() {
+                $('#productRows tr').each(function(i) {
+                    $(this).find('.row-index').text(i + 1);
+                });
+            }
+
+            function updateProductsSummary() {
+                var $rows = $('#productRows tr');
+                var rows = $rows.length;
+                var totalQty = 0;
+                $rows.find('.qty-input').each(function() {
+                    totalQty += parseFloat($(this).val()) || 0;
+                });
+                $('#productCountBadge').text(rows + (rows === 1 ? ' item' : ' items'));
+                $('#totalRowsText').text(rows + (rows === 1 ? ' row' : ' rows'));
+                $('#totalQtyText').text(totalQty);
+                $('#productTable, .products-toolbar').toggle(rows > 0);
+                $('#productsEmptyHint').toggle(rows === 0);
+            }
+
+            /* Manual add (no requisition cap) */
+            $('#addRowBtn').on('click', function() {
+                rowCount++;
+                var $row = $('#rowTemplate tr').clone();
+                $row.find('.row-index').text(rowCount);
+                $('#productRows').append($row);
+                initSelect2($row);
+                renumberRows();
+                updateProductsSummary();
+            });
+
+            /* NEW: Add from Requisition remaining list */
+            $('#addFromPrBtn').on('click', function() {
+                var $opt = $('#prRemainingSelect option:selected');
+                var productId = $opt.val();
+                if (!productId) {
+                    alert('একটা item সিলেক্ট করুন।');
+                    return;
+                }
+
+                var categoryId = $opt.data('category');
+                var purchasetype = $opt.data('purchasetype');
+                var remaining = parseFloat($opt.data('remaining'));
+                var productName = $opt.data('name');
+
+                rowCount++;
+                var $row = $('#prRowTemplate tr').clone();
+                $('#productRows').append($row);
+                initSelect2($row);
+
+                $row.find('.category-select').val(categoryId).trigger('change.select2');
+
+                $.get("{{ route('project.transferproject.filterproduct') }}", {
+                        category_id: categoryId
+                    })
+                    .done(function(res) {
+                        var options = '<option value="">-- Select Product --</option>';
+                        $.each(res, function(i, p) {
+                            var sel = (p.id == productId) ? 'selected' : '';
+                            options += '<option value="' + p.id + '" ' + sel + '>' + p.name +
+                                '</option>';
+                        });
+                        $row.find('.product-select').html(options).trigger('change.select2');
+
+                        $row.find('.purchasetype-select').val(purchasetype || 'local');
+                        $row.find('.qty-input').attr('max', remaining).val(remaining);
+                        $row.find('input[name="requested_qty[]"]').val(remaining);
+                        updateRemainingDisplay($row);
+
+                        $row.find('.product-select').trigger('change');
+                    });
+
+                // remove the used option from the dropdown so it can't be added twice
+                $opt.remove();
+                $('#prRemainingSelect').val('').trigger('change.select2');
+
+                renumberRows();
+                updateProductsSummary();
+            });
+
+            $('#productRows').on('click keypress', '.remove-row-btn', function(e) {
+                if (e.type === 'keypress' && e.which !== 13 && e.which !== 32) return;
+                if ($('#productRows tr').length > 1) {
+                    $(this).closest('tr').remove();
+                    renumberRows();
+                    updateProductsSummary();
+                } else {
+                    alert('At least one product row is required.');
+                }
+            });
+
+            $('#productRows').on('change', '.category-select', function() {
+                var $row = $(this).closest('tr');
+                var categoryId = $(this).val();
+                var $productSelect = $row.find('.product-select');
+                $productSelect.html('<option value="">Loading...</option>');
+
+                $.get("{{ route('project.transferproject.filterproduct') }}", {
+                        category_id: categoryId
+                    })
+                    .done(function(res) {
+                        var options = '<option value="">-- Select Product --</option>';
+                        $.each(res, function(i, p) {
+                            options += '<option value="' + p.id + '">' + p.name + '</option>';
+                        });
+                        $productSelect.html(options).trigger('change');
+                    });
+            });
+
+            function currentFromKey() {
+                var type = '{{ $editInfo->transfer_type }}';
+                if (type === 'branch_to_project') {
+                    return {
+                        type: 'branch',
+                        id: $('input[name=from_branch_id]').val()
+                    };
+                }
+                return {
+                    type: 'project',
+                    id: $('select[name=from_project_id]').val()
+                };
+            }
+
+            $('#productRows').on('change', '.product-select, .purchasetype-select', function() {
+                var $row = $(this).closest('tr');
+                var productId = $row.find('.product-select').val();
+                var purchaseType = $row.find('.purchasetype-select').val();
+                var from = currentFromKey();
+
+                if (!productId || !from.id) {
+                    $row.find('.stock-display').val('-');
+                    return;
+                }
+                $row.find('.stock-display').val('Checking...');
+
+                $.get("{{ route('project.transferproject.availableStock') }}", {
+                    product_id: productId,
+                    source_type: from.type,
+                    source_id: from.id,
+                    purchase_type: purchaseType
+                }).done(function(res) {
+                    $row.find('.stock-display').val(res.quantity + ' ' + (res.unit || ''));
+                    $row.data('available', res.quantity);
+                    validateQty($row);
+                });
+            });
+
+            function validateQty($row) {
+                var available = $row.data('available');
+                var qty = parseFloat($row.find('.qty-input').val()) || 0;
+                var $hint = $row.find('.stock-hint');
+                if (available === undefined) {
+                    $hint.text('');
+                    return;
+                }
+                if (qty > available) {
+                    $hint.removeClass('ok').addClass('low').text('No stock available (Available: ' + available +
+                        ')');
+                } else {
+                    $hint.removeClass('low').addClass('ok').text('OK');
+                }
+            }
+
+            $('#productRows').on('input', '.qty-input', function() {
+                var $row = $(this).closest('tr');
+                validateQty($row);
+                updateRemainingDisplay($row);
+                updateProductsSummary();
+            });
+
+            $(document).on('change', 'input[name=from_branch_id], select[name=from_project_id]', function() {
+                $('#productRows tr').each(function() {
+                    $(this).find('.product-select').trigger('change');
+                });
+            });
+
+            $('#transferForm').on('submit', function(e) {
+                var blocked = false,
+                    overRequested = false;
+                $('#productRows tr').each(function() {
+                    var $row = $(this);
+                    var available = $row.data('available');
+                    var qty = parseFloat($row.find('.qty-input').val()) || 0;
+                    var requested = parseFloat($row.find('input[name="requested_qty[]"]').val()) ||
+                        0;
+                    if (available !== undefined && qty > available) blocked = true;
+                    if (requested > 0 && qty > requested) overRequested = true;
+                });
+                if (blocked) {
+                    e.preventDefault();
+                    alert('One or more rows exceed available stock.');
+                    return;
+                }
+                if (overRequested) {
+                    e.preventDefault();
+                    alert('One or more rows exceed the remaining requisition quantity.');
+                    return;
+                }
+                $(this).find('button[type=submit]').prop('disabled', true).html(
+                    '<i class="fas fa-spinner fa-spin"></i> Updating...');
+            });
+
         });
 
-    }
-</script>
+        function resolveRouteNode(target) {
+            return target === 'to_branch_id' ? $('.route-node-to') : $('.route-node-from');
+        }
 
+        function updateRouteLabel(target, text) {
+            var $resolved = resolveRouteNode(target).find('.route-resolved-text[data-target="' + target + '"]');
+            if ($resolved.length) $resolved.text(text || '-');
+        }
+
+        $(document).on('change', '.branch-picker', function() {
+            var $picker = $(this);
+            var target = $picker.data('target');
+            var $wrap = $('.warehouse-wrap[data-target="' + target + '"]');
+            var $wh = $wrap.find('.warehouse-picker');
+            var branchId = $picker.val();
+            var branchTxt = $picker.find('option:selected').text();
+
+            $('input[type=hidden][name="' + target + '"]').val(branchId);
+            updateRouteLabel(target, branchId ? branchTxt : '');
+
+            if (!branchId) {
+                $wrap.hide();
+                return;
+            }
+
+            $.get("{{ route('project.transferproject.getWarehouses') }}", {
+                    branch_id: branchId
+                })
+                .done(function(res) {
+                    if (res.length > 0) {
+                        var options = '<option value="">-- Warehouse --</option>';
+                        $.each(res, function(i, w) {
+                            options += '<option value="' + w.id + '">' + w.name + '</option>';
+                        });
+                        $wh.html(options).trigger('change.select2');
+                        $wrap.show();
+                    } else {
+                        $wrap.hide();
+                    }
+                });
+        });
+
+        $(document).on('change', '.warehouse-picker', function() {
+            var $picker = $(this);
+            var target = $picker.data('target');
+            var whId = $picker.val();
+            var whTxt = $picker.find('option:selected').text();
+            var branchTxt = $('.branch-picker[data-target="' + target + '"]').find('option:selected').text();
+
+            if (whId) {
+                $('input[type=hidden][name="' + target + '"]').val(whId);
+                updateRouteLabel(target, whTxt);
+            } else {
+                var branchId = $('.branch-picker[data-target="' + target + '"]').val();
+                $('input[type=hidden][name="' + target + '"]').val(branchId);
+                updateRouteLabel(target, branchTxt);
+            }
+        });
+    </script>
 @endsection

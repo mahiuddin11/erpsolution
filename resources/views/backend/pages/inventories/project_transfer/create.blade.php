@@ -130,6 +130,11 @@
             margin-top: 8px;
         }
 
+        .remaining-display {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
         .badge-req {
             background: #fff3cd;
             color: #856404;
@@ -276,8 +281,8 @@
             padding: 16px;
         }
 
-        /* 10-Aug-2026: lock-warning note-এর জায়গায় তথ্যমূলক নোট — এখন আর কোনো row
-                                       lock হয় না, item delete করে বা qty কমিয়ে partial transfer করা যায়। */
+        /* Requisition থেকে remaining qty auto-load হওয়ার তথ্যমূলক নোট —
+                                                                                                                                           কোনো row lock করা হয় না, delete/qty-কমানো দুটোই চালু থাকে। */
         .products-info-note {
             display: none;
             align-items: center;
@@ -404,7 +409,6 @@
         .stock-hint.low {
             color: #dc3545;
         }
-
 
         .remaining-hint {
             font-size: 11px;
@@ -534,6 +538,15 @@
                     @csrf
                     <div class="card-body">
 
+                        @if ($errors->any())
+                            <div class="alert alert-danger">
+                                <ul class="mb-0">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
                         {{-- ============ STEP 1: TRANSFER TYPE ============ --}}
                         <div class="section-title"><span class="step-num">1</span> Choose Transfer Type</div>
 
@@ -543,7 +556,7 @@
                                 <div class="tt-icon"><i class="fas fa-warehouse"></i></div>
                                 <div class="tt-title">Branch / Warehouse &rarr; Project</div>
                                 <div class="tt-sub">Issue material from stock to a running project</div>
-                                <div class="tt-flow"><i class="fas fa-building"></i> Branch &nbsp;<i
+                                <div class="tt-flow"><i class="fas fa-building"></i> Branch/warehouse &nbsp;<i
                                         class="fas fa-long-arrow-alt-right"></i>&nbsp; <i
                                         class="fas fa-diagram-project"></i> Project</div>
                                 <span class="tt-badge badge-req"><i class="fas fa-file-alt"></i> Requisition required</span>
@@ -557,7 +570,7 @@
                                 <div class="tt-flow"><i class="fas fa-diagram-project"></i> Project &nbsp;<i
                                         class="fas fa-long-arrow-alt-right"></i>&nbsp; <i
                                         class="fas fa-diagram-project"></i> Project</div>
-                                <span class="tt-badge badge-noreq"><i class="fas fa-check"></i> No requisition needed</span>
+                                <span class="tt-badge badge-req"><i class="fas fa-file-alt"></i> Requisition required</span>
                             </label>
 
                             <label class="transfer-type-card" data-type="project_to_branch">
@@ -567,7 +580,7 @@
                                 <div class="tt-sub">Return unused material back to stock</div>
                                 <div class="tt-flow"><i class="fas fa-diagram-project"></i> Project &nbsp;<i
                                         class="fas fa-long-arrow-alt-right"></i>&nbsp; <i class="fas fa-building"></i>
-                                    Branch</div>
+                                    Branch/warehouse</div>
                                 <span class="tt-badge badge-noreq"><i class="fas fa-check"></i> No requisition needed</span>
                             </label>
                         </div>
@@ -600,7 +613,8 @@
                                             <option value="{{ $pr->id }}">{{ $pr->invoice_no }}</option>
                                         @endforeach
                                     </select>
-                                    <small class="text-muted">Only <b>Accepted</b> requisitions are shown.</small>
+                                    <small class="text-muted">Showing only <b>Accepted</b> Requisitions with remaining
+                                        items.</small>
                                 </div>
 
                                 <div class="col-lg-3 col-md-6 col-sm-6 form-group route-fields rf-source-branch"
@@ -624,7 +638,7 @@
                                     <div class="warehouse-wrap" data-target="from_branch_id" style="display:none">
                                         <select class="form-control select2 warehouse-picker"
                                             data-target="from_branch_id">
-                                            <option value="">-- Use Branch itself --</option>
+                                            <option value="">-- Warehouse --</option>
                                         </select>
                                     </div>
                                 </div>
@@ -649,7 +663,7 @@
                                     <label>Warehouse <span class="text-muted">(optional)</span></label>
                                     <div class="warehouse-wrap" data-target="to_branch_id" style="display:none">
                                         <select class="form-control select2 warehouse-picker" data-target="to_branch_id">
-                                            <option value="">-- Use Branch itself --</option>
+                                            <option value="">-- Warehouse --</option>
                                         </select>
                                     </div>
                                 </div>
@@ -740,14 +754,11 @@
                         </div>
 
                         <div class="products-panel">
-                            {{-- 10-Aug-2026: আগে এখানে "products are locked" সতর্কবার্তা ছিল।
-                                 এখন row আর লক হয় না — এটা শুধু জানানোর জন্য যে remaining qty
-                                 auto-fill হয়েছে, চাইলে কমানো/মুছে ফেলা যাবে। --}}
                             <div class="products-info-note" id="productsInfoNote">
                                 <i class="fas fa-info-circle"></i>
-                                নির্বাচিত Requisition থেকে বাকি থাকা (remaining) কোয়ান্টিটি auto-fill হয়েছে। স্টক না
-                                থাকলে সেই Qty কমিয়ে দিন অথবা row মুছে দিয়ে Transfer চালিয়ে যান — বাকি অংশ পরে আবার
-                                একই Requisition থেকে transfer করা যাবে।
+                                The remaining quantity from the selected requisition is auto-filled. If out of stock, reduce
+                                the Qty or delete the row and continue the transfer — the rest can be transferred from the
+                                same requisition later.
                             </div>
 
                             <div class="table-responsive">
@@ -755,13 +766,13 @@
                                     <thead>
                                         <tr>
                                             <th style="width:5%">#</th>
-                                            <th style="width:17%">Category</th>
+                                            <th style="width:16%">Category</th>
                                             <th style="width:20%">Product</th>
                                             <th style="width:12%">Purchase Type</th>
-
-                                            <th style="width:14%">Available Stock</th>
-                                            <th style="width:15%">Qty</th>
-                                            <th style="width:8%"></th>
+                                            <th style="width:12%">Available Stock</th>
+                                            <th style="width:11%">Qty</th>
+                                            <th style="width:12%">Remaining</th> {{-- NEW --}}
+                                            <th style="width:6%"></th>
                                         </tr>
                                     </thead>
                                     <tbody id="productRows">
@@ -803,7 +814,6 @@
 
     {{-- Hidden template row --}}
     <table style="display:none">
-
         <tbody id="rowTemplate">
             <tr>
                 <td class="row-index-cell"><span class="row-badge row-index"></span></td>
@@ -832,15 +842,17 @@
                 <td data-label="Qty">
                     <input type="number" name="qty[]" min="0.01" step="0.01" class="form-control qty-input"
                         required>
-                    <span class="remaining-hint"></span>
                     <div class="stock-hint"></div>
+                </td>
+                <td data-label="Remaining" class="text-center">
+                    <span class="remaining-display text-muted">-</span>
                 </td>
                 <td class="text-center remove-cell">
                     <i class="fas fa-trash text-danger remove-row-btn" title="Remove row" role="button"
                         tabindex="0"></i>
                 </td>
-                {{-- requested_qty শুধু ব্যাকগ্রাউন্ড ভ্যালিডেশনের জন্য, UI-তে দেখানো হয় না --}}
                 <input type="hidden" name="requested_qty[]" value="">
+
             </tr>
         </tbody>
     </table>
@@ -857,6 +869,27 @@
                     $el.select2('destroy');
                 }
             });
+
+            function updateRemainingDisplay($row) {
+                var requested = parseFloat($row.find('input[name="requested_qty[]"]').val());
+                var $display = $row.find('.remaining-display');
+
+                if (!requested && requested !== 0) {
+                    $display.text('-').removeClass('text-danger').addClass('text-muted');
+                    return;
+                }
+
+                var qty = parseFloat($row.find('.qty-input').val()) || 0;
+                var remaining = requested - qty;
+
+                $display.text(remaining.toFixed(2)).removeClass('text-muted');
+
+                if (remaining < 0) {
+                    $display.removeClass('text-success').addClass('text-danger');
+                } else {
+                    $display.removeClass('text-danger').addClass('text-success');
+                }
+            }
 
             /* ---------------- Transfer type switching ---------------- */
             function applyTransferType(type) {
@@ -954,9 +987,7 @@
             $('#addRowBtn').on('click', addRow);
             addRow();
 
-            /* 10-Aug-2026: এখন প্রতিটা row-ই মুছে ফেলা যাবে, requisition থেকে
-               auto-loaded হোক বা ম্যানুয়ালি যোগ করা হোক — আর কোনো row-locked
-               চেক নেই। */
+
             $('#productRows').on('click keypress', '.remove-row-btn', function(e) {
                 if (e.type === 'keypress' && e.which !== 13 && e.which !== 32) return;
                 if ($('#productRows tr').length > 1) {
@@ -1031,10 +1062,11 @@
                 });
             });
 
-            $('#productRows').on('input', '.qty-input', function() {
-                validateQty($(this).closest('tr'));
-                updateProductsSummary();
-            });
+            // $('#productRows').on('input', '.qty-input', function() {
+            //     validateQty($(this).closest('tr'));
+            //     updateProductsSummary();
+            // });
+
 
             function validateQty($row) {
                 var available = $row.data('available');
@@ -1043,8 +1075,11 @@
                 var $hint = $row.find('.stock-hint');
                 var $remainingHint = $row.find('.remaining-hint');
 
+
                 if (requested > 0 && qty > requested) {
-                    $remainingHint.text('Requested qty (' + requested + ') exceeded!').css('color', '#dc3545');
+                    $remainingHint.text('Only ' + requested +
+                            ' remaining in the requisition — you cannot enter more than this.')
+                        .css('color', '#dc3545');
                 } else {
                     $remainingHint.text('');
                 }
@@ -1056,12 +1091,20 @@
 
                 if (qty > available) {
                     $hint.removeClass('ok').addClass('low').text(
-                        'Stock নেই (Available: ' + available + '). Qty কমান অথবা row মুছে দিন।'
+                        'No stock available (Available: ' + available +
+                        '). Reduce the quantity or remove the row.'
                     );
                 } else {
                     $hint.removeClass('low').addClass('ok').text('OK');
                 }
             }
+
+            $('#productRows').on('input', '.qty-input', function() {
+                var $row = $(this).closest('tr');
+                validateQty($row);
+                updateRemainingDisplay($row); // NEW: রিয়েল-টাইম remaining আপডেট
+                updateProductsSummary();
+            });
 
             $(document).on('change',
                 'input[name=from_branch_id], select[name=from_project_id], input[name=transfer_type]',
@@ -1080,6 +1123,7 @@
                 addRow();
             }
 
+
             function parsePrDetailsHtml(html) {
                 var items = [];
                 $('<table><tbody>' + (html || '') + '</tbody></table>').find('tr').each(function() {
@@ -1087,7 +1131,7 @@
                     var categoryId = $tr.find('input[name="category_nm[]"]').val();
                     var productId = $tr.find('input[name="product_nm[]"]').val();
                     var purchaseType = $tr.find('input[name="purchasetype[]"]').val();
-                    var qty = $tr.find('input[name="qty[]"]').val(); // backend থেকে remaining qty আসে
+                    var qty = $tr.find('input[name="qty[]"]').val(); // = remaining_qty (backend থেকে)
                     var requestedQty = $tr.find('input[name="requested_qty[]"]').val();
                     if (categoryId && productId) {
                         items.push({
@@ -1102,7 +1146,8 @@
                 return items;
             }
 
-
+            /* requisition line থেকে একটা fully-editable row বানায় — qty[] এ remaining
+               prefill হয়, max attribute সেই remaining দিয়েই বসানো হয়। */
             function addRequisitionRow(item) {
                 rowCount++;
                 var $row = $('#rowTemplate tr').clone();
@@ -1125,7 +1170,12 @@
                         var $qty = $row.find('.qty-input');
                         $qty.val(item.qty);
 
+                        if (item.requested_qty) {
+                            $qty.attr('max', item.requested_qty);
+                            $row.find('input[name="requested_qty[]"]').val(item.requested_qty);
+                        }
 
+                        updateRemainingDisplay($row); // NEW: প্রথমবার লোড হওয়ার সময়ই Remaining দেখাও
 
                         $row.find('.product-select').val(item.product_id).trigger('change');
                     });
@@ -1133,7 +1183,7 @@
 
             function loadRequisitionProducts(reqId) {
                 $.ajax({
-                        url: "{{ route('project.transferproject.searchpr') }}",
+                        url: "{{ route('project.transfer.searchprvoucher') }}",
                         data: {
                             id: reqId
                         },
@@ -1158,7 +1208,7 @@
                         if (!items.length) {
                             console.warn('searchpr returned no matching product rows.', res);
                             $('#productsInfoNote').removeClass('show');
-                            alert('এই Requisition-এর সব পণ্য ইতিমধ্যে সম্পূর্ণভাবে Transfer করা হয়ে গেছে।');
+                            alert('All products in this requisition have already been fully transferred.');
                             addRow();
                             return;
                         }
@@ -1219,7 +1269,7 @@
                 if (overRequested) {
                     e.preventDefault();
                     alert(
-                        'One or more rows exceed the originally requested quantity. Please correct before submitting.'
+                        'One or more rows exceed the remaining requisition quantity. Please correct before submitting.'
                     );
                     return;
                 }
@@ -1272,7 +1322,7 @@
 
             if (!branchId) {
                 $wrap.hide();
-                $wh.val(null).html('<option value="">-- Use Branch itself --</option>');
+                $wh.val(null).html('<option value="">-- Warehouse --</option>');
                 return;
             }
 
@@ -1281,7 +1331,7 @@
                 })
                 .done(function(res) {
                     if (res.length > 0) {
-                        var options = '<option value="">-- Use Branch itself --</option>';
+                        var options = '<option value="">-- Warehouse --</option>';
                         $.each(res, function(i, w) {
                             options += '<option value="' + w.id + '">' + w.name + '</option>';
                         });

@@ -16,8 +16,6 @@ class ProductLedgerService
         $isAllBranch = ($branch_id === 'all' || empty($branch_id));
 
 
-
-
         // ── 1. Opening Stock ──────────────────────────────────────────────
         $openingRows = ProductOpeningStockDetails::with(['branch:id,name', 'product:id,name', 'ProductOpeningStock:id,invoice_no'])
             ->where('product_id', $product_id)
@@ -208,6 +206,91 @@ class ProductLedgerService
                 'created_at' => $item->created_at,
             ]);
 
+
+        // ── 7. Project Transfer Out (Branch/Warehouse → Project) ────────────
+        $projectTransferOutRows = DB::table('project_transfer_details as ptd')
+            ->join('project_transfers as pt', 'pt.id', '=', 'ptd.project_transfer_id')
+            ->leftJoin('branches as b', 'b.id', '=', 'ptd.branch_id')
+            ->leftJoin('products as p', 'p.id', '=', 'ptd.product_id')
+            ->leftJoin('projects as pr', 'pr.id', '=', 'ptd.project_id')
+            ->where('ptd.product_id', $product_id)
+            ->where('pt.transfer_type', 'branch_to_project')
+            ->where('ptd.status', 'Accepted')
+            ->when(!$isAllBranch, fn($q) => $q->where('ptd.branch_id', $branch_id))
+            ->whereBetween('pt.order_date', [$from_date, $to_date])
+            ->select(
+                'pt.order_date as date',
+                'pt.invoice_no',
+                'ptd.project_transfer_id',
+                'ptd.qty',
+                'ptd.purchasetype',
+                'ptd.created_at',
+                'b.name as branch_name',
+                'p.name as product_name',
+                'pr.name as project_name'
+            )
+            ->get()
+            ->map(function ($item) {
+                $source      = $item->branch_name ?: 'Branch/Warehouse';
+                $destination = $item->project_name ?: 'Project';
+
+                return [
+                    'date'       => $item->date,
+                    'invoice'    => $item->invoice_no ?? ('PT-' . $item->project_transfer_id),
+                    'branch'     => $item->branch_name ?? 'N/A',
+                    'product'    => $item->product_name ?? 'N/A',
+                    'type'       => 'Transfer Out (' . ucfirst($item->purchasetype) . '): '
+                        . $source . ' → ' . $destination,
+                    'quantity'   => (int) $item->qty,
+                    'in'         => 0,
+                    'out'        => (int) $item->qty,
+                    'sort_key'   => '6',
+                    'created_at' => $item->created_at,
+                ];
+            });
+
+        // ── 8. Project Transfer In (Project → Branch/Warehouse, return) ─────
+        $projectTransferInRows = DB::table('project_transfer_details as ptd')
+            ->join('project_transfers as pt', 'pt.id', '=', 'ptd.project_transfer_id')
+            ->leftJoin('branches as b', 'b.id', '=', 'ptd.branch_id')
+            ->leftJoin('products as p', 'p.id', '=', 'ptd.product_id')
+            ->leftJoin('projects as pr', 'pr.id', '=', 'ptd.project_id')
+            ->where('ptd.product_id', $product_id)
+            ->where('pt.transfer_type', 'project_to_branch')
+            ->where('ptd.status', 'Accepted')
+            ->when(!$isAllBranch, fn($q) => $q->where('ptd.branch_id', $branch_id))
+            ->whereBetween('pt.order_date', [$from_date, $to_date])
+            ->select(
+                'pt.order_date as date',
+                'pt.invoice_no',
+                'ptd.project_transfer_id',
+                'ptd.qty',
+                'ptd.purchasetype',
+                'ptd.created_at',
+                'b.name as branch_name',
+                'p.name as product_name',
+                'pr.name as project_name'
+            )
+            ->get()
+            ->map(function ($item) {
+                $source      = $item->project_name ?: 'Project';
+                $destination = $item->branch_name ?: 'Branch/Warehouse';
+
+                return [
+                    'date'       => $item->date,
+                    'invoice'    => $item->invoice_no ?? ('PT-' . $item->project_transfer_id),
+                    'branch'     => $item->branch_name ?? 'N/A',
+                    'product'    => $item->product_name ?? 'N/A',
+                    'type'       => 'Transfer In (' . ucfirst($item->purchasetype) . '): '
+                        . $source . ' → ' . $destination,
+                    'quantity'   => (int) $item->qty,
+                    'in'         => (int) $item->qty,
+                    'out'        => 0,
+                    'sort_key'   => '6',
+                    'created_at' => $item->created_at,
+                ];
+            });
+
         // ── Merge + Sort ──────────────────────────────────────────────────
         $allRows = collect()
             ->merge($openingRows)
@@ -216,6 +299,8 @@ class ProductLedgerService
             ->merge($transferInRows)
             ->merge($transferOutRows)
             ->merge($salesRows)
+            ->merge($projectTransferOutRows)   // NEW
+            ->merge($projectTransferInRows)    // NEW
             ->sortBy('created_at')
             ->values();
 

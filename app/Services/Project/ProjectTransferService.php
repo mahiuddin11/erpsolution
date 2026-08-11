@@ -2,6 +2,7 @@
 
 namespace App\Services\Project;
 
+use App\Models\PrDetails;
 use App\Models\PurchaseRequisition;
 use App\Models\StockSummary;
 use App\Repositories\InventorySetup\PurchaseOrderRepositories;
@@ -34,9 +35,16 @@ class ProjectTransferService
         return $this->systemRepositories->getList($request);
     }
 
+
     public function getprList($request)
     {
         return $this->systemRepositories->getprList($request);
+    }
+
+
+    public function getprProduct($request)
+    {
+        return $this->systemRepositories->getprListByTransfer($request);
     }
 
     /**
@@ -92,21 +100,31 @@ class ProjectTransferService
             'qty.*'                 => 'required|numeric|min:1',
 
             // branch_to_project ONLY
-            'from_branch_id'        => 'required_if:transfer_type,branch_to_project',
-            'to_project_id_a'       => 'required_if:transfer_type,branch_to_project',
-            'purchase_requisition'  => 'required_if:transfer_type,branch_to_project',
+            'from_branch_id'        => 'nullable|required_if:transfer_type,branch_to_project',
+            'to_project_id_a'       => 'nullable|required_if:transfer_type,branch_to_project',
+            'purchase_requisition'  => 'nullable|required_if:transfer_type,branch_to_project',
 
             // project_to_project / project_to_branch
-            'from_project_id'       => 'required_if:transfer_type,project_to_project,project_to_branch',
+            'from_project_id'       => 'nullable|required_if:transfer_type,project_to_project,project_to_branch',
 
             // project_to_project ONLY (+ same-project block)
-            'to_project_id_b'       => 'required_if:transfer_type,project_to_project|different:from_project_id',
+            // FIX: 'nullable' added so this rule only actually validates when the field has a value
+            'to_project_id_b'       => 'nullable|required_if:transfer_type,project_to_project|different:from_project_id',
 
             // project_to_branch ONLY
-            'to_branch_id'          => 'required_if:transfer_type,project_to_branch',
+            'to_branch_id'          => 'nullable|required_if:transfer_type,project_to_branch',
         ];
     }
 
+    public function hasRemainingItems($prId)
+    {
+        return PrDetails::where('pr_id', $prId)
+            ->where(function ($q) {
+                $q->where('remaining_qty', '>', 0)
+                    ->orWhereNull('remaining_qty');
+            })
+            ->exists();
+    }
 
     public function storeBusinessRules($request)
     {
@@ -122,8 +140,10 @@ class ProjectTransferService
 
         // ---- stock availability check (purchasetype-aware) ----
         $product  = $request->product_nm;
+
         $qty      = $request->qty;
         $purchase = $request->purchasetype;
+
 
         for ($i = 0; $i < count($product); $i++) {
             $purchaseType = $purchase[$i] ?? 'local';

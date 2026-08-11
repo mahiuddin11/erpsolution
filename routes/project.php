@@ -70,6 +70,8 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/dataProcessingtransferproject', [ProjectTransferController::class, 'dataProcessing'])->name('project.transferproject.dataProcessing');
         Route::post('/project-transferproject-store', [ProjectTransferController::class, 'store'])->name('project.transferproject.store');
         Route::get('/project-transferproject-searchpr', [ProjectTransferController::class, 'searchpr'])->name('project.transferproject.searchpr');
+        Route::get('/project-transfer-searchpr-voucher', [ProjectTransferController::class, 'pr_voucher_product'])->name('project.transfer.searchprvoucher');
+
         Route::get('/project-transferproject-create', [ProjectTransferController::class, 'create'])->name('project.transferproject.create');
         Route::get('/project-transferproject-edit/{id}', [ProjectTransferController::class, 'edit'])->name('project.transferproject.edit');
         Route::post('/project-transferproject-update/{id}', [ProjectTransferController::class, 'update'])->name('project.transferproject.update');
