@@ -177,18 +177,29 @@ class ProjectTransferService
      */
     public function updateValidation($request, $id)
     {
-        // dd($request->all());
         return [
-            'date' => 'required',
-            'purchase_requisition' => 'required',
-            'branch_id' => 'required',
-            'category_nm' => 'required',
-            'product_nm' => 'required',
-            'qty' => 'required',
-            // 'unitprice' => 'required',
-            // 'total' => 'required',
+            'date'                  => 'required|date',
+            'category_nm'           => 'required|array|min:1',
+            'product_nm'            => 'required|array|min:1',
+            'qty'                   => 'required|array|min:1',
+            'qty.*'                 => 'required|numeric|min:0.01',
+
+            // branch_to_project ONLY
+            'from_branch_id'        => 'nullable|required_if:transfer_type,branch_to_project',
+            'to_project_id_a'       => 'nullable|required_if:transfer_type,branch_to_project',
+            'purchase_requisition'  => 'nullable|required_if:transfer_type,branch_to_project',
+
+            // project_to_project / project_to_branch
+            'from_project_id'       => 'nullable|required_if:transfer_type,project_to_project,project_to_branch',
+
+            // project_to_project ONLY (+ same-project block)
+            'to_project_id_b'       => 'nullable|required_if:transfer_type,project_to_project|different:from_project_id',
+
+            // project_to_branch ONLY
+            'to_branch_id'          => 'nullable|required_if:transfer_type,project_to_branch',
         ];
     }
+
 
     public function approveValidation($request, $id)
     {

@@ -352,15 +352,15 @@
                 type: 'GET',
                 success: function(html) {
                     $('#ledgerModalBody').html(html);
-                    // Added: 2026-07-20 - select2 dropdownParent modal-এ set করা জরুরি,
-                    // নাহলে dropdown modal-এর পিছনে চলে যায়
+
+
                     $('#ledgerModalBody .select2').select2({
                         dropdownParent: $('#productLedgerModal')
                     });
                 },
                 error: function() {
                     $('#ledgerModalBody').html(
-                        '<div class="alert alert-danger m-3">Ledger load করতে সমস্যা হয়েছে।</div>'
+                        '<div class="alert alert-danger m-3"> Something went wrong. Please try again. </div>'
                     );
                 }
             });

@@ -282,7 +282,7 @@
         }
 
         /* Requisition থেকে remaining qty auto-load হওয়ার তথ্যমূলক নোট —
-                                                                                                                                           কোনো row lock করা হয় না, delete/qty-কমানো দুটোই চালু থাকে। */
+                                                                                                                                                           কোনো row lock করা হয় না, delete/qty-কমানো দুটোই চালু থাকে। */
         .products-info-note {
             display: none;
             align-items: center;
@@ -786,8 +786,19 @@
                                 No products added yet. Use "Add Product Row" to start.
                             </div>
 
-                            <div class="products-toolbar">
+                            {{-- <div class="products-toolbar">
                                 <button type="button" class="btn btn-outline-primary btn-sm" id="addRowBtn">
+                                    <i class="fas fa-plus"></i> Add Product Row
+                                </button>
+                                <div class="products-summary">
+                                    <strong id="totalRowsText">1 row</strong> &middot;
+                                    Total qty: <strong id="totalQtyText">0</strong>
+                                </div>
+                            </div> --}}
+
+                            <div class="products-toolbar">
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="addRowBtn"
+                                    style="display:none">
                                     <i class="fas fa-plus"></i> Add Product Row
                                 </button>
                                 <div class="products-summary">
@@ -892,6 +903,42 @@
             }
 
             /* ---------------- Transfer type switching ---------------- */
+            // function applyTransferType(type) {
+            //     $('.transfer-type-card').removeClass('active');
+            //     $('.transfer-type-card[data-type="' + type + '"]').addClass('active');
+
+            //     $('.route-fields').removeClass('show').hide();
+            //     $('.rf-input').prop('required', false);
+
+            //     $('.route-fields').each(function() {
+            //         var $field = $(this);
+            //         var input = $field.find('.rf-input');
+            //         var ruleAttr = input.length ? input.data('rule') : $field.data('rule');
+            //         var rules = (ruleAttr || '').toString().split(',');
+            //         if (rules.indexOf(type) !== -1) {
+            //             $field.addClass('show').show();
+            //             input.prop('required', true);
+            //         }
+            //     });
+
+            //     if (type !== 'branch_to_project' && type !== 'project_to_project') {
+            //         var $req = $('select[name=purchase_requisition]');
+            //         if ($req.val()) {
+            //             $req.val(null).trigger('change');
+            //         } else {
+            //             resetToSingleEmptyRow();
+            //         }
+            //     }
+
+            //     $('.branch-picker').each(function() {
+            //         var $bp = $(this);
+            //         var rule = ($bp.data('rule') || '').toString();
+            //         if (rule && rule !== type && $bp.val()) {
+            //             $bp.val(null).trigger('change');
+            //         }
+            //     });
+            // }
+
             function applyTransferType(type) {
                 $('.transfer-type-card').removeClass('active');
                 $('.transfer-type-card[data-type="' + type + '"]').addClass('active');
@@ -909,6 +956,9 @@
                         input.prop('required', true);
                     }
                 });
+
+
+                $('#addRowBtn').toggle(type === 'project_to_branch');
 
                 if (type !== 'branch_to_project' && type !== 'project_to_project') {
                     var $req = $('select[name=purchase_requisition]');

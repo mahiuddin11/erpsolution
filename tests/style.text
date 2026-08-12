@@ -1,0 +1,428 @@
+@section('styles')
+    <link rel="stylesheet" href="{{ asset('backend/plugins/select2/css/select2.min.css') }}">
+    <style>
+        :root {
+            --tt-primary: #007bff;
+            --tt-primary-soft: #f0f7ff;
+            --tt-border: #dee2e6;
+            --tt-muted: #868e96;
+            --tt-text: #343a40;
+            --tt-radius: 10px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+            color: #495057;
+            border-bottom: 2px solid #f1f1f1;
+            padding-bottom: 8px;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .section-title .step-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--tt-primary);
+            color: #fff;
+            font-size: 12px;
+            flex: 0 0 auto;
+        }
+
+        .required-star {
+            color: #dc3545;
+        }
+
+        .transfer-type-wrap {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+        }
+
+        .transfer-type-card {
+            flex: 1 1 250px;
+            border: 2px solid var(--tt-border);
+            border-radius: var(--tt-radius);
+            padding: 16px 15px;
+            position: relative;
+            background: #fff;
+            margin: 0;
+            min-height: 44px;
+        }
+
+        .transfer-type-card.active {
+            border-color: var(--tt-primary);
+            background: var(--tt-primary-soft);
+            box-shadow: 0 2px 8px rgba(0, 123, 255, .15);
+        }
+
+        .transfer-type-card input[type=radio] {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 20px;
+            height: 20px;
+            margin: 0;
+        }
+
+        .transfer-type-card .tt-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: #6c757d;
+        }
+
+        .transfer-type-card.active .tt-icon {
+            color: var(--tt-primary);
+        }
+
+        .transfer-type-card .tt-title {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 3px;
+            color: var(--tt-text);
+            padding-right: 28px;
+        }
+
+        .transfer-type-card .tt-sub {
+            font-size: 12.5px;
+            color: var(--tt-muted);
+        }
+
+        .transfer-type-card .tt-badge {
+            display: inline-block;
+            font-size: 10.5px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 10px;
+            margin-top: 8px;
+        }
+
+        .badge-req {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-noreq {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .details-panel {
+            background: #fff;
+            border: 1px solid var(--tt-border);
+            border-radius: var(--tt-radius);
+            padding: 18px 18px 4px;
+            margin-bottom: 22px;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            font-size: 13.5px;
+            color: #495057;
+        }
+
+        .route-visual {
+            display: flex;
+            align-items: stretch;
+            gap: 14px;
+            margin: 4px 0 18px;
+        }
+
+        .route-node {
+            flex: 1 1 0;
+            min-width: 0;
+            background: #f8f9fb;
+            border: 1px dashed var(--tt-border);
+            border-radius: var(--tt-radius);
+            padding: 14px 16px;
+        }
+
+        .route-node-from {
+            background: #f4f9ff;
+            border-color: #bcdcff;
+        }
+
+        .route-node-to {
+            background: #f3faf4;
+            border-color: #bfe6c6;
+        }
+
+        .route-node-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .5px;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+
+        .route-node-from .route-node-tag {
+            color: #0d6efd;
+        }
+
+        .route-node-to .route-node-tag {
+            color: #28a745;
+        }
+
+        .route-arrow {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            font-size: 20px;
+            color: #adb5bd;
+        }
+
+        @media (max-width: 767.98px) {
+            .route-visual {
+                flex-direction: column;
+            }
+
+            .route-arrow {
+                width: auto;
+                height: 22px;
+                transform: rotate(90deg);
+            }
+        }
+
+        .form-control,
+        .select2-container .select2-selection--single {
+            min-height: 42px;
+        }
+
+        .select2-container .select2-selection--single .select2-selection__rendered {
+            line-height: 40px;
+        }
+
+        .select2-container .select2-selection--single .select2-selection__arrow {
+            height: 40px;
+        }
+
+        .route-resolved-box {
+            display: flex;
+            align-items: center;
+            min-height: 42px;
+            background: #fff;
+            border: 1px solid var(--tt-border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 14px;
+            color: var(--tt-text);
+        }
+
+        .products-panel {
+            background: #fff;
+            border: 1px solid var(--tt-border);
+            border-radius: var(--tt-radius);
+            padding: 16px;
+        }
+
+        .product-count-badge {
+            background: #eef2f7;
+            color: #495057;
+            font-weight: 600;
+            font-size: 12px;
+            padding: 5px 11px;
+            border-radius: 20px;
+        }
+
+        .products-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid #f1f1f1;
+        }
+
+        .products-summary {
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        .products-summary strong {
+            color: var(--tt-text);
+        }
+
+        .products-empty {
+            display: none;
+            text-align: center;
+            padding: 30px 10px;
+            color: #adb5bd;
+        }
+
+        .products-empty i {
+            font-size: 26px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .row-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: #eef2f7;
+            color: #495057;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        #productTable {
+            margin-bottom: 0;
+        }
+
+        #productTable thead th {
+            font-size: 12.5px;
+            text-transform: uppercase;
+            color: #6c757d;
+            white-space: nowrap;
+        }
+
+        #productTable td {
+            vertical-align: middle;
+        }
+
+        .remove-row-btn {
+            cursor: pointer;
+            font-size: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+        }
+
+        .remove-row-btn:hover {
+            background: #fdeaea;
+        }
+
+        .stock-hint {
+            font-size: 12px;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .stock-hint.ok {
+            color: #28a745;
+        }
+
+        .stock-hint.low {
+            color: #dc3545;
+        }
+
+        .remaining-display {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .pr-add-panel {
+            background: #eef7ff;
+            border: 1px solid #bfe0ff;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 14px;
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .pr-add-panel .form-group {
+            margin-bottom: 0;
+            flex: 1 1 260px;
+        }
+
+        .pr-add-panel small {
+            display: block;
+            color: #0c5aa6;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 767.98px) {
+            #productTable thead {
+                display: none;
+            }
+
+            #productTable,
+            #productTable tbody,
+            #productTable tr,
+            #productTable td {
+                display: block;
+                width: 100% !important;
+            }
+
+            #productTable {
+                border: none;
+            }
+
+            #productTable tbody tr {
+                border: 1px solid var(--tt-border);
+                border-radius: var(--tt-radius);
+                padding: 14px 14px 10px;
+                margin-bottom: 14px;
+                position: relative;
+                background: #fff;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+            }
+
+            #productTable td {
+                border: none !important;
+                padding: 8px 0;
+            }
+
+            #productTable td[data-label]::before {
+                content: attr(data-label);
+                display: block;
+                font-size: 11px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: .3px;
+                color: #868e96;
+                margin-bottom: 4px;
+            }
+
+            #productTable td.remove-cell {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                width: auto !important;
+                padding: 0;
+            }
+        }
+
+        .card-footer {
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 575.98px) {
+            .card-footer {
+                flex-direction: column-reverse;
+            }
+
+            .card-footer a,
+            .card-footer button {
+                width: 100%;
+            }
+        }
+    </style>
+@endsection

@@ -174,10 +174,6 @@ class ProjectTransferController extends Controller
 
         $details = ProjectTransferDetails::where('project_transfer_id', $id)->get();
 
-        // Live editable max per line:
-        // - requisition-linked lines (requested_qty is not null): max = CURRENT pr_details.remaining_qty + this line's own qty
-        //   (adding back this line's own qty because it will be "released" before being re-applied on update)
-        // - manual lines (requested_qty is null): no PR-based cap, only stock-limited client-side
         $lineMax = [];
         if ($editInfo->purchase_requisition_id) {
             foreach ($details as $d) {
@@ -202,8 +198,7 @@ class ProjectTransferController extends Controller
             ->orWhere('id', $editInfo->purchase_requisition_id)
             ->get();
 
-        // Remaining requisition products NOT yet used in THIS transfer — lets the user
-        // add more lines from the same requisition without leaving the edit page.
+
         $remainingPrProducts = collect();
         if ($editInfo->purchase_requisition_id && in_array($editInfo->transfer_type, ['branch_to_project', 'project_to_project'])) {
             $usedProductIds = $details->pluck('product_id')->all();
@@ -280,6 +275,21 @@ class ProjectTransferController extends Controller
      * @param $slug
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
+    // public function destroy($id)
+    // {
+    //     if (!is_numeric($id)) {
+    //         return response()->json($this->systemTransformer->invalidId($id), 200);
+    //     }
+    //     $detailsInfo = $this->systemService->details($id);
+    //     if (!$detailsInfo) {
+    //         return response()->json($this->systemTransformer->notFound($detailsInfo), 200);
+    //     }
+    //     $deleteInfo = $this->systemService->destroy($id);
+    //     if ($deleteInfo) {
+    //         return response()->json($this->systemTransformer->delete($deleteInfo), 200);
+    //     }
+    // }
+
     public function destroy($id)
     {
         if (!is_numeric($id)) {
@@ -289,11 +299,17 @@ class ProjectTransferController extends Controller
         if (!$detailsInfo) {
             return response()->json($this->systemTransformer->notFound($detailsInfo), 200);
         }
+
         $deleteInfo = $this->systemService->destroy($id);
+
         if ($deleteInfo) {
             return response()->json($this->systemTransformer->delete($deleteInfo), 200);
         }
+
+        return response()->json(['success' => false, 'message' => session('error', 'Delete failed')], 200);
     }
+
+
 
     public function filterproduct(Request $request)
     {
@@ -308,10 +324,7 @@ class ProjectTransferController extends Controller
 
     public function availableStock(Request $request)
     {
-
         $type = $request->source_type === 'project' ? 'Project' : 'Branch';
-
-
 
         $query = StockSummary::where([
             'branch_id'  => $request->source_id,

@@ -2,7 +2,6 @@
 @section('title')
     inventory - {{ $title }}
 @endsection
-
 @section('styles')
     <link rel="stylesheet" href="{{ asset('backend/plugins/select2/css/select2.min.css') }}">
     <style>
@@ -431,9 +430,7 @@
         }
     </style>
 @endsection
-
 @php
-
     $resolveBranchWarehouse = function ($storedId) use ($branchs) {
         if (!$storedId) {
             return ['branch_id' => null, 'warehouse_id' => null];
@@ -454,6 +451,35 @@
     $destResolved = $resolveBranchWarehouse(
         $editInfo->transfer_type === 'project_to_branch' ? $editInfo->branch_id : null,
     );
+
+    // FIX: initial "resolved" id for the stock-check hidden input must be the
+    // WAREHOUSE id when a warehouse is set, otherwise fall back to the branch id.
+    // Previously this was hardcoded to branch_id only, so the very first stock
+    // check on page load ignored the warehouse entirely.
+    $sourceInitialId = $sourceResolved['warehouse_id'] ?? $sourceResolved['branch_id'];
+    $destInitialId = $destResolved['warehouse_id'] ?? $destResolved['branch_id'];
+
+    $transferTypeLabels = [
+        'branch_to_project' => [
+            'icon' => 'fa-warehouse',
+            'title' => 'Branch / Warehouse &rarr; Project',
+            'sub' => 'Issue material from stock to a running project',
+            'badge' => 'req',
+        ],
+        'project_to_project' => [
+            'icon' => 'fa-people-arrows',
+            'title' => 'Project &rarr; Project',
+            'sub' => 'Move surplus material between two projects',
+            'badge' => 'req',
+        ],
+        'project_to_branch' => [
+            'icon' => 'fa-undo-alt',
+            'title' => 'Project &rarr; Branch / Warehouse',
+            'sub' => 'Return unused material back to stock',
+            'badge' => 'noreq',
+        ],
+    ];
+    $currentTypeInfo = $transferTypeLabels[$editInfo->transfer_type] ?? null;
 @endphp
 
 @section('navbar-content')
@@ -502,44 +528,36 @@
                             </div>
                         @endif
 
+                        {{-- ============ STEP 1: TRANSFER TYPE ============ --}}
+                        {{-- FIX: only the SELECTED transfer type card is rendered now.
+                             The other two are not shown at all (previously all three
+                             were rendered with the other two just disabled/greyed). --}}
                         <div class="section-title"><span class="step-num">1</span> Transfer Type
                             <span class="badge badge-secondary ml-2" style="font-size:11px;"><i class="fas fa-lock"></i>
                                 Locked after creation</span>
                         </div>
 
-                        <div class="transfer-type-wrap" style="pointer-events:none; opacity:.85;">
-                            <label
-                                class="transfer-type-card{{ $editInfo->transfer_type === 'branch_to_project' ? ' active' : '' }}">
-                                <input type="radio" value="branch_to_project"
-                                    {{ $editInfo->transfer_type === 'branch_to_project' ? 'checked' : '' }} disabled>
-                                <div class="tt-icon"><i class="fas fa-warehouse"></i></div>
-                                <div class="tt-title">Branch / Warehouse &rarr; Project</div>
-                                <div class="tt-sub">Issue material from stock to a running project</div>
-                                <span class="tt-badge badge-req"><i class="fas fa-file-alt"></i> Requisition required</span>
-                            </label>
-                            <label
-                                class="transfer-type-card{{ $editInfo->transfer_type === 'project_to_project' ? ' active' : '' }}">
-                                <input type="radio" value="project_to_project"
-                                    {{ $editInfo->transfer_type === 'project_to_project' ? 'checked' : '' }} disabled>
-                                <div class="tt-icon"><i class="fas fa-people-arrows"></i></div>
-                                <div class="tt-title">Project &rarr; Project</div>
-                                <div class="tt-sub">Move surplus material between two projects</div>
-                                <span class="tt-badge badge-req"><i class="fas fa-file-alt"></i> Requisition required</span>
-                            </label>
-                            <label
-                                class="transfer-type-card{{ $editInfo->transfer_type === 'project_to_branch' ? ' active' : '' }}">
-                                <input type="radio" value="project_to_branch"
-                                    {{ $editInfo->transfer_type === 'project_to_branch' ? 'checked' : '' }} disabled>
-                                <div class="tt-icon"><i class="fas fa-undo-alt"></i></div>
-                                <div class="tt-title">Project &rarr; Branch / Warehouse</div>
-                                <div class="tt-sub">Return unused material back to stock</div>
-                                <span class="tt-badge badge-noreq"><i class="fas fa-check"></i> No requisition needed</span>
-                            </label>
-                        </div>
+                        @if ($currentTypeInfo)
+                            <div class="transfer-type-wrap">
+                                <label class="transfer-type-card active">
+                                    <div class="tt-icon"><i class="fas {{ $currentTypeInfo['icon'] }}"></i></div>
+                                    <div class="tt-title">{!! $currentTypeInfo['title'] !!}</div>
+                                    <div class="tt-sub">{{ $currentTypeInfo['sub'] }}</div>
+                                    @if ($currentTypeInfo['badge'] === 'req')
+                                        <span class="tt-badge badge-req"><i class="fas fa-file-alt"></i> Requisition
+                                            required</span>
+                                    @else
+                                        <span class="tt-badge badge-noreq"><i class="fas fa-check"></i> No requisition
+                                            needed</span>
+                                    @endif
+                                </label>
+                            </div>
+                        @endif
                         <input type="hidden" name="transfer_type" value="{{ $editInfo->transfer_type }}">
 
                         <hr>
 
+                        {{-- ============ STEP 2: ROUTE DETAILS (unchanged) ============ --}}
                         <div class="section-title"><span class="step-num">2</span> Transfer Details</div>
 
                         <div class="details-panel">
@@ -556,21 +574,6 @@
                                         readonly>
                                 </div>
 
-                                {{-- @if (in_array($editInfo->transfer_type, ['branch_to_project', 'project_to_project']))
-                                    <div class="col-lg-3 col-md-4 col-sm-6 form-group">
-                                        <label>Purchase Requisition <span class="required-star">*</span></label>
-                                        <select name="purchase_requisition" class="form-control select2" @readonly(true)
-                                            required>
-                                            <option value="">-- Select Requisition --</option>
-                                            @foreach ($purchaserequisitions as $pr)
-                                                <option value="{{ $pr->id }}"
-                                                    {{ $pr->id == $editInfo->purchase_requisition_id ? 'selected' : '' }}>
-                                                    {{ $pr->invoice_no }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                @endif --}}
-
                                 @if (in_array($editInfo->transfer_type, ['branch_to_project', 'project_to_project']))
                                     <div class="col-lg-3 col-md-4 col-sm-6 form-group">
                                         <label>
@@ -579,7 +582,6 @@
 
                                         <select class="form-control select2" disabled>
                                             <option value="">-- Select Requisition --</option>
-
                                             @foreach ($purchaserequisitions as $pr)
                                                 <option value="{{ $pr->id }}"
                                                     {{ $pr->id == $editInfo->purchase_requisition_id ? 'selected' : '' }}>
@@ -601,9 +603,7 @@
 
                                         <select class="form-control select2 branch-picker" data-target="from_branch_id"
                                             data-preselect-warehouse="{{ $sourceResolved['warehouse_id'] }}" disabled>
-
                                             <option value="">-- Select Branch --</option>
-
                                             @foreach ($branchs->where('parent_id', 0) as $branch)
                                                 <option value="{{ $branch->id }}"
                                                     {{ $branch->id == $sourceResolved['branch_id'] ? 'selected' : '' }}>
@@ -612,11 +612,11 @@
                                             @endforeach
                                         </select>
 
-                                        {{-- Backend-এ Branch ID পাঠানোর জন্য --}}
-                                        <input type="hidden" name="from_branch_id"
-                                            value="{{ $sourceResolved['branch_id'] }}">
+                                        {{-- FIX: value is now the resolved WAREHOUSE id when one is set,
+                                             otherwise the branch id — this is what stock checks read on
+                                             initial page load. --}}
+                                        <input type="hidden" name="from_branch_id" value="{{ $sourceInitialId }}">
                                     </div>
-
 
                                     <div class="col-lg-2 col-md-6 col-sm-6 form-group">
                                         <label>
@@ -625,26 +625,17 @@
 
                                         <div class="warehouse-wrap" data-target="from_branch_id"
                                             style="display:{{ $sourceResolved['warehouse_id'] ? 'block' : 'none' }}">
-
                                             <select class="form-control select2 warehouse-picker"
                                                 data-target="from_branch_id" disabled>
-
                                                 <option value="">-- Warehouse --</option>
-
                                                 @foreach ($warehouses ?? [] as $warehouse)
                                                     <option value="{{ $warehouse->id }}"
                                                         {{ $warehouse->id == $sourceResolved['warehouse_id'] ? 'selected' : '' }}>
                                                         {{ $warehouse->name }}
                                                     </option>
                                                 @endforeach
-
                                             </select>
-
                                         </div>
-
-                                        {{-- Backend-এ Warehouse ID পাঠানোর জন্য --}}
-                                        <input type="hidden" name="from_warehouse_id"
-                                            value="{{ $sourceResolved['warehouse_id'] }}">
                                     </div>
                                 @endif
 
@@ -660,7 +651,8 @@
                                                     {{ $branch->name }}</option>
                                             @endforeach
                                         </select>
-                                        <input type="hidden" name="to_branch_id" value="{{ $editInfo->branch_id }}">
+                                        {{-- FIX: same resolved-id correction applied here --}}
+                                        <input type="hidden" name="to_branch_id" value="{{ $destInitialId }}">
                                     </div>
 
                                     <div class="col-lg-2 col-md-6 col-sm-6 form-group">
@@ -670,6 +662,12 @@
                                             <select class="form-control select2 warehouse-picker"
                                                 data-target="to_branch_id">
                                                 <option value="">-- Warehouse --</option>
+                                                @foreach ($warehouses ?? [] as $warehouse)
+                                                    <option value="{{ $warehouse->id }}"
+                                                        {{ $warehouse->id == $destResolved['warehouse_id'] ? 'selected' : '' }}>
+                                                        {{ $warehouse->name }}
+                                                    </option>
+                                                @endforeach
                                             </select>
                                         </div>
                                     </div>
@@ -685,7 +683,7 @@
                                             <div class="route-resolved-box">
                                                 <i class="fas fa-warehouse mr-2 text-muted"></i>
                                                 <span class="route-resolved-text" data-target="from_branch_id">
-                                                    {{ optional($branchs->firstWhere('id', $editInfo->branch_id))->name ?? '-' }}
+                                                    {{ optional($branchs->firstWhere('id', $sourceInitialId))->name ?? '-' }}
                                                 </span>
                                             </div>
                                         </div>
@@ -739,7 +737,7 @@
                                             <div class="route-resolved-box">
                                                 <i class="fas fa-building mr-2 text-muted"></i>
                                                 <span class="route-resolved-text" data-target="to_branch_id">
-                                                    {{ optional($branchs->firstWhere('id', $editInfo->branch_id))->name ?? '-' }}
+                                                    {{ optional($branchs->firstWhere('id', $destInitialId))->name ?? '-' }}
                                                 </span>
                                             </div>
                                         </div>
@@ -757,6 +755,7 @@
 
                         <hr>
 
+                        {{-- ============ STEP 3: PRODUCTS ============ --}}
                         <div class="section-title justify-content-between">
                             <span><span class="step-num">3</span> Products to Transfer</span>
                             <span class="product-count-badge" id="productCountBadge">{{ $details->count() }} items</span>
@@ -764,7 +763,6 @@
 
                         <div class="products-panel">
 
-                            {{-- NEW: Add another item straight from this Requisition's remaining balance --}}
                             @if ($remainingPrProducts->isNotEmpty())
                                 <div class="pr-add-panel">
                                     <div class="form-group">
@@ -845,8 +843,6 @@
                                                         value="-" readonly>
                                                 </td>
                                                 <td data-label="Qty">
-                                                    {{-- FIX: max is now the live remaining-plus-own-qty computed in the Controller,
-                                                     not the old (wrong) requested_qty + qty formula. --}}
                                                     <input type="number" name="qty[]" min="0.01" step="0.01"
                                                         class="form-control qty-input" value="{{ $d->qty }}"
                                                         @if (isset($lineMax[$d->id])) max="{{ $lineMax[$d->id] }}" @endif
@@ -873,10 +869,22 @@
                                 No products added yet. Use "Add Product Row" to start.
                             </div>
 
-                            <div class="products-toolbar">
+                            {{-- <div class="products-toolbar">
                                 <button type="button" class="btn btn-outline-primary btn-sm" id="addRowBtn">
                                     <i class="fas fa-plus"></i> Add Product Row (manual)
                                 </button>
+                                <div class="products-summary">
+                                    <strong id="totalRowsText">{{ $details->count() }} rows</strong> &middot;
+                                    Total qty: <strong id="totalQtyText">{{ $details->sum('qty') }}</strong>
+                                </div>
+                            </div> --}}
+
+                            <div class="products-toolbar">
+                                @if ($editInfo->transfer_type === 'project_to_branch')
+                                    <button type="button" class="btn btn-outline-primary btn-sm" id="addRowBtn">
+                                        <i class="fas fa-plus"></i> Add Product Row (manual)
+                                    </button>
+                                @endif
                                 <div class="products-summary">
                                     <strong id="totalRowsText">{{ $details->count() }} rows</strong> &middot;
                                     Total qty: <strong id="totalQtyText">{{ $details->sum('qty') }}</strong>
@@ -1006,7 +1014,9 @@
                 $display.toggleClass('text-danger', remaining < 0).toggleClass('text-success', remaining >= 0);
             }
 
-            /* Existing rows: load correct product list per category and preselect */
+            /* Existing rows: load correct product list per category, preselect, then trigger
+               stock check via .trigger('change') (which reads the resolved from_branch_id /
+               from_project_id hidden/select values). */
             $('#productRows tr').each(function() {
                 var $row = $(this);
                 var categoryId = $row.find('.category-select').val();
@@ -1030,7 +1040,9 @@
                 updateRemainingDisplay($row);
             });
 
-            /* Branch -> Warehouse preselect for header fields */
+            /* Branch -> Warehouse preselect for header fields (initial paint only;
+               subsequent changes are handled by the .branch-picker/.warehouse-picker
+               handlers further below). */
             $('.branch-picker').each(function() {
                 var $picker = $(this);
                 var target = $picker.data('target');
@@ -1083,7 +1095,6 @@
                 $('#productsEmptyHint').toggle(rows === 0);
             }
 
-            /* Manual add (no requisition cap) */
             $('#addRowBtn').on('click', function() {
                 rowCount++;
                 var $row = $('#rowTemplate tr').clone();
@@ -1094,7 +1105,6 @@
                 updateProductsSummary();
             });
 
-            /* NEW: Add from Requisition remaining list */
             $('#addFromPrBtn').on('click', function() {
                 var $opt = $('#prRemainingSelect option:selected');
                 var productId = $opt.val();
@@ -1106,7 +1116,6 @@
                 var categoryId = $opt.data('category');
                 var purchasetype = $opt.data('purchasetype');
                 var remaining = parseFloat($opt.data('remaining'));
-                var productName = $opt.data('name');
 
                 rowCount++;
                 var $row = $('#prRowTemplate tr').clone();
@@ -1135,7 +1144,6 @@
                         $row.find('.product-select').trigger('change');
                     });
 
-                // remove the used option from the dropdown so it can't be added twice
                 $opt.remove();
                 $('#prRemainingSelect').val('').trigger('change.select2');
 
@@ -1172,6 +1180,7 @@
                     });
             });
 
+
             function currentFromKey() {
                 var type = '{{ $editInfo->transfer_type }}';
                 if (type === 'branch_to_project') {
@@ -1197,6 +1206,7 @@
                     return;
                 }
                 $row.find('.stock-display').val('Checking...');
+
 
                 $.get("{{ route('project.transferproject.availableStock') }}", {
                     product_id: productId,
@@ -1284,7 +1294,7 @@
             var branchId = $picker.val();
             var branchTxt = $picker.find('option:selected').text();
 
-            $('input[type=hidden][name="' + target + '"]').val(branchId);
+            $('input[type=hidden][name="' + target + '"]').val(branchId).trigger('change');
             updateRouteLabel(target, branchId ? branchTxt : '');
 
             if (!branchId) {
@@ -1317,11 +1327,11 @@
             var branchTxt = $('.branch-picker[data-target="' + target + '"]').find('option:selected').text();
 
             if (whId) {
-                $('input[type=hidden][name="' + target + '"]').val(whId);
+                $('input[type=hidden][name="' + target + '"]').val(whId).trigger('change');
                 updateRouteLabel(target, whTxt);
             } else {
                 var branchId = $('.branch-picker[data-target="' + target + '"]').val();
-                $('input[type=hidden][name="' + target + '"]').val(branchId);
+                $('input[type=hidden][name="' + target + '"]').val(branchId).trigger('change');
                 updateRouteLabel(target, branchTxt);
             }
         });
