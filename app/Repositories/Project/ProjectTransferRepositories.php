@@ -474,6 +474,7 @@ class ProjectTransferRepositories
         DB::beginTransaction();
         $user = Auth::user();
 
+
         try {
             $type = $request->transfer_type;
 
@@ -498,7 +499,6 @@ class ProjectTransferRepositories
                 $purchaseorder->branch_id               = $request->from_branch_id;
                 $purchaseorder->project_id               = $request->to_project_id_a;
                 $purchaseorder->purchase_requisition_id = $request->purchase_requisition;
-
                 $fromBranchId = $request->from_branch_id;
             } elseif ($type === 'project_to_project') {
                 $purchaseorder->project_id               = $request->from_project_id;
@@ -506,10 +506,9 @@ class ProjectTransferRepositories
                 $purchaseorder->purchase_requisition_id = $request->purchase_requisition ?: null;
 
                 $fromProjectId = $request->from_project_id;
-            } else { // project_to_branch
+            } else {
                 $purchaseorder->project_id = $request->from_project_id;
                 $purchaseorder->branch_id  = $request->to_branch_id;
-
                 $fromProjectId = $request->from_project_id;
             }
 
@@ -521,17 +520,20 @@ class ProjectTransferRepositories
             $product      = $request->product_nm;
             $qty          = $request->qty;
             $purchasetype = $request->purchasetype;
-            $requestedQty = $request->requested_qty ?? []; // empty for manually-added rows
+            $requestedQty = $request->requested_qty ?? [];
 
             for ($i = 0; $i < count($product); $i++) {
                 $productId   = $product[$i];
                 $transferQty = (float) $qty[$i];
-                $ptype       = $purchasetype[$i] ?? 'local';
+                $ptype       = $purchasetype[$i];
                 $reqQtySnap  = isset($requestedQty[$i]) && $requestedQty[$i] !== '' ? (float) $requestedQty[$i] : null;
 
-                // ---- NEW: server-side unit price resolve — frontend কোনো price পাঠায় না ----
+                // ---- NEW: server-side unit price resolve —
                 $unitPrice  = $this->resolveUnitPrice($type, $productId, $fromBranchId, $fromProjectId);
-                $totalPrice = round($unitPrice * $transferQty, 2);
+
+                $totalPrice = round($unitPrice * $transferQty);
+
+
 
                 // ---- 2a. Detail line ----
                 $purchaseOrderDetails = new ProjectTransferDetails();
@@ -545,6 +547,8 @@ class ProjectTransferRepositories
                 $purchaseOrderDetails->total_price          = $totalPrice;  // NEW
                 $purchaseOrderDetails->status               = 'Accepted';
 
+
+
                 if ($type === 'branch_to_project') {
                     $purchaseOrderDetails->branch_id  = $request->from_branch_id;
                     $purchaseOrderDetails->project_id = $request->to_project_id_a;
@@ -555,32 +559,33 @@ class ProjectTransferRepositories
                     $purchaseOrderDetails->project_id = $request->from_project_id;
                 }
                 $purchaseOrderDetails->save();
-
-                // ---- 2b. Stock ledger rows (uses REAL project_id column, not branch_id) ----
-                // NOTE: stocks.branch_id is NOT NULL at the DB level and cannot be altered.
-                // We use 0 as a sentinel meaning "not applicable / project-only row" instead of NULL.
                 $stockRows = [];
 
                 if ($type === 'branch_to_project') {
-                    $stockRows[] = ['branch_id' => $request->from_branch_id, 'project_id' => null, 'status' => 'Project Out'];
-                    $stockRows[] = ['branch_id' => 0, 'project_id' => $request->to_project_id_a, 'status' => 'Project In'];
+                    $stockRows[] = ['branch_id' => $request->from_branch_id, 'project_id' => null, 'status' => 'Project Out', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
+                    $stockRows[] = ['branch_id' => 0, 'project_id' => $request->to_project_id_a, 'status' => 'Project In', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
                 } elseif ($type === 'project_to_project') {
-                    $stockRows[] = ['branch_id' => 0, 'project_id' => $request->from_project_id, 'status' => 'Project Out'];
-                    $stockRows[] = ['branch_id' => 0, 'project_id' => $request->to_project_id_b, 'status' => 'Project In'];
+                    $stockRows[] = ['branch_id' => 0, 'project_id' => $request->from_project_id, 'status' => 'Project Out', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
+                    $stockRows[] = ['branch_id' => 0, 'project_id' => $request->to_project_id_b, 'status' => 'Project In', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
                 } else { // project_to_branch
-                    $stockRows[] = ['branch_id' => 0, 'project_id' => $request->from_project_id, 'status' => 'Project Out'];
-                    $stockRows[] = ['branch_id' => $request->to_branch_id, 'project_id' => null, 'status' => 'Return'];
+                    $stockRows[] = ['branch_id' => 0, 'project_id' => $request->from_project_id, 'status' => 'Project Out', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
+                    $stockRows[] = ['branch_id' => $request->to_branch_id, 'project_id' => null, 'status' => 'Return', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
                 }
+
+
 
                 foreach ($stockRows as $row) {
                     $stock = new Stock();
                     $stock->general_id = $purchaseOr_id;
                     $stock->product_id = $productId;
                     $stock->quantity   = $transferQty;
+                    $stock->unit_price = $row['unit_price'];
+                    $stock->total_price = $row['totalPrice'];
                     $stock->branch_id  = $row['branch_id'];
                     $stock->project_id = $row['project_id'];
                     $stock->date       = $request->date;
                     $stock->status     = $row['status'];
+                    $stock->invoice_no = $row['invoice_no'] ?? '';
                     $stock->created_by = $user->id ?? $this->user_id;
                     $stock->save();
                 }
@@ -1117,15 +1122,21 @@ class ProjectTransferRepositories
             return $this->lastPurchasePrice($productId, $fromBranchId);
         }
 
-        // project_to_project & project_to_branch: source project-এ এই product-এর last cost carry forward
-        $price = ProjectTransferDetails::where('product_id', $productId)
-            ->where('project_id', $fromProjectId)
+        if ($type === 'project_to_project') {
+            return $this->lastPurchasePrice($productId, null);
+        }
+
+
+        $lastTransferPrice = ProjectTransferDetails::where('product_id', $productId)
+            ->whereNotNull('unit_price')
+            ->where('unit_price', '>', 0)
             ->orderByDesc('id')
             ->value('unit_price');
 
-        if ($price !== null) {
-            return (float) $price;
+        if ($lastTransferPrice !== null) {
+            return (float) $lastTransferPrice;
         }
+
 
         return $this->lastPurchasePrice($productId, null);
     }

@@ -202,8 +202,6 @@ class ProjectRepositories
         $eproject->created_by = Auth::user()->id;
         $eproject->save();
 
-
-
         activity_log(
             'create',
             'projects',
