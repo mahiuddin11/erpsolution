@@ -122,6 +122,47 @@
             font-size: 11px;
             color: #94a3b8;
         }
+
+        /* Added: 2026-08-13 - modal tab buttons (Product Ledger / Stock Diagnosis) */
+        #productLedgerModal .modal-header {
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        #productLedgerModal .modal-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+        }
+
+        #productLedgerModal .tab-btn {
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 999px;
+            padding: 5px 14px;
+        }
+
+        #productLedgerModal .tab-btn.active {
+            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .05);
+        }
+
+        @media (max-width: 575px) {
+            #productLedgerModal .modal-title {
+                width: 100%;
+            }
+
+            #productLedgerModal .modal-header-actions {
+                width: 100%;
+                margin-left: 0;
+                justify-content: flex-start;
+            }
+
+            #productLedgerModal .tab-btn {
+                flex: 1;
+                text-align: center;
+            }
+        }
     </style>
 @endsection
 
@@ -283,18 +324,41 @@
         </div>
     </div>
 
-    {{-- Added: 2026-07-20 - Product Ledger Modal (loads productledger-content partial via AJAX) --}}
+    {{-- Added: 2026-07-20 - Product Ledger Modal --}}
+    {{-- Updated: 2026-08-13 - tab buttons (Product Ledger / Stock Diagnosis) next to close, two swappable panes --}}
     <div class="modal fade" id="productLedgerModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-xl" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Product Ledger</h5>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h5 class="modal-title" id="ledgerModalTitle">Product Ledger</h5>
+
+                    <div class="modal-header-actions">
+                        <button type="button" id="btnShowLedger" class="btn btn-sm btn-primary tab-btn active"
+                            onclick="showModalTab('ledger')">
+                            <i class="fas fa-book"></i> Product Ledger
+                        </button>
+                        <button type="button" id="btnShowDiagnosis" class="btn btn-sm btn-outline-warning tab-btn"
+                            onclick="showModalTab('diagnosis')">
+                            <i class="fas fa-stethoscope"></i> Stock Diagnosis
+                        </button>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>
+                    </div>
                 </div>
-                <div class="modal-body" id="ledgerModalBody">
-                    <div id="ledgerLoading" class="text-center py-5">
-                        <i class="fas fa-spinner fa-spin fa-2x"></i>
-                        <p class="mt-2 mb-0">Loading...</p>
+                <div class="modal-body">
+                    {{-- Pane 1: Product Ledger (default visible) --}}
+                    <div id="ledgerPane">
+                        <div id="ledgerLoading" class="text-center py-5">
+                            <i class="fas fa-spinner fa-spin fa-2x"></i>
+                            <p class="mt-2 mb-0">Loading...</p>
+                        </div>
+                    </div>
+
+                    {{-- Pane 2: Stock Diagnosis (hidden until its tab is clicked) --}}
+                    <div id="diagnosisPane" style="display:none;">
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-stethoscope fa-2x mb-2"></i>
+                            <p class="mb-0">Click "Stock Diagnosis" to load this product's diagnosis.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -304,6 +368,12 @@
 
 @section('scripts')
     <script>
+        // Added: 2026-08-13 - which product/branch the modal currently represents,
+        // and whether diagnosis has already been fetched for it (avoid refetching on every tab click)
+        let modalProductId = null;
+        let modalBranchId = null;
+        let diagnosisLoadedForProductId = null;
+
         $(document).ready(function() {
             $('#categorysubmit').on('change', function() {
                 $(this).closest('form').submit();
@@ -321,15 +391,19 @@
             });
 
             // Added: 2026-07-20 - row click -> load ledger inside modal
+            // Updated: 2026-08-13 - remembers product/branch, resets to Ledger tab each time a new row is opened
             $('#stockSummaryTable tbody').on('click', 'tr.ledger-row', function() {
-                let productId = $(this).data('product-id');
-                let branchId = $(this).data('branch-id');
+                modalProductId = $(this).data('product-id');
+                modalBranchId = $(this).data('branch-id');
+                diagnosisLoadedForProductId = null; // force diagnosis reload for the newly selected product
+
                 let url = "{{ route('inventorySetup.productledger.modal') }}" +
-                    "?product_id=" + productId +
-                    "&branch_id=" + branchId +
+                    "?product_id=" + modalProductId +
+                    "&branch_id=" + modalBranchId +
                     "&from_date={{ date('2020-01-01') }}" +
                     "&to_date={{ date('Y-12-d') }}";
 
+                showModalTab('ledger'); // always open on the Ledger tab
                 loadLedgerIntoModal(url);
             });
 
@@ -339,10 +413,31 @@
                 let url = $(this).attr('action') + '?' + $(this).serialize();
                 loadLedgerIntoModal(url);
             });
+
+            // Added: 2026-08-13 - Stock Diagnosis tab click -> fetch once per product, then just toggle panes
+            $('#btnShowDiagnosis').on('click', function() {
+                showModalTab('diagnosis');
+
+                if (!modalProductId) {
+                    return;
+                }
+
+                if (diagnosisLoadedForProductId === modalProductId) {
+                    return; // already loaded for this product, no refetch needed
+                }
+
+                let url = "{{ route('inventorySetup.stockDiagnosis.modal') }}" +
+                    "?product_id=" + modalProductId +
+                    "&branch_id=" + modalBranchId +
+                    "&from_date={{ date('2020-01-01') }}" +
+                    "&to_date={{ date('Y-12-d') }}";
+
+                loadDiagnosisIntoModal(url);
+            });
         });
 
         function loadLedgerIntoModal(url) {
-            $('#ledgerModalBody').html(
+            $('#ledgerPane').html(
                 '<div id="ledgerLoading" class="text-center py-5"><i class="fas fa-spinner fa-spin fa-2x"></i><p class="mt-2 mb-0">Loading...</p></div>'
             );
             $('#productLedgerModal').modal('show');
@@ -351,19 +446,62 @@
                 url: url,
                 type: 'GET',
                 success: function(html) {
-                    $('#ledgerModalBody').html(html);
+                    $('#ledgerPane').html(html);
 
-
-                    $('#ledgerModalBody .select2').select2({
+                    $('#ledgerPane .select2').select2({
                         dropdownParent: $('#productLedgerModal')
                     });
                 },
                 error: function() {
-                    $('#ledgerModalBody').html(
+                    $('#ledgerPane').html(
                         '<div class="alert alert-danger m-3"> Something went wrong. Please try again. </div>'
                     );
                 }
             });
+        }
+
+        // Added: 2026-08-13 - loads the Stock Diagnosis partial into its own pane
+        function loadDiagnosisIntoModal(url) {
+            $('#diagnosisPane').html(
+                '<div class="text-center py-5"><i class="fas fa-spinner fa-spin fa-2x"></i><p class="mt-2 mb-0">Loading diagnosis...</p></div>'
+            );
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function(html) {
+                    $('#diagnosisPane').html(html);
+                    diagnosisLoadedForProductId = modalProductId;
+                },
+                error: function() {
+                    $('#diagnosisPane').html(
+                        '<div class="alert alert-danger m-3"> Something went wrong loading the diagnosis. Please try again. </div>'
+                    );
+                    diagnosisLoadedForProductId = null;
+                }
+            });
+        }
+
+        // Added: 2026-08-13 - swap panes + active tab styling without closing the modal
+        function showModalTab(tab) {
+            const $ledgerBtn = $('#btnShowLedger');
+            const $diagBtn = $('#btnShowDiagnosis');
+
+            if (tab === 'ledger') {
+                $('#ledgerPane').show();
+                $('#diagnosisPane').hide();
+                $('#ledgerModalTitle').text('Product Ledger');
+
+                $ledgerBtn.addClass('btn-primary active').removeClass('btn-outline-primary');
+                $diagBtn.addClass('btn-outline-warning').removeClass('btn-warning active');
+            } else {
+                $('#diagnosisPane').show();
+                $('#ledgerPane').hide();
+                $('#ledgerModalTitle').text('Stock Diagnosis');
+
+                $diagBtn.addClass('btn-warning active').removeClass('btn-outline-warning');
+                $ledgerBtn.addClass('btn-outline-primary').removeClass('btn-primary active');
+            }
         }
     </script>
 @endsection

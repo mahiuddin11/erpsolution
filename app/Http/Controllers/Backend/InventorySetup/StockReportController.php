@@ -492,4 +492,256 @@ class StockReportController extends Controller
             ], 500);
         }
     }
+
+
+    public function stockDiagnosis(Request $request)
+    {
+        $validated = $request->validate([
+            'product_id' => 'required|integer|exists:products,id',
+            'branch_id'  => 'nullable',
+            'from_date'  => 'nullable|date',
+            'to_date'    => 'nullable|date',
+        ]);
+
+        $productId   = (int) $validated['product_id'];
+        $branchParam = $validated['branch_id'] ?? 'all';
+        $isAllBranch = ($branchParam === 'all' || empty($branchParam));
+        $from        = $validated['from_date'] ?? '2000-01-01';
+        $to          = $validated['to_date'] ?? '2100-01-01';
+
+        $product = Product::select('id', 'name', 'productCode')->findOrFail($productId);
+
+        // adjust table/column names if your branches table differs
+        $branch = $isAllBranch ? null : DB::table('branches')->find($branchParam);
+
+        $data = $this->computeDiagnosis($productId, $branchParam, $isAllBranch, $from, $to);
+
+        return view('backend.pages.reports.partials.stockDiagnosis', [
+            'product'     => $product,
+            'branchLabel' => $isAllBranch ? 'All Branches' : ($branch->name ?? "Branch #{$branchParam}"),
+            'from'        => $from,
+            'to'          => $to,
+        ] + $data);
+    }
+
+
+    private function computeDiagnosis(int $productId, $branchId, bool $isAllBranch, string $from, string $to): array
+    {
+
+        $source = [];
+
+        $source['Opening Stock'] = [
+            'in' => ProductOpeningStockDetails::where('product_id', $productId)
+                ->when(!$isAllBranch, fn($q) => $q->where('branch_id', $branchId))
+                ->whereNull('deleted_at')
+                ->sum('quantity'),
+            'out' => 0,
+        ];
+
+        $purchaseRows = PurchasesDetails::with('purchase:id,type,purchase_type')
+            ->where('product_id', $productId)
+            ->when(!$isAllBranch, fn($q) => $q->where('branch_id', $branchId))
+            ->whereBetween('date', [$from, $to])
+            ->get();
+
+        $purchaseIn = 0;
+        $projectManualConsumeOut = 0;
+        foreach ($purchaseRows as $row) {
+            $purchaseIn += (float) $row->quantity;
+            $isProjectManual = (
+                optional($row->purchase)->type === 'Project' &&
+                optional($row->purchase)->purchase_type === 'Manual'
+            );
+            if ($isProjectManual) {
+                $projectManualConsumeOut += (float) $row->quantity;
+            }
+        }
+        $source['Purchase'] = ['in' => $purchaseIn, 'out' => 0];
+        $source['Project Consume (Manual, synthetic)'] = ['in' => 0, 'out' => $projectManualConsumeOut];
+
+        $adjRows = DB::table('stock_ajdustment_detailsts as sad')
+            ->join('stock_ajdustments as sa', 'sa.id', '=', 'sad.purchases_id')
+            ->where('sad.product_id', $productId)
+            ->when(!$isAllBranch, fn($q) => $q->where('sad.branch_id', $branchId))
+            ->whereNotNull('sad.date')
+            ->where('sad.date', '>=', $from)
+            ->where('sad.date', '<=', $to)
+            ->select('sad.quantity', 'sa.adjustment_type')
+            ->get();
+
+        $adjIn = 0;
+        $adjOut = 0;
+        foreach ($adjRows as $row) {
+            $qty = abs((float) $row->quantity);
+            if ($row->adjustment_type === 'Gain') {
+                $adjIn += $qty;
+            } else {
+                $adjOut += $qty; // Loss, Damage, Others
+            }
+        }
+        $source['Stock Adjustment'] = ['in' => $adjIn, 'out' => $adjOut];
+
+        $source['Transfer In'] = [
+            'in' => DB::table('transfer_details')
+                ->where('product_id', $productId)
+                ->where('status', 'Approved')
+                ->when(!$isAllBranch, fn($q) => $q->where('to_branch_id', $branchId))
+                ->whereNull('deleted_at')
+                ->whereBetween('date', [$from, $to])
+                ->sum('approve_qty'),
+            'out' => 0,
+        ];
+        $source['Transfer Out'] = [
+            'in' => 0,
+            'out' => DB::table('transfer_details')
+                ->where('product_id', $productId)
+                ->where('status', 'Approved')
+                ->when(!$isAllBranch, fn($q) => $q->where('from_branch_id', $branchId))
+                ->whereNull('deleted_at')
+                ->whereBetween('date', [$from, $to])
+                ->sum('approve_qty'),
+        ];
+
+        $source['Sale'] = [
+            'in' => 0,
+            'out' => sales_Details::where('product_id', $productId)
+                ->when(!$isAllBranch, fn($q) => $q->where('branch_id', $branchId))
+                ->whereBetween('date', [$from, $to])
+                ->sum('qty'),
+        ];
+
+        $source['Project Transfer Out'] = [
+            'in' => 0,
+            'out' => DB::table('project_transfer_details as ptd')
+                ->join('project_transfers as pt', 'pt.id', '=', 'ptd.project_transfer_id')
+                ->where('ptd.product_id', $productId)
+                ->where('pt.transfer_type', 'branch_to_project')
+                ->where('ptd.status', 'Accepted')
+                ->when(!$isAllBranch, fn($q) => $q->where('ptd.branch_id', $branchId))
+                ->whereBetween('pt.order_date', [$from, $to])
+                ->sum('ptd.qty'),
+        ];
+
+        $source['Project Transfer In'] = [
+            'in' => DB::table('project_transfer_details as ptd')
+                ->join('project_transfers as pt', 'pt.id', '=', 'ptd.project_transfer_id')
+                ->where('ptd.product_id', $productId)
+                ->where('pt.transfer_type', 'project_to_branch')
+                ->where('ptd.status', 'Accepted')
+                ->when(!$isAllBranch, fn($q) => $q->where('ptd.branch_id', $branchId))
+                ->whereBetween('pt.order_date', [$from, $to])
+                ->sum('ptd.qty'),
+            'out' => 0,
+        ];
+
+        // ------------------------------------------------------------
+        // 2. STOCKS TABLE TOTALS, grouped by raw status
+        // ------------------------------------------------------------
+        $stocksRows = Stock::where('product_id', $productId)
+            ->when(!$isAllBranch, fn($q) => $q->where('branch_id', $branchId))
+            ->when($from && $to, fn($q) => $q->whereBetween('date', [$from, $to]))
+            ->select('status', DB::raw('SUM(quantity) as qty'), DB::raw('COUNT(*) as cnt'))
+            ->groupBy('status')
+            ->get();
+
+        $stocksummeryIn  = ['Opening', 'Purchase', 'Manual Purchase', 'Production', 'Gain', 'Transfer In', 'Project In', 'Return', 'Purchase Return'];
+        $stocksummeryOut = ['Production Sale', 'Production Out', 'Sale', 'Damage', 'Lost', 'Transfer Out', 'Project Out', 'Project Use', 'Sale Return'];
+        $stockControllerIn = ['Opening', 'Purchase', 'Manual Purchase', 'Production', 'Gain', 'Loss', 'Transfer In', 'Project In', 'Return', 'Purchase Return'];
+
+        $statusBreakdown = [];
+        $unmappedStatuses = [];
+        foreach ($stocksRows as $row) {
+            $bucketSummery = in_array($row->status, $stocksummeryIn)
+                ? 'IN'
+                : (in_array($row->status, $stocksummeryOut) ? 'OUT' : 'UNMAPPED');
+            $bucketStockCtrl = in_array($row->status, $stockControllerIn) ? 'IN' : 'OUT';
+
+            if ($bucketSummery === 'UNMAPPED') {
+                $unmappedStatuses[] = $row->status;
+            }
+
+            $statusBreakdown[] = [
+                'status'          => $row->status,
+                'count'           => (int) $row->cnt,
+                'qty'             => (float) $row->qty,
+                'stocksummery'    => $bucketSummery,
+                'stockController' => $bucketStockCtrl,
+            ];
+        }
+
+        $stocksInTotal = 0;
+        $stocksOutTotal = 0;
+        foreach ($stocksRows as $row) {
+            if (in_array($row->status, $stocksummeryIn)) {
+                $stocksInTotal += $row->qty;
+            } elseif (in_array($row->status, $stocksummeryOut)) {
+                $stocksOutTotal += $row->qty;
+            }
+        }
+
+        $stocksummeryInFixed = array_values(array_diff($stocksummeryIn, ['Project In']));
+        $stocksInTotalFixed = 0;
+        $stocksOutTotalFixed = 0;
+        foreach ($stocksRows as $row) {
+            if (in_array($row->status, $stocksummeryInFixed)) {
+                $stocksInTotalFixed += $row->qty;
+            } elseif (in_array($row->status, $stocksummeryOut)) {
+                $stocksOutTotalFixed += $row->qty;
+            }
+        }
+
+        // ------------------------------------------------------------
+        // 3. Totals + comparison
+        // ------------------------------------------------------------
+        $sourceInTotal = 0;
+        $sourceOutTotal = 0;
+        $sourceBreakdown = [];
+        foreach ($source as $label => $vals) {
+            $sourceInTotal += $vals['in'];
+            $sourceOutTotal += $vals['out'];
+            $sourceBreakdown[] = ['label' => $label, 'in' => (float) $vals['in'], 'out' => (float) $vals['out']];
+        }
+
+        $summary = [
+            [
+                'label' => 'Source tables (ledger truth)',
+                'in'    => $sourceInTotal,
+                'out'   => $sourceOutTotal,
+                'net'   => $sourceInTotal - $sourceOutTotal,
+            ],
+            [
+                'label' => '`stocks` table — AS-IS',
+                'in'    => $stocksInTotal,
+                'out'   => $stocksOutTotal,
+                'net'   => $stocksInTotal - $stocksOutTotal,
+            ],
+            [
+                'label' => '`stocks` table — with "Project In" excluded (simulated fix)',
+                'in'    => $stocksInTotalFixed,
+                'out'   => $stocksOutTotalFixed,
+                'net'   => $stocksInTotalFixed - $stocksOutTotalFixed,
+            ],
+        ];
+
+        $diffAsIs = [
+            'in'  => $sourceInTotal - $stocksInTotal,
+            'out' => $sourceOutTotal - $stocksOutTotal,
+            'net' => ($sourceInTotal - $sourceOutTotal) - ($stocksInTotal - $stocksOutTotal),
+        ];
+        $diffFixed = [
+            'in'  => $sourceInTotal - $stocksInTotalFixed,
+            'out' => $sourceOutTotal - $stocksOutTotalFixed,
+            'net' => ($sourceInTotal - $sourceOutTotal) - ($stocksInTotalFixed - $stocksOutTotalFixed),
+        ];
+
+        return [
+            'sourceBreakdown'  => $sourceBreakdown,
+            'statusBreakdown'  => $statusBreakdown,
+            'unmappedStatuses' => array_values(array_unique($unmappedStatuses)),
+            'summary'          => $summary,
+            'diffAsIs'         => $diffAsIs,
+            'diffFixed'        => $diffFixed,
+            'hasMismatch'      => abs($diffAsIs['net']) > 0.0001 || !empty($unmappedStatuses),
+        ];
+    }
 }

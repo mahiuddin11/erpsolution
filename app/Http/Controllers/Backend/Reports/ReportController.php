@@ -4326,6 +4326,101 @@ class ReportController extends Controller
     //     return view('backend.pages.reports.stock', get_defined_vars());
     // }
 
+    // public function stock(Request $request)
+    // {
+    //     $title = 'Stock Details Report';
+
+    //     $branch_id   = $request->branch_id ?? 'all';
+    //     $product_id  = $request->product_id;
+    //     $from_date   = null;
+    //     $to_date     = null;
+
+    //     // ==================== Date Range Processing (Fixed) ====================
+    //     if ($request->filled('dateRange')) {
+    //         $dateStr = trim($request->dateRange);
+    //         // Remove extra spaces and split
+    //         $dateStr = str_replace(' ', '', $dateStr);
+    //         $datas   = explode('-', $dateStr);
+
+    //         if (count($datas) == 2) {
+    //             $from_date = date('Y-m-d', strtotime(trim($datas[0])));
+    //             $to_date   = date('Y-m-d', strtotime(trim($datas[1])));
+    //         }
+    //     }
+
+    //     $StockDetails = collect();
+
+    //     if ($request->isMethod('POST')) {
+
+    //         if (empty($product_id) || $product_id == '---Select Product---') {
+    //             return redirect()->back()->withErrors(['msg' => 'Product is required!']);
+    //         }
+
+    //         // ==================== Main Query ====================
+    //         $query = Stock::select(
+    //             'stocks.*',
+    //             'products.productCode',
+    //             'products.name as product_name',
+    //             'branches.branchCode',
+    //             'branches.name as branch_name'
+    //         )
+    //             ->leftJoin('products', 'products.id', '=', 'stocks.product_id')
+    //             ->leftJoin('branches', 'branches.id', '=', 'stocks.branch_id')
+    //             ->where('stocks.product_id', $product_id)
+    //             ->orderBy('stocks.date', 'asc')
+    //             ->orderBy('stocks.id', 'asc');
+
+    //         if ($branch_id != 'all') {
+    //             $query->where('stocks.branch_id', $branch_id);
+    //         }
+
+    //         // ==================== Date Filter ====================
+    //         if ($from_date && $to_date) {
+    //             $query->whereBetween('stocks.date', [$from_date, $to_date]);
+    //         }
+
+    //         $StockDetails = $query->get();
+
+    //         // ==================== Running Balance Calculation ====================
+    //         $runningBalance = 0;
+    //         foreach ($StockDetails as $item) {
+
+    //             $positiveStatuses = [
+    //                 'Opening',
+    //                 'Purchase',
+    //                 'Manual Purchase',
+    //                 'Production',
+    //                 'Gain',
+    //                 'Loss',
+    //                 'Transfer In',
+    //                 'Project In',
+    //                 'Return',
+    //                 'Purchase Return'
+    //             ];
+
+    //             $isIn = in_array($item->status, $positiveStatuses);
+
+    //             if ($isIn) {
+    //                 $runningBalance += $item->quantity ?? 0;
+    //                 $item->in_qty  = $item->quantity ?? 0;
+    //                 $item->out_qty = 0;
+    //             } else {
+    //                 $runningBalance -= $item->quantity ?? 0;
+    //                 $item->in_qty  = 0;
+    //                 $item->out_qty = $item->quantity ?? 0;
+    //             }
+
+    //             $item->running_balance = $runningBalance;
+    //         }
+    //     }
+
+    //     $companyInfo   = Company::latest('id')->first();
+    //     $branch        = Branch::where('status', 'Active')->get();
+    //     $category_info = Category::where('status', 'Active')->get();
+
+    //     return view('backend.pages.reports.stock', get_defined_vars());
+    // }
+
     public function stock(Request $request)
     {
         $title = 'Stock Details Report';
@@ -4379,24 +4474,38 @@ class ReportController extends Controller
                 $query->whereBetween('stocks.date', [$from_date, $to_date]);
             }
 
-            $StockDetails = $query->get();
+            $allRows = $query->get();
 
             // ==================== Running Balance Calculation ====================
+            // NOTE: calculated over ALL rows (including Project Out / Project In) so the
+            // running balance stays correct for every subsequent row, even though the
+            // Project Out / Project In rows themselves are removed from what's displayed below.
             $runningBalance = 0;
-            foreach ($StockDetails as $item) {
 
-                $positiveStatuses = [
-                    'Opening',
-                    'Purchase',
-                    'Manual Purchase',
-                    'Production',
-                    'Gain',
-                    'Loss',
-                    'Transfer In',
-                    'Project In',
-                    'Return',
-                    'Purchase Return'
-                ];
+            // Statuses that increase branch/warehouse stock.
+            // 'Loss' removed — it's a decrease, not an increase (was a bug).
+            // 'Project In' removed — never real branch/warehouse stock, handled separately below.
+            $positiveStatuses = [
+                'Opening',
+                'Purchase',
+                'Manual Purchase',
+                'Production',
+                'Gain',
+                'Transfer In',
+                'Return',
+                'Purchase Return'
+            ];
+
+            foreach ($allRows as $item) {
+
+                // 'Project In' is history-only bookkeeping (the qty already left the branch as
+                // 'Project Out' below). It must not affect the running balance in either direction.
+                if ($item->status === 'Project In') {
+                    $item->in_qty          = 0;
+                    $item->out_qty          = 0;
+                    $item->running_balance = $runningBalance; // unchanged
+                    continue;
+                }
 
                 $isIn = in_array($item->status, $positiveStatuses);
 
@@ -4405,6 +4514,8 @@ class ReportController extends Controller
                     $item->in_qty  = $item->quantity ?? 0;
                     $item->out_qty = 0;
                 } else {
+                    // 'Project Out' falls here too — it's a real reduction of branch/warehouse
+                    // stock (the qty left for a project), so it correctly decreases the balance.
                     $runningBalance -= $item->quantity ?? 0;
                     $item->in_qty  = 0;
                     $item->out_qty = $item->quantity ?? 0;
@@ -4412,6 +4523,14 @@ class ReportController extends Controller
 
                 $item->running_balance = $runningBalance;
             }
+
+            // ==================== Hide Project In/Out from the displayed report ====================
+            // Both rows already did their job above (Project Out reduced the balance, Project In
+            // was a no-op). The user only wants branch/warehouse-facing movements listed here —
+            // project transfers have their own dedicated report (getProductLedgerData()).
+            $StockDetails = $allRows->reject(function ($item) {
+                return in_array($item->status, ['Project In']);
+            })->values();
         }
 
         $companyInfo   = Company::latest('id')->first();
@@ -4631,32 +4750,32 @@ class ReportController extends Controller
                 ELSE 0 
             END
         ) as current_stock
-    '),
+        '),
 
 
                 // DB::raw('AVG(CASE WHEN stocks.status IN ("Purchase", "Opening", "Manual Purchase") THEN stocks.unit_price END) as avg_unit_price'),
                 DB::raw('
-ROUND(
-    SUM(
-        CASE
-            WHEN stocks.status IN ("Opening","Purchase","Manual Purchase")
-            THEN stocks.unit_price * stocks.quantity
-            ELSE 0
-        END
-    )
-    /
-    NULLIF(
-        SUM(
-            CASE
-                WHEN stocks.status IN ("Opening","Purchase","Manual Purchase")
-                THEN stocks.quantity
-                ELSE 0
-            END
-        ),
-        0
-    ),
-2) as avg_unit_price
-'),
+            ROUND(
+                SUM(
+                    CASE
+                        WHEN stocks.status IN ("Opening","Purchase","Manual Purchase")
+                        THEN stocks.unit_price * stocks.quantity
+                        ELSE 0
+                    END
+                )
+                /
+                NULLIF(
+                    SUM(
+                        CASE
+                            WHEN stocks.status IN ("Opening","Purchase","Manual Purchase")
+                            THEN stocks.quantity
+                            ELSE 0
+                        END
+                    ),
+                    0
+                ),
+            2) as avg_unit_price
+            '),
 
                 DB::raw('
                 ROUND(
@@ -4748,6 +4867,8 @@ ROUND(
 
         return view('backend.pages.reports.stocksummery', get_defined_vars());
     }
+
+
 
     public function purchasereq(Request $request)
     {
