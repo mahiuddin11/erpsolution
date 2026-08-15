@@ -282,7 +282,7 @@
         }
 
         /* Requisition থেকে remaining qty auto-load হওয়ার তথ্যমূলক নোট —
-                                                                                                                                                           কোনো row lock করা হয় না, delete/qty-কমানো দুটোই চালু থাকে। */
+                                                                                                                                                                   কোনো row lock করা হয় না, delete/qty-কমানো দুটোই চালু থাকে। */
         .products-info-note {
             display: none;
             align-items: center;
@@ -1181,7 +1181,7 @@
                     var categoryId = $tr.find('input[name="category_nm[]"]').val();
                     var productId = $tr.find('input[name="product_nm[]"]').val();
                     var purchaseType = $tr.find('input[name="purchasetype[]"]').val();
-                    var qty = $tr.find('input[name="qty[]"]').val(); // = remaining_qty (backend থেকে)
+                    var qty = $tr.find('input[name="qty[]"]').val(); // = remaining_qty (backend)
                     var requestedQty = $tr.find('input[name="requested_qty[]"]').val();
                     if (categoryId && productId) {
                         items.push({
@@ -1196,8 +1196,7 @@
                 return items;
             }
 
-            /* requisition line থেকে একটা fully-editable row বানায় — qty[] এ remaining
-               prefill হয়, max attribute সেই remaining দিয়েই বসানো হয়। */
+
             function addRequisitionRow(item) {
                 rowCount++;
                 var $row = $('#rowTemplate tr').clone();
@@ -1225,7 +1224,7 @@
                             $row.find('input[name="requested_qty[]"]').val(item.requested_qty);
                         }
 
-                        updateRemainingDisplay($row); // NEW: প্রথমবার লোড হওয়ার সময়ই Remaining দেখাও
+                        updateRemainingDisplay($row);
 
                         $row.find('.product-select').val(item.product_id).trigger('change');
                     });
