@@ -462,7 +462,7 @@ class StockReportController extends Controller
     }
 
 
-    // ── 2. নতুন method — Bulk Status Update (AJAX) ───────────────────────
+    // ── 2.  method — Bulk Status Update (AJAX) ───────────────────────
     public function bulkUpdateStockStatus(Request $request)
     {
 

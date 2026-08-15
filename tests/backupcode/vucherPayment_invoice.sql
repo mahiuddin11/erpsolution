@@ -527,3 +527,19 @@ WHERE e.employee_status = 'left';
 -- project product transfer check
 SELECT pt.order_date as date, pt.invoice_no, ptd.project_transfer_id, ptd.qty, ptd.purchasetype, b.name as branch_name, p.name as product_name, pr.name as project_name FROM project_transfer_details ptd JOIN project_transfers pt ON pt.id = ptd.project_transfer_id LEFT JOIN branches b ON b.id = ptd.branch_id LEFT JOIN products p ON p.id = ptd.product_id LEFT JOIN projects pr ON pr.id = ptd.project_id WHERE ptd.product_id = 4661;
 SELECT id, branch_id, project_id FROM project_transfer_details WHERE id = 9;
+
+
+-- branch table e warehouse id check and update 
+SELECT 
+    id,
+    name,
+    branchCode,
+    parent_id,
+    warehouse_id
+FROM branches
+WHERE parent_id != 0;
+
+UPDATE branches
+SET warehouse_id = id
+WHERE parent_id != 0;
+
