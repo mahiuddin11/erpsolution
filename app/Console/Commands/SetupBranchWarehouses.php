@@ -2,165 +2,192 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Branch;
-use App\Models\Warehouse;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 class SetupBranchWarehouses extends Command
 {
     /**
-     * The name and signature of the console command.
-     *
-     * @var string
+     * php artisan warehouse:setup-branch-warehouses
+     * php artisan warehouse:setup-branch-warehouses --dry-run
      */
-    protected $signature = 'warehouse:setup-branch-warehouses';
+    protected $signature = 'warehouse:setup-branch-warehouses {--dry-run : Preview changes without writing to the database}';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
+    protected $description = 'Create warehouses from child branches, update branches.warehouse_id, and extend stocks.status ENUM';
 
-    // php artisan warehouse:setup-branch-warehouses
-    protected $description = 'Create warehouses from child branches and update branches.warehouse_id';
-
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
-     * Execute the console command.
-     *
-     * @return int
-     */
     public function handle()
     {
-        $this->info('Starting branch warehouse setup...');
+        $dryRun = (bool) $this->option('dry-run');
+
+        $this->info($dryRun ? 'DRY RUN — no changes will be written.' : 'Starting branch warehouse setup...');
+
+        // ==========================================================
+        // STEP 1: branches -> warehouses (safe to wrap in a transaction,
+        // no DDL happens here)
+        // ==========================================================
+        $created = 0;
+        $updated = 0;
+        $skipped = 0;
+        $mismatches = [];
 
         DB::beginTransaction();
 
         try {
-
             /*
              * parent_id != 0 branches are warehouses.
+             * Exclude soft-deleted branches — they shouldn't be (re)materialised
+             * as active warehouses.
              */
             $branches = DB::table('branches')
                 ->where('parent_id', '!=', 0)
+                ->whereNull('deleted_at')
                 ->get();
 
-            $created = 0;
-            $updated = 0;
-            $skipped = 0;
-
             foreach ($branches as $branch) {
-
-                /*
-                 * Warehouse ID MUST be the same as Branch ID.
-                 */
+                // Warehouse ID MUST be the same as Branch ID.
                 $warehouseId = $branch->id;
 
-                /*
-                 * Generate warehouse code from Branch ID.
-                 *
-                 * Example:
-                 * Branch ID 5  = WH00005
-                 * Branch ID 25 = WH00025
-                 */
-                $warehouseCode = 'WH' . str_pad(
-                    $branch->id,
-                    5,
-                    '0',
-                    STR_PAD_LEFT
-                );
+                // Example: Branch ID 5 -> WH00005
+                $warehouseCode = 'WH' . str_pad($branch->id, 5, '0', STR_PAD_LEFT);
 
-                /*
-                 * Check warehouse by ID.
-                 */
-                $warehouse = DB::table('warehouses')
-                    ->where('id', $warehouseId)
-                    ->first();
+                $warehouse = DB::table('warehouses')->where('id', $warehouseId)->first();
 
                 if (!$warehouse) {
-
-                    /*
-                     * Create warehouse with SAME ID as branch.
-                     */
-                    DB::table('warehouses')->insert([
-                        'id'            => $warehouseId,
-                        'branch_id'     => $branch->parent_id,
-                        'name'          => !empty($branch->name)
-                            ? $branch->name
-                            : 'Warehouse ' . $branch->id,
-
-                        'warehouseCode' => $warehouseCode,
-
-                        'email'         => $branch->email,
-                        'phone'         => $branch->phone,
-                        'address'       => $branch->address,
-
-                        'status'        => !empty($branch->status)
-                            ? $branch->status
-                            : 'Active',
-
-                        'created_by'    => $branch->created_by,
-                        'updated_by'    => $branch->updated_by,
-                        'deleted_by'    => $branch->deleted_by,
-
-                        'created_at'    => $branch->created_at,
-                        'updated_at'    => $branch->updated_at,
-                    ]);
+                    if (!$dryRun) {
+                        DB::table('warehouses')->insert([
+                            'id'            => $warehouseId,
+                            'branch_id'     => $branch->parent_id,
+                            'name'          => !empty($branch->name) ? $branch->name : 'Warehouse ' . $branch->id,
+                            'warehouseCode' => $warehouseCode,
+                            'email'         => $branch->email,
+                            'phone'         => $branch->phone,
+                            'address'       => $branch->address,
+                            'status'        => !empty($branch->status) ? $branch->status : 'Active',
+                            'created_by'    => $branch->created_by,
+                            'updated_by'    => $branch->updated_by,
+                            'deleted_by'    => $branch->deleted_by,
+                            'created_at'    => $branch->created_at,
+                            'updated_at'    => $branch->updated_at,
+                        ]);
+                    }
 
                     $created++;
                 } else {
 
-                    /*
-                     * Warehouse already exists.
-                     * No new ID will be generated.
-                     */
+                    if ((int) $warehouse->branch_id !== (int) $branch->parent_id) {
+                        $mismatches[] = [
+                            'warehouse_id'       => $warehouseId,
+                            'warehouse.branch_id' => $warehouse->branch_id,
+                            'branch.parent_id'   => $branch->parent_id,
+                        ];
+                    }
+
                     $skipped++;
                 }
 
-                /*
-                 * Branch warehouse_id = Branch ID.
-                 */
-                DB::table('branches')
-                    ->where('id', $branch->id)
-                    ->update([
-                        'warehouse_id' => $branch->id,
-                    ]);
+                if (!$dryRun) {
+                    DB::table('branches')
+                        ->where('id', $branch->id)
+                        ->update(['warehouse_id' => $branch->id]);
+                }
 
                 $updated++;
             }
 
-            DB::commit();
-
-            $this->newLine();
-
-            $this->info('Warehouse setup completed successfully.');
-
-            $this->table(
-                ['Created', 'Branches Updated', 'Already Exists'],
-                [
-                    [$created, $updated, $skipped]
-                ]
-            );
-
-            return self::SUCCESS;
+            if ($dryRun) {
+                DB::rollBack(); // dry run never writes, regardless of no errors
+            } else {
+                DB::commit();
+            }
         } catch (\Throwable $e) {
-
             DB::rollBack();
 
-            $this->error('Warehouse setup failed!');
+            $this->error('Branch/warehouse setup failed — nothing was written.');
             $this->error($e->getMessage());
 
             return self::FAILURE;
         }
+
+        $this->newLine();
+        $this->info('Step 1 complete: branches -> warehouses');
+        $this->table(
+            ['Warehouses Created', 'Branches Updated', 'Warehouses Already Existed'],
+            [[$created, $updated, $skipped]]
+        );
+
+        if (!empty($mismatches)) {
+            $this->warn('Found existing warehouses whose branch_id does NOT match the expected parent branch:');
+            $this->table(['warehouse_id', 'warehouse.branch_id', 'branch.parent_id'], $mismatches);
+            $this->warn('These were left untouched — review manually before proceeding.');
+        }
+
+
+        $this->newLine();
+        $this->info('Checking stocks.status...');
+
+        try {
+            $column = DB::selectOne("
+                SELECT COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT
+                FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE()
+                AND TABLE_NAME = 'stocks'
+                AND COLUMN_NAME = 'status'
+            ");
+
+            if (!$column) {
+                throw new \Exception('stocks.status column not found.');
+            }
+
+            $enumType = $column->COLUMN_TYPE;
+
+            $newStatuses = [
+                'Project To Project In',
+                'Project To Project Out',
+                'Project Transfer In',
+                'Project Transfer Out',
+            ];
+
+            $toAdd = [];
+            foreach ($newStatuses as $status) {
+                if (!str_contains($enumType, "'" . $status . "'")) {
+                    $enumType = substr($enumType, 0, -1) . ",'" . addslashes($status) . "')";
+                    $toAdd[] = $status;
+                }
+            }
+
+            if (empty($toAdd)) {
+                $this->info('All target statuses already present — nothing to add.');
+            } else {
+
+                $nullClause = strtoupper($column->IS_NULLABLE) === 'NO' ? 'NOT NULL' : 'NULL';
+
+                $defaultClause = '';
+                if ($column->COLUMN_DEFAULT !== null) {
+                    $defaultClause = "DEFAULT '" . addslashes($column->COLUMN_DEFAULT) . "'";
+                }
+
+                $sql = "ALTER TABLE stocks MODIFY status {$enumType} {$nullClause} {$defaultClause}";
+
+                if ($dryRun) {
+                    $this->info('Would run:');
+                    $this->line($sql);
+                } else {
+                    DB::statement($sql);
+                    $this->info('Stock status ENUM updated successfully.');
+                    $this->table(['Added Status'], array_map(fn($s) => [$s], $toAdd));
+                }
+            }
+        } catch (\Throwable $e) {
+            $this->error('Step 2 (status ENUM update) failed:');
+            $this->error($e->getMessage());
+            $this->warn('Step 1 (branches/warehouses) already committed successfully and is NOT affected by this failure.');
+
+            return self::FAILURE;
+        }
+
+        $this->newLine();
+        $this->info($dryRun ? 'Dry run complete — no changes were written.' : 'All setup completed successfully.');
+
+        return self::SUCCESS;
     }
 }
