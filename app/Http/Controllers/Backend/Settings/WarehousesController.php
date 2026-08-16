@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Backend\Settings;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
+use App\Models\Warehouse;
 use App\Services\Settings\warehouseService;
 use App\Services\Settings\WarehousesService;
 use App\Transformers\BranchTransformer;
@@ -58,6 +59,7 @@ class WarehousesController extends Controller
         $branchCode = 'BR' . str_pad($BranchData, 5, "0", STR_PAD_LEFT);
         return view('backend.pages.settings.warehouses.create', get_defined_vars());
     }
+
     /**
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -70,6 +72,7 @@ class WarehousesController extends Controller
             session()->flash('error', 'Validation error !!');
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
+
         $this->WarehousesService->store($request);
         session()->flash('success', 'Data successfully save!!');
         return redirect()->route('settings.warehouses.index');
@@ -89,7 +92,10 @@ class WarehousesController extends Controller
             session()->flash('error', 'Edit info is invalid!!');
             return redirect()->back();
         }
+
         $parents = Branch::where('parent_id', 0)->get();
+
+        $warehouse = Warehouse::find($editInfo->id);
         $title = 'Edit Branch';
         return view('backend.pages.settings.warehouses.edit', get_defined_vars());
     }

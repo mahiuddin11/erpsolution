@@ -63,6 +63,8 @@ class WarehousesService
      */
     public function storeValidation($request)
     {
+
+
         return [
             'name'               => 'required|max:100|min:2',
             'email'              => 'required|email|unique:branches,email',
@@ -96,6 +98,7 @@ class WarehousesService
      */
     public function store($request)
     {
+
         return $this->systemRepositories->store($request);
     }
 

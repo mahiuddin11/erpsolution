@@ -5,6 +5,7 @@ namespace App\Repositories\Settings;
 use App\Helpers\Helper;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Branch;
+use App\Models\Warehouse;
 use phpDocumentor\Reflection\PseudoTypes\False_;
 
 class WarehousesRepositories
@@ -16,9 +17,11 @@ class WarehousesRepositories
 
     private $warehouses;
 
+
     public function __construct(Branch $branch)
     {
         $this->warehouses = $branch;
+
         //$this->middleware(function ($request, $next) {
         $this->user_id = 1; //auth()->user()->id;
         //  return $next($request);
@@ -137,6 +140,7 @@ class WarehousesRepositories
 
     public function store($request)
     {
+
         // Save the Branch
         $branch = new $this->warehouses();
         $branch->parent_id = $request->parent_id;
@@ -148,6 +152,19 @@ class WarehousesRepositories
         $branch->status = 'Active';
         $branch->created_by = Auth::user()->id;
         $branch->save();
+
+        $warehouses = new Warehouse();
+        $warehouses->id = $branch->id;
+        $warehouses->name = $request->name ?? '';
+        $warehouses->branch_id = $request->parent_id;
+        $warehouses->warehouseCode = $request->warehouseCode ?? '';
+        $warehouses->email = $request->email ?? '';
+        $warehouses->phone = $request->phone ?? '';
+        $warehouses->address = $request->address ?? '';
+        $warehouses->address = $request->address ?? '';
+        $warehouses->status = $request->status ?? 'Active';
+        $warehouses->created_by = Auth::user()->id;
+        $warehouses->save();
 
         return $branch;
     }
@@ -163,14 +180,31 @@ class WarehousesRepositories
         $branch->status = 'Active';
         $branch->updated_by = Auth::user()->id;
         $branch->save();
+
+
+        $warehouses = Warehouse::findOrFail($id);
+        $warehouses->id = $branch->id;
+        $warehouses->name = $request->name ?? '';
+        $warehouses->branch_id = $request->parent_id;
+        $warehouses->warehouseCode = $request->warehouseCode ?? '';
+        $warehouses->email = $request->email ?? '';
+        $warehouses->phone = $request->phone ?? '';
+        $warehouses->address = $request->address ?? '';
+        $warehouses->address = $request->address ?? '';
+        $warehouses->status = $request->status ?? 'Active';
+        $warehouses->created_by = Auth::user()->id;
+        $warehouses->save();
+
         return $branch;
     }
 
     public function statusUpdate($id, $status)
     {
+
         $branch = $this->warehouses::find($id);
         $branch->status = $status;
         $branch->save();
+
         return $branch;
     }
 

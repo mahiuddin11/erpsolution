@@ -864,3 +864,152 @@
         white-space: normal;
     }
 }
+
+
+/* create edit page desing  */
+* ---------- Section headers ---------- */ .ecf-section {
+    border: 1px solid #e3e6ea;
+    border-radius: .5rem;
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+}
+
+.ecf-section .card-header {
+    background: #f8f9fb;
+    border-bottom: 1px solid #e3e6ea;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .85rem 1.1rem;
+}
+
+.ecf-section .card-header .ecf-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #eef2ff;
+    color: #3b5bdb;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    font-size: 13px;
+}
+
+.ecf-section .card-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.ecf-section .card-header small {
+    display: block;
+    color: #8a92a6;
+    font-size: .78rem;
+}
+
+.ecf-section .card-body {
+    padding: 1.1rem;
+}
+
+/* ---------- Form fields ---------- */
+.ecf-field {
+    margin-bottom: 1rem;
+}
+
+.ecf-field label {
+    font-weight: 500;
+    font-size: .86rem;
+    margin-bottom: .3rem;
+    color: #384158;
+}
+
+.ecf-field .text-danger {
+    font-weight: 600;
+}
+
+.ecf-field .form-text {
+    font-size: .76rem;
+    color: #9aa1b1;
+}
+
+.form-control:focus,
+.custom-file-input:focus~.custom-file-label,
+.select2-container--default.select2-container--focus .select2-selection {
+    border-color: #3b5bdb !important;
+    box-shadow: 0 0 0 .15rem rgba(59, 91, 219, .18) !important;
+}
+
+.select2-container {
+    width: 100% !important;
+}
+
+/* ---------- File upload with preview ---------- */
+.ecf-upload {
+    border: 1px dashed #c6cbd8;
+    border-radius: .4rem;
+    padding: .6rem .75rem;
+    background: #fbfbfd;
+}
+
+.ecf-upload-preview {
+    display: none;
+    align-items: center;
+    gap: .6rem;
+    margin-top: .55rem;
+}
+
+.ecf-upload-preview img {
+    width: 46px;
+    height: 46px;
+    object-fit: cover;
+    border-radius: .35rem;
+    border: 1px solid #dfe2ea;
+    background: #fff;
+}
+
+.ecf-upload-preview span {
+    font-size: .78rem;
+    color: #5c6579;
+    word-break: break-all;
+}
+
+/* ---------- Sticky save bar ---------- */
+.ecf-action-bar {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-top: 1px solid #e3e6ea;
+    padding: .85rem 1rem;
+    margin: 1.25rem -1.25rem -1.25rem -1.25rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: .6rem;
+    z-index: 5;
+}
+
+@media (max-width: 575.98px) {
+    .ecf-action-bar {
+        flex-direction: column-reverse;
+    }
+
+    .ecf-action-bar .btn {
+        width: 100%;
+    }
+
+    .ecf-section .card-header {
+        align-items: flex-start;
+    }
+}
+
+/* Keyboard accessibility */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid #3b5bdb;
+    outline-offset: 1px;
+}
