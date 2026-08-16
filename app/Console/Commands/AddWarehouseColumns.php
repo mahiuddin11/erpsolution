@@ -11,8 +11,8 @@ class AddWarehouseColumns extends Command
                             {--dry-run : Show what would happen without changing anything}
                             {--force : Skip the confirmation prompt}';
 
-    protected $description = 'SCHEMA-ONLY: Add warehouse_id + backup_branch_id columns to the '
-        . 'listed tables (if missing). Does NOT touch or update any existing row data — '
+    protected $description = 'SCHEMA-ONLY: Add warehouse_id + backup_branch_id + project_id columns '
+        . 'to the listed tables (if missing). Does NOT touch or update any existing row data — '
         . 'use warehouse:backfill-columns separately to populate these columns.';
 
     protected array $tables = [
@@ -26,8 +26,8 @@ class AddWarehouseColumns extends Command
         // 'dabit_vouchers',
         // 'dabit_voucher_details',
         // 'projects',
-        // 'project_transfers',
-        // 'project_transfer_details',
+        'project_transfers',
+        'project_transfer_details',
     ];
 
     public function handle()
@@ -50,13 +50,14 @@ class AddWarehouseColumns extends Command
         }
 
         $this->table(
-            ['Table', 'exists', 'warehouse_id', 'backup_branch_id'],
+            ['Table', 'exists', 'warehouse_id', 'backup_branch_id', 'project_id'],
             collect($plan)->map(function ($p, $table) {
                 return [
                     $table,
                     $p['table_exists'] ? 'yes' : 'MISSING TABLE',
                     !$p['table_exists'] ? '-' : ($p['has_warehouse_id'] ? 'exists' : 'will add'),
                     !$p['table_exists'] ? '-' : ($p['has_backup_branch_id'] ? 'exists' : 'will add'),
+                    !$p['table_exists'] ? '-' : ($p['has_project_id'] ? 'exists' : 'will add'),
                 ];
             })->toArray()
         );
@@ -74,10 +75,10 @@ class AddWarehouseColumns extends Command
             return self::SUCCESS;
         }
 
-        $needsWork = array_filter($processable, fn($p) => !$p['has_warehouse_id'] || !$p['has_backup_branch_id']);
+        $needsWork = array_filter($processable, fn($p) => !$p['has_warehouse_id'] || !$p['has_backup_branch_id'] || !$p['has_project_id']);
 
         if (empty($needsWork)) {
-            $this->info('All listed tables already have both columns. Nothing to do.');
+            $this->info('All listed tables already have all columns. Nothing to do.');
             return self::SUCCESS;
         }
 
@@ -114,6 +115,7 @@ class AddWarehouseColumns extends Command
             'table_exists'          => $tableExists,
             'has_warehouse_id'      => $tableExists && $this->columnExists($tableName, 'warehouse_id'),
             'has_backup_branch_id'  => $tableExists && $this->columnExists($tableName, 'backup_branch_id'),
+            'has_project_id'        => $tableExists && $this->columnExists($tableName, 'project_id'),
         ];
     }
 
@@ -177,6 +179,31 @@ class AddWarehouseColumns extends Command
             $this->line("  + added backup_branch_id (indexed, no FK — may hold corrupted/legacy values by design)");
         } else {
             $this->line("  - backup_branch_id already exists, skipped");
+        }
+
+        if (!$this->columnExists($tableName, 'project_id')) {
+            $backupBranchIdExists = $this->columnExists($tableName, 'backup_branch_id');
+            $projectsTableExists  = $this->tableExists('projects');
+
+            $fkClause = $projectsTableExists
+                ? ",\n                ADD CONSTRAINT `fk_{$tableName}_project_id`
+                    FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`)
+                    ON DELETE SET NULL"
+                : "";
+
+            DB::statement("
+                ALTER TABLE `{$tableName}`
+                ADD COLUMN `project_id` BIGINT UNSIGNED NULL DEFAULT NULL"
+                . ($backupBranchIdExists ? " AFTER `backup_branch_id`" : "") . ",
+                ADD INDEX `idx_{$tableName}_project_id` (`project_id`)"
+                . $fkClause . "
+            ");
+
+            $this->line($projectsTableExists
+                ? "  + added project_id (indexed, FK -> projects.id)"
+                : "  + added project_id (indexed, no FK — projects table not found)");
+        } else {
+            $this->line("  - project_id already exists, skipped");
         }
     }
 }

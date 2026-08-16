@@ -164,61 +164,6 @@
                                             </td>
                                         </tr>
                                     </table>
-                                    {{-- <table id="datatablexcel" class="table table-striped table-bordered">
-                                        <thead>
-                                            <tr>
-                                                <th>SL</th>
-                                                <th>Date</th>
-                                                <th>Product</th>
-                                                <th style="text-align: right">Quantity</th>
-                                                <th style="text-align: right">Avg Unit Price</th>
-                                                <th style="text-align: right">Total Price</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @php
-                                                $i = 1;
-
-                                                $qty = 0;
-                                                $unitprc = 0;
-                                                $totalprc = 0;
-
-                                            @endphp
-                                            @foreach ($StockDetails as $item)
-                                                @if ($item->productCode)
-                                                    @php
-
-                                                        $qty += $item->quantity;
-                                                        $unitprc += $item->avgPrice;
-                                                        $totalprc += $item->total_price;
-
-                                                    @endphp
-                                                    <tr>
-                                                        <td>{{ $i++ }}</td>
-                                                        <td>{{ $item->date }}</td>
-                                                        <td>{{ $item->productCode . ' - ' . $item->name }}</td>
-                                                        <td align="right">{{ $item->quantity }}</td>
-                                                        <td align="right">{{ $item->avgPrice }}</td>
-                                                        <td align="right">{{ $item->total_price }}</td>
-                                                    </tr>
-                                                @else
-                                                    <tr>
-                                                        <td colspan="6" style="color:red">NO DATA RECORDS</td>
-                                                    </tr>
-                                                @endif
-                                            @endforeach
-                                        </tbody>
-                                        <tfoot>
-                                            <tr>
-                                                <th colspan="3" style="text-align: right">Total</th>
-
-                                                <th style="text-align: right;">{{ $qty }}</th>
-                                                <th style="text-align: right;">{{ $unitprc }}</th>
-                                                <th style="text-align: right;">{{ $totalprc }}</th>
-                                            </tr>
-                                        </tfoot>
-
-                                    </table> --}}
 
                                     <table id="datatablexcel" class="table table-striped table-bordered">
                                         <thead>
@@ -240,50 +185,35 @@
                                         <tbody>
                                             @php
                                                 $i = 1;
-                                                $runningBalance = 0;
                                             @endphp
 
                                             @foreach ($StockDetails as $item)
                                                 @php
-                                                    // Stock In / Out Logic
-                                                    $positiveStatuses = [
-                                                        'Opening',
-                                                        'Purchase',
-                                                        'Manual Purchase',
-                                                        'Production',
-                                                        'Gain',
-                                                        'Transfer In',
-                                                        'Project In',
-                                                        'Return',
-                                                        'Purchase Return',
-                                                    ];
+                                                    // NOTE: in_qty, out_qty, running_balance, and particulars are already
+                                                    // computed correctly in the StockReportController::stock() method
+                                                    // (handles Opening/Purchase/Sale/Adjustment/Transfer/Project statuses,
+                                                    // including branch↔project movement). They are used AS-IS here —
+                                                    // do NOT recompute them in the view, that previously caused this
+                                                    // report to silently disagree with the controller's calculation.
+$inQty = $item->in_qty ?? 0;
+$outQty = $item->out_qty ?? 0;
+$runningBalance = $item->running_balance ?? 0;
+$particulars = $item->particulars ?? $item->status;
 
-                                                    $isIn = in_array($item->status, $positiveStatuses);
-
-                                                    if ($isIn) {
-                                                        $runningBalance += $item->quantity ?? 0;
-                                                        $inQty = $item->quantity ?? 0;
-                                                        $outQty = 0;
-                                                    } else {
-                                                        $runningBalance -= $item->quantity ?? 0;
-                                                        $inQty = 0;
-                                                        $outQty = $item->quantity ?? 0;
-                                                    }
-
-                                                    // Smart Invoice / Reference Logic
-                                                    $invoiceRef = '-';
-                                                    if (!empty($item->invoice_no)) {
-                                                        $invoiceRef = $item->invoice_no;
-                                                    } elseif (!empty($item->general_id)) {
-                                                        $invoiceRef = $item->general_id;
-                                                    } elseif ($item->status == 'Opening') {
-                                                        $invoiceRef = 'Opening Stock';
-                                                    } elseif (in_array($item->status, ['Gain', 'Damage', 'Lost'])) {
-                                                        $invoiceRef =
-                                                            $item->general_id ??
-                                                            'ADJ-' . str_pad($item->id ?? '', 5, '0', STR_PAD_LEFT);
-                                                    } else {
-                                                        $invoiceRef = $item->general_id ?? '-';
+// Smart Invoice / Reference Logic
+$invoiceRef = '-';
+if (!empty($item->invoice_no)) {
+    $invoiceRef = $item->invoice_no;
+} elseif (!empty($item->general_id)) {
+    $invoiceRef = $item->general_id;
+} elseif ($item->status == 'Opening') {
+    $invoiceRef = 'Opening Stock';
+} elseif (in_array($item->status, ['Gain', 'Damage', 'Lost'])) {
+    $invoiceRef =
+        $item->general_id ??
+        'ADJ-' . str_pad($item->id ?? '', 5, '0', STR_PAD_LEFT);
+} else {
+    $invoiceRef = $item->general_id ?? '-';
                                                     }
                                                 @endphp
 
@@ -293,8 +223,7 @@
                                                     <td>{{ $item->product_name ?? ($item->name ?? 'N/A') }}</td>
                                                     <td>{{ $item->date ? date('d-m-Y', strtotime($item->date)) : '' }}</td>
 
-                                                    <td><strong>{{ ucwords(str_replace(['_', '-'], ' ', $item->status)) }}</strong>
-                                                    </td>
+                                                    <td><strong>{{ $particulars }}</strong></td>
 
                                                     <td><strong>{{ $invoiceRef }}</strong></td>
 

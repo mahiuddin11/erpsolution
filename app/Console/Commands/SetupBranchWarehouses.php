@@ -145,6 +145,9 @@ class SetupBranchWarehouses extends Command
                 'Project To Project Out',
                 'Project Transfer In',
                 'Project Transfer Out',
+                'Project Transfer Out',
+                'Branch to Project',
+                'Project to Branch',
             ];
 
             $toAdd = [];

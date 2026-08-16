@@ -643,10 +643,10 @@ class StockReportController extends Controller
             ->select('status', DB::raw('SUM(quantity) as qty'), DB::raw('COUNT(*) as cnt'))
             ->groupBy('status')
             ->get();
+        $stocksummeryIn  = ['Opening', 'Purchase', 'Manual Purchase', 'Production', 'Gain', 'Transfer In', 'Return', 'Purchase Return', 'Project to Branch'];
+        $stocksummeryOut = ['Production Sale', 'Production Out', 'Sale', 'Damage', 'Lost', 'Transfer Out', 'Project Out', 'Project Use', 'Sale Return', 'Branch to Project'];
 
-        $stocksummeryIn  = ['Opening', 'Purchase', 'Manual Purchase', 'Production', 'Gain', 'Transfer In', 'Project In', 'Return', 'Purchase Return'];
-        $stocksummeryOut = ['Production Sale', 'Production Out', 'Sale', 'Damage', 'Lost', 'Transfer Out', 'Project Out', 'Project Use', 'Sale Return'];
-        $stockControllerIn = ['Opening', 'Purchase', 'Manual Purchase', 'Production', 'Gain', 'Loss', 'Transfer In', 'Project In', 'Return', 'Purchase Return'];
+        $stockControllerIn = ['Opening', 'Purchase', 'Manual Purchase', 'Production', 'Gain', 'Transfer In', 'Return', 'Purchase Return', 'Project to Branch'];
 
         $statusBreakdown = [];
         $unmappedStatuses = [];
