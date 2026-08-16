@@ -1,0 +1,14 @@
+step 1: run php artisan migrate . added table and culums 
+step 2 :  php artisan warehouse:setup-branch-warehouses --dry-run
+stock table status update 
+
+step 3 :php artisan warehouse:add-columns --dry-run
+
+add  ['warehouse_id', 'backup_branch_id', 'project_id'], this culums on taget table in array 
+
+step 4 : open deatabase tabe and serarch product id wise 
+
+
+step 5 : project trasaciton table e status chenge korte hobe 
+step 6: stock table e status change korte hobe 
+step 7 : stock adjuest ment table e data thakle checck kore remove korte hobe 
