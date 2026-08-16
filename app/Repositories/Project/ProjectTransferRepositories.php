@@ -692,7 +692,7 @@ class ProjectTransferRepositories
         DB::beginTransaction();
         $user = Auth::user();
 
-        // dd($request->all());
+
         try {
             $type = $request->transfer_type;
 
@@ -943,6 +943,7 @@ class ProjectTransferRepositories
         }
     }
 
+
     public function update($request, $id)
     {
         DB::beginTransaction();
@@ -955,6 +956,10 @@ class ProjectTransferRepositories
             $oldDetails = ProjectTransferDetails::where('project_transfer_id', $id)->get();
 
             // ---------- STEP 1: reverse old effects (StockSummary + pr_details.remaining_qty) ----------
+            // NOTE: match keys here are intentionally kept EXACTLY as before (branch_id,
+            // product_id, type, purchasetype only) — same as store()'s StockSummary
+            // matching convention — so this correctly finds/reverses rows regardless
+            // of whether they were created by the old or new store() logic.
             foreach ($oldDetails as $old) {
                 $oldQty = (float) $old->qty;
                 $ptype  = $old->purchasetype ?: 'local';
@@ -1005,34 +1010,41 @@ class ProjectTransferRepositories
             Stock::where('general_id', $id)->delete();
             ProjectTransferDetails::where('project_transfer_id', $id)->delete();
 
-            // ---------- STEP 2: update header ----------
+            // ---------- STEP 2: update header (mirrors store()'s header logic, incl. warehouse_id/backup_branch_id) ----------
             $purchaseorder->order_date = $request->date;
             $purchaseorder->note       = $request->note;
+            // invoice_no is intentionally left untouched — update() never regenerates it
 
             $fromBranchId  = null;
             $fromProjectId = null;
-
 
             if ($type === 'branch_to_project') {
                 $purchaseorder->branch_id               = $request->from_branch_id;
                 $purchaseorder->project_id               = $request->to_project_id_a;
                 $purchaseorder->purchase_requisition_id = $request->purchase_requisition;
+                $purchaseorder->warehouse_id             = $this->resolveWarehouseIdForBranch($request->from_branch_id);
+                $purchaseorder->backup_branch_id         = $request->from_branch_id;
                 $fromBranchId = $request->from_branch_id;
             } elseif ($type === 'project_to_project') {
                 $purchaseorder->project_id               = $request->from_project_id;
                 $purchaseorder->to_project_id            = $request->to_project_id_b;
                 $purchaseorder->purchase_requisition_id = $request->purchase_requisition ?: null;
+                $purchaseorder->warehouse_id             = null;
+                $purchaseorder->backup_branch_id         = null;
                 $fromProjectId = $request->from_project_id;
             } else { // project_to_branch
-                $purchaseorder->project_id = $request->from_project_id;
-                $purchaseorder->branch_id  = $request->to_branch_id;
+                $purchaseorder->project_id       = $request->from_project_id;
+                $purchaseorder->branch_id        = $request->to_branch_id;
+                $purchaseorder->warehouse_id     = $this->resolveWarehouseIdForBranch($request->to_branch_id);
+                $purchaseorder->backup_branch_id = $request->to_branch_id;
                 $fromProjectId = $request->from_project_id;
             }
 
             $purchaseorder->save();
             $purchaseOr_id = $purchaseorder->id;
+            $invoiceNo     = $purchaseorder->invoice_no; // reuse existing invoice_no on every stock row, same as store()
 
-            // ---------- STEP 3: re-apply exactly like store ----------
+            // ---------- STEP 3: re-apply exactly like store() ----------
             $category     = $request->category_nm;
             $product      = $request->product_nm;
             $qty          = $request->qty;
@@ -1046,7 +1058,7 @@ class ProjectTransferRepositories
                 $reqQtySnap  = isset($requestedQty[$i]) && $requestedQty[$i] !== '' ? (float) $requestedQty[$i] : null;
 
                 $unitPrice  = $this->resolveUnitPrice($type, $productId, $fromBranchId, $fromProjectId);
-                $totalPrice = round($unitPrice * $transferQty, 2);
+                $totalPrice = round($unitPrice * $transferQty);
 
                 // ---- 3a. Detail line ----
                 $detail = new ProjectTransferDetails();
@@ -1063,77 +1075,107 @@ class ProjectTransferRepositories
                 if ($type === 'branch_to_project') {
                     $detail->branch_id  = $request->from_branch_id;
                     $detail->project_id = $request->to_project_id_a;
+
+                    $detail->warehouse_id     = $this->resolveWarehouseIdForBranch($request->from_branch_id);
+                    $detail->backup_branch_id = $request->from_branch_id;
                 } elseif ($type === 'project_to_project') {
                     $detail->project_id = $request->to_project_id_b;
+                    // no branch involved -> warehouse_id / backup_branch_id stay NULL
                 } else {
                     $detail->branch_id  = $request->to_branch_id;
                     $detail->project_id = $request->from_project_id;
+
+                    $detail->warehouse_id     = $this->resolveWarehouseIdForBranch($request->to_branch_id);
+                    $detail->backup_branch_id = $request->to_branch_id;
                 }
                 $detail->save();
 
-                // ---- 3b. Stock ledger rows ----
+                // ---- 3b. Stock ledger rows (mirrors store()'s stockRows structure exactly) ----
                 $stockRows = [];
+
                 if ($type === 'branch_to_project') {
-                    $stockRows[] = ['branch_id' => $request->from_branch_id, 'project_id' => null, 'status' => 'Project Out'];
-                    $stockRows[] = ['branch_id' => 0, 'project_id' => $request->to_project_id_a, 'status' => 'Project In'];
+                    $stockRows[] = ['branch_id' => $request->from_branch_id, 'warehouse_id' => $this->resolveWarehouseIdForBranch($request->from_branch_id), 'backup_branch_id' => $request->from_branch_id, 'project_id' => null, 'status' => 'Branch to Project', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
+                    $stockRows[] = ['branch_id' => 0, 'warehouse_id' => null, 'backup_branch_id' => null, 'project_id' => $request->to_project_id_a, 'status' => 'Project Transfer In', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
                 } elseif ($type === 'project_to_project') {
-                    $stockRows[] = ['branch_id' => 0, 'project_id' => $request->from_project_id, 'status' => 'Project Out'];
-                    $stockRows[] = ['branch_id' => 0, 'project_id' => $request->to_project_id_b, 'status' => 'Project In'];
-                } else {
-                    $stockRows[] = ['branch_id' => 0, 'project_id' => $request->from_project_id, 'status' => 'Project Out'];
-                    $stockRows[] = ['branch_id' => $request->to_branch_id, 'project_id' => null, 'status' => 'Return'];
+                    $stockRows[] = ['branch_id' => 0, 'warehouse_id' => null, 'backup_branch_id' => null, 'project_id' => $request->from_project_id, 'status' => 'Project To Project Out', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
+                    $stockRows[] = ['branch_id' => 0, 'warehouse_id' => null, 'backup_branch_id' => null, 'project_id' => $request->to_project_id_b, 'status' => 'Project To Project In', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
+                } else { // project_to_branch
+                    $stockRows[] = ['branch_id' => 0, 'warehouse_id' => null, 'backup_branch_id' => null, 'project_id' => $request->from_project_id, 'status' => 'Project Transfer Out', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
+                    $stockRows[] = ['branch_id' => $request->to_branch_id, 'warehouse_id' => $this->resolveWarehouseIdForBranch($request->to_branch_id), 'backup_branch_id' => $request->to_branch_id, 'project_id' => null, 'status' => 'Project to Branch', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
                 }
 
                 foreach ($stockRows as $row) {
                     $stock = new Stock();
-                    $stock->general_id = $purchaseOr_id;
-                    $stock->product_id = $productId;
-                    $stock->quantity   = $transferQty;
-                    $stock->branch_id  = $row['branch_id'];
-                    $stock->project_id = $row['project_id'];
-                    $stock->date       = $request->date;
-                    $stock->status     = $row['status'];
-                    $stock->created_by = $user->id ?? $this->user_id;
+                    $stock->general_id       = $purchaseOr_id;
+                    $stock->product_id       = $productId;
+                    $stock->quantity         = $transferQty;
+                    $stock->unit_price       = $row['unit_price'];
+                    $stock->total_price      = $row['totalPrice'];
+                    $stock->branch_id        = $row['branch_id'];
+                    $stock->project_id       = $row['project_id'];
+                    $stock->date             = $request->date;
+                    $stock->status           = $row['status'];
+                    $stock->invoice_no       = $row['invoice_no'] ?? '';
+                    $stock->created_by       = $user->id ?? $this->user_id;
+                    $stock->warehouse_id     = $row['warehouse_id'];
+                    $stock->backup_branch_id = $row['backup_branch_id'];
                     $stock->save();
                 }
 
-                // ---- 3c. StockSummary sync ----
+                // ---- 3c. StockSummary sync (matching key unchanged, extra columns only on new-row creation) ----
                 if ($type === 'branch_to_project') {
-                    $fromKey = ['branch_id' => $request->from_branch_id, 'product_id' => $productId, 'type' => 'Branch', 'purchasetype' => $ptype];
-                    $toKey   = ['branch_id' => $request->to_project_id_a, 'product_id' => $productId, 'type' => 'Project', 'purchasetype' => $ptype];
+                    $fromMatchKey = ['branch_id' => $request->from_branch_id, 'product_id' => $productId, 'type' => 'Branch', 'purchasetype' => $ptype];
+                    $fromExtra    = ['project_id' => null, 'warehouse_id' => $this->resolveWarehouseIdForBranch($request->from_branch_id), 'backup_branch_id' => $request->from_branch_id];
+
+                    $toMatchKey = ['branch_id' => $request->to_project_id_a, 'product_id' => $productId, 'type' => 'Project', 'purchasetype' => $ptype];
+                    $toExtra    = ['project_id' => $request->to_project_id_a, 'warehouse_id' => null, 'backup_branch_id' => null];
                 } elseif ($type === 'project_to_project') {
-                    $fromKey = ['branch_id' => $request->from_project_id, 'product_id' => $productId, 'type' => 'Project', 'purchasetype' => $ptype];
-                    $toKey   = ['branch_id' => $request->to_project_id_b, 'product_id' => $productId, 'type' => 'Project', 'purchasetype' => $ptype];
+                    $fromMatchKey = ['branch_id' => $request->from_project_id, 'product_id' => $productId, 'type' => 'Project', 'purchasetype' => $ptype];
+                    $fromExtra    = ['project_id' => $request->from_project_id, 'warehouse_id' => null, 'backup_branch_id' => null];
+
+                    $toMatchKey = ['branch_id' => $request->to_project_id_b, 'product_id' => $productId, 'type' => 'Project', 'purchasetype' => $ptype];
+                    $toExtra    = ['project_id' => $request->to_project_id_b, 'warehouse_id' => null, 'backup_branch_id' => null];
                 } else {
-                    $fromKey = ['branch_id' => $request->from_project_id, 'product_id' => $productId, 'type' => 'Project', 'purchasetype' => $ptype];
-                    $toKey   = ['branch_id' => $request->to_branch_id, 'product_id' => $productId, 'type' => 'Branch', 'purchasetype' => $ptype];
+                    $fromMatchKey = ['branch_id' => $request->from_project_id, 'product_id' => $productId, 'type' => 'Project', 'purchasetype' => $ptype];
+                    $fromExtra    = ['project_id' => $request->from_project_id, 'warehouse_id' => null, 'backup_branch_id' => null];
+
+                    $toMatchKey = ['branch_id' => $request->to_branch_id, 'product_id' => $productId, 'type' => 'Branch', 'purchasetype' => $ptype];
+                    $toExtra    = ['project_id' => null, 'warehouse_id' => $this->resolveWarehouseIdForBranch($request->to_branch_id), 'backup_branch_id' => $request->to_branch_id];
                 }
 
-                $fromRow = StockSummary::where($fromKey)->first();
+                // FROM: decrement (create if somehow missing, to avoid a hard failure)
+                $fromRow = StockSummary::where($fromMatchKey)->first();
                 if ($fromRow) {
                     $fromRow->quantity = $fromRow->quantity - $transferQty;
                     $fromRow->save();
                 } else {
                     $fromRow = new StockSummary();
-                    $fromRow->branch_id    = $fromKey['branch_id'];
-                    $fromRow->product_id   = $fromKey['product_id'];
-                    $fromRow->type         = $fromKey['type'];
-                    $fromRow->purchasetype = $fromKey['purchasetype'];
+                    $fromRow->branch_id    = $fromMatchKey['branch_id'];
+                    $fromRow->product_id   = $fromMatchKey['product_id'];
+                    $fromRow->type         = $fromMatchKey['type'];
+                    $fromRow->purchasetype = $fromMatchKey['purchasetype'];
                     $fromRow->quantity     = -$transferQty;
+                    $fromRow->project_id       = $fromExtra['project_id'];
+                    $fromRow->warehouse_id     = $fromExtra['warehouse_id'];
+                    $fromRow->backup_branch_id = $fromExtra['backup_branch_id'];
                     $fromRow->save();
                 }
 
-                $toRow = StockSummary::where($toKey)->first();
+                // TO: increment or create
+                $toRow = StockSummary::where($toMatchKey)->first();
                 if ($toRow) {
                     $toRow->quantity = $toRow->quantity + $transferQty;
                     $toRow->save();
                 } else {
                     $toRow = new StockSummary();
-                    $toRow->branch_id    = $toKey['branch_id'];
-                    $toRow->product_id   = $toKey['product_id'];
-                    $toRow->type         = $toKey['type'];
-                    $toRow->purchasetype = $toKey['purchasetype'];
+                    $toRow->branch_id    = $toMatchKey['branch_id'];
+                    $toRow->product_id   = $toMatchKey['product_id'];
+                    $toRow->type         = $toMatchKey['type'];
+                    $toRow->purchasetype = $toMatchKey['purchasetype'];
                     $toRow->quantity     = $transferQty;
+                    $toRow->project_id       = $toExtra['project_id'];
+                    $toRow->warehouse_id     = $toExtra['warehouse_id'];
+                    $toRow->backup_branch_id = $toExtra['backup_branch_id'];
                     $toRow->save();
                 }
 
@@ -1154,6 +1196,15 @@ class ProjectTransferRepositories
                 }
             }
 
+            // ---------- STEP 4: requisition header status (branch_to_project only, mirrors store()) ----------
+            if ($type === 'branch_to_project' && $request->purchase_requisition) {
+                PurchaseRequisition::where('id', $request->purchase_requisition)->update([
+                    'approve_by' => $user->id ?? $this->user_id,
+                    'approve_at' => date('Y-m-d'),
+                    'status'     => 'Accepted',
+                ]);
+            }
+
             DB::commit();
             return $purchaseorder;
         } catch (\Exception $e) {
@@ -1166,6 +1217,229 @@ class ProjectTransferRepositories
             return null;
         }
     }
+    // public function update($request, $id)
+    // {
+    //     DB::beginTransaction();
+    //     $user = Auth::user();
+
+    //     try {
+    //         $purchaseorder = $this->projectTransfer::findOrFail($id);
+    //         $type = $purchaseorder->transfer_type; // locked, comes from the existing record — not from $request
+
+    //         $oldDetails = ProjectTransferDetails::where('project_transfer_id', $id)->get();
+
+    //         // ---------- STEP 1: reverse old effects (StockSummary + pr_details.remaining_qty) ----------
+    //         foreach ($oldDetails as $old) {
+    //             $oldQty = (float) $old->qty;
+    //             $ptype  = $old->purchasetype ?: 'local';
+
+    //             if ($type === 'branch_to_project') {
+    //                 $fromKey = ['branch_id' => $purchaseorder->branch_id, 'product_id' => $old->product_id, 'type' => 'Branch', 'purchasetype' => $ptype];
+    //                 $toKey   = ['branch_id' => $purchaseorder->project_id, 'product_id' => $old->product_id, 'type' => 'Project', 'purchasetype' => $ptype];
+    //             } elseif ($type === 'project_to_project') {
+    //                 $fromKey = ['branch_id' => $purchaseorder->project_id, 'product_id' => $old->product_id, 'type' => 'Project', 'purchasetype' => $ptype];
+    //                 $toKey   = ['branch_id' => $purchaseorder->to_project_id, 'product_id' => $old->product_id, 'type' => 'Project', 'purchasetype' => $ptype];
+    //             } else { // project_to_branch
+    //                 $fromKey = ['branch_id' => $purchaseorder->project_id, 'product_id' => $old->product_id, 'type' => 'Project', 'purchasetype' => $ptype];
+    //                 $toKey   = ['branch_id' => $purchaseorder->branch_id, 'product_id' => $old->product_id, 'type' => 'Branch', 'purchasetype' => $ptype];
+    //             }
+
+    //             // give back to source
+    //             $fromRow = StockSummary::where($fromKey)->first();
+    //             if ($fromRow) {
+    //                 $fromRow->quantity = $fromRow->quantity + $oldQty;
+    //                 $fromRow->save();
+    //             }
+
+    //             // remove from destination
+    //             $toRow = StockSummary::where($toKey)->first();
+    //             if ($toRow) {
+    //                 $toRow->quantity = $toRow->quantity - $oldQty;
+    //                 $toRow->save();
+    //             }
+
+    //             // restore requisition remaining balance (branch_to_project only, requisition-linked lines only)
+    //             if ($type === 'branch_to_project' && $purchaseorder->purchase_requisition_id && $old->requested_qty !== null) {
+    //                 $prDetail = PrDetails::where('pr_id', $purchaseorder->purchase_requisition_id)
+    //                     ->where('product_id', $old->product_id)
+    //                     ->first();
+
+    //                 if ($prDetail) {
+    //                     $current  = $prDetail->remaining_qty !== null ? (float) $prDetail->remaining_qty : (float) $prDetail->qty;
+    //                     $restored = min($current + $oldQty, (float) $prDetail->qty);
+
+    //                     $prDetail->remaining_qty = $restored;
+    //                     $prDetail->status        = $restored >= (float) $prDetail->qty ? 'Accepted' : 'Partial';
+    //                     $prDetail->save();
+    //                 }
+    //             }
+    //         }
+
+    //         // remove old ledger + detail rows tied to this transfer
+    //         Stock::where('general_id', $id)->delete();
+    //         ProjectTransferDetails::where('project_transfer_id', $id)->delete();
+
+    //         // ---------- STEP 2: update header ----------
+    //         $purchaseorder->order_date = $request->date;
+    //         $purchaseorder->note       = $request->note;
+
+    //         $fromBranchId  = null;
+    //         $fromProjectId = null;
+
+
+    //         if ($type === 'branch_to_project') {
+    //             $purchaseorder->branch_id               = $request->from_branch_id;
+    //             $purchaseorder->project_id               = $request->to_project_id_a;
+    //             $purchaseorder->purchase_requisition_id = $request->purchase_requisition;
+    //             $fromBranchId = $request->from_branch_id;
+    //         } elseif ($type === 'project_to_project') {
+    //             $purchaseorder->project_id               = $request->from_project_id;
+    //             $purchaseorder->to_project_id            = $request->to_project_id_b;
+    //             $purchaseorder->purchase_requisition_id = $request->purchase_requisition ?: null;
+    //             $fromProjectId = $request->from_project_id;
+    //         } else { // project_to_branch
+    //             $purchaseorder->project_id = $request->from_project_id;
+    //             $purchaseorder->branch_id  = $request->to_branch_id;
+    //             $fromProjectId = $request->from_project_id;
+    //         }
+
+    //         $purchaseorder->save();
+    //         $purchaseOr_id = $purchaseorder->id;
+
+    //         // ---------- STEP 3: re-apply exactly like store ----------
+    //         $category     = $request->category_nm;
+    //         $product      = $request->product_nm;
+    //         $qty          = $request->qty;
+    //         $purchasetype = $request->purchasetype;
+    //         $requestedQty = $request->requested_qty ?? [];
+
+    //         for ($i = 0; $i < count($product); $i++) {
+    //             $productId   = $product[$i];
+    //             $transferQty = (float) $qty[$i];
+    //             $ptype       = $purchasetype[$i] ?? 'local';
+    //             $reqQtySnap  = isset($requestedQty[$i]) && $requestedQty[$i] !== '' ? (float) $requestedQty[$i] : null;
+
+    //             $unitPrice  = $this->resolveUnitPrice($type, $productId, $fromBranchId, $fromProjectId);
+    //             $totalPrice = round($unitPrice * $transferQty, 2);
+
+    //             // ---- 3a. Detail line ----
+    //             $detail = new ProjectTransferDetails();
+    //             $detail->project_transfer_id = $purchaseOr_id;
+    //             $detail->category_id         = $category[$i];
+    //             $detail->purchasetype        = $ptype;
+    //             $detail->product_id          = $productId;
+    //             $detail->qty                 = $transferQty;
+    //             $detail->requested_qty       = $reqQtySnap;
+    //             $detail->unit_price          = $unitPrice;
+    //             $detail->total_price         = $totalPrice;
+    //             $detail->status              = 'Accepted';
+
+    //             if ($type === 'branch_to_project') {
+    //                 $detail->branch_id  = $request->from_branch_id;
+    //                 $detail->project_id = $request->to_project_id_a;
+    //             } elseif ($type === 'project_to_project') {
+    //                 $detail->project_id = $request->to_project_id_b;
+    //             } else {
+    //                 $detail->branch_id  = $request->to_branch_id;
+    //                 $detail->project_id = $request->from_project_id;
+    //             }
+    //             $detail->save();
+
+    //             // ---- 3b. Stock ledger rows ----
+    //             $stockRows = [];
+    //             if ($type === 'branch_to_project') {
+    //                 $stockRows[] = ['branch_id' => $request->from_branch_id, 'project_id' => null, 'status' => 'Project Out'];
+    //                 $stockRows[] = ['branch_id' => 0, 'project_id' => $request->to_project_id_a, 'status' => 'Project In'];
+    //             } elseif ($type === 'project_to_project') {
+    //                 $stockRows[] = ['branch_id' => 0, 'project_id' => $request->from_project_id, 'status' => 'Project Out'];
+    //                 $stockRows[] = ['branch_id' => 0, 'project_id' => $request->to_project_id_b, 'status' => 'Project In'];
+    //             } else {
+    //                 $stockRows[] = ['branch_id' => 0, 'project_id' => $request->from_project_id, 'status' => 'Project Out'];
+    //                 $stockRows[] = ['branch_id' => $request->to_branch_id, 'project_id' => null, 'status' => 'Return'];
+    //             }
+
+    //             foreach ($stockRows as $row) {
+    //                 $stock = new Stock();
+    //                 $stock->general_id = $purchaseOr_id;
+    //                 $stock->product_id = $productId;
+    //                 $stock->quantity   = $transferQty;
+    //                 $stock->branch_id  = $row['branch_id'];
+    //                 $stock->project_id = $row['project_id'];
+    //                 $stock->date       = $request->date;
+    //                 $stock->status     = $row['status'];
+    //                 $stock->created_by = $user->id ?? $this->user_id;
+    //                 $stock->save();
+    //             }
+
+    //             // ---- 3c. StockSummary sync ----
+    //             if ($type === 'branch_to_project') {
+    //                 $fromKey = ['branch_id' => $request->from_branch_id, 'product_id' => $productId, 'type' => 'Branch', 'purchasetype' => $ptype];
+    //                 $toKey   = ['branch_id' => $request->to_project_id_a, 'product_id' => $productId, 'type' => 'Project', 'purchasetype' => $ptype];
+    //             } elseif ($type === 'project_to_project') {
+    //                 $fromKey = ['branch_id' => $request->from_project_id, 'product_id' => $productId, 'type' => 'Project', 'purchasetype' => $ptype];
+    //                 $toKey   = ['branch_id' => $request->to_project_id_b, 'product_id' => $productId, 'type' => 'Project', 'purchasetype' => $ptype];
+    //             } else {
+    //                 $fromKey = ['branch_id' => $request->from_project_id, 'product_id' => $productId, 'type' => 'Project', 'purchasetype' => $ptype];
+    //                 $toKey   = ['branch_id' => $request->to_branch_id, 'product_id' => $productId, 'type' => 'Branch', 'purchasetype' => $ptype];
+    //             }
+
+    //             $fromRow = StockSummary::where($fromKey)->first();
+    //             if ($fromRow) {
+    //                 $fromRow->quantity = $fromRow->quantity - $transferQty;
+    //                 $fromRow->save();
+    //             } else {
+    //                 $fromRow = new StockSummary();
+    //                 $fromRow->branch_id    = $fromKey['branch_id'];
+    //                 $fromRow->product_id   = $fromKey['product_id'];
+    //                 $fromRow->type         = $fromKey['type'];
+    //                 $fromRow->purchasetype = $fromKey['purchasetype'];
+    //                 $fromRow->quantity     = -$transferQty;
+    //                 $fromRow->save();
+    //             }
+
+    //             $toRow = StockSummary::where($toKey)->first();
+    //             if ($toRow) {
+    //                 $toRow->quantity = $toRow->quantity + $transferQty;
+    //                 $toRow->save();
+    //             } else {
+    //                 $toRow = new StockSummary();
+    //                 $toRow->branch_id    = $toKey['branch_id'];
+    //                 $toRow->product_id   = $toKey['product_id'];
+    //                 $toRow->type         = $toKey['type'];
+    //                 $toRow->purchasetype = $toKey['purchasetype'];
+    //                 $toRow->quantity     = $transferQty;
+    //                 $toRow->save();
+    //             }
+
+    //             // ---- 3d. Decrement pr_details.remaining_qty (branch_to_project only) ----
+    //             if ($type === 'branch_to_project' && $request->purchase_requisition) {
+    //                 $prDetail = PrDetails::where('pr_id', $request->purchase_requisition)
+    //                     ->where('product_id', $productId)
+    //                     ->first();
+
+    //                 if ($prDetail) {
+    //                     $current      = $prDetail->remaining_qty !== null ? (float) $prDetail->remaining_qty : (float) $prDetail->qty;
+    //                     $newRemaining = $current - $transferQty;
+
+    //                     $prDetail->remaining_qty = max($newRemaining, 0);
+    //                     $prDetail->status        = $newRemaining <= 0 ? 'Transfer' : 'Partial';
+    //                     $prDetail->save();
+    //                 }
+    //             }
+    //         }
+
+    //         DB::commit();
+    //         return $purchaseorder;
+    //     } catch (\Exception $e) {
+    //         DB::rollback();
+    //         \Log::error('ProjectTransfer update failed: ' . $e->getMessage(), [
+    //             'line' => $e->getLine(),
+    //             'file' => $e->getFile(),
+    //         ]);
+    //         session()->flash('error', 'Something went wrong while updating the transfer: ' . $e->getMessage());
+    //         return null;
+    //     }
+    // }
 
     // public function update($request, $id)
     // {
@@ -1218,86 +1492,84 @@ class ProjectTransferRepositories
         try {
             $purchaseorder = $this->projectTransfer::find($id);
 
-
-
             if (!$purchaseorder) {
                 DB::rollback();
                 session()->flash('error', 'Transfer not found!!');
                 return false;
             }
 
-            if ($purchaseorder->status == "Accepted") {
+
+            if ($purchaseorder->status == "Accepted" && Auth::user()->type !== 'Admin') {
+                DB::rollback();
                 session()->flash('error', "Sorry, you couldn't delete!!");
                 return false;
-            } else {
+            }
 
-                $type = $purchaseorder->transfer_type;
-                $details = ProjectTransferDetails::where('project_transfer_id', $id)->get();
+            $type = $purchaseorder->transfer_type;
+            $details = ProjectTransferDetails::where('project_transfer_id', $id)->get();
 
-                // ---------- STEP 1: reverse StockSummary + pr_details.remaining_qty ----------
-                foreach ($details as $old) {
-                    $oldQty = (float) $old->qty;
-                    $ptype  = $old->purchasetype ?: 'local';
+            // ---------- STEP 1: reverse StockSummary + pr_details.remaining_qty ----------
+            foreach ($details as $old) {
+                $oldQty = (float) $old->qty;
+                $ptype  = $old->purchasetype ?: 'local';
 
-                    if ($type === 'branch_to_project') {
-                        $fromKey = ['branch_id' => $purchaseorder->branch_id, 'product_id' => $old->product_id, 'type' => 'Branch', 'purchasetype' => $ptype];
-                        $toKey   = ['branch_id' => $purchaseorder->project_id, 'product_id' => $old->product_id, 'type' => 'Project', 'purchasetype' => $ptype];
-                    } elseif ($type === 'project_to_project') {
-                        $fromKey = ['branch_id' => $purchaseorder->project_id, 'product_id' => $old->product_id, 'type' => 'Project', 'purchasetype' => $ptype];
-                        $toKey   = ['branch_id' => $purchaseorder->to_project_id, 'product_id' => $old->product_id, 'type' => 'Project', 'purchasetype' => $ptype];
-                    } else { // project_to_branch
-                        $fromKey = ['branch_id' => $purchaseorder->project_id, 'product_id' => $old->product_id, 'type' => 'Project', 'purchasetype' => $ptype];
-                        $toKey   = ['branch_id' => $purchaseorder->branch_id, 'product_id' => $old->product_id, 'type' => 'Branch', 'purchasetype' => $ptype];
-                    }
-
-                    // give back to source (undo the decrement done at store/update time)
-                    $fromRow = StockSummary::where($fromKey)->first();
-                    if ($fromRow) {
-                        $fromRow->quantity = $fromRow->quantity + $oldQty;
-                        $fromRow->save();
-                    } else {
-                        // source row somehow missing — recreate it with the restored qty
-                        $fromRow = new StockSummary();
-                        $fromRow->branch_id    = $fromKey['branch_id'];
-                        $fromRow->product_id   = $fromKey['product_id'];
-                        $fromRow->type         = $fromKey['type'];
-                        $fromRow->purchasetype = $fromKey['purchasetype'];
-                        $fromRow->quantity     = $oldQty;
-                        $fromRow->save();
-                    }
-
-                    // remove from destination (undo the increment done at store/update time)
-                    $toRow = StockSummary::where($toKey)->first();
-                    if ($toRow) {
-                        $toRow->quantity = $toRow->quantity - $oldQty;
-                        $toRow->save();
-                    }
-
-                    // restore requisition remaining balance (branch_to_project only, requisition-linked lines only)
-                    if ($type === 'branch_to_project' && $purchaseorder->purchase_requisition_id && $old->requested_qty !== null) {
-                        $prDetail = PrDetails::where('pr_id', $purchaseorder->purchase_requisition_id)
-                            ->where('product_id', $old->product_id)
-                            ->first();
-
-                        if ($prDetail) {
-                            $current  = $prDetail->remaining_qty !== null ? (float) $prDetail->remaining_qty : (float) $prDetail->qty;
-                            $restored = min($current + $oldQty, (float) $prDetail->qty);
-
-                            $prDetail->remaining_qty = $restored;
-                            $prDetail->status        = $restored >= (float) $prDetail->qty ? 'Accepted' : 'Partial';
-                            $prDetail->save();
-                        }
-                    }
+                if ($type === 'branch_to_project') {
+                    $fromKey = ['branch_id' => $purchaseorder->branch_id, 'product_id' => $old->product_id, 'type' => 'Branch', 'purchasetype' => $ptype];
+                    $toKey   = ['branch_id' => $purchaseorder->project_id, 'product_id' => $old->product_id, 'type' => 'Project', 'purchasetype' => $ptype];
+                } elseif ($type === 'project_to_project') {
+                    $fromKey = ['branch_id' => $purchaseorder->project_id, 'product_id' => $old->product_id, 'type' => 'Project', 'purchasetype' => $ptype];
+                    $toKey   = ['branch_id' => $purchaseorder->to_project_id, 'product_id' => $old->product_id, 'type' => 'Project', 'purchasetype' => $ptype];
+                } else { // project_to_branch
+                    $fromKey = ['branch_id' => $purchaseorder->project_id, 'product_id' => $old->product_id, 'type' => 'Project', 'purchasetype' => $ptype];
+                    $toKey   = ['branch_id' => $purchaseorder->branch_id, 'product_id' => $old->product_id, 'type' => 'Branch', 'purchasetype' => $ptype];
                 }
 
-                // ---------- STEP 2: delete ledger + detail + header rows ----------
-                Stock::where('general_id', $id)->delete();
-                ProjectTransferDetails::where('project_transfer_id', $id)->delete();
-                $purchaseorder->delete();
+                // give back to source (undo the decrement done at store/update time)
+                $fromRow = StockSummary::where($fromKey)->first();
+                if ($fromRow) {
+                    $fromRow->quantity = $fromRow->quantity + $oldQty;
+                    $fromRow->save();
+                } else {
+                    $fromRow = new StockSummary();
+                    $fromRow->branch_id    = $fromKey['branch_id'];
+                    $fromRow->product_id   = $fromKey['product_id'];
+                    $fromRow->type         = $fromKey['type'];
+                    $fromRow->purchasetype = $fromKey['purchasetype'];
+                    $fromRow->quantity     = $oldQty;
+                    $fromRow->save();
+                }
 
-                DB::commit();
-                return true;
+                // remove from destination (undo the increment done at store/update time)
+                $toRow = StockSummary::where($toKey)->first();
+                if ($toRow) {
+                    $toRow->quantity = $toRow->quantity - $oldQty;
+                    $toRow->save();
+                }
+
+                // restore requisition remaining balance (branch_to_project only, requisition-linked lines only)
+                if ($type === 'branch_to_project' && $purchaseorder->purchase_requisition_id && $old->requested_qty !== null) {
+                    $prDetail = PrDetails::where('pr_id', $purchaseorder->purchase_requisition_id)
+                        ->where('product_id', $old->product_id)
+                        ->first();
+
+                    if ($prDetail) {
+                        $current  = $prDetail->remaining_qty !== null ? (float) $prDetail->remaining_qty : (float) $prDetail->qty;
+                        $restored = min($current + $oldQty, (float) $prDetail->qty);
+
+                        $prDetail->remaining_qty = $restored;
+                        $prDetail->status        = $restored >= (float) $prDetail->qty ? 'Accepted' : 'Partial';
+                        $prDetail->save();
+                    }
+                }
             }
+
+            // ---------- STEP 2: delete ledger + detail + header rows ----------
+            Stock::where('general_id', $id)->delete();
+            ProjectTransferDetails::where('project_transfer_id', $id)->delete();
+            $purchaseorder->delete();
+
+            DB::commit();
+            return true;
         } catch (\Exception $e) {
             DB::rollback();
             \Log::error('ProjectTransfer destroy failed: ' . $e->getMessage(), [
