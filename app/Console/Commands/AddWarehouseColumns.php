@@ -16,8 +16,14 @@ class AddWarehouseColumns extends Command
         . 'use warehouse:backfill-columns separately to populate these columns.';
 
     protected array $tables = [
+
+
         'stocks',
         'stock_summaries',
+        'stock_ajdustments',
+        'stock_ajdustment_detailsts',
+        'project_transfers',
+        'project_transfer_details',
         // 'purchases',
         // 'purchases_details',
         // 'sales',
@@ -26,8 +32,7 @@ class AddWarehouseColumns extends Command
         // 'dabit_vouchers',
         // 'dabit_voucher_details',
         // 'projects',
-        'project_transfers',
-        'project_transfer_details',
+
     ];
 
     public function handle()
