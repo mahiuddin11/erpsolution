@@ -311,6 +311,136 @@ class ReportController extends Controller
     }
 
 
+    // public function project(Request $request)
+    // {
+
+    //     // dd('project', $request->all());
+    //     $title = 'Project Report';
+    //     $project_id = '';
+    //     if ($request->method() == 'POST') {
+
+    //         if ($request->project_id ==  0) {
+    //             return Redirect::back()->withErrors(['msg' => 'Project Can not be empty!']);
+    //         }
+
+    //         $projectDetails = '';
+    //         $projectExpense = '';
+    //         $productUses = '';
+    //         $productReturn = '';
+    //         $productIssue = '';
+
+    //         $project_id = $request->project_id;
+    //         $projectDetails = Project::join('users', 'users.id', '=', 'projects.manager_id')
+    //             ->where("projects.id", $project_id) // Specify the table name
+    //             ->first([
+    //                 'users.name as aname',
+    //                 'projects.budget',
+    //                 'projects.start_date',
+    //                 'projects.estimate_profit',
+    //                 'projects.condition',
+    //                 'projects.closing',
+    //                 'projects.end_date',
+    //                 'projects.name as pname',
+    //                 'users.phone as aphone',
+    //                 'projects.address',
+    //                 'projects.projectCode'
+    //             ]);
+    //         // $productUses = ProductUse::join('product_use_details', 'product_use_details.product_use_id', '=', 'product_uses.id')
+    //         //     ->join('products', 'products.id', '=', 'product_use_details.product_id')
+    //         //     ->get(['products.name as pname', 'products.productCode as pcode', 'product_uses.invoice_no as in_no', 'product_use_details.updated_at as upDate', 'product_use_details.use_qty as uqty', 'products.purchases_price as purPrice', 'products.id as productId']);
+
+    //         $accountsTrans = AccountTransaction::where('type', 5)->whereNull('credit')->where('project_id', $project_id)->get();
+    //         $productgoodreceive = Grn::with('details')->where('project_id', $project_id)->get();
+
+    //         $projectTransfer = ProjectTransfer::with('details')->where('project_id', $project_id)->get();
+
+    //         $projectMoney = ProjectMoney::where('project_id', $project_id)->sum('debit');
+
+    //         // dd('transfer', $projectTransfer,  $projectMoney);
+
+    //         $directIncome = AccountTransaction::whereIn('account_id', getOldAccount(24)->pluck("id"))->where('project_id', $project_id)->get();
+    //         $indirectIncome = AccountTransaction::whereIn('account_id', getOldAccount(25)->pluck("id"))->where('project_id', $project_id)->get();
+    //         $directExpenses = AccountTransaction::whereIn('account_id', getOldAccount(20)->pluck("id"))->where('project_id', $project_id)->get();
+    //         $indirectExpenses = AccountTransaction::whereIn('account_id', getOldAccount(21)->pluck("id"))->where('project_id', $project_id)->get();
+
+    //         $invoice = Invoice::where('project_id', $project_id)->first();
+    //     }
+
+    //     $companyInfo = Company::latest('id')->first();
+    //     $project = Project::where('status', 'Active')->get();
+    //     return view('backend.pages.reports.project', get_defined_vars());
+    // }
+
+    // public function project(Request $request)
+    // {
+
+    //     // dd('project', $request->all());
+    //     $title = 'Project Report';
+    //     $project_id = '';
+    //     if ($request->method() == 'POST') {
+
+    //         if ($request->project_id ==  0) {
+    //             return Redirect::back()->withErrors(['msg' => 'Project Can not be empty!']);
+    //         }
+
+    //         $projectDetails = '';
+    //         $projectExpense = '';
+    //         $productUses = '';
+    //         $productReturn = '';
+    //         $productIssue = '';
+
+    //         $project_id = $request->project_id;
+    //         $projectDetails = Project::join('users', 'users.id', '=', 'projects.manager_id')
+    //             ->where("projects.id", $project_id) // Specify the table name
+    //             ->first([
+    //                 'users.name as aname',
+    //                 'projects.budget',
+    //                 'projects.start_date',
+    //                 'projects.estimate_profit',
+    //                 'projects.condition',
+    //                 'projects.closing',
+    //                 'projects.end_date',
+    //                 'projects.name as pname',
+    //                 'users.phone as aphone',
+    //                 'projects.address',
+    //                 'projects.projectCode'
+    //             ]);
+    //         // $productUses = ProductUse::join('product_use_details', 'product_use_details.product_use_id', '=', 'product_uses.id')
+    //         //     ->join('products', 'products.id', '=', 'product_use_details.product_id')
+    //         //     ->get(['products.name as pname', 'products.productCode as pcode', 'product_uses.invoice_no as in_no', 'product_use_details.updated_at as upDate', 'product_use_details.use_qty as uqty', 'products.purchases_price as purPrice', 'products.id as productId']);
+
+    //         $accountsTrans = AccountTransaction::where('type', 5)->whereNull('credit')->where('project_id', $project_id)->get();
+    //         $productgoodreceive = Grn::with('details')->where('project_id', $project_id)->get();
+
+
+
+    //         $projectTransfer = ProjectTransfer::with('details')
+    //             ->where('status', 'Accepted')
+    //             ->where(function ($q) use ($project_id) {
+    //                 $q->where('project_id', $project_id)
+    //                     ->orWhere('to_project_id', $project_id);
+    //             })
+    //             ->get();
+
+    //         $projectMoney = ProjectMoney::where('project_id', $project_id)->sum('debit');
+
+    //         $transferBranchNames  = Branch::whereIn('id', $transferBranchIds)->pluck('name', 'id');
+    //         $transferProjectNames = Project::whereIn('id', $transferProjectIds)->pluck('name', 'id');
+    //         // dd('transfer', $projectTransfer, $project_id);
+
+    //         $directIncome = AccountTransaction::whereIn('account_id', getOldAccount(24)->pluck("id"))->where('project_id', $project_id)->get();
+    //         $indirectIncome = AccountTransaction::whereIn('account_id', getOldAccount(25)->pluck("id"))->where('project_id', $project_id)->get();
+    //         $directExpenses = AccountTransaction::whereIn('account_id', getOldAccount(20)->pluck("id"))->where('project_id', $project_id)->get();
+    //         $indirectExpenses = AccountTransaction::whereIn('account_id', getOldAccount(21)->pluck("id"))->where('project_id', $project_id)->get();
+
+    //         $invoice = Invoice::where('project_id', $project_id)->first();
+    //     }
+
+    //     $companyInfo = Company::latest('id')->first();
+    //     $project = Project::where('status', 'Active')->get();
+    //     return view('backend.pages.reports.project', get_defined_vars());
+    // }
+
     public function project(Request $request)
     {
 
@@ -352,9 +482,33 @@ class ReportController extends Controller
             $accountsTrans = AccountTransaction::where('type', 5)->whereNull('credit')->where('project_id', $project_id)->get();
             $productgoodreceive = Grn::with('details')->where('project_id', $project_id)->get();
 
-            $projectTransfer = ProjectTransfer::with('details')->where('project_id', $project_id)->get();
-            $projectMoney = ProjectMoney::where('project_id', $project_id)->sum('debit');
 
+
+
+            $projectTransfer = ProjectTransfer::with('details')
+                ->where('status', 'Accepted')
+                ->where(function ($q) use ($project_id) {
+                    $q->where('project_id', $project_id)
+                        ->orWhere('to_project_id', $project_id);
+                })
+                ->get();
+
+
+
+            $transferBranchIds = $projectTransfer->pluck('branch_id')
+                ->merge($projectTransfer->pluck('warehouse_id'))
+                ->filter()
+                ->unique();
+
+            $transferProjectIds = $projectTransfer->pluck('project_id')
+                ->merge($projectTransfer->pluck('to_project_id'))
+                ->filter()
+                ->unique();
+
+            $transferBranchNames  = Branch::whereIn('id', $transferBranchIds)->pluck('name', 'id');
+            $transferProjectNames = Project::whereIn('id', $transferProjectIds)->pluck('name', 'id');
+
+            $projectMoney = ProjectMoney::where('project_id', $project_id)->sum('debit');
 
             $directIncome = AccountTransaction::whereIn('account_id', getOldAccount(24)->pluck("id"))->where('project_id', $project_id)->get();
             $indirectIncome = AccountTransaction::whereIn('account_id', getOldAccount(25)->pluck("id"))->where('project_id', $project_id)->get();
@@ -368,8 +522,6 @@ class ReportController extends Controller
         $project = Project::where('status', 'Active')->get();
         return view('backend.pages.reports.project', get_defined_vars());
     }
-
-
 
     public function supledger(Request $request)
     {

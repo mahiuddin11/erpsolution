@@ -213,7 +213,8 @@
                                                 <th>Amount</th>
                                             </tr>
                                         </thead>
-                                        @if (!$productgoodreceive->isEmpty())
+
+                                        @if ($productgoodreceive->isNotEmpty() || $projectTransfer->isNotEmpty())
                                             <tbody>
                                                 <tr>
                                                     <td colspan="5">
@@ -244,7 +245,89 @@
                                                     @endforeach
                                                 @endforeach
 
+
                                                 @foreach ($projectTransfer as $val)
+                                                    @foreach ($val->details as $eachuse)
+                                                        @php
+
+                                                            $unitPrice = $eachuse->unit_price ?? 0;
+
+                                                            if ($unitPrice <= 0) {
+                                                                $purchase = App\Models\PurchasesDetails::whereMonth(
+                                                                    'date',
+                                                                    date('m', strtotime($val->order_date)),
+                                                                )
+                                                                    ->where('product_id', $eachuse->product_id)
+                                                                    ->latest('id')
+                                                                    ->first();
+
+                                                                if (!$purchase) {
+                                                                    $purchase = App\Models\PurchasesDetails::where(
+                                                                        'product_id',
+                                                                        $eachuse->product_id,
+                                                                    )
+                                                                        ->latest('id')
+                                                                        ->first();
+                                                                }
+
+                                                                $unitPrice = $purchase->unit_price ?? 0;
+                                                            }
+
+                                                            $lineAmount = $unitPrice * $eachuse->qty;
+
+                                                            if ($val->transfer_type == 'branch_to_project') {
+                                                                $sourceName =
+                                                                    $transferBranchNames[$val->branch_id] ??
+                                                                    ($transferBranchNames[$val->warehouse_id] ?? 'N/A');
+                                                                $transferSign = 1;
+                                                                $transferLabel = 'Transfer In from ' . $sourceName;
+                                                            } elseif ($val->transfer_type == 'project_to_project') {
+                                                                if ((int) $val->project_id === (int) $project_id) {
+                                                                    $destName =
+                                                                        $transferProjectNames[$val->to_project_id] ??
+                                                                        'N/A';
+                                                                    $transferSign = -1;
+                                                                    $transferLabel = 'Transfer Out to ' . $destName;
+                                                                } else {
+                                                                    $srcName =
+                                                                        $transferProjectNames[$val->project_id] ??
+                                                                        'N/A';
+                                                                    $transferSign = 1;
+                                                                    $transferLabel = 'Transfer In from ' . $srcName;
+                                                                }
+                                                            } elseif ($val->transfer_type == 'project_to_branch') {
+                                                                $destName =
+                                                                    $transferBranchNames[$val->branch_id] ??
+                                                                    ($transferBranchNames[$val->warehouse_id] ?? 'N/A');
+                                                                $transferSign = -1;
+                                                                $transferLabel = 'Transfer Out to ' . $destName;
+                                                            } else {
+                                                                $transferSign = 1;
+                                                                $transferLabel = 'Transfer';
+                                                            }
+
+                                                            $signedAmount = $transferSign * $lineAmount;
+                                                            $productAmount += $signedAmount;
+                                                        @endphp
+                                                        <tr>
+                                                            <td>{{ $val->order_date }}</td>
+                                                            <td>{{ $val->invoice_no }}</td>
+                                                            <td>
+                                                                {{ ($eachuse->product->productCode ?? 'N/A') . ' - ' . ($eachuse->product->name ?? '') }}
+                                                                <br>
+                                                                <small
+                                                                    class="{{ $transferSign < 0 ? 'text-danger' : 'text-success' }}">{{ $transferLabel }}</small>
+                                                            </td>
+                                                            <td>{{ $eachuse->qty }}</td>
+                                                            <td style="text-align: right;"
+                                                                class="{{ $transferSign < 0 ? 'text-danger' : '' }}">
+                                                                {{ $transferSign < 0 ? '(' . number_format($lineAmount, 2) . ')' : number_format($lineAmount, 2) }}
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                @endforeach
+
+                                                {{-- @foreach ($projectTransfer as $val)
                                                     @foreach ($val->details as $eachuse)
                                                         @php
                                                             $purchase = App\Models\PurchasesDetails::whereMonth(
@@ -274,7 +357,7 @@
                                                                 {{ $purchase->unit_price * $eachuse->qty }}</td>
                                                         </tr>
                                                     @endforeach
-                                                @endforeach
+                                                @endforeach --}}
 
                                                 <tr>
                                                     <th colspan="4" style="text-align: center;">Total Uses</th>
@@ -282,6 +365,8 @@
                                                 </tr>
                                             </tbody>
                                         @endif
+                                        {{-- @dd($projectTransfer); --}}
+
                                         {{--
                                         @if ($productReturn)
                                             <tbody>
@@ -434,7 +519,8 @@
                                                     </tr>
                                                 @endforeach
                                                 <tr>
-                                                    <th colspan="2" style="text-align: center;">Total Direct Expense</th>
+                                                    <th colspan="2" style="text-align: center;">Total Direct Expense
+                                                    </th>
                                                     <th style="text-align: right;">{{ $ttlexpdir }}</th>
                                                 </tr>
                                             </tbody>
