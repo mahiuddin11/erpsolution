@@ -634,7 +634,7 @@
                                             Auto Check Out Allow <span class="text-danger">*</span>
                                             <i class="fa fa-question-circle text-muted" data-toggle="tooltip"
                                                 data-placement="top"
-                                                title="Yes: কর্মচারী Check Out করতে ভুলে গেলে সিস্টেম নিজে থেকে বন্ধ করে দেবে। সাধারণ Day Shift কর্মচারীদের জন্য প্রযোজ্য। || No: Auto Check Out বন্ধ থাকবে — Night Guard, Driver, Operator ইত্যাদির জন্য, এদের নিজে Check Out করতে হবে।">
+                                                title="Yes: The system will shut down automatically if the employee forgets to Check Out. Applicable to general Day Shift employees. || No: Auto Check Out will be off — For Night Guard, Driver, Operator etc., they have to check out manually.">
                                             </i>
                                         </label>
                                         <select name="auto_checkout" id="auto_checkout"
@@ -648,6 +648,96 @@
                                         @error('auto_checkout')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- ================= USER ACCESS ================= --}}
+                        <div class="card ecf-section">
+                            <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                                <div class="d-flex align-items-center" style="gap:.6rem;">
+                                    <span class="ecf-icon"><i class="fa fa-user-lock"></i></span>
+                                    <div>
+                                        <h4>User Access</h4>
+                                        <small>Enabling this will create a login account for the employee</small>
+                                    </div>
+                                </div>
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="create_user_toggle"
+                                        name="create_user" value="1" {{ old('create_user') ? 'checked' : '' }}>
+                                    <label class="custom-control-label" for="create_user_toggle">Create User
+                                        Account</label>
+                                </div>
+                            </div>
+
+                            <div class="card-body" id="userAccessBody"
+                                style="{{ old('create_user') ? '' : 'display:none;' }}">
+                                <div class="row">
+                                    <div class="col-12 col-sm-6 col-lg-4 ecf-field">
+                                        <label>Login Name <span class="text-danger">*</span></label>
+                                        <input type="text"
+                                            class="form-control @error('user_name') is-invalid @enderror"
+                                            value="{{ old('user_name') }}" name="user_name" id="user_name"
+                                            placeholder="Auto-fill from Name field">
+                                        @error('user_name')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-12 col-sm-6 col-lg-4 ecf-field">
+                                        <label>Login Email <span class="text-danger">*</span></label>
+                                        <input type="email"
+                                            class="form-control @error('user_email') is-invalid @enderror"
+                                            value="{{ old('user_email') }}" name="user_email" id="user_email"
+                                            placeholder="Auto-fill from Email field">
+                                        @error('user_email')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-12 col-sm-6 col-lg-4 ecf-field">
+                                        <label>Role <span class="text-danger">*</span></label>
+                                        <select name="role_name" id="role_name"
+                                            class="form-control select2 @error('role_name') is-invalid @enderror">
+                                            <option value="" selected disabled>Select Role</option>
+                                            @foreach ($userRoll as $value)
+                                                <option value="{{ $value->id }}">
+                                                    {{ $value->role_name }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('role_name')
+                                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-12 col-sm-6 col-lg-4 ecf-field">
+                                        <label>Type <span class="text-danger">*</span></label>
+                                        <select name="type" id="user_type"
+                                            class="form-control @error('type') is-invalid @enderror">
+                                            <option value="" disabled>Select Type</option>
+                                            <option value="Admin" @selected(old('type') == 'Admin')>Admin</option>
+                                            <option value="Employee" @selected(old('type', 'Employee') == 'Employee')>Employee</option>
+                                        </select>
+                                        @error('type')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-12 col-sm-6 col-lg-4 ecf-field">
+                                        <label>Password <span class="text-danger">*</span></label>
+                                        <input type="password"
+                                            class="form-control @error('password') is-invalid @enderror" name="password"
+                                            id="user_password" placeholder="Password">
+                                        @error('password')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-12 col-sm-6 col-lg-4 ecf-field">
+                                        <label>Confirm Password <span class="text-danger">*</span></label>
+                                        <input type="password" class="form-control" name="password_confirmation"
+                                            id="user_password_confirmation" placeholder="Confirm Password">
                                     </div>
                                 </div>
                             </div>
@@ -757,6 +847,66 @@
                     $areaSelect.trigger('change');
                 }
             });
+        }
+    </script>
+
+    <script>
+        // ---------- User Access toggle + auto-fill ----------
+        var $userToggle = $('#create_user_toggle');
+        var $userBody = $('#userAccessBody');
+        var userEdited = {
+            user_name: false,
+            user_email: false
+        };
+
+        function toggleUserFieldsRequired(state) {
+            $userBody.find('#user_name, #user_email, #role_name, #user_type, #user_password, #user_password_confirmation')
+                .prop('required', state);
+        }
+
+        function syncUserFieldsFromPersonalInfo() {
+            if (!userEdited.user_name) {
+                $('#user_name').val($('input[name="name"]').val());
+            }
+            if (!userEdited.user_email) {
+                $('#user_email').val($('input[name="email"]').val());
+            }
+        }
+
+        $userToggle.on('change', function() {
+            if (this.checked) {
+                $userBody.slideDown(150);
+                toggleUserFieldsRequired(true);
+                syncUserFieldsFromPersonalInfo();
+            } else {
+                $userBody.slideUp(150);
+                toggleUserFieldsRequired(false);
+            }
+        });
+
+
+        $('#user_name').on('input', function() {
+            userEdited.user_name = true;
+        });
+        $('#user_email').on('input', function() {
+            userEdited.user_email = true;
+        });
+
+
+        $('input[name="name"]').on('input', function() {
+            if ($userToggle.is(':checked') && !userEdited.user_name) {
+                $('#user_name').val($(this).val());
+            }
+        });
+        $('input[name="email"]').on('input', function() {
+            if ($userToggle.is(':checked') && !userEdited.user_email) {
+                $('#user_email').val($(this).val());
+            }
+        });
+
+
+        if ($userToggle.is(':checked')) {
+            toggleUserFieldsRequired(true);
         }
     </script>
 @endsection

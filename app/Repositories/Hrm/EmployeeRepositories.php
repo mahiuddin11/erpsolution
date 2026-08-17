@@ -5,8 +5,11 @@ namespace App\Repositories\Hrm;
 use App\Helpers\Helper;
 use App\Models\Accounts;
 use App\Models\Employee;
+use App\Models\RoleAccess;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use PhpParser\Node\Stmt\TryCatch;
@@ -267,7 +270,7 @@ class EmployeeRepositories
     public function store($request)
     {
 
-        // dd('adsfads', $request->all());
+
         try {
 
             $employee = new Employee();
@@ -363,7 +366,7 @@ class EmployeeRepositories
                     "first_name" => $employee->am_name,
                     "last_name" => null,
                     "nickname" => null,
-                    "card_no" => $employee->id_card ?? '',
+                    "card_no" => null,
                     "department" => 1,
                     "position" => null,
                     "hire_date" => $employee->join_date ?? date("Y-m-d"),
@@ -407,6 +410,32 @@ class EmployeeRepositories
                     session()->flash('warning', 'Employee saved but ZKTeco device sync failed. Please check device connection.');
                 }
             }
+
+
+            if ($request->boolean('create_user')) {
+
+                $user = new User();
+                $user->name = $request->user_name;
+                $user->phone = $request->phone ?? $request->personal_phone;
+                $user->employee_id = $employee->id;
+                $user->email = $request->user_email;
+                $user->password = Hash::make($request->password);
+                $user->branch_id = $request->branch_id;
+                $user->role_id = $request->role_name;
+                $user->type = $request->type;
+                $user->status = 'Active';
+                $user->created_by = Auth::user()->id;
+                $user->save();
+
+                $accessRoll = new RoleAccess();
+                $accessRoll->user_id = $user->id;
+                $accessRoll->role_id = $request->role_name;
+                $accessRoll->save();
+
+                $employee->user_id = $user->id;
+                $employee->save();
+            }
+
 
             return $employee;
         } catch (\Exception $e) {

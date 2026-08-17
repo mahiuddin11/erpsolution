@@ -103,7 +103,6 @@ class EmployeeController extends Controller
      */
     public function store(Request $request)
     {
-        // dd($request->all(), "Employee store");
         try {
             $this->validate($request, $this->systemService->storeValidation($request));
         } catch (ValidationException $e) {
@@ -111,6 +110,7 @@ class EmployeeController extends Controller
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
         $this->systemService->store($request);
+
         session()->flash('success', 'Data successfully save!!');
         return redirect()->route('hrm.employee.index');
     }
