@@ -8,8 +8,37 @@
         .bootstrap-switch-large {
             width: 200px;
         }
+
+        .clickable-row {
+            cursor: pointer;
+        }
+
+        .clickable-row:hover {
+            background-color: #f8f9fa;
+        }
+
+        .modal-body .table-sm th,
+        .modal-body .table-sm td {
+            padding: 0.4rem;
+        }
+
+        @media print {
+            .modal {
+                display: none !important;
+            }
+        }
+
+        @media (max-width: 767px) {
+
+            .invoice table.table-bordered td,
+            .invoice table.table-bordered th {
+                font-size: 12px;
+                padding: 0.4rem;
+            }
+        }
     </style>
 @endsection
+
 @section('navbar-content')
     <div class="content-header">
         <div class="container-fluid">
@@ -52,7 +81,6 @@
                         </div>
 
                         <div class="row no-print">
-                            {{-- @dd('ff'); --}}
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label>Project </label>
@@ -71,10 +99,6 @@
                                 </div>
                             </div>
 
-                            @php
-
-                            @endphp
-
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label>&nbsp;</label><br>
@@ -90,7 +114,6 @@
             </form>
         </div>
         @php
-            // dd($projectDetails);
             $productAmount = 0;
         @endphp
         @if (isset($projectDetails) && !empty($projectDetails))
@@ -156,433 +179,679 @@
                                             </td>
                                         </tr>
                                     </table>
-                                    {{-- <table id="datatablexcel" class="table  table-striped  table-bordered">
-                                        <thead>
-                                            <tr>
-                                                <td colspan="5"><b>
-                                                        <i class="fa fa-bullseye" aria-hidden="true"></i>
 
-                                                    </b></td>
-                                            </tr>
-                                            <tr>
-                                                <th>Date</th>
-                                                <th>Invoice</th>
-                                                <th>Details</th>
-                                                <th>Quantity</th>
-                                            </tr>
-                                        </thead>
-                                        @if ($productIssue)
-                                            <tbody>
-                                                @php
-                                                    $ttlpurchase = 0;
-                                                @endphp
-                                                @foreach ($productgoodreceive as $element)
-                                                 @foreach ($element->details as $eachissue)
-                                                 @php
-                                                     $ttlpurchase +=$eachissue->qty;
-                                                 @endphp
-                                                    <tr>
-                                                        <td>{{ $eachissue->date }}</td>
-                                                        <td>{{ $element->invoice_no }}</td>
-                                                        <td>{{ ($eachissue->product->productCode ?? "N/A") . ' - ' . $eachissue->product->name ?? ""}}</td>
-                                                        <td>{{ $eachissue->qty }}</td>
+                                    {{-- >>> NEW: Products details - product wise grouped with modal --}}
+                                    @php
+                                        $productRows = collect();
 
-                                                    </tr>
-                                                 @endforeach
-                                                @endforeach
-                                                <tr>
-                                                    <th colspan="3" style="text-align: center;">Total Issue</th>
-                                                    <th style="text-align: center;">{{ $ttlpurchase }}</th>
-                                                </tr>
-                                            </tbody>
-                                            @endif
-                                    </table> --}}
-                                    <table id="datatablexcel" class="table  table-striped  table-bordered">
-                                        <thead>
-                                            <tr>
-                                                <td colspan="5"><b>
-                                                        <i class="fa fa-bullseye" aria-hidden="true"></i>
+                                        foreach ($productgoodreceive as $val) {
+                                            foreach ($val->details as $eachuse) {
+                                                $lineAmount = $eachuse->unit_price * $eachuse->qty;
+                                                $productRows->push([
+                                                    'product_id' => $eachuse->product_id,
+                                                    'pname' =>
+                                                        ($eachuse->product->productCode ?? 'N/A') .
+                                                        ' - ' .
+                                                        ($eachuse->product->name ?? ''),
+                                                    'date' => $val->date,
+                                                    'invoice_no' => $val->invoice_no,
+                                                    'qty' => $eachuse->qty,
+                                                    'amount' => $lineAmount,
+                                                    'label' => 'GRN',
+                                                    'sign' => 1,
+                                                ]);
+                                            }
+                                        }
 
-                                                    </b></td>
-                                            </tr>
-                                            <tr>
-                                                <th>Date</th>
-                                                <th>Invoice</th>
-                                                <th>Details</th>
-                                                <th>Quantity</th>
-                                                <th>Amount</th>
-                                            </tr>
-                                        </thead>
+                                        foreach ($projectTransfer as $val) {
+                                            foreach ($val->details as $eachuse) {
+                                                $unitPrice = $eachuse->unit_price ?? 0;
 
-                                        @if ($productgoodreceive->isNotEmpty() || $projectTransfer->isNotEmpty())
-                                            <tbody>
-                                                <tr>
-                                                    <td colspan="5">
-                                                        <b>
-                                                            <i class="fa fa-bullseye" aria-hidden="true"></i>
-                                                            Products details
-                                                        </b>
-                                                    </td>
-                                                </tr>
-                                                @php
-                                                    $productAmount = 0;
-                                                @endphp
+                                                if ($unitPrice <= 0) {
+                                                    $purchase = App\Models\PurchasesDetails::whereMonth(
+                                                        'date',
+                                                        date('m', strtotime($val->order_date)),
+                                                    )
+                                                        ->where('product_id', $eachuse->product_id)
+                                                        ->latest('id')
+                                                        ->first();
 
-                                                @foreach ($productgoodreceive as $val)
-                                                    @foreach ($val->details as $eachuse)
-                                                        @php
-                                                            $productAmount += $eachuse->unit_price * $eachuse->qty;
-                                                        @endphp
-                                                        <tr>
-                                                            <td>{{ $val->date }}</td>
-                                                            <td>{{ $val->invoice_no }}</td>
-                                                            <td>{{ ($eachuse->product->productCode ?? 'N/A') . ' - ' . $eachuse->product->name ?? '' }}
-                                                            </td>
-                                                            <td>{{ $eachuse->qty }}</td>
-                                                            <td style="text-align: right;">
-                                                                {{ $eachuse->unit_price * $eachuse->qty }}</td>
-                                                        </tr>
-                                                    @endforeach
-                                                @endforeach
-
-
-                                                @foreach ($projectTransfer as $val)
-                                                    @foreach ($val->details as $eachuse)
-                                                        @php
-
-                                                            $unitPrice = $eachuse->unit_price ?? 0;
-
-                                                            if ($unitPrice <= 0) {
-                                                                $purchase = App\Models\PurchasesDetails::whereMonth(
-                                                                    'date',
-                                                                    date('m', strtotime($val->order_date)),
-                                                                )
-                                                                    ->where('product_id', $eachuse->product_id)
-                                                                    ->latest('id')
-                                                                    ->first();
-
-                                                                if (!$purchase) {
-                                                                    $purchase = App\Models\PurchasesDetails::where(
-                                                                        'product_id',
-                                                                        $eachuse->product_id,
-                                                                    )
-                                                                        ->latest('id')
-                                                                        ->first();
-                                                                }
-
-                                                                $unitPrice = $purchase->unit_price ?? 0;
-                                                            }
-
-                                                            $lineAmount = $unitPrice * $eachuse->qty;
-
-                                                            if ($val->transfer_type == 'branch_to_project') {
-                                                                $sourceName =
-                                                                    $transferBranchNames[$val->branch_id] ??
-                                                                    ($transferBranchNames[$val->warehouse_id] ?? 'N/A');
-                                                                $transferSign = 1;
-                                                                $transferLabel = 'Transfer In from ' . $sourceName;
-                                                            } elseif ($val->transfer_type == 'project_to_project') {
-                                                                if ((int) $val->project_id === (int) $project_id) {
-                                                                    $destName =
-                                                                        $transferProjectNames[$val->to_project_id] ??
-                                                                        'N/A';
-                                                                    $transferSign = -1;
-                                                                    $transferLabel = 'Transfer Out to ' . $destName;
-                                                                } else {
-                                                                    $srcName =
-                                                                        $transferProjectNames[$val->project_id] ??
-                                                                        'N/A';
-                                                                    $transferSign = 1;
-                                                                    $transferLabel = 'Transfer In from ' . $srcName;
-                                                                }
-                                                            } elseif ($val->transfer_type == 'project_to_branch') {
-                                                                $destName =
-                                                                    $transferBranchNames[$val->branch_id] ??
-                                                                    ($transferBranchNames[$val->warehouse_id] ?? 'N/A');
-                                                                $transferSign = -1;
-                                                                $transferLabel = 'Transfer Out to ' . $destName;
-                                                            } else {
-                                                                $transferSign = 1;
-                                                                $transferLabel = 'Transfer';
-                                                            }
-
-                                                            $signedAmount = $transferSign * $lineAmount;
-                                                            $productAmount += $signedAmount;
-                                                        @endphp
-                                                        <tr>
-                                                            <td>{{ $val->order_date }}</td>
-                                                            <td>{{ $val->invoice_no }}</td>
-                                                            <td>
-                                                                {{ ($eachuse->product->productCode ?? 'N/A') . ' - ' . ($eachuse->product->name ?? '') }}
-                                                                <br>
-                                                                <small
-                                                                    class="{{ $transferSign < 0 ? 'text-danger' : 'text-success' }}">{{ $transferLabel }}</small>
-                                                            </td>
-                                                            <td>{{ $eachuse->qty }}</td>
-                                                            <td style="text-align: right;"
-                                                                class="{{ $transferSign < 0 ? 'text-danger' : '' }}">
-                                                                {{ $transferSign < 0 ? '(' . number_format($lineAmount, 2) . ')' : number_format($lineAmount, 2) }}
-                                                            </td>
-                                                        </tr>
-                                                    @endforeach
-                                                @endforeach
-
-                                                {{-- @foreach ($projectTransfer as $val)
-                                                    @foreach ($val->details as $eachuse)
-                                                        @php
-                                                            $purchase = App\Models\PurchasesDetails::whereMonth(
-                                                                'date',
-                                                                date('m', strtotime($val->order_date)),
-                                                            )
-                                                                ->where('product_id', $eachuse->product_id)
-                                                                ->latest('id')
-                                                                ->first();
-                                                            if (!$purchase) {
-                                                                $purchase = App\Models\PurchasesDetails::where(
-                                                                    'product_id',
-                                                                    $eachuse->product_id,
-                                                                )
-                                                                    ->latest('id')
-                                                                    ->first();
-                                                            }
-                                                            $productAmount += $purchase->unit_price * $eachuse->qty;
-                                                        @endphp
-                                                        <tr>
-                                                            <td>{{ $val->order_date }}</td>
-                                                            <td>{{ $val->invoice_no }}</td>
-                                                            <td>{{ ($eachuse->product->productCode ?? 'N/A') . ' - ' . $eachuse->product->name ?? '' }}
-                                                            </td>
-                                                            <td>{{ $eachuse->qty }}</td>
-                                                            <td style="text-align: right;">
-                                                                {{ $purchase->unit_price * $eachuse->qty }}</td>
-                                                        </tr>
-                                                    @endforeach
-                                                @endforeach --}}
-
-                                                <tr>
-                                                    <th colspan="4" style="text-align: center;">Total Uses</th>
-                                                    <th style="text-align: right;">{{ $productAmount }}</th>
-                                                </tr>
-                                            </tbody>
-                                        @endif
-                                        {{-- @dd($projectTransfer); --}}
-
-                                        {{--
-                                        @if ($productReturn)
-                                            <tbody>
-                                                <tr>
-                                                    <td colspan="5">
-                                                        <b>
-                                                            <i class="fa fa-bullseye" aria-hidden="true"></i>
-                                                            Products Return details
-                                                        </b>
-                                                    </td>
-                                                </tr>
-                                                @php
-                                                    $ttlreturn = 0;
-                                                @endphp
-                                                @foreach ($productReturn as $eachreturn)
-                                                    @php
-                                                        $requisitions = App\Models\ProjectRequisition::where('project_id', $project_id)->first();
-                                                        $unitprice = $requisitions->ProjectRequisitionDetails
-                                                            ->where('product_id', $eachuse->productId)
-                                                            ->pluck('unit_price')
+                                                    if (!$purchase) {
+                                                        $purchase = App\Models\PurchasesDetails::where(
+                                                            'product_id',
+                                                            $eachuse->product_id,
+                                                        )
+                                                            ->latest('id')
                                                             ->first();
-                                                        $ttlreturn += $unitprice * $eachreturn->return_qty;
-                                                    @endphp
-                                                    <tr>
-                                                        <td>{{ $eachreturn->created }}</td>
-                                                        <td>{{ $eachreturn->in_no }}</td>
-                                                        <td>{{ $eachreturn->pcode . ' - ' . $eachreturn->pname }}</td>
-                                                        <td>{{ $eachreturn->return_qty }}</td>
-                                                        <td style="text-align: right;">
-                                                            {{ $unitprice * $eachreturn->return_qty }}</td>
-                                                    </tr>
-                                                @endforeach
+                                                    }
+
+                                                    $unitPrice = $purchase->unit_price ?? 0;
+                                                }
+
+                                                $lineAmount = $unitPrice * $eachuse->qty;
+
+                                                if ($val->transfer_type == 'branch_to_project') {
+                                                    $sourceName =
+                                                        $transferBranchNames[$val->branch_id] ??
+                                                        ($transferBranchNames[$val->warehouse_id] ?? 'N/A');
+                                                    $transferSign = 1;
+                                                    $transferLabel = 'Transfer In from ' . $sourceName;
+                                                } elseif ($val->transfer_type == 'project_to_project') {
+                                                    if ((int) $val->project_id === (int) $project_id) {
+                                                        $destName = $transferProjectNames[$val->to_project_id] ?? 'N/A';
+                                                        $transferSign = -1;
+                                                        $transferLabel = 'Transfer Out to ' . $destName;
+                                                    } else {
+                                                        $srcName = $transferProjectNames[$val->project_id] ?? 'N/A';
+                                                        $transferSign = 1;
+                                                        $transferLabel = 'Transfer In from ' . $srcName;
+                                                    }
+                                                } elseif ($val->transfer_type == 'project_to_branch') {
+                                                    $destName =
+                                                        $transferBranchNames[$val->branch_id] ??
+                                                        ($transferBranchNames[$val->warehouse_id] ?? 'N/A');
+                                                    $transferSign = -1;
+                                                    $transferLabel = 'Transfer Out to ' . $destName;
+                                                } else {
+                                                    $transferSign = 1;
+                                                    $transferLabel = 'Transfer';
+                                                }
+
+                                                $productRows->push([
+                                                    'product_id' => $eachuse->product_id,
+                                                    'pname' =>
+                                                        ($eachuse->product->productCode ?? 'N/A') .
+                                                        ' - ' .
+                                                        ($eachuse->product->name ?? ''),
+                                                    'date' => $val->order_date,
+                                                    'invoice_no' => $val->invoice_no,
+                                                    'qty' => $transferSign < 0 ? -$eachuse->qty : $eachuse->qty,
+                                                    'amount' => $transferSign * $lineAmount,
+                                                    'label' => $transferLabel,
+                                                    'sign' => $transferSign,
+                                                ]);
+                                            }
+                                        }
+
+                                        $productAmount = $productRows->sum('amount');
+                                        $groupedProducts = $productRows->groupBy('product_id');
+                                    @endphp
+
+                                    <div class="table-responsive">
+                                        <table id="datatablexcel" class="table  table-striped  table-bordered">
+                                            <thead>
                                                 <tr>
-                                                    <th colspan="4" style="text-align: center;">Total Uses</th>
-                                                    <th style="text-align: right;">{{ $ttlreturn }}</th>
-                                                </tr>
-                                            </tbody>
-                                        @endif --}}
-
-
-
-                                    </table>
-
-                                    @if ($directIncome)
-                                        <table class="table table-bordered">
-
-
-                                            <tbody>
-                                                <tr>
-                                                    <td colspan="3">
-                                                        <b>
+                                                    <td colspan="5"><b>
                                                             <i class="fa fa-bullseye" aria-hidden="true"></i>
-                                                            Direct Income details
-                                                        </b>
-                                                    </td>
-                                                <tr>
-                                                    <th>Date</th>
-                                                    <th>Category</th>
-                                                    <th>Amount</th>
+                                                        </b></td>
                                                 </tr>
-                                                </tr>
-                                                @php
-                                                    $ttlexpdirinc = 0;
-                                                @endphp
-                                                @foreach ($directIncome as $echexp)
-                                                    @php
-                                                        $ttlexpdirinc += $echexp->debit;
-                                                    @endphp
+                                            </thead>
+
+                                            @if ($groupedProducts->isNotEmpty())
+                                                <tbody>
                                                     <tr>
-                                                        <td>{{ $echexp->created_at }}</td>
-                                                        <td>{{ $echexp->account->account_name }}</td>
-                                                        <td style="text-align: right;">{{ $echexp->credit }}</td>
+                                                        <td colspan="5">
+                                                            <b>
+                                                                <i class="fa fa-bullseye" aria-hidden="true"></i>
+                                                                Products details
+                                                            </b>
+                                                        </td>
                                                     </tr>
-                                                @endforeach
-                                                <tr>
-                                                    <th colspan="2" style="text-align: center;">Total Direct Income</th>
-                                                    <th style="text-align: right;">{{ $ttlexpdirinc }}</th>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    @endif
-                                    @if ($indirectIncome)
-                                        <table class="table table-bordered">
-
-
-                                            <tbody>
-                                                <tr>
-                                                    <td colspan="3">
-                                                        <b>
-                                                            <i class="fa fa-bullseye" aria-hidden="true"></i>
-                                                            Indirect Income details
-                                                        </b>
-                                                    </td>
-                                                <tr>
-                                                    <th>Date</th>
-                                                    <th>Category</th>
-                                                    <th>Amount</th>
-                                                </tr>
-                                                </tr>
-                                                @php
-                                                    $ttlexpindrinc = 0;
-                                                @endphp
-                                                @foreach ($indirectIncome as $echexp)
-                                                    @php
-                                                        $ttlexpindrinc += $echexp->debit;
-                                                    @endphp
                                                     <tr>
-                                                        <td>{{ $echexp->created_at }}</td>
-                                                        <td>{{ $echexp->account->account_name }}</td>
-                                                        <td style="text-align: right;">{{ $echexp->credit }}</td>
+                                                        <th>Product</th>
+                                                        <th style="text-align: right;">Total Qty</th>
+                                                        <th style="text-align: right;">Amount</th>
+                                                        <th class="no-print" style="width: 90px; text-align: center;">
+                                                            Details</th>
                                                     </tr>
-                                                @endforeach
-                                                <tr>
-                                                    <th colspan="2" style="text-align: center;">Total Indirect Expense
-                                                    </th>
-                                                    <th style="text-align: right;">{{ $ttlexpindrinc }}</th>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    @endif
-                                    @if ($directExpenses)
-                                        <table class="table table-bordered">
 
+                                                    @foreach ($groupedProducts as $prodId => $group)
+                                                        @php
+                                                            $groupQty = $group->sum('qty');
+                                                            $groupAmount = $group->sum('amount');
+                                                            $prodName = $group->first()['pname'];
+                                                        @endphp
+                                                        <tr class="clickable-row" data-toggle="modal"
+                                                            data-target="#productModal{{ $prodId }}">
+                                                            <td>{{ $prodName }}</td>
+                                                            <td style="text-align: right;">{{ $groupQty }}</td>
+                                                            <td style="text-align: right;"
+                                                                class="{{ $groupAmount < 0 ? 'text-danger' : '' }}">
+                                                                {{ $groupAmount < 0 ? '(' . number_format(abs($groupAmount), 2) . ')' : number_format($groupAmount, 2) }}
+                                                            </td>
+                                                            <td class="no-print text-center">
+                                                                <i class="fa fa-eye"></i> View
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
 
-                                            <tbody>
-                                                <tr>
-                                                    <td colspan="3">
-                                                        <b>
-                                                            <i class="fa fa-bullseye" aria-hidden="true"></i>
-                                                            Direct Expense details
-                                                        </b>
-                                                    </td>
-                                                <tr>
-                                                    <th>Date</th>
-                                                    <th>Category</th>
-                                                    <th>Amount</th>
-                                                </tr>
-                                                </tr>
-                                                @php
-                                                    $ttlexpdir = 0;
-                                                @endphp
-                                                @foreach ($directExpenses as $echexp)
-                                                    @php
-                                                        $ttlexpdir += $echexp->debit;
-                                                    @endphp
                                                     <tr>
-                                                        <td>{{ $echexp->created_at }}</td>
-                                                        <td>{{ $echexp->account->account_name }}</td>
-                                                        <td style="text-align: right;">{{ $echexp->debit }}</td>
+                                                        <th colspan="2" style="text-align: center;">Total Uses</th>
+                                                        <th style="text-align: right;">
+                                                            {{ number_format($productAmount, 2) }}</th>
+                                                        <th class="no-print"></th>
                                                     </tr>
-                                                @endforeach
-                                                <tr>
-                                                    <th colspan="2" style="text-align: center;">Total Direct Expense
-                                                    </th>
-                                                    <th style="text-align: right;">{{ $ttlexpdir }}</th>
-                                                </tr>
-                                            </tbody>
+                                                </tbody>
+                                            @endif
                                         </table>
-                                    @endif
-                                    @if ($indirectExpenses)
-                                        <table class="table table-bordered">
+                                    </div>
 
-                                            <tbody>
-                                                <tr>
-                                                    <td colspan="3">
-                                                        <b>
-                                                            <i class="fa fa-bullseye" aria-hidden="true"></i>
-                                                            Indirect Expense details
-                                                        </b>
-                                                    </td>
-                                                <tr>
-                                                    <th>Date</th>
-                                                    <th>Category</th>
-                                                    <th>Amount</th>
-                                                </tr>
-                                                </tr>
-                                                @php
-                                                    $ttlexpind = 0;
-                                                @endphp
-                                                @foreach ($indirectExpenses as $echexp)
-                                                    @php
-                                                        $ttlexpind += $echexp->debit;
-                                                    @endphp
+                                    {{-- Modals: one per product --}}
+                                    @foreach ($groupedProducts as $prodId => $group)
+                                        <div class="modal fade no-print" id="productModal{{ $prodId }}"
+                                            tabindex="-1" role="dialog" aria-hidden="true">
+                                            <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">{{ $group->first()['pname'] }}</h5>
+                                                        <button type="button" class="close" data-dismiss="modal"
+                                                            aria-label="Close">
+                                                            <span aria-hidden="true">&times;</span>
+                                                        </button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div class="table-responsive">
+                                                            <table class="table table-sm table-bordered">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Date</th>
+                                                                        <th>Invoice No</th>
+                                                                        <th>Detail</th>
+                                                                        <th style="text-align: right;">Qty</th>
+                                                                        <th style="text-align: right;">Amount</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @foreach ($group as $row)
+                                                                        <tr>
+                                                                            <td>{{ $row['date'] }}</td>
+                                                                            <td>{{ $row['invoice_no'] }}</td>
+                                                                            <td>
+                                                                                <small
+                                                                                    class="{{ $row['sign'] < 0 ? 'text-danger' : 'text-success' }}">
+                                                                                    {{ $row['label'] }}
+                                                                                </small>
+                                                                            </td>
+                                                                            <td style="text-align: right;">
+                                                                                {{ $row['qty'] }}</td>
+                                                                            <td style="text-align: right;"
+                                                                                class="{{ $row['sign'] < 0 ? 'text-danger' : '' }}">
+                                                                                {{ $row['sign'] < 0 ? '(' . number_format(abs($row['amount']), 2) . ')' : number_format($row['amount'], 2) }}
+                                                                            </td>
+                                                                        </tr>
+                                                                    @endforeach
+                                                                </tbody>
+                                                                <tfoot>
+                                                                    <tr>
+                                                                        <th colspan="3" style="text-align: right;">
+                                                                            Total</th>
+                                                                        <th style="text-align: right;">
+                                                                            {{ $group->sum('qty') }}</th>
+                                                                        <th style="text-align: right;">
+                                                                            {{ number_format($group->sum('amount'), 2) }}
+                                                                        </th>
+                                                                    </tr>
+                                                                </tfoot>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-default"
+                                                            data-dismiss="modal">Close</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                    {{-- <<< END NEW --}}
+
+                                    {{-- >>> NEW: Direct Income - category wise grouped with modal --}}
+                                    @php
+                                        $directIncomeGrouped = $directIncome
+                                            ? $directIncome->groupBy('account_id')
+                                            : collect();
+                                    @endphp
+                                    @if ($directIncomeGrouped->isNotEmpty())
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered">
+                                                <tbody>
                                                     <tr>
-                                                        <td>{{ date('Y-m-d', strtotime($echexp->created_at)) }}</td>
-                                                        <td>{{ $echexp->account->account_name }}</td>
-                                                        <td style="text-align: right;">{{ $echexp->debit }}</td>
+                                                        <td colspan="3">
+                                                            <b><i class="fa fa-bullseye" aria-hidden="true"></i> Direct
+                                                                Income details</b>
+                                                        </td>
                                                     </tr>
-                                                @endforeach
-                                                <tr>
-                                                    <th colspan="2" style="text-align: center;">Total Indirect Expense
-                                                    </th>
-                                                    <th style="text-align: right;">{{ $ttlexpind }}</th>
-                                                </tr>
-                                            </tbody>
-                                        </table>
+                                                    <tr>
+                                                        <th>Category</th>
+                                                        <th style="text-align:right;">Amount</th>
+                                                        <th class="no-print" style="width:90px; text-align:center;">
+                                                            Details</th>
+                                                    </tr>
+                                                    @php $ttlexpdirinc = 0; @endphp
+                                                    @foreach ($directIncomeGrouped as $accId => $group)
+                                                        @php
+                                                            $catTotal = $group->sum('credit');
+                                                            $ttlexpdirinc += $catTotal;
+                                                            $catName =
+                                                                optional($group->first()->account)->account_name ??
+                                                                'N/A';
+                                                        @endphp
+                                                        <tr class="clickable-row" data-toggle="modal"
+                                                            data-target="#dirIncModal{{ $accId }}">
+                                                            <td>{{ $catName }}</td>
+                                                            <td style="text-align:right;">
+                                                                {{ number_format($catTotal, 2) }}</td>
+                                                            <td class="no-print text-center"><i class="fa fa-eye"></i>
+                                                                View</td>
+                                                        </tr>
+                                                    @endforeach
+                                                    <tr>
+                                                        <th colspan="2" style="text-align:center;">Total Direct Income
+                                                        </th>
+                                                        <th style="text-align:right;">
+                                                            {{ number_format($ttlexpdirinc, 2) }}</th>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        @foreach ($directIncomeGrouped as $accId => $group)
+                                            <div class="modal fade no-print" id="dirIncModal{{ $accId }}"
+                                                tabindex="-1" role="dialog" aria-hidden="true">
+                                                <div class="modal-dialog modal-lg modal-dialog-scrollable"
+                                                    role="document">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">
+                                                                {{ optional($group->first()->account)->account_name ?? 'N/A' }}
+                                                            </h5>
+                                                            <button type="button" class="close" data-dismiss="modal"
+                                                                aria-label="Close">
+                                                                <span aria-hidden="true">&times;</span>
+                                                            </button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <div class="table-responsive">
+                                                                <table class="table table-sm table-bordered">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>Date</th>
+                                                                            <th style="text-align:right;">Amount</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        @foreach ($group as $echexp)
+                                                                            <tr>
+                                                                                <td>{{ $echexp->created_at }}</td>
+                                                                                <td style="text-align:right;">
+                                                                                    {{ number_format($echexp->credit, 2) }}
+                                                                                </td>
+                                                                            </tr>
+                                                                        @endforeach
+                                                                    </tbody>
+                                                                    <tfoot>
+                                                                        <tr>
+                                                                            <th style="text-align:right;">Total</th>
+                                                                            <th style="text-align:right;">
+                                                                                {{ number_format($group->sum('credit'), 2) }}
+                                                                            </th>
+                                                                        </tr>
+                                                                    </tfoot>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-default"
+                                                                data-dismiss="modal">Close</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
                                     @endif
+                                    {{-- <<< END NEW --}}
+
+                                    {{-- >>> NEW: Indirect Income - category wise grouped with modal --}}
+                                    @php
+                                        $indirectIncomeGrouped = $indirectIncome
+                                            ? $indirectIncome->groupBy('account_id')
+                                            : collect();
+                                    @endphp
+                                    @if ($indirectIncomeGrouped->isNotEmpty())
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered">
+                                                <tbody>
+                                                    <tr>
+                                                        <td colspan="3">
+                                                            <b><i class="fa fa-bullseye" aria-hidden="true"></i>
+                                                                Indirect Income details</b>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Category</th>
+                                                        <th style="text-align:right;">Amount</th>
+                                                        <th class="no-print" style="width:90px; text-align:center;">
+                                                            Details</th>
+                                                    </tr>
+                                                    @php $ttlexpindrinc = 0; @endphp
+                                                    @foreach ($indirectIncomeGrouped as $accId => $group)
+                                                        @php
+                                                            $catTotal = $group->sum('credit');
+                                                            $ttlexpindrinc += $catTotal;
+                                                            $catName =
+                                                                optional($group->first()->account)->account_name ??
+                                                                'N/A';
+                                                        @endphp
+                                                        <tr class="clickable-row" data-toggle="modal"
+                                                            data-target="#indIncModal{{ $accId }}">
+                                                            <td>{{ $catName }}</td>
+                                                            <td style="text-align:right;">
+                                                                {{ number_format($catTotal, 2) }}</td>
+                                                            <td class="no-print text-center"><i class="fa fa-eye"></i>
+                                                                View</td>
+                                                        </tr>
+                                                    @endforeach
+                                                    <tr>
+                                                        <th colspan="2" style="text-align:center;">Total Indirect
+                                                            Income</th>
+                                                        <th style="text-align:right;">
+                                                            {{ number_format($ttlexpindrinc, 2) }}</th>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        @foreach ($indirectIncomeGrouped as $accId => $group)
+                                            <div class="modal fade no-print" id="indIncModal{{ $accId }}"
+                                                tabindex="-1" role="dialog" aria-hidden="true">
+                                                <div class="modal-dialog modal-lg modal-dialog-scrollable"
+                                                    role="document">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">
+                                                                {{ optional($group->first()->account)->account_name ?? 'N/A' }}
+                                                            </h5>
+                                                            <button type="button" class="close" data-dismiss="modal"
+                                                                aria-label="Close">
+                                                                <span aria-hidden="true">&times;</span>
+                                                            </button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <div class="table-responsive">
+                                                                <table class="table table-sm table-bordered">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>Date</th>
+                                                                            <th style="text-align:right;">Amount</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        @foreach ($group as $echexp)
+                                                                            <tr>
+                                                                                <td>{{ $echexp->created_at }}</td>
+                                                                                <td style="text-align:right;">
+                                                                                    {{ number_format($echexp->credit, 2) }}
+                                                                                </td>
+                                                                            </tr>
+                                                                        @endforeach
+                                                                    </tbody>
+                                                                    <tfoot>
+                                                                        <tr>
+                                                                            <th style="text-align:right;">Total</th>
+                                                                            <th style="text-align:right;">
+                                                                                {{ number_format($group->sum('credit'), 2) }}
+                                                                            </th>
+                                                                        </tr>
+                                                                    </tfoot>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-default"
+                                                                data-dismiss="modal">Close</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    @endif
+                                    {{-- <<< END NEW --}}
+
+                                    {{-- >>> NEW: Direct Expense - category wise grouped with modal --}}
+                                    @php
+                                        $directExpensesGrouped = $directExpenses
+                                            ? $directExpenses->groupBy('account_id')
+                                            : collect();
+                                    @endphp
+                                    @if ($directExpensesGrouped->isNotEmpty())
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered">
+                                                <tbody>
+                                                    <tr>
+                                                        <td colspan="3">
+                                                            <b><i class="fa fa-bullseye" aria-hidden="true"></i> Direct
+                                                                Expense details</b>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Category</th>
+                                                        <th style="text-align:right;">Amount</th>
+                                                        <th class="no-print" style="width:90px; text-align:center;">
+                                                            Details</th>
+                                                    </tr>
+                                                    @php $ttlexpdir = 0; @endphp
+                                                    @foreach ($directExpensesGrouped as $accId => $group)
+                                                        @php
+                                                            $catTotal = $group->sum('debit');
+                                                            $ttlexpdir += $catTotal;
+                                                            $catName =
+                                                                optional($group->first()->account)->account_name ??
+                                                                'N/A';
+                                                        @endphp
+                                                        <tr class="clickable-row" data-toggle="modal"
+                                                            data-target="#dirExpModal{{ $accId }}">
+                                                            <td>{{ $catName }}</td>
+                                                            <td style="text-align:right;">
+                                                                {{ number_format($catTotal, 2) }}</td>
+                                                            <td class="no-print text-center"><i class="fa fa-eye"></i>
+                                                                View</td>
+                                                        </tr>
+                                                    @endforeach
+                                                    <tr>
+                                                        <th colspan="2" style="text-align:center;">Total Direct
+                                                            Expense</th>
+                                                        <th style="text-align:right;">
+                                                            {{ number_format($ttlexpdir, 2) }}</th>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        @foreach ($directExpensesGrouped as $accId => $group)
+                                            <div class="modal fade no-print" id="dirExpModal{{ $accId }}"
+                                                tabindex="-1" role="dialog" aria-hidden="true">
+                                                <div class="modal-dialog modal-lg modal-dialog-scrollable"
+                                                    role="document">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">
+                                                                {{ optional($group->first()->account)->account_name ?? 'N/A' }}
+                                                            </h5>
+                                                            <button type="button" class="close" data-dismiss="modal"
+                                                                aria-label="Close">
+                                                                <span aria-hidden="true">&times;</span>
+                                                            </button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <div class="table-responsive">
+                                                                <table class="table table-sm table-bordered">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>Date</th>
+                                                                            <th style="text-align:right;">Amount</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        @foreach ($group as $echexp)
+                                                                            <tr>
+                                                                                <td>{{ $echexp->created_at }}</td>
+                                                                                <td style="text-align:right;">
+                                                                                    {{ number_format($echexp->debit, 2) }}
+                                                                                </td>
+                                                                            </tr>
+                                                                        @endforeach
+                                                                    </tbody>
+                                                                    <tfoot>
+                                                                        <tr>
+                                                                            <th style="text-align:right;">Total</th>
+                                                                            <th style="text-align:right;">
+                                                                                {{ number_format($group->sum('debit'), 2) }}
+                                                                            </th>
+                                                                        </tr>
+                                                                    </tfoot>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-default"
+                                                                data-dismiss="modal">Close</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    @endif
+                                    {{-- <<< END NEW --}}
+
+                                    {{-- >>> NEW: Indirect Expense - category wise grouped with modal --}}
+                                    @php
+                                        $indirectExpensesGrouped = $indirectExpenses
+                                            ? $indirectExpenses->groupBy('account_id')
+                                            : collect();
+                                    @endphp
+                                    @if ($indirectExpensesGrouped->isNotEmpty())
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered">
+                                                <tbody>
+                                                    <tr>
+                                                        <td colspan="3">
+                                                            <b><i class="fa fa-bullseye" aria-hidden="true"></i>
+                                                                Indirect Expense details</b>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Category</th>
+                                                        <th style="text-align:right;">Amount</th>
+                                                        <th class="no-print" style="width:90px; text-align:center;">
+                                                            Details</th>
+                                                    </tr>
+                                                    @php $ttlexpind = 0; @endphp
+                                                    @foreach ($indirectExpensesGrouped as $accId => $group)
+                                                        @php
+                                                            $catTotal = $group->sum('debit');
+                                                            $ttlexpind += $catTotal;
+                                                            $catName =
+                                                                optional($group->first()->account)->account_name ??
+                                                                'N/A';
+                                                        @endphp
+                                                        <tr class="clickable-row" data-toggle="modal"
+                                                            data-target="#indExpModal{{ $accId }}">
+                                                            <td>{{ $catName }}</td>
+                                                            <td style="text-align:right;">
+                                                                {{ number_format($catTotal, 2) }}</td>
+                                                            <td class="no-print text-center"><i class="fa fa-eye"></i>
+                                                                View</td>
+                                                        </tr>
+                                                    @endforeach
+                                                    <tr>
+                                                        <th colspan="2" style="text-align:center;">Total Indirect
+                                                            Expense</th>
+                                                        <th style="text-align:right;">
+                                                            {{ number_format($ttlexpind, 2) }}</th>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        @foreach ($indirectExpensesGrouped as $accId => $group)
+                                            <div class="modal fade no-print" id="indExpModal{{ $accId }}"
+                                                tabindex="-1" role="dialog" aria-hidden="true">
+                                                <div class="modal-dialog modal-lg modal-dialog-scrollable"
+                                                    role="document">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">
+                                                                {{ optional($group->first()->account)->account_name ?? 'N/A' }}
+                                                            </h5>
+                                                            <button type="button" class="close" data-dismiss="modal"
+                                                                aria-label="Close">
+                                                                <span aria-hidden="true">&times;</span>
+                                                            </button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <div class="table-responsive">
+                                                                <table class="table table-sm table-bordered">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>Date</th>
+                                                                            <th style="text-align:right;">Amount</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        @foreach ($group as $echexp)
+                                                                            <tr>
+                                                                                <td>
+                                                                                    {{ date('Y-m-d', strtotime($echexp->created_at)) }}
+                                                                                </td>
+                                                                                <td style="text-align:right;">
+                                                                                    {{ number_format($echexp->debit, 2) }}
+                                                                                </td>
+                                                                            </tr>
+                                                                        @endforeach
+                                                                    </tbody>
+                                                                    <tfoot>
+                                                                        <tr>
+                                                                            <th style="text-align:right;">Total</th>
+                                                                            <th style="text-align:right;">
+                                                                                {{ number_format($group->sum('debit'), 2) }}
+                                                                            </th>
+                                                                        </tr>
+                                                                    </tfoot>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-default"
+                                                                data-dismiss="modal">Close</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    @endif
+                                    {{-- <<< END NEW --}}
 
                                     @if ($projectMoney)
-                                        <table class="table table-bordered">
-                                            <tbody>
-                                                <tr>
-                                                    <td colspan="3">
-                                                        <b>
-                                                            <i class="fa fa-bullseye" aria-hidden="true"></i>
-                                                            Project Money
-                                                        </b>
-                                                    </td>
-                                                <tr>
-                                                    <th>Total</th>
-                                                    <th style="text-align: right;">{{ $projectMoney }}</th>
-                                                </tr>
-                                                </tr>
-                                            </tbody>
-                                        </table>
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered">
+                                                <tbody>
+                                                    <tr>
+                                                        <td colspan="3">
+                                                            <b>
+                                                                <i class="fa fa-bullseye" aria-hidden="true"></i>
+                                                                Project Money
+                                                            </b>
+                                                        </td>
+                                                    <tr>
+                                                        <th>Total</th>
+                                                        <th style="text-align: right;">{{ $projectMoney }}</th>
+                                                    </tr>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     @endif
+
                                     <div class="row">
                                         <div class="col-lg-6 ">
                                             <div class="card card-danger">
@@ -615,80 +884,78 @@
 
                                     </div>
 
-                                    <table class="table table-bordered">
-                                        <tbody>
-                                            <tr>
-                                                <td colspan="3">
-                                                    <b>
-                                                        <i class="fa fa-bullseye" aria-hidden="true"></i>
-                                                        Full Project Summary
-                                                    </b>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td colspan="3">
-                                                    <b>
-                                                        A . Income
-                                                    </b>
-                                                </td>
-                                            </tr>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <tbody>
+                                                <tr>
+                                                    <td colspan="3">
+                                                        <b>
+                                                            <i class="fa fa-bullseye" aria-hidden="true"></i>
+                                                            Full Project Summary
+                                                        </b>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="3">
+                                                        <b>
+                                                            A . Income
+                                                        </b>
+                                                    </td>
+                                                </tr>
 
-                                            <tr>
-                                                <th>Sale Value</th>
-                                                <th style="text-align: right;">{{ $projectDetails->budget ?? 0 }}</th>
-                                            </tr>
+                                                <tr>
+                                                    <th>Sale Value</th>
+                                                    <th style="text-align: right;">{{ $projectDetails->budget ?? 0 }}
+                                                    </th>
+                                                </tr>
 
-                                            <tr>
-                                                <th>Indirect Income </th>
-                                                <th style="text-align: right;">{{ $ttlexpindrinc ?? 0 }}</th>
-                                            </tr>
+                                                <tr>
+                                                    <th>Indirect Income </th>
+                                                    <th style="text-align: right;">{{ $ttlexpindrinc ?? 0 }}</th>
+                                                </tr>
 
-                                            <tr>
-                                                <th>Direct Income </th>
-                                                <th style="text-align: right;">{{ $ttlexpdirinc ?? 0 }}</th>
-                                            </tr>
-                                            <tr>
-                                                <td colspan="3">
-                                                    <b>
-                                                        B . Expenses
-                                                    </b>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <th>Direct Expenses </th>
-                                                <th style="text-align: right;">{{ $ttlexpdir ?? 0 }}</th>
-                                            </tr>
-                                            <tr>
-                                                <th>Indirect Expenses </th>
-                                                <th style="text-align: right;">{{ $ttlexpind }}</th>
-                                            </tr>
-                                            <tr>
-                                                <th>Total Product Consumption </th>
-                                                <th style="text-align: right;">{{ $productAmount }}</th>
-                                            </tr>
-                                            <tr>
-                                                <th>Total Profit (A - B)</th>
-                                                <th style="text-align: right;">
-                                                    {{ ($projectDetails->budget ?? 0) + $ttlexpindrinc + $ttlexpdirinc - ($ttlexpdir + $ttlexpind + $productAmount) }}
-                                                </th>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-
-
+                                                <tr>
+                                                    <th>Direct Income </th>
+                                                    <th style="text-align: right;">{{ $ttlexpdirinc ?? 0 }}</th>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="3">
+                                                        <b>
+                                                            B . Expenses
+                                                        </b>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Direct Expenses </th>
+                                                    <th style="text-align: right;">{{ $ttlexpdir ?? 0 }}</th>
+                                                </tr>
+                                                <tr>
+                                                    <th>Indirect Expenses </th>
+                                                    <th style="text-align: right;">{{ $ttlexpind ?? 0 }}</th>
+                                                </tr>
+                                                <tr>
+                                                    <th>Total Product Consumption </th>
+                                                    <th style="text-align: right;">{{ $productAmount }}</th>
+                                                </tr>
+                                                <tr>
+                                                    <th>Total Profit (A - B)</th>
+                                                    <th style="text-align: right;">
+                                                        {{ ($projectDetails->budget ?? 0) + ($ttlexpindrinc ?? 0) + ($ttlexpdirinc ?? 0) - (($ttlexpdir ?? 0) + ($ttlexpind ?? 0) + $productAmount) }}
+                                                    </th>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
 
                                 </div>
                                 @php
                                     $buject = $projectDetails->budget;
                                     $estimateprofit = $buject - $projectDetails->estimate_profit;
-                                    $expense = abs($ttlexpdir + $ttlexpind + $productAmount);
-                                    $compleate = ($expense / $estimateprofit) * 100;
+                                    $expense = abs(($ttlexpdir ?? 0) + ($ttlexpind ?? 0) + $productAmount);
+                                    $compleate = $estimateprofit != 0 ? ($expense / $estimateprofit) * 100 : 0;
                                     $incomplate = 100 - $compleate;
                                     $curentprofit = ($projectDetails->estimate_profit * $compleate) / 100;
                                 @endphp
-
-
-
 
                                 <div class="col-md-4  float-left">
                                     <br>
@@ -709,14 +976,11 @@
 
                                 <hr>
 
-
                                 <div class="col-md-12 bg-success" style="text-align: center">
                                     Thank you for choosing {{ $companyInfo->company_name ?? 'N/A' }} products.
                                     We believe you will be satisfied by our services.
                                 </div>
                                 <!-- /.col -->
-
-
 
                             </div>
                             <!-- Table row -->
@@ -739,13 +1003,11 @@
             //-------------
             //- DONUT CHART -
             //-------------
-            // Get context with jQuery - using jQuery's .get() method.
             var donutChartCanvas = $('#donutChart').get(0).getContext('2d')
             var donutData = {
                 labels: [
                     'Complete',
                     'InComplete',
-
                 ],
                 datasets: [{
                     data: [{{ $compleate ?? 0 }}, {{ $incomplate ?? 0 }}],
@@ -756,32 +1018,26 @@
                 maintainAspectRatio: false,
                 responsive: true,
             }
-            //Create pie or douhnut chart
-            // You can switch between pie and douhnut using the method below.
             new Chart(donutChartCanvas, {
                 type: 'doughnut',
                 data: donutData,
                 options: donutOptions
             })
+
             //-------------
             //- PIE CHART -
             //-------------
-            // Get context with jQuery - using jQuery's .get() method.
             var pieChartCanvas = $('#pieChart').get(0).getContext('2d')
             var pieData = donutData;
             var pieOptions = {
                 maintainAspectRatio: false,
                 responsive: true,
             }
-            //Create pie or douhnut chart
-            // You can switch between pie and douhnut using the method below.
             new Chart(pieChartCanvas, {
                 type: 'pie',
                 data: pieData,
                 options: pieOptions
             })
-
-
 
         })
 
@@ -792,7 +1048,6 @@
                 backgroundColor: ["#3F88C5"]
             }];
 
-
             for (var i = 0; i < datasets[0].data.length; i++) {
                 if (datasets[0].data[i] > 0) {
                     datasets[0].backgroundColor[i] = "#3F88C5";
@@ -800,10 +1055,6 @@
                     datasets[0].backgroundColor[i] = "#FF5E5B";
                 }
             }
-
-            /* ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-             
-            ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー */
 
             var ctx = document.getElementById("myChart");
             var myChart = new Chart(ctx, {
@@ -815,7 +1066,6 @@
                     datasets: datasets
                 }
             });
-
 
         })
     </script>

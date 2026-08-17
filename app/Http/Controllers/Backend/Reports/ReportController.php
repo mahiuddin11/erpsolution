@@ -444,7 +444,7 @@ class ReportController extends Controller
     public function project(Request $request)
     {
 
-        // dd('project', $request->all());
+
         $title = 'Project Report';
         $project_id = '';
         if ($request->method() == 'POST') {
