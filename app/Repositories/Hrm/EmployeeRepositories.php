@@ -9,6 +9,7 @@ use App\Models\RoleAccess;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -269,6 +270,7 @@ class EmployeeRepositories
 
     public function store($request)
     {
+        DB::beginTransaction();
 
 
         try {
@@ -423,7 +425,7 @@ class EmployeeRepositories
                 $user->branch_id = $request->branch_id;
                 $user->role_id = $request->role_name;
                 $user->type = $request->type;
-                $user->status = 'Active';
+                $employee->status = $request->boolean('account_lock') ? 'Active' : 'Inactive';
                 $user->created_by = Auth::user()->id;
                 $user->save();
 
@@ -436,7 +438,7 @@ class EmployeeRepositories
                 $employee->save();
             }
 
-
+            DB::commit();
             return $employee;
         } catch (\Exception $e) {
             dd($e->getMessage(), $e->getLine());
@@ -614,9 +616,506 @@ class EmployeeRepositories
     //     return $employee;
     // }
 
+    // public function update($request, $id)
+    // {
+    //     try {
+
+    //         $employee = $this->model::find($id);
+
+    //         if (!$employee) {
+    //             session()->flash('error', 'Employee not found!');
+    //             return back();
+    //         }
+
+    //         $employee->name = $request->name;
+    //         $employee->dob = $request->dob;
+    //         $employee->id_card = $request->id_card;
+    //         $employee->gender = $request->gender;
+    //         $employee->personal_phone = $request->personal_phone;
+    //         $employee->branch_id = $request->branch_id;
+    //         $employee->office_phone = $request->office_phone;
+    //         $employee->marital_status = $request->marital_status;
+    //         $employee->nid = $request->nid;
+    //         $employee->email = $request->email;
+    //         $employee->last_in_time = $request->last_in_time;
+    //         $employee->reference = $request->reference;
+    //         $employee->department = $request->department;
+    //         $employee->position_id = $request->position_id;
+    //         $employee->experience = $request->experience;
+    //         $employee->present_address = $request->present_address;
+    //         $employee->permanent_address = $request->permanent_address;
+    //         $employee->achieved_degree = $request->achieved_degree;
+    //         $employee->institution = $request->institution;
+    //         $employee->passing_year = $request->passing_year;
+    //         $employee->salary = $request->salary;
+    //         $employee->join_date = $request->join_date;
+    //         $employee->blood_group = $request->blood_group;
+    //         $employee->over_time_is = $request->over_time_is;
+    //         $employee->updated_by = auth()->id();
+    //         $employee->guardian_number = $request->guardian_number;
+    //         $employee->employee_status = $request->status;
+    //         $employee->auto_checkout = $request->auto_checkout;
+    //         $employee->am_name = $request->am_name;
+
+
+
+    //         // area 
+    //         $normalizedArea = is_array($request->area) ? array_values($request->area) : array_filter([$request->area]);
+    //         $employee->area = json_encode($normalizedArea);
+
+    //         // ---- Profile Photo ----
+    //         $image = $request->file('image');
+    //         if (isset($image)) {
+    //             $currentDate = Carbon::now()->toDateString();
+    //             $imageName = $currentDate . '-' . uniqid() . '.' . $image->getClientOriginalExtension();
+
+    //             if (!Storage::disk('public')->exists('photo')) {
+    //                 Storage::disk('public')->makeDirectory('photo');
+    //             }
+
+    //             if ($employee->image) {
+    //                 Storage::disk('public')->delete('photo/' . $employee->image);
+    //             }
+
+    //             $image->storeAs('photo', $imageName, 'public');
+    //             $employee->image = $imageName;
+    //         }
+
+    //         // ---- Employee Signature ----
+    //         $emp_signature = $request->file('emp_signature');
+    //         if (isset($emp_signature)) {
+    //             $currentDate = Carbon::now()->toDateString();
+    //             $imageNameemp_signature = $currentDate . '-' . uniqid() . '.' . $emp_signature->getClientOriginalExtension();
+
+    //             if (!Storage::disk('public')->exists('photo')) {
+    //                 Storage::disk('public')->makeDirectory('photo');
+    //             }
+
+    //             if ($employee->emp_signature) {
+    //                 Storage::disk('public')->delete('photo/' . $employee->emp_signature);
+    //             }
+
+    //             $emp_signature->storeAs('photo', $imageNameemp_signature, 'public');
+    //             $employee->emp_signature = $imageNameemp_signature;
+    //         }
+
+    //         $employee->status = $request->status === 'left' ? 'Inactive' : 'Active';
+
+    //         // ---- Guardian NID Photo ----
+    //         $guardian_nid = $request->file('guardian_nid');
+    //         if (isset($guardian_nid)) {
+    //             $currentDate = Carbon::now()->toDateString();
+    //             $imageNameguardian_nid = $currentDate . '-' . uniqid() . '.' . $guardian_nid->getClientOriginalExtension();
+
+    //             if (!Storage::disk('public')->exists('photo')) {
+    //                 Storage::disk('public')->makeDirectory('photo');
+    //             }
+
+    //             if ($employee->guardian_nid) {
+    //                 Storage::disk('public')->delete('photo/' . $employee->guardian_nid);
+    //             }
+
+    //             $guardian_nid->storeAs('photo', $imageNameguardian_nid, 'public');
+    //             $employee->guardian_nid = $imageNameguardian_nid;
+    //         }
+
+
+
+
+    //         $employee->save();
+
+    //         // ---- ZKTeco sync ----
+    //         if (env("ZKTECO")) {
+
+    //             $zkGender = strtolower($employee->gender) == 'male' ? 'M' : 'F';
+    //             $enableAttendance = $request->status === 'left' ? false : true;
+
+    //             $local = editZKTecoEmployee($employee->device_id, [
+    //                 "emp_code" => $employee->id_card,
+    //                 "first_name" => $employee->am_name,
+    //                 "last_name" => null,
+    //                 "nickname" => null,
+    //                 "card_no" => $employee->id_card ?? '',
+    //                 "department" => 1,
+    //                 "position" => null,
+    //                 "hire_date" => $employee->join_date ?? date("Y-m-d"),
+    //                 "gender" => $zkGender,
+    //                 "birthday" => $employee->dob ?? null,
+    //                 "verify_mode" => 0,
+    //                 "emp_type" => null,
+    //                 "contact_tel" => null,
+    //                 "office_tel" => $employee->office_phone ?? null,
+    //                 "mobile" => $employee->personal_phone ?? null,
+    //                 "national" => null,
+    //                 "city" => null,
+    //                 "address" => $employee->permanent_address ?? null,
+    //                 "postcode" => null,
+    //                 "email" => $employee->email ?? null,
+    //                 "enroll_sn" => "",
+    //                 "ssn" => null,
+    //                 "religion" => null,
+    //                 "enable_att" => $enableAttendance,
+    //                 "enable_overtime" => false,
+    //                 "enable_holiday" => true,
+    //                 "dev_privilege" => 0,
+    //                 "area" => $normalizedArea,
+    //                 "app_status" => 0,
+    //                 "app_role" => 1
+    //             ]);
+
+    //             // response string 
+    //             $data = [];
+    //             if (!is_array($local)) {
+    //                 $data = json_decode($local, true) ?? [];
+    //             }
+
+    //             // device-
+    //             if (!is_array($local) && isset($data['detail'])) {
+
+    //                 $employeedf = createZKTecoEmployee([
+    //                     "emp_code" => $employee->id_card,
+    //                     "first_name" => $employee->am_name,
+    //                     "last_name" => null,
+    //                     "nickname" => null,
+    //                     "card_no" => $employee->id_card ?? '',
+    //                     "department" => 1,
+    //                     "position" => null,
+    //                     "hire_date" => $employee->join_date ?? date("Y-m-d"),
+    //                     "gender" => $zkGender,
+    //                     "birthday" => $employee->dob ?? null,
+    //                     "verify_mode" => 0,
+    //                     "emp_type" => null,
+    //                     "contact_tel" => null,
+    //                     "office_tel" => $employee->office_phone ?? null,
+    //                     "mobile" => $employee->personal_phone ?? null,
+    //                     "national" => null,
+    //                     "city" => null,
+    //                     "address" => $employee->permanent_address ?? null,
+    //                     "postcode" => null,
+    //                     "email" => $employee->email ?? null,
+    //                     "enroll_sn" => "",
+    //                     "ssn" => null,
+    //                     "religion" => null,
+    //                     "enable_att" => true,
+    //                     "enable_overtime" => false,
+    //                     "enable_holiday" => true,
+    //                     "dev_privilege" => 0,
+    //                     "area" => $normalizedArea,
+    //                     "app_status" => 0,
+    //                     "app_role" => 1
+    //                 ]);
+
+    //                 // string 
+    //                 if (is_string($employeedf)) {
+    //                     $employeedf = json_decode($employeedf, true) ?? [];
+    //                 }
+
+    //                 if (is_array($employeedf) && isset($employeedf['id'])) {
+    //                     $employee->device_id = $employeedf['id'];
+    //                     $employee->save();
+    //                 } else {
+    //                     Log::error('ZKTeco employee re-create on update failed', [
+    //                         'employee_id' => $employee->id,
+    //                         'response' => $employeedf,
+    //                     ]);
+    //                     session()->flash('warning', 'Employee updated but ZKTeco device re-sync failed. Please check device connection.');
+    //                 }
+    //             } elseif (!is_array($local)) {
+    //                 // 
+    //                 Log::error('ZKTeco employee update failed', [
+    //                     'employee_id' => $employee->id,
+    //                     'response' => $data,
+    //                 ]);
+    //                 session()->flash('warning', 'Employee updated but ZKTeco device sync failed. Please check device connection.');
+    //             }
+    //             // $local array 
+    //         }
+
+    //         return $employee;
+    //     } catch (\Exception $e) {
+    //         Log::error('Employee update failed', [
+    //             'employee_id' => $id,
+    //             'message' => $e->getMessage(),
+    //             'line' => $e->getLine(),
+    //         ]);
+    //         session()->flash('error', 'Employee update failed: ' . $e->getMessage());
+    //         return back()->withInput();
+    //     }
+    // }
+
+    // public function update($request, $id)
+    // {
+    //     try {
+    //         dd($request->all());
+
+    //         DB::beginTransaction();
+    //         $employee = $this->model::find($id);
+
+    //         if (!$employee) {
+    //             session()->flash('error', 'Employee not found!');
+    //             return back();
+    //         }
+
+    //         $employee->name = $request->name;
+    //         $employee->dob = $request->dob;
+    //         $employee->id_card = $request->id_card;
+    //         $employee->gender = $request->gender;
+    //         $employee->personal_phone = $request->personal_phone;
+    //         $employee->branch_id = $request->branch_id;
+    //         $employee->office_phone = $request->office_phone;
+    //         $employee->marital_status = $request->marital_status;
+    //         $employee->nid = $request->nid;
+    //         $employee->email = $request->email;
+    //         $employee->last_in_time = $request->last_in_time;
+    //         $employee->reference = $request->reference;
+    //         $employee->department = $request->department;
+    //         $employee->position_id = $request->position_id;
+    //         $employee->experience = $request->experience;
+    //         $employee->present_address = $request->present_address;
+    //         $employee->permanent_address = $request->permanent_address;
+    //         $employee->achieved_degree = $request->achieved_degree;
+    //         $employee->institution = $request->institution;
+    //         $employee->passing_year = $request->passing_year;
+    //         $employee->salary = $request->salary;
+    //         $employee->join_date = $request->join_date;
+    //         $employee->blood_group = $request->blood_group;
+    //         $employee->over_time_is = $request->over_time_is;
+    //         $employee->updated_by = auth()->id();
+    //         $employee->guardian_number = $request->guardian_number;
+    //         $employee->employee_status = $request->status;
+    //         $employee->auto_checkout = $request->auto_checkout;
+    //         $employee->am_name = $request->am_name;
+
+
+
+    //         // area
+    //         $normalizedArea = is_array($request->area) ? array_values($request->area) : array_filter([$request->area]);
+    //         $employee->area = json_encode($normalizedArea);
+
+    //         // ---- Profile Photo ----
+    //         $image = $request->file('image');
+    //         if (isset($image)) {
+    //             $currentDate = Carbon::now()->toDateString();
+    //             $imageName = $currentDate . '-' . uniqid() . '.' . $image->getClientOriginalExtension();
+
+    //             if (!Storage::disk('public')->exists('photo')) {
+    //                 Storage::disk('public')->makeDirectory('photo');
+    //             }
+
+    //             if ($employee->image) {
+    //                 Storage::disk('public')->delete('photo/' . $employee->image);
+    //             }
+
+    //             $image->storeAs('photo', $imageName, 'public');
+    //             $employee->image = $imageName;
+    //         }
+
+    //         // ---- Employee Signature ----
+    //         $emp_signature = $request->file('emp_signature');
+    //         if (isset($emp_signature)) {
+    //             $currentDate = Carbon::now()->toDateString();
+    //             $imageNameemp_signature = $currentDate . '-' . uniqid() . '.' . $emp_signature->getClientOriginalExtension();
+
+    //             if (!Storage::disk('public')->exists('photo')) {
+    //                 Storage::disk('public')->makeDirectory('photo');
+    //             }
+
+    //             if ($employee->emp_signature) {
+    //                 Storage::disk('public')->delete('photo/' . $employee->emp_signature);
+    //             }
+
+    //             $emp_signature->storeAs('photo', $imageNameemp_signature, 'public');
+    //             $employee->emp_signature = $imageNameemp_signature;
+    //         }
+
+    //         $employee->status = $request->status === 'left' ? 'Inactive' : 'Active';
+
+    //         // ---- Guardian NID Photo ----
+    //         $guardian_nid = $request->file('guardian_nid');
+    //         if (isset($guardian_nid)) {
+    //             $currentDate = Carbon::now()->toDateString();
+    //             $imageNameguardian_nid = $currentDate . '-' . uniqid() . '.' . $guardian_nid->getClientOriginalExtension();
+
+    //             if (!Storage::disk('public')->exists('photo')) {
+    //                 Storage::disk('public')->makeDirectory('photo');
+    //             }
+
+    //             if ($employee->guardian_nid) {
+    //                 Storage::disk('public')->delete('photo/' . $employee->guardian_nid);
+    //             }
+
+    //             $guardian_nid->storeAs('photo', $imageNameguardian_nid, 'public');
+    //             $employee->guardian_nid = $imageNameguardian_nid;
+    //         }
+
+
+
+
+    //         $employee->save();
+
+    //         // ---- ZKTeco sync ----
+    //         if (env("ZKTECO")) {
+
+    //             $zkGender = strtolower($employee->gender) == 'male' ? 'M' : 'F';
+    //             $enableAttendance = $request->status === 'left' ? false : true;
+
+    //             $local = editZKTecoEmployee($employee->device_id, [
+    //                 "emp_code" => $employee->id_card,
+    //                 "first_name" => $employee->am_name,
+    //                 "last_name" => null,
+    //                 "nickname" => null,
+    //                 "card_no" => $employee->id_card ?? '',
+    //                 "department" => 1,
+    //                 "position" => null,
+    //                 "hire_date" => $employee->join_date ?? date("Y-m-d"),
+    //                 "gender" => $zkGender,
+    //                 "birthday" => $employee->dob ?? null,
+    //                 "verify_mode" => 0,
+    //                 "emp_type" => null,
+    //                 "contact_tel" => null,
+    //                 "office_tel" => $employee->office_phone ?? null,
+    //                 "mobile" => $employee->personal_phone ?? null,
+    //                 "national" => null,
+    //                 "city" => null,
+    //                 "address" => $employee->permanent_address ?? null,
+    //                 "postcode" => null,
+    //                 "email" => $employee->email ?? null,
+    //                 "enroll_sn" => "",
+    //                 "ssn" => null,
+    //                 "religion" => null,
+    //                 "enable_att" => $enableAttendance,
+    //                 "enable_overtime" => false,
+    //                 "enable_holiday" => true,
+    //                 "dev_privilege" => 0,
+    //                 "area" => $normalizedArea,
+    //                 "app_status" => 0,
+    //                 "app_role" => 1
+    //             ]);
+
+    //             // response string
+    //             $data = [];
+    //             if (!is_array($local)) {
+    //                 $data = json_decode($local, true) ?? [];
+    //             }
+
+    //             // device-
+    //             if (!is_array($local) && isset($data['detail'])) {
+
+    //                 $employeedf = createZKTecoEmployee([
+    //                     "emp_code" => $employee->id_card,
+    //                     "first_name" => $employee->am_name,
+    //                     "last_name" => null,
+    //                     "nickname" => null,
+    //                     "card_no" => $employee->id_card ?? '',
+    //                     "department" => 1,
+    //                     "position" => null,
+    //                     "hire_date" => $employee->join_date ?? date("Y-m-d"),
+    //                     "gender" => $zkGender,
+    //                     "birthday" => $employee->dob ?? null,
+    //                     "verify_mode" => 0,
+    //                     "emp_type" => null,
+    //                     "contact_tel" => null,
+    //                     "office_tel" => $employee->office_phone ?? null,
+    //                     "mobile" => $employee->personal_phone ?? null,
+    //                     "national" => null,
+    //                     "city" => null,
+    //                     "address" => $employee->permanent_address ?? null,
+    //                     "postcode" => null,
+    //                     "email" => $employee->email ?? null,
+    //                     "enroll_sn" => "",
+    //                     "ssn" => null,
+    //                     "religion" => null,
+    //                     "enable_att" => true,
+    //                     "enable_overtime" => false,
+    //                     "enable_holiday" => true,
+    //                     "dev_privilege" => 0,
+    //                     "area" => $normalizedArea,
+    //                     "app_status" => 0,
+    //                     "app_role" => 1
+    //                 ]);
+
+    //                 // string
+    //                 if (is_string($employeedf)) {
+    //                     $employeedf = json_decode($employeedf, true) ?? [];
+    //                 }
+
+    //                 if (is_array($employeedf) && isset($employeedf['id'])) {
+    //                     $employee->device_id = $employeedf['id'];
+    //                     $employee->save();
+    //                 } else {
+    //                     Log::error('ZKTeco employee re-create on update failed', [
+    //                         'employee_id' => $employee->id,
+    //                         'response' => $employeedf,
+    //                     ]);
+    //                     session()->flash('warning', 'Employee updated but ZKTeco device re-sync failed. Please check device connection.');
+    //                 }
+    //             } elseif (!is_array($local)) {
+    //                 //
+    //                 Log::error('ZKTeco employee update failed', [
+    //                     'employee_id' => $employee->id,
+    //                     'response' => $data,
+    //                 ]);
+    //                 session()->flash('warning', 'Employee updated but ZKTeco device sync failed. Please check device connection.');
+    //             }
+    //         }
+
+    //         // ================= USER ACCESS (create or update) =================
+    //         if ($request->boolean('create_user')) {
+
+    //             $user = $employee->user ?? new User();
+
+    //             $user->name = $request->user_name;
+    //             $user->phone = $request->phone ?? $request->personal_phone;
+    //             $user->employee_id = $employee->id;
+    //             $user->email = $request->user_email;
+    //             $user->branch_id = $request->branch_id;
+    //             $user->role_id = $request->role_name;
+    //             $user->type = $request->type;
+    //             $user->status = $request->boolean('account_lock') ? 'Active' : 'Inactive';
+
+    //             // password blank thakle purono hash e hat dibo na
+    //             if ($request->filled('password')) {
+    //                 $user->password = Hash::make($request->password);
+    //             }
+
+    //             if (!$user->exists) {
+    //                 $user->created_by = auth()->id();
+    //             } else {
+    //                 $user->updated_by = auth()->id();
+    //             }
+
+    //             $user->save();
+
+    //             // RoleAccess sync — already thakle update, na thakle create
+    //             $accessRoll = RoleAccess::firstOrNew(['user_id' => $user->id]);
+    //             $accessRoll->role_id = $request->role_name;
+    //             $accessRoll->save();
+
+    //             if ($employee->user_id !== $user->id) {
+    //                 $employee->user_id = $user->id;
+    //                 $employee->save();
+    //             }
+    //         }
+    //         DB::commit();
+
+    //         return $employee;
+    //     } catch (\Exception $e) {
+    //         Log::error('Employee update failed', [
+    //             'employee_id' => $id,
+    //             'message' => $e->getMessage(),
+    //             'line' => $e->getLine(),
+    //         ]);
+    //         session()->flash('error', 'Employee update failed: ' . $e->getMessage());
+    //         return back()->withInput();
+    //     }
+    // }
+
     public function update($request, $id)
     {
         try {
+
+
+            DB::beginTransaction();
 
             $employee = $this->model::find($id);
 
@@ -624,6 +1123,9 @@ class EmployeeRepositories
                 session()->flash('error', 'Employee not found!');
                 return back();
             }
+
+
+            $isInactive = ($request->status === 'left') || !$request->boolean('account_lock');
 
             $employee->name = $request->name;
             $employee->dob = $request->dob;
@@ -657,7 +1159,7 @@ class EmployeeRepositories
 
 
 
-            // area 
+            // area
             $normalizedArea = is_array($request->area) ? array_values($request->area) : array_filter([$request->area]);
             $employee->area = json_encode($normalizedArea);
 
@@ -697,7 +1199,7 @@ class EmployeeRepositories
                 $employee->emp_signature = $imageNameemp_signature;
             }
 
-            $employee->status = $request->status === 'left' ? 'Inactive' : 'Active';
+            $employee->status = $isInactive ? 'Inactive' : 'Active';
 
             // ---- Guardian NID Photo ----
             $guardian_nid = $request->file('guardian_nid');
@@ -723,54 +1225,121 @@ class EmployeeRepositories
             $employee->save();
 
             // ---- ZKTeco sync ----
+            // if (env("ZKTECO")) {
+
+            //     $zkGender = strtolower($employee->gender) == 'male' ? 'M' : 'F';
+            //     $enableAttendance = !$isInactive;
+
+            //     $local = editZKTecoEmployee($employee->device_id, [
+            //         "emp_code" => $employee->id_card,
+            //         "first_name" => $employee->am_name,
+            //         "last_name" => null,
+            //         "nickname" => null,
+            //         "card_no" => $employee->id_card ?? '',
+            //         "department" => 1,
+            //         "position" => null,
+            //         "hire_date" => $employee->join_date ?? date("Y-m-d"),
+            //         "gender" => $zkGender,
+            //         "birthday" => $employee->dob ?? null,
+            //         "verify_mode" => 0,
+            //         "emp_type" => null,
+            //         "contact_tel" => null,
+            //         "office_tel" => $employee->office_phone ?? null,
+            //         "mobile" => $employee->personal_phone ?? null,
+            //         "national" => null,
+            //         "city" => null,
+            //         "address" => $employee->permanent_address ?? null,
+            //         "postcode" => null,
+            //         "email" => $employee->email ?? null,
+            //         "enroll_sn" => "",
+            //         "ssn" => null,
+            //         "religion" => null,
+            //         "enable_att" => $enableAttendance,
+            //         "enable_overtime" => false,
+            //         "enable_holiday" => true,
+            //         "dev_privilege" => 0,
+            //         "area" => $normalizedArea,
+            //         "app_status" => 0,
+            //         "app_role" => 1
+            //     ]);
+
+            //     // response string
+            //     $data = [];
+            //     if (!is_array($local)) {
+            //         $data = json_decode($local, true) ?? [];
+            //     }
+
+            //     // device-
+            //     if (!is_array($local) && isset($data['detail'])) {
+
+            //         $employeedf = createZKTecoEmployee([
+            //             "emp_code" => $employee->id_card,
+            //             "first_name" => $employee->am_name,
+            //             "last_name" => null,
+            //             "nickname" => null,
+            //             "card_no" => $employee->id_card ?? '',
+            //             "department" => 1,
+            //             "position" => null,
+            //             "hire_date" => $employee->join_date ?? date("Y-m-d"),
+            //             "gender" => $zkGender,
+            //             "birthday" => $employee->dob ?? null,
+            //             "verify_mode" => 0,
+            //             "emp_type" => null,
+            //             "contact_tel" => null,
+            //             "office_tel" => $employee->office_phone ?? null,
+            //             "mobile" => $employee->personal_phone ?? null,
+            //             "national" => null,
+            //             "city" => null,
+            //             "address" => $employee->permanent_address ?? null,
+            //             "postcode" => null,
+            //             "email" => $employee->email ?? null,
+            //             "enroll_sn" => "",
+            //             "ssn" => null,
+            //             "religion" => null,
+            //             "enable_att" => $enableAttendance,
+            //             "enable_overtime" => false,
+            //             "enable_holiday" => true,
+            //             "dev_privilege" => 0,
+            //             "area" => $normalizedArea,
+            //             "app_status" => 0,
+            //             "app_role" => 1
+            //         ]);
+
+            //         // string
+            //         if (is_string($employeedf)) {
+            //             $employeedf = json_decode($employeedf, true) ?? [];
+            //         }
+
+            //         if (is_array($employeedf) && isset($employeedf['id'])) {
+            //             $employee->device_id = $employeedf['id'];
+            //             $employee->save();
+            //         } else {
+            //             Log::error('ZKTeco employee re-create on update failed', [
+            //                 'employee_id' => $employee->id,
+            //                 'response' => $employeedf,
+            //             ]);
+            //             session()->flash('warning', 'Employee updated but ZKTeco device re-sync failed. Please check device connection.');
+            //         }
+            //     } elseif (!is_array($local)) {
+            //         //
+            //         Log::error('ZKTeco employee update failed', [
+            //             'employee_id' => $employee->id,
+            //             'response' => $data,
+            //         ]);
+            //         session()->flash('warning', 'Employee updated but ZKTeco device sync failed. Please check device connection.');
+            //     }
+            //     // $local array
+            // }
+
+            // ---- ZKTeco sync ----
             if (env("ZKTECO")) {
 
                 $zkGender = strtolower($employee->gender) == 'male' ? 'M' : 'F';
-                $enableAttendance = $request->status === 'left' ? false : true;
+                $enableAttendance = !$isInactive;
 
-                $local = editZKTecoEmployee($employee->device_id, [
-                    "emp_code" => $employee->id_card,
-                    "first_name" => $employee->am_name,
-                    "last_name" => null,
-                    "nickname" => null,
-                    "card_no" => $employee->id_card ?? '',
-                    "department" => 1,
-                    "position" => null,
-                    "hire_date" => $employee->join_date ?? date("Y-m-d"),
-                    "gender" => $zkGender,
-                    "birthday" => $employee->dob ?? null,
-                    "verify_mode" => 0,
-                    "emp_type" => null,
-                    "contact_tel" => null,
-                    "office_tel" => $employee->office_phone ?? null,
-                    "mobile" => $employee->personal_phone ?? null,
-                    "national" => null,
-                    "city" => null,
-                    "address" => $employee->permanent_address ?? null,
-                    "postcode" => null,
-                    "email" => $employee->email ?? null,
-                    "enroll_sn" => "",
-                    "ssn" => null,
-                    "religion" => null,
-                    "enable_att" => $enableAttendance,
-                    "enable_overtime" => false,
-                    "enable_holiday" => true,
-                    "dev_privilege" => 0,
-                    "area" => $normalizedArea,
-                    "app_status" => 0,
-                    "app_role" => 1
-                ]);
+                if (!empty($employee->device_id)) {
 
-                // response string 
-                $data = [];
-                if (!is_array($local)) {
-                    $data = json_decode($local, true) ?? [];
-                }
-
-                // device-
-                if (!is_array($local) && isset($data['detail'])) {
-
-                    $employeedf = createZKTecoEmployee([
+                    $local = editZKTecoEmployee($employee->device_id, [
                         "emp_code" => $employee->id_card,
                         "first_name" => $employee->am_name,
                         "last_name" => null,
@@ -794,7 +1363,7 @@ class EmployeeRepositories
                         "enroll_sn" => "",
                         "ssn" => null,
                         "religion" => null,
-                        "enable_att" => true,
+                        "enable_att" => $enableAttendance,
                         "enable_overtime" => false,
                         "enable_holiday" => true,
                         "dev_privilege" => 0,
@@ -803,31 +1372,122 @@ class EmployeeRepositories
                         "app_role" => 1
                     ]);
 
-                    // string 
-                    if (is_string($employeedf)) {
-                        $employeedf = json_decode($employeedf, true) ?? [];
+                    // response string
+                    $data = [];
+                    if (!is_array($local)) {
+                        $data = json_decode($local, true) ?? [];
                     }
 
-                    if (is_array($employeedf) && isset($employeedf['id'])) {
-                        $employee->device_id = $employeedf['id'];
-                        $employee->save();
-                    } else {
-                        Log::error('ZKTeco employee re-create on update failed', [
-                            'employee_id' => $employee->id,
-                            'response' => $employeedf,
-                        ]);
-                        session()->flash('warning', 'Employee updated but ZKTeco device re-sync failed. Please check device connection.');
-                    }
-                } elseif (!is_array($local)) {
-                    // 
-                    Log::error('ZKTeco employee update failed', [
-                        'employee_id' => $employee->id,
-                        'response' => $data,
-                    ]);
-                    session()->flash('warning', 'Employee updated but ZKTeco device sync failed. Please check device connection.');
-                }
-                // $local array 
+                    // ---- TEMPORARILY DISABLED: re-create on device if edit fails ----
+                    // Future e enable korte chaile ei block ta uncomment korle hobe.
+                    /*
+        if (!is_array($local) && isset($data['detail'])) {
+
+            $employeedf = createZKTecoEmployee([
+                "emp_code" => $employee->id_card,
+                "first_name" => $employee->am_name,
+                "last_name" => null,
+                "nickname" => null,
+                "card_no" => $employee->id_card ?? '',
+                "department" => 1,
+                "position" => null,
+                "hire_date" => $employee->join_date ?? date("Y-m-d"),
+                "gender" => $zkGender,
+                "birthday" => $employee->dob ?? null,
+                "verify_mode" => 0,
+                "emp_type" => null,
+                "contact_tel" => null,
+                "office_tel" => $employee->office_phone ?? null,
+                "mobile" => $employee->personal_phone ?? null,
+                "national" => null,
+                "city" => null,
+                "address" => $employee->permanent_address ?? null,
+                "postcode" => null,
+                "email" => $employee->email ?? null,
+                "enroll_sn" => "",
+                "ssn" => null,
+                "religion" => null,
+                "enable_att" => $enableAttendance,
+                "enable_overtime" => false,
+                "enable_holiday" => true,
+                "dev_privilege" => 0,
+                "area" => $normalizedArea,
+                "app_status" => 0,
+                "app_role" => 1
+            ]);
+
+            // string
+            if (is_string($employeedf)) {
+                $employeedf = json_decode($employeedf, true) ?? [];
             }
+
+            if (is_array($employeedf) && isset($employeedf['id'])) {
+                $employee->device_id = $employeedf['id'];
+                $employee->save();
+            } else {
+                Log::error('ZKTeco employee re-create on update failed', [
+                    'employee_id' => $employee->id,
+                    'response' => $employeedf,
+                ]);
+                session()->flash('warning', 'Employee updated but ZKTeco device re-sync failed. Please check device connection.');
+            }
+        } elseif (!is_array($local)) {
+        */
+                    if (!is_array($local)) {
+                        Log::error('ZKTeco employee update failed', [
+                            'employee_id' => $employee->id,
+                            'response' => $data,
+                        ]);
+                        session()->flash('warning', 'Employee updated but ZKTeco device sync failed. Please check device connection.');
+                    }
+                } else {
+
+                    Log::info('ZKTeco sync skipped: employee has no device_id (not found in ZKBio Time)', [
+                        'employee_id' => $employee->id,
+                    ]);
+                }
+            }
+
+
+            // ================= USER ACCESS (create or update) =================
+            if ($request->boolean('create_user')) {
+
+                $user = $employee->user ?? new User();
+
+                $user->name = $request->user_name;
+                $user->phone = $request->phone ?? $request->personal_phone;
+                $user->employee_id = $employee->id;
+                $user->email = $request->user_email;
+                $user->branch_id = $request->branch_id;
+                $user->role_id = $request->role_name;
+                $user->type = $request->type;
+                $user->status = $isInactive ? 'Inactive' : 'Active';
+
+                if ($request->filled('password')) {
+                    $user->password = Hash::make($request->password);
+                }
+
+                if (!$user->exists) {
+                    $user->created_by = auth()->id();
+                } else {
+                    $user->updated_by = auth()->id();
+                }
+
+                $user->save();
+
+                $accessRoll = RoleAccess::firstOrNew(['user_id' => $user->id]);
+                $accessRoll->role_id = $request->role_name;
+                $accessRoll->save();
+
+                if ($employee->user_id !== $user->id) {
+                    $employee->user_id = $user->id;
+                    $employee->save();
+                }
+            }
+
+
+
+            DB::commit();
 
             return $employee;
         } catch (\Exception $e) {

@@ -41,7 +41,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
 
         Route::get('/hrm-employe-edit/{id}', [EmployeeController::class, 'edit'])->name('hrm.employee.edit');
         Route::get('/hrm-employe-show/{employee:id}', [EmployeeController::class, 'show'])->name('hrm.employee.show');
-        Route::post('/hrm-employe-update/{id}', [EmployeeController::class, 'update'])->name('hrm.employee.update');
+        Route::put('/hrm-employe-update/{id}', [EmployeeController::class, 'update'])->name('hrm.employee.update');
         Route::get('/hrm-employe-delete/{id}', [EmployeeController::class, 'destroy'])->name('hrm.employee.destroy');
         Route::get('/hrm-employe-status/{id}/{status}', [EmployeeController::class, 'statusUpdate'])->name('hrm.employee.status');
         //Employe crud operation end

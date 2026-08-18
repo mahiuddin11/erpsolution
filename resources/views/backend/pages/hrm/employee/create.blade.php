@@ -106,6 +106,17 @@
             width: 100% !important;
         }
 
+        /* ---------- Select2 manual validation styling ---------- */
+        .select2-container .select2-selection.is-invalid-select2 {
+            border: 1px solid #dc3545 !important;
+        }
+
+        .select2-error-msg {
+            font-size: .82rem;
+            color: #dc3545;
+            margin-top: .3rem;
+        }
+
         /* ---------- File upload with preview ---------- */
         .ecf-upload {
             border: 1px dashed #c6cbd8;
@@ -552,9 +563,8 @@
                                     </div>
                                     <div class="col-12 col-sm-6 col-lg-4 ecf-field">
                                         <label>Position <span class="text-danger">*</span></label>
-                                        <select name="position_id"
-                                            class="form-control select2 @error('position_id') is-invalid @enderror"
-                                            required>
+                                        <select name="position_id" id="position_id"
+                                            class="form-control select2 @error('position_id') is-invalid @enderror">
                                             <option value="" selected disabled>Select Position</option>
                                             @foreach ($positions as $value)
                                                 <option value="{{ $value->id }}">
@@ -660,14 +670,24 @@
                                     <span class="ecf-icon"><i class="fa fa-user-lock"></i></span>
                                     <div>
                                         <h4>User Access</h4>
-                                        <small>Enabling this will create a login account for the employee</small>
+                                        <small>Enable korle employee er jonno login account create hobe</small>
                                     </div>
                                 </div>
-                                <div class="custom-control custom-switch">
-                                    <input type="checkbox" class="custom-control-input" id="create_user_toggle"
-                                        name="create_user" value="1" {{ old('create_user') ? 'checked' : '' }}>
-                                    <label class="custom-control-label" for="create_user_toggle">Create User
-                                        Account</label>
+                                <div class="d-flex align-items-center" style="gap:1rem;">
+                                    {{-- Lock/Unlock icon: locked = employee Inactive, unlocked = employee Active --}}
+                                    <button type="button" id="accountLockBtn" class="btn btn-sm btn-outline-secondary"
+                                        style="display:none;" title="Click to toggle account status">
+                                        <i class="fa fa-lock" id="accountLockIcon"></i>
+                                        <span id="accountLockLabel">Locked (Inactive)</span>
+                                    </button>
+                                    <input type="hidden" name="account_lock" id="account_lock" value="0">
+
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="create_user_toggle"
+                                            name="create_user" value="1" {{ old('create_user') ? 'checked' : '' }}>
+                                        <label class="custom-control-label" for="create_user_toggle">Create User
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
 
@@ -789,21 +809,102 @@
                 }
             });
 
-            // ---------- Simple client-side validation feedback ----------
+            // ---------- Select2 manual validation helper ----------
+            // Native `required` on a select2-hidden <select> doesn't reliably
+            // trigger visible browser validation feedback, so we validate manually.
+            function validateSelect2Field($select, label) {
+                var val = $select.val();
+                var isEmpty = !val || (Array.isArray(val) && val.length === 0);
+                var $container = $select.next('.select2-container');
+
+                // remove any previous error message right after this field's container
+                $container.next('.select2-error-msg').remove();
+
+                if (isEmpty) {
+                    $container.find('.select2-selection').addClass('is-invalid-select2');
+                    $container.after('<div class="invalid-feedback d-block select2-error-msg">' + label +
+                        ' is required.</div>');
+                    return false;
+                } else {
+                    $container.find('.select2-selection').removeClass('is-invalid-select2');
+                    return true;
+                }
+            }
+
+            // clear the error state as soon as the user picks a value
+            $(document).on('select2:select select2:unselect change', '#position_id, #area_select, #role_name',
+                function() {
+                    var label = $(this).attr('id') === 'position_id' ? 'Position' :
+                        ($(this).attr('id') === 'area_select' ? 'Area' : 'Role');
+                    validateSelect2Field($(this), label);
+                });
+
+            // ---------- Full form validation on submit ----------
             var form = document.getElementById('employeeCreateForm');
+            var $submitBtn = $('#ecfSubmitBtn');
+            var submitBtnOriginalHtml = $submitBtn.html();
+
+            function resetSubmitButton() {
+                $submitBtn.prop('disabled', false).html(submitBtnOriginalHtml);
+            }
+
+            // Safety net: some browsers restore the page from cache (back/forward
+            // navigation) with the button still showing the disabled "Saving..."
+            // state from a previous attempt. Always reset it when the page is shown.
+            window.addEventListener('pageshow', function(event) {
+                resetSubmitButton();
+            });
+
             form.addEventListener('submit', function(event) {
-                if (!form.checkValidity()) {
+                // Always start from a clean, enabled button state for this attempt.
+                resetSubmitButton();
+
+                var valid = false;
+                var positionOk = false;
+                var areaOk = false;
+                var roleOk = false;
+
+                try {
+                    valid = form.checkValidity();
+                    positionOk = validateSelect2Field($('#position_id'), 'Position');
+                    areaOk = validateSelect2Field($('#area_select'), 'Area');
+
+                    var userToggleOn = $('#create_user_toggle').is(':checked');
+                    roleOk = userToggleOn ? validateSelect2Field($('#role_name'), 'Role') : true;
+                } catch (err) {
+                    // If anything above throws, do NOT let it fall through to the
+                    // "disable button" branch — treat it as invalid and let the
+                    // user try again instead of getting stuck.
+                    console.error('Validation error:', err);
+                    valid = false;
+                }
+
+                var isFormValid = valid && positionOk && areaOk && roleOk;
+
+                if (!isFormValid) {
                     event.preventDefault();
                     event.stopPropagation();
+
+                    // Explicitly guarantee the button stays clickable so the user
+                    // can fix the missing field(s) and press Save again.
+                    resetSubmitButton();
+
                     var $firstInvalid = $(form).find(':invalid').first();
-                    if ($firstInvalid.length) {
+                    var $firstSelect2Error = $('.select2-error-msg').first();
+                    var $scrollTarget = $firstInvalid.length ? $firstInvalid : $firstSelect2Error;
+
+                    if ($scrollTarget.length) {
                         $('html, body').animate({
-                            scrollTop: $firstInvalid.offset().top - 120
+                            scrollTop: $scrollTarget.offset().top - 120
                         }, 300);
+                    }
+                    if ($firstInvalid.length) {
                         $firstInvalid.focus();
                     }
                 } else {
-                    $('#ecfSubmitBtn').prop('disabled', true)
+                    // Only disable + show spinner when the form is actually
+                    // about to submit to the server.
+                    $submitBtn.prop('disabled', true)
                         .html('<i class="fa fa-spinner fa-spin"></i> Saving...');
                 }
                 form.classList.add('was-validated');
@@ -860,8 +961,9 @@
         };
 
         function toggleUserFieldsRequired(state) {
-            $userBody.find('#user_name, #user_email, #role_name, #user_type, #user_password, #user_password_confirmation')
+            $userBody.find('#user_name, #user_email, #user_type, #user_password, #user_password_confirmation')
                 .prop('required', state);
+            // role_name is a select2 field, validated manually (not via native required)
         }
 
         function syncUserFieldsFromPersonalInfo() {
@@ -873,25 +975,12 @@
             }
         }
 
-        $userToggle.on('change', function() {
-            if (this.checked) {
-                $userBody.slideDown(150);
-                toggleUserFieldsRequired(true);
-                syncUserFieldsFromPersonalInfo();
-            } else {
-                $userBody.slideUp(150);
-                toggleUserFieldsRequired(false);
-            }
-        });
-
-
         $('#user_name').on('input', function() {
             userEdited.user_name = true;
         });
         $('#user_email').on('input', function() {
             userEdited.user_email = true;
         });
-
 
         $('input[name="name"]').on('input', function() {
             if ($userToggle.is(':checked') && !userEdited.user_name) {
@@ -904,9 +993,60 @@
             }
         });
 
-
         if ($userToggle.is(':checked')) {
             toggleUserFieldsRequired(true);
+        }
+
+        // ---------- Lock / Unlock account status ----------
+        // Locked  -> employee saved as Inactive
+        // Unlocked -> employee saved as Active
+        var $lockBtn = $('#accountLockBtn');
+        var $lockIcon = $('#accountLockIcon');
+        var $lockLabel = $('#accountLockLabel');
+        var $lockInput = $('#account_lock');
+
+        function renderLockState(isUnlocked) {
+            $lockInput.val(isUnlocked ? 1 : 0);
+            if (isUnlocked) {
+                $lockIcon.removeClass('fa-lock text-danger').addClass('fa-unlock text-success');
+                $lockLabel.text('Unlocked (Active)');
+                $lockBtn.removeClass('btn-outline-secondary').addClass('btn-outline-success');
+            } else {
+                $lockIcon.removeClass('fa-unlock text-success').addClass('fa-lock text-danger');
+                $lockLabel.text('Locked (Inactive)');
+                $lockBtn.removeClass('btn-outline-success').addClass('btn-outline-secondary');
+            }
+        }
+
+        // default state: locked / inactive
+        renderLockState(false);
+
+        $lockBtn.on('click', function() {
+            var currentlyUnlocked = $lockInput.val() == '1';
+            renderLockState(!currentlyUnlocked);
+        });
+
+        // ---------- Single toggle handler (create_user checkbox) ----------
+        $userToggle.on('change', function() {
+            if (this.checked) {
+                $userBody.slideDown(150);
+                toggleUserFieldsRequired(true);
+                syncUserFieldsFromPersonalInfo();
+                $lockBtn.show();
+            } else {
+                $userBody.slideUp(150);
+                toggleUserFieldsRequired(false);
+                $lockBtn.hide();
+                renderLockState(false); // reset to locked/inactive when toggle turned off
+                $('#role_name').next('.select2-container').find('.select2-selection')
+                    .removeClass('is-invalid-select2');
+                $('#role_name').next('.select2-container').next('.select2-error-msg').remove();
+            }
+        });
+
+        // if the form re-renders with create_user already checked (validation error return), show lock button
+        if ($userToggle.is(':checked')) {
+            $lockBtn.show();
         }
     </script>
 @endsection

@@ -106,6 +106,17 @@
             width: 100% !important;
         }
 
+        /* ---------- Select2 manual validation styling ---------- */
+        .select2-container .select2-selection.is-invalid-select2 {
+            border: 1px solid #dc3545 !important;
+        }
+
+        .select2-error-msg {
+            font-size: .82rem;
+            color: #dc3545;
+            margin-top: .3rem;
+        }
+
         /* ---------- File upload with preview ---------- */
         .ecf-upload {
             border: 1px dashed #c6cbd8;
@@ -229,6 +240,7 @@
                     <form class="needs-validation" id="employeeEditForm" method="POST"
                         action="{{ route('hrm.employee.update', $editInfo->id) }}" enctype="multipart/form-data" novalidate>
                         @csrf
+                        @method('PUT')
 
 
                         {{-- ================= PERSONAL INFO ================= --}}
@@ -245,7 +257,8 @@
                                     <div class="col-12 col-sm-6 col-lg-4 ecf-field">
                                         <label>Name <span class="text-danger">*</span></label>
                                         <input type="text" class="form-control @error('name') is-invalid @enderror"
-                                            value="{{ old('name', $editInfo->name) }}" name="name" required>
+                                            value="{{ old('name', $editInfo->name) }}" name="name" id="emp_name"
+                                            required>
                                         @error('name')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -271,7 +284,7 @@
                                     <div class="col-12 col-sm-6 col-lg-4 ecf-field">
                                         <label>Email</label>
                                         <input type="email" class="form-control @error('email') is-invalid @enderror"
-                                            value="{{ old('email', $editInfo->email) }}" name="email">
+                                            value="{{ old('email', $editInfo->email) }}" name="email" id="emp_email">
                                         @error('email')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -611,9 +624,8 @@
                                     </div>
                                     <div class="col-12 col-sm-6 col-lg-4 ecf-field">
                                         <label>Position <span class="text-danger">*</span></label>
-                                        <select name="position_id"
-                                            class="form-control select2 @error('position_id') is-invalid @enderror"
-                                            required>
+                                        <select name="position_id" id="position_id"
+                                            class="form-control select2 @error('position_id') is-invalid @enderror">
 
                                             <option value="" disabled>Select Position</option>
 
@@ -740,6 +752,143 @@
                             </div>
                         </div>
 
+                        {{-- ================= USER ACCESS ================= --}}
+                        @php
+
+                            $linkedUser = $editInfo->user_id ? $editInfo->user : null;
+                            $hasUser = (bool) $linkedUser;
+                            $userIsActive = $hasUser && $linkedUser->status === 'Active';
+                        @endphp
+
+
+                        <div class="card ecf-section">
+                            <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                                <div class="d-flex align-items-center" style="gap:.6rem;">
+                                    <span class="ecf-icon"><i class="fa fa-user-lock"></i></span>
+                                    <div>
+                                        <h4>User Access</h4>
+                                        <small>
+                                            @if ($hasUser)
+                                                This employee already has a login account. Update the fields below or
+                                                use the lock button to control login access.
+                                            @else
+                                                Enable to create a login account for this employee.
+                                            @endif
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center" style="gap:1rem;">
+                                    {{-- Lock/Unlock icon: locked = user login Inactive, unlocked = user login Active --}}
+                                    <button type="button" id="accountLockBtn" class="btn btn-sm btn-outline-secondary"
+                                        style="{{ $hasUser ? '' : 'display:none;' }}"
+                                        title="Click to toggle login access">
+                                        <i class="fa fa-lock" id="accountLockIcon"></i>
+                                        <span id="accountLockLabel">Locked (Inactive)</span>
+                                    </button>
+                                    <input type="hidden" name="account_lock" id="account_lock"
+                                        value="{{ old('account_lock', $userIsActive ? 1 : 0) }}">
+
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="create_user_toggle"
+                                            name="create_user" value="1"
+                                            {{ old('create_user', $hasUser ? '1' : null) ? 'checked' : '' }}>
+                                        <label class="custom-control-label" for="create_user_toggle">
+                                            {{ $hasUser ? 'Manage User Account' : 'Create User Account' }}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-body" id="userAccessBody"
+                                style="{{ old('create_user', $hasUser ? '1' : null) ? '' : 'display:none;' }}">
+                                <div class="row">
+                                    <div class="col-12 col-sm-6 col-lg-4 ecf-field">
+                                        <label>Login Name <span class="text-danger">*</span></label>
+                                        <input type="text"
+                                            class="form-control @error('user_name') is-invalid @enderror"
+                                            value="{{ old('user_name', $linkedUser->name ?? '') }}" name="user_name"
+                                            id="user_name" placeholder="Auto-fill from Name field">
+                                        @error('user_name')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-12 col-sm-6 col-lg-4 ecf-field">
+                                        <label>Login Email <span class="text-danger">*</span></label>
+                                        <input type="email"
+                                            class="form-control @error('user_email') is-invalid @enderror"
+                                            value="{{ old('user_email', $linkedUser->email ?? '') }}" name="user_email"
+                                            id="user_email" placeholder="Auto-fill from Email field">
+                                        @error('user_email')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-12 col-sm-6 col-lg-4 ecf-field">
+                                        <label>Role <span class="text-danger">*</span></label>
+                                        <select name="role_name" id="role_name"
+                                            class="form-control select2 @error('role_name') is-invalid @enderror">
+                                            <option value=""
+                                                {{ old('role_name', $linkedUser->role_id ?? '') ? '' : 'selected disabled' }}>
+                                                Select Role</option>
+                                            @foreach ($userRoll as $value)
+                                                <option value="{{ $value->id }}"
+                                                    {{ old('role_name', $linkedUser->role_id ?? '') == $value->id ? 'selected' : '' }}>
+                                                    {{ $value->role_name }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('role_name')
+                                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-12 col-sm-6 col-lg-4 ecf-field">
+                                        <label>Type <span class="text-danger">*</span></label>
+                                        <select name="type" id="user_type"
+                                            class="form-control @error('type') is-invalid @enderror">
+                                            <option value="" disabled>Select Type</option>
+                                            <option value="Admin"
+                                                {{ old('type', $linkedUser->type ?? 'Employee') == 'Admin' ? 'selected' : '' }}>
+                                                Admin</option>
+                                            <option value="Employee"
+                                                {{ old('type', $linkedUser->type ?? 'Employee') == 'Employee' ? 'selected' : '' }}>
+                                                Employee</option>
+                                        </select>
+                                        @error('type')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-12 col-sm-6 col-lg-4 ecf-field">
+                                        <label>Password @if (!$hasUser)
+                                                <span class="text-danger">*</span>
+                                            @endif
+                                        </label>
+                                        <input type="password"
+                                            class="form-control @error('password') is-invalid @enderror" name="password"
+                                            id="user_password"
+                                            placeholder="{{ $hasUser ? 'Leave blank to keep current password' : 'Password' }}">
+                                        @error('password')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                        @if ($hasUser)
+                                            <small class="form-text">Leave blank if you don't want to change the
+                                                password.</small>
+                                        @endif
+                                    </div>
+
+                                    <div class="col-12 col-sm-6 col-lg-4 ecf-field">
+                                        <label>Confirm Password @if (!$hasUser)
+                                                <span class="text-danger">*</span>
+                                            @endif
+                                        </label>
+                                        <input type="password" class="form-control" name="password_confirmation"
+                                            id="user_password_confirmation" placeholder="Confirm Password">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="ecf-action-bar">
                             @if (helper::roleAccess('hrm.employee.index'))
                                 <a href="{{ route('hrm.employee.index') }}" class="btn btn-outline-secondary">
@@ -764,7 +913,7 @@
         $(document).ready(function() {
             $('[data-toggle="tooltip"]').tooltip();
 
-            // select2 init — saved area code 
+            // select2 init — saved area code
             $('.select2').select2({
                 theme: 'bootstrap4',
                 width: '100%'
@@ -788,21 +937,86 @@
                 }
             });
 
-            // ---------- Simple client-side validation feedback ----------
+            // ---------- Select2 manual validation helper ----------
+            function validateSelect2Field($select, label) {
+                var val = $select.val();
+                var isEmpty = !val || (Array.isArray(val) && val.length === 0);
+                var $container = $select.next('.select2-container');
+
+                $container.next('.select2-error-msg').remove();
+
+                if (isEmpty) {
+                    $container.find('.select2-selection').addClass('is-invalid-select2');
+                    $container.after('<div class="invalid-feedback d-block select2-error-msg">' + label +
+                        ' is required.</div>');
+                    return false;
+                } else {
+                    $container.find('.select2-selection').removeClass('is-invalid-select2');
+                    return true;
+                }
+            }
+
+            $(document).on('select2:select select2:unselect change', '#position_id, #area_select, #role_name',
+                function() {
+                    var label = $(this).attr('id') === 'position_id' ? 'Position' :
+                        ($(this).attr('id') === 'area_select' ? 'Area' : 'Role');
+                    validateSelect2Field($(this), label);
+                });
+
+            // ---------- Full form validation on submit (button never gets stuck disabled) ----------
             var form = document.getElementById('employeeEditForm');
+            var $submitBtn = $('#ecfSubmitBtn');
+            var submitBtnOriginalHtml = $submitBtn.html();
+
+            function resetSubmitButton() {
+                $submitBtn.prop('disabled', false).html(submitBtnOriginalHtml);
+            }
+
+            window.addEventListener('pageshow', function() {
+                resetSubmitButton();
+            });
+
             form.addEventListener('submit', function(event) {
-                if (!form.checkValidity()) {
+                resetSubmitButton();
+
+                var valid = false;
+                var positionOk = false;
+                var areaOk = false;
+                var roleOk = false;
+
+                try {
+                    valid = form.checkValidity();
+                    positionOk = validateSelect2Field($('#position_id'), 'Position');
+                    areaOk = validateSelect2Field($('#area_select'), 'Area');
+
+                    var userToggleOn = $('#create_user_toggle').is(':checked');
+                    roleOk = userToggleOn ? validateSelect2Field($('#role_name'), 'Role') : true;
+                } catch (err) {
+                    console.error('Validation error:', err);
+                    valid = false;
+                }
+
+                var isFormValid = valid && positionOk && areaOk && roleOk;
+
+                if (!isFormValid) {
                     event.preventDefault();
                     event.stopPropagation();
+                    resetSubmitButton();
+
                     var $firstInvalid = $(form).find(':invalid').first();
-                    if ($firstInvalid.length) {
+                    var $firstSelect2Error = $('.select2-error-msg').first();
+                    var $scrollTarget = $firstInvalid.length ? $firstInvalid : $firstSelect2Error;
+
+                    if ($scrollTarget.length) {
                         $('html, body').animate({
-                            scrollTop: $firstInvalid.offset().top - 120
+                            scrollTop: $scrollTarget.offset().top - 120
                         }, 300);
+                    }
+                    if ($firstInvalid.length) {
                         $firstInvalid.focus();
                     }
                 } else {
-                    $('#ecfSubmitBtn').prop('disabled', true)
+                    $submitBtn.prop('disabled', true)
                         .html('<i class="fa fa-spinner fa-spin"></i> Updating...');
                 }
                 form.classList.add('was-validated');
@@ -847,6 +1061,109 @@
                     );
                 }
             });
+        }
+    </script>
+
+    <script>
+        // ---------- User Access toggle + auto-fill ----------
+        var $userToggle = $('#create_user_toggle');
+        var $userBody = $('#userAccessBody');
+        var hasExistingUser = {{ $hasUser ? 'true' : 'false' }};
+        var userEdited = {
+            user_name: hasExistingUser, // don't overwrite existing login name/email automatically
+            user_email: hasExistingUser
+        };
+
+        function toggleUserFieldsRequired(state) {
+            $userBody.find('#user_name, #user_email, #user_type, #user_password, #user_password_confirmation')
+                .prop('required', state && !hasExistingUser ? true : false);
+            // Login Name / Email / Type stay required whenever the section is open,
+            // password stays optional on edit (blank = keep current password).
+            $userBody.find('#user_name, #user_email, #user_type').prop('required', state);
+            $userBody.find('#user_password, #user_password_confirmation').prop('required', state && !hasExistingUser);
+        }
+
+        function syncUserFieldsFromPersonalInfo() {
+            if (!userEdited.user_name) {
+                $('#user_name').val($('#emp_name').val());
+            }
+            if (!userEdited.user_email) {
+                $('#user_email').val($('#emp_email').val());
+            }
+        }
+
+        $('#user_name').on('input', function() {
+            userEdited.user_name = true;
+        });
+        $('#user_email').on('input', function() {
+            userEdited.user_email = true;
+        });
+
+        $('#emp_name').on('input', function() {
+            if ($userToggle.is(':checked') && !userEdited.user_name) {
+                $('#user_name').val($(this).val());
+            }
+        });
+        $('#emp_email').on('input', function() {
+            if ($userToggle.is(':checked') && !userEdited.user_email) {
+                $('#user_email').val($(this).val());
+            }
+        });
+
+        if ($userToggle.is(':checked')) {
+            toggleUserFieldsRequired(true);
+        }
+
+        // ---------- Lock / Unlock login access ----------
+
+        var $lockBtn = $('#accountLockBtn');
+        var $lockIcon = $('#accountLockIcon');
+        var $lockLabel = $('#accountLockLabel');
+        var $lockInput = $('#account_lock');
+
+        function renderLockState(isUnlocked) {
+            $lockInput.val(isUnlocked ? 1 : 0);
+            if (isUnlocked) {
+                $lockIcon.removeClass('fa-lock text-danger').addClass('fa-unlock text-success');
+                $lockLabel.text('Unlocked (Active)');
+                $lockBtn.removeClass('btn-outline-secondary').addClass('btn-outline-success');
+            } else {
+                $lockIcon.removeClass('fa-unlock text-success').addClass('fa-lock text-danger');
+                $lockLabel.text('Locked (Inactive)');
+                $lockBtn.removeClass('btn-outline-success').addClass('btn-outline-secondary');
+            }
+        }
+
+        // initialize from the existing user's current status (rendered server-side into the hidden input)
+        renderLockState($lockInput.val() == '1');
+
+        $lockBtn.on('click', function() {
+            var currentlyUnlocked = $lockInput.val() == '1';
+            renderLockState(!currentlyUnlocked);
+        });
+
+        // ---------- Toggle handler (create_user checkbox) ----------
+        $userToggle.on('change', function() {
+            if (this.checked) {
+                $userBody.slideDown(150);
+                toggleUserFieldsRequired(true);
+                syncUserFieldsFromPersonalInfo();
+                $lockBtn.show();
+            } else {
+                $userBody.slideUp(150);
+                toggleUserFieldsRequired(false);
+                $lockBtn.hide();
+                if (!hasExistingUser) {
+                    renderLockState(false); // reset only for brand-new (not-yet-created) accounts
+                }
+                $('#role_name').next('.select2-container').find('.select2-selection')
+                    .removeClass('is-invalid-select2');
+                $('#role_name').next('.select2-container').next('.select2-error-msg').remove();
+            }
+        });
+
+        if ($userToggle.is(':checked')) {
+            $lockBtn.show();
         }
     </script>
 @endsection
