@@ -714,12 +714,12 @@
                                         <select name="status" class="form-control @error('status') is-invalid @enderror"
                                             required>
                                             <option value="present"
-                                                {{ old('status', $editInfo->status) == 'present' ? 'selected' : '' }}>
+                                                {{ old('status', $editInfo->employee_status) == 'present' ? 'selected' : '' }}>
                                                 Present
                                             </option>
 
                                             <option value="left"
-                                                {{ old('status', $editInfo->status) == 'left' ? 'selected' : '' }}>
+                                                {{ old('status', $editInfo->employee_status) == 'left' ? 'selected' : '' }}>
                                                 Left
                                             </option>
                                         </select>

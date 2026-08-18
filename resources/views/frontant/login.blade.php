@@ -475,6 +475,36 @@
 
             @csrf
 
+            @if ($errors->any())
+                <div class="alert alert-danger"
+                    style="
+            background: rgba(220, 53, 69, 0.15);
+            border: 1px solid rgba(220, 53, 69, 0.4);
+            color: #ffe3e6;
+            font-size: 13px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        ">
+                    {{ $errors->first() }}
+                </div>
+            @endif
+
+            @if (session('error'))
+                <div class="alert alert-danger"
+                    style="
+            background: rgba(220, 53, 69, 0.15);
+            border: 1px solid rgba(220, 53, 69, 0.4);
+            color: #ffe3e6;
+            font-size: 13px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        ">
+                    {{ session('error') }}
+                </div>
+            @endif
+
             <div class="form-group">
                 <input type="text" name="email" id="email" placeholder="Enter Your Email" autocomplete="email"
                     required>
@@ -506,7 +536,7 @@
         </form>
 
         @if (env('APP_ENV') == 'local')
-            <table class="credentials-table">
+            {{-- <table class="credentials-table">
 
                 <tr>
                     <th>Email</th>
@@ -520,12 +550,12 @@
                     <td>Admin</td>
                 </tr>
 
-            </table>
+            </table> --}}
         @endif
 
     </div>
 
-    {{-- Fish swimming layer — wave-wrapper এর নিচে বসবে (z-index দিয়ে) --}}
+
     {{-- Added: 2026-07-19 --}}
     <div class="fish-wrapper" id="fishWrapper"></div>
 
@@ -688,7 +718,7 @@
         });
 
         const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        // 👉 phone/small screen এ wave animation একদম বন্ধ থাকবে, শুধু desktop/laptop এ চলবে
+
         const isMobileScreen = window.matchMedia('(max-width: 768px)').matches;
 
         const waveWrapper = document.getElementById('waveWrapper');
@@ -717,7 +747,7 @@
             targetY = y * 15;
             targetRotate = x * -2;
 
-            // মাউস নড়লে animation loop বন্ধ থাকলে আবার চালু করা হয়
+
             startTiltAnimation();
         }, {
             passive: true
@@ -735,7 +765,7 @@
         });
 
         function startTiltAnimation() {
-            if (tiltAnimationRunning) return; // ইতিমধ্যে চলছে, দ্বিতীয়বার শুরু করার দরকার নেই
+            if (tiltAnimationRunning) return;
             tiltAnimationRunning = true;
             requestAnimationFrame(animateTilt);
         }
@@ -762,12 +792,11 @@
         }
     </script>
 
-    {{-- ===== Fish swimming with mouse interaction ===== --}}
-    {{-- Added: 2026-07-19 --}}
+
     <script>
         (function() {
             const prefersReducedMotionFish = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            // 👉 phone/small screen এ fish animation একদম চলবে না, শুধু desktop/laptop এ চলবে
+
             const isMobileScreenFish = window.matchMedia('(max-width: 768px)').matches;
             const fishWrapper = document.getElementById('fishWrapper');
             if (!fishWrapper || prefersReducedMotionFish || isMobileScreenFish) return;
@@ -789,8 +818,7 @@
                 `;
             }
 
-            // ধরে নেওয়া হচ্ছে waterline = wrapper-এর উপরের প্রায় ৩৫% অংশ (waveline zone),
-            // বাকি নিচের অংশ = পানির গভীর অংশ। fish গুলোকে এই গভীর অংশে (waterline এর নিচে) রাখা হবে।
+
             const WATERLINE_RATIO = 0.35;
 
             function initFish() {
@@ -814,19 +842,19 @@
                     fishes.push({
                         el: el,
                         x: Math.random() * wrapperWidth,
-                        // fish শুধু waterline এর নিচের অংশেই থাকবে (deepZoneStart থেকে নিচ পর্যন্ত)
+                        // fish 
                         baseY: deepZoneStart + Math.random() * (wrapperHeight - deepZoneStart - 20),
                         driftY: 0,
-                        depth: scale, // বড় fish = কাছে = দ্রুত movement
+                        depth: scale,
                         baseSpeed: (0.25 + Math.random() * 0.5) * dir,
-                        speedBoost: 1, // eased multiplier — normal অবস্থায় 1, mouse chase করলে বাড়বে
+                        speedBoost: 1,
                         dir: dir,
                         phase: Math.random() * Math.PI * 2
                     });
                 }
             }
 
-            // raw (un-eased) mouse position — water zone-এ আছে কিনা সেটা তাৎক্ষণিকভাবে বুঝতে raw value লাগবে
+
             let rawMouseX = window.innerWidth / 2;
             let rawMouseY = 0;
             let mouseInsideWindow = false;
@@ -858,45 +886,40 @@
                 const wrapperHeight = fishWrapper.clientHeight;
                 const waterTop = window.innerHeight - wrapperHeight;
 
-                // মাউস পয়েন্টার আসলেই পানির area-র ভিতরে আছে কিনা (waterline এর নিচে) — এটাই "focus" শর্ত
+
                 const isMouseInWater = mouseInsideWindow && rawMouseY >= waterTop;
 
-                // eased mouse follow (jerky না হয়ে smooth থাকার জন্য)
+                // eased mouse follow 
                 mouseX += (rawMouseX - mouseX) * 0.08;
                 mouseY += (rawMouseY - mouseY) * 0.08;
 
                 const mouseYInWrapper = mouseY - waterTop;
                 const mouseXInWrapper = mouseX;
-                const deepZoneStart = wrapperHeight * WATERLINE_RATIO; // waterline — এর উপরে fish যাবে না
-                const bottomLimit = wrapperHeight - 16; // একদম নিচের সীমা
-
+                const deepZoneStart = wrapperHeight * WATERLINE_RATIO;
+                const bottomLimit = wrapperHeight - 16;
                 fishes.forEach(function(f) {
-                    // চেজ মোডে speedBoost target বেশি, normal মোডে 1 — eased transition
+
                     const targetBoost = isMouseInWater ? 2.4 : 1;
                     f.speedBoost += (targetBoost - f.speedBoost) * 0.04;
 
-                    // gentle vertical bobbing (normal ambient movement)
+
                     const bob = Math.sin(fishTime * 1.3 + f.phase) * 6;
 
                     let facing = f.dir; // default: নিজের স্বাভাবিক direction
 
                     if (isMouseInWater) {
-                        // ===== খাবারের লোভে fish সরাসরি pointer-এর দিকে ছুটবে =====
-                        // fish যেদিকেই মুখ করে থাকুক না কেন, এখন মাউসের দিকেই ঘুরে যাবে
+
                         const dx = mouseXInWrapper - f.x;
                         const dy = mouseYInWrapper - f.baseY;
                         const dist = Math.max(Math.abs(dx), 1);
 
-                        // দূরত্ব অনুযায়ী গতি — কাছে এলে একটু কমে, দূরে থাকলে জোরে ছোটে
                         const chaseSpeed = Math.min(dist * 0.10, 3.2) * f.depth * f.speedBoost;
                         f.x += Math.sign(dx) * chaseSpeed;
 
-                        // y-অক্ষেও সরাসরি pointer-এর দিকে সরবে
-                        f.baseY += dy * 0.10 * f.depth;
 
-                        // মাউস যেদিকে, মাছের মুখও সেদিকে ঘুরে যাবে (খাবারের দিকে তাকানোর ভাব)
+                        f.baseY += dy * 0.10 * f.depth;
                         facing = dx >= 0 ? 1 : -1;
-                        f.dir = facing; // মাউস সরে গেলে normal swim এই নতুন direction থেকেই শুরু হবে
+                        f.dir = facing;
                     } else {
 
                         f.x += f.baseSpeed * (0.10 + f.depth) * f.speedBoost;
@@ -906,7 +929,7 @@
                         f.dir = facing;
                     }
 
-                    // waterline এর উপরে fish কখনো উঠবে না — নিচের সীমার মধ্যেও ক্ল্যাম্প করা
+
                     f.baseY = Math.max(deepZoneStart, Math.min(bottomLimit, f.baseY));
 
                     const targetDriftY = 0;
