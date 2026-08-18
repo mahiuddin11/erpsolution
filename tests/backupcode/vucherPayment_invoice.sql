@@ -543,3 +543,32 @@ UPDATE branches
 SET warehouse_id = id
 WHERE parent_id != 0;
 
+
+-- employe table user id check and update 
+SELECT e.id AS employee_id, e.user_id AS employee_user_id, u.employee_id AS user_employee_id, u.id AS user_id, e.employee_status, CASE WHEN e.employee_status = 'present' THEN 'Active' WHEN e.employee_status = 'left' THEN 'Inactive' ELSE 'Unknown' END AS employee_status_active_inactive, u.status AS user_status, e.name AS employee_name, u.name AS username FROM employees e LEFT JOIN users u ON u.employee_id = e.id ORDER BY FIELD(e.employee_status, 'present', 'left'), e.id;
+
+
+
+-- employe present but user atatus active na 
+SELECT
+    e.id AS employee_id,
+    e.user_id AS employee_user_id,
+    u.id AS user_id,
+    u.employee_id AS user_employee_id,
+    e.employee_status,
+    u.status AS user_status,
+    e.name AS employee_name,
+    u.name AS username,
+    e.email AS employee_email,
+    u.email AS user_email
+FROM employees e
+LEFT JOIN users u
+    ON u.employee_id = e.id
+WHERE e.employee_status = 'present'
+  AND (
+      u.id IS NULL
+      OR u.status <> 'Active'
+  )
+ORDER BY e.id;
+
+-- update only actiove user employe table user_id
