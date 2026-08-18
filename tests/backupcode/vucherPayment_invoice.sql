@@ -147,7 +147,7 @@ WHERE dvd.payment_invoice REGEXP '^[0-9]+$';
 UPDATE credit_voucher_details cvd
 JOIN account_transactions ref ON ref.id = cvd.payment_invoice
 SET cvd.payment_invoice = ref.invoice
-WHERE cvd.payment_invoice REGEXP '^[0-9]+$';
+WHERE cvd.payment_invoice REGEXP '^[0-9]+$'; 
 
 -- Step 4: journal_voucher_details update
 UPDATE journal_voucher_details jvd
@@ -163,8 +163,6 @@ UNION ALL
 SELECT 'credit_voucher_details',       COUNT(*) FROM credit_voucher_details       WHERE payment_invoice REGEXP '^[0-9]+$'
 UNION ALL
 SELECT 'journal_voucher_details',      COUNT(*) FROM journal_voucher_details      WHERE payment_invoice REGEXP '^[0-9]+$';
-
-
 
 
 -- stock priview opening to stock --

@@ -601,18 +601,21 @@
                         success: function(response) {
 
                             if (response.bill_by_bill) {
-                                // Show payment options
-                                $('#payment-options-container').html(`
-                         <select class="form-control select2" id="payment_invoice">
-                            ${response.payment_invoices.map(invoice => `<option value="${invoice.invoice}">${invoice.invoice} (${invoice.amount}) ${invoice.date}</option>`).join('')}
-                            </select>
-                        `);
 
+                                // Show payment options
+                                let options = `<option value="">Select Invoice</option>`;
+                                options += response.payment_invoices.map(invoice =>
+                                    `<option value="${invoice.invoice}">${invoice.invoice} (${invoice.amount}) ${invoice.date}</option>`
+                                ).join('');
+                                $('#payment-options-container').html(`
+                                        <select class="form-control select2" id="payment_invoice">
+                                            ${options}
+                                        </select>
+                                    `);
                                 $('#payment_invoice').select2({
                                     theme: 'bootstrap4',
                                     width: '100%'
                                 });
-
                             } else {
                                 $('#payment-options-container').html("")
                             }

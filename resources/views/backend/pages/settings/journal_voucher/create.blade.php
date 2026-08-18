@@ -418,11 +418,11 @@
                             if (response.bill_by_bill) {
                                 // Show payment options
                                 $('#payment-options-container').html(`
-                        <select class="form-control select2" id="payment_invoice">
-                            <option value=""></option>
-                     ${response.payment_invoices.map(invoice => `<option value="${invoice.invoice}">${invoice.invoice} (${invoice.amount}) ${invoice.date}</option>`).join('')}
-                        </select>
-                    `);
+                                   <select class="form-control select2" id="payment_invoice">
+                                       <option value="">Select Invoice</option>
+                                       ${response.payment_invoices.map(invoice => `<option value="${invoice.invoice}">${invoice.invoice} (${invoice.amount}) ${invoice.date}</option>`).join('')}
+                                   </select>
+                               `);
 
                                 $('#payment_invoice').select2({
                                     theme: 'bootstrap4',

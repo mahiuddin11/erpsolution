@@ -474,6 +474,7 @@ class DabitVoucherController extends Controller
             }
         }
 
+
         return response()->json([
             'bill_by_bill'     => true,
             'payment_invoices' => $details,

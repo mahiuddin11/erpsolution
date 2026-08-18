@@ -306,41 +306,41 @@
               <input type="hidden" value="${account_id}" name="account_id[]">
             </div>
            ${!is_bank ? `
-            <div class="mr-3">
-              <select name="cost_center_type[]" class="form-control form-control-sm cost_center_type">
-                <option value="">Select</option>
-                <option value="branch">Branch</option>
-                <option value="project">Project</option>
-              </select>
-            </div>
+                                                                <div class="mr-3">
+                                                                  <select name="cost_center_type[]" class="form-control form-control-sm cost_center_type">
+                                                                    <option value="">Select</option>
+                                                                    <option value="branch">Branch</option>
+                                                                    <option value="project">Project</option>
+                                                                  </select>
+                                                                </div>
 
-            <div class="d-none">
-              <select name="branch_id[]" class="form-control select2 form-control-sm branch-section " style="min-width: 150px;">
-                <option value="">Select Branch</option>
-                @foreach($branches as $branch)
-                  <option value="{{ $branch->id }}">{{ $branch->name }}</option>
-                @endforeach
-              </select>
-            </div>
+                                                                <div class="d-none">
+                                                                  <select name="branch_id[]" class="form-control select2 form-control-sm branch-section " style="min-width: 150px;">
+                                                                    <option value="">Select Branch</option>
+                                                                    @foreach ($branches as $branch)
+                                                                      <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                                                    @endforeach
+                                                                  </select>
+                                                                </div>
 
-            <div class="d-none">
-              <select name="project_id[]" class="form-control select2 form-control-sm project-section " style="min-width: 150px;">
-                <option value="">Select Project</option>
-                @foreach($projects as $project)
-                  <option value="{{ $project->id }}">{{ $project->name }}</option>
-                @endforeach
-              </select>
-            </div>` : `
-              <input type="hidden" name="project_id[]"/>
-              <input type="hidden" name="branch_id[]"/>
-              <input type="hidden" name="cost_center_type[]"/>
-               <div class="mt-3 ml-3">
-                  <input type="text" class="form-control" placeholder="Voucher Number" name="voucher_number[${rowCount}]"/>
-               </div>
-               <div class="mt-3">
-                  <input type="date" class="form-control" placeholder="Voucher Date" name="voucher_date[${rowCount}]"/>
-               </div>
-            ` }
+                                                                <div class="d-none">
+                                                                  <select name="project_id[]" class="form-control select2 form-control-sm project-section " style="min-width: 150px;">
+                                                                    <option value="">Select Project</option>
+                                                                    @foreach ($projects as $project)
+                                                                      <option value="{{ $project->id }}">{{ $project->name }}</option>
+                                                                    @endforeach
+                                                                  </select>
+                                                                </div>` : `
+                                                                  <input type="hidden" name="project_id[]"/>
+                                                                  <input type="hidden" name="branch_id[]"/>
+                                                                  <input type="hidden" name="cost_center_type[]"/>
+                                                                   <div class="mt-3 ml-3">
+                                                                      <input type="text" class="form-control" placeholder="Voucher Number" name="voucher_number[${rowCount}]"/>
+                                                                   </div>
+                                                                   <div class="mt-3">
+                                                                      <input type="date" class="form-control" placeholder="Voucher Date" name="voucher_date[${rowCount}]"/>
+                                                                   </div>
+                                                                ` }
 
        </div>
      </td>
@@ -381,20 +381,20 @@
         })
 
 
-    $('#main-table').on('change', '.cost_center_type', function () {
-    let type = $(this).val();
-    let row = $(this).closest('td');
+        $('#main-table').on('change', '.cost_center_type', function() {
+            let type = $(this).val();
+            let row = $(this).closest('td');
 
-    if (type === 'branch') {
-        row.find('.branch-section').closest("div").removeClass('d-none').prop('disabled', false);
-        row.find('.project-section').closest("div").addClass('d-none').prop('disabled', true);
-    } else if (type === 'project') {
-        row.find('.project-section').closest("div").removeClass('d-none').prop('disabled', false);
-        row.find('.branch-section').closest("div").addClass('d-none').prop('disabled', true);
-    } else {
-        row.find('.branch-section, .project-section').addClass('d-none').prop('disabled', true);
-    }
-});
+            if (type === 'branch') {
+                row.find('.branch-section').closest("div").removeClass('d-none').prop('disabled', false);
+                row.find('.project-section').closest("div").addClass('d-none').prop('disabled', true);
+            } else if (type === 'project') {
+                row.find('.project-section').closest("div").removeClass('d-none').prop('disabled', false);
+                row.find('.branch-section').closest("div").addClass('d-none').prop('disabled', true);
+            } else {
+                row.find('.branch-section, .project-section').addClass('d-none').prop('disabled', true);
+            }
+        });
 
 
 
@@ -423,12 +423,16 @@
                     "_token": "{{ csrf_token() }}",
                     account_id: account_id
                 },
+
+
                 success: function(val) {
                     let totalamount = 0;
                     $.each($("input[name='amount[]']"), function() {
                         amount = Number($(this).val());
                         totalamount += amount;
                     });
+
+
                     alert(totalamount);
                     let newamount = val - totalamount
                     $("#showamount").html('<span>Cureent Balance : ' + newamount + '</span>');
@@ -477,26 +481,28 @@
                             account_id: accountId
                         },
                         success: function(response) {
-                        if (response.bill_by_bill) {
-                               let options = `<option value="">Select Payment Invoice</option>`;
-                               response.payment_invoices.forEach(function(invoice) {
-                                   options += `<option value="${invoice.invoice}">${invoice.invoice} (${invoice.amount}) (${invoice.date})</option>`;
-                               });
+                            if (response.bill_by_bill) {
+                                let options =
+                                    `<option value="">Select Payment Invoice</option>`;
+                                response.payment_invoices.forEach(function(invoice) {
+                                    options +=
+                                        `<option value="${invoice.invoice}">${invoice.invoice} (${invoice.amount}) (${invoice.date})</option>`;
+                                });
 
-                             $('#payment-options-container').html(`
+                                $('#payment-options-container').html(`
                                  <select class="form-control select2" id="payment_invoice" name="payment_invoice_select">
                                      ${options}
                                  </select>
                              `);
 
-                             // Re-initialize select2 for the dynamically added select box
-                             $('#payment_invoice').select2({
-                                 theme: 'bootstrap4',
-                                 width: '100%'
-                             });
-                         } else {
-                             $('#payment-options-container').html("")
-                         }
+                                // Re-initialize select2 for the dynamically added select box
+                                $('#payment_invoice').select2({
+                                    theme: 'bootstrap4',
+                                    width: '100%'
+                                });
+                            } else {
+                                $('#payment-options-container').html("")
+                            }
                         },
                         error: function(xhr) {
                             console.error('Failed to check bill-by-bill flag:', xhr);
