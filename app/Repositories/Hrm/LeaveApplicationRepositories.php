@@ -184,9 +184,9 @@ class LeaveApplicationRepositories
 
         foreach ($LeaveApplication as $key => $value) {
 
-            $to = \Carbon\Carbon::parse($value->end_date);
+            $to   = \Carbon\Carbon::parse($value->end_date);
             $from = \Carbon\Carbon::parse($value->apply_date);
-            $days = $to->diffInDays($from);
+            $days = $from->diffInDays($to) + 1;
 
             $nestedData['id'] = $start + $key + 1;
             $nestedData['employee_id'] = $value->employee->name ?? '';
@@ -224,6 +224,7 @@ class LeaveApplicationRepositories
             "data" => $data
         ];
     }
+
     /**
      * @param $request
      * @return mixed
