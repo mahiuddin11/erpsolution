@@ -33,6 +33,7 @@ use App\Http\Controllers\Backend\Dashboard\ProcurementDashboardController;
 use App\Http\Controllers\Backend\Dashboard\ProjectDashboardController;
 use App\Http\Controllers\Backend\Dashboard\ManagementDashboardController;
 use App\Http\Controllers\Backend\Dashboard\PosDashboardController;
+use App\Http\Controllers\Backend\Settings\SmsSettingController;
 
 //use App\Http\Controllers\AttendanceController;
 
@@ -531,9 +532,8 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //fiscal_year crud operation end
 
         //sms congigaretion operation start
-        Route::get('sms-config', function () {
-            return 'sms config';
-        })->name('sms.config');
+        Route::get('setting-sms-config', [SmsSettingController::class, 'index'])->name('setting.sms.config');
+
         //sms congigaretion operation end
 
         //account crud operation start

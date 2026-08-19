@@ -40,6 +40,7 @@ class SmsSettingController extends Controller
     public function index(Request $request)
     {
         $title = 'SMS Setting';
+
         return view('backend.pages.settings.sms_setting.index', get_defined_vars());
     }
 

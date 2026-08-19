@@ -1954,7 +1954,7 @@ $parent_menu = array(
                 'icon' => 'fa fa-sms',
                 'parent_id' => null,
                 'childMenu' => (object) array(
-                    (object) array('label' => 'SMS Configaretion', 'route' => 'sms.config', 'icon' => 'fa fa-sms', 'navigate_status' => 1),
+                    (object) array('label' => 'SMS Configaretion', 'route' => 'setting.sms.config', 'icon' => 'fa fa-sms', 'navigate_status' => 1),
                 )
             ),
 
