@@ -1947,6 +1947,17 @@ $parent_menu = array(
                 )
             ),
 
+            (object) array(
+                'label' => 'SMS Configaretion',
+                'route' => null,
+                'uniqueName' => 'smsConfig',
+                'icon' => 'fa fa-sms',
+                'parent_id' => null,
+                'childMenu' => (object) array(
+                    (object) array('label' => 'SMS Configaretion', 'route' => 'sms.config', 'icon' => 'fa fa-sms', 'navigate_status' => 1),
+                )
+            ),
+
             // (object) array(
             //     'label' => 'Fiscal Year ',
             //     'route' => null,

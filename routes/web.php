@@ -530,6 +530,12 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/settings-fiscal_year-status/{id}/{status}', 'FiscalYearController@statusUpdate')->name('settings.fiscal_year.status');
         //fiscal_year crud operation end
 
+        //sms congigaretion operation start
+        Route::get('sms-config', function () {
+            return 'sms config';
+        })->name('sms.config');
+        //sms congigaretion operation end
+
         //account crud operation start
         Route::get('/settings-account-list', 'AccountsController@index')->name('settings.account.index');
         Route::get('/dataProcessingAccount', 'AccountsController@dataProcessingAccount')->name('settings.account.dataProcessingAccount');
