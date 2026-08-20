@@ -82,6 +82,8 @@
                                         </option>
                                     @endforeach
                                 </select>
+
+
                                 @error('branch_id')
                                     <span class=" error text-red text-bold">{{ $message }}</span>
                                 @enderror
@@ -113,7 +115,7 @@
                             </div>
 
 
-                            <table class="table table-bordered table-hover" id="show_item">
+                            {{-- <table class="table table-bordered table-hover" id="show_item">
 
                                 <thead>
                                     <tr>
@@ -223,7 +225,134 @@
                                         <td class="text-right"><strong class=""></strong></td>
                                     </tr>
                                 </tfoot>
+                            </table> --}}
+                            <table class="table table-bordered table-hover" id="show_item">
+
+                                <thead>
+                                    <tr>
+                                        <th colspan="9">Select Product Item</th>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center"><strong>Category</strong></td>
+                                        <td class="text-center"><strong>Product</strong></td>
+                                        <td class="text-center"><strong>Product Type</strong></td>
+                                        <td class="text-center"><strong>Quantity</strong></td>
+                                        <td class="text-center"><strong>Unit Price</strong></td>
+                                        <td class="text-center"><strong>Total</strong></td>
+                                        <td class="text-center"><strong>Action</strong></td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <select onchange="getProductList(this.value)"
+                                                class="select2 form-control catName reset" id="form-field-select-3"
+                                                data-placeholder="Search Category">
+                                                <option disabled selected>---Select Category---</option>
+                                                <?php
+                foreach ($category_info as $eachInfo) :
+                ?>
+                                                <option catName="{{ $eachInfo->name }}" value="{{ $eachInfo->id }}">
+                                                    {{ $eachInfo->name }}
+                                                </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <select class="select2 form-control proName reset" id="productID"
+                                                data-placeholder="Search Product" onchange="getUnitPrice(this.value)">
+                                                <option disabled selected>---Select Product---</option>
+                                            </select>
+                                        </td>
+                                        {{-- notun: Product Type (Import/Local) dropdown --}}
+                                        <td>
+                                            <select class="select2 form-control purchaseType reset" id="purchaseType"
+                                                data-placeholder="Select Type">
+                                                <option disabled selected value="">--Type--</option>
+                                                <option value="local">Local</option>
+                                                <option value="imported">Imported</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="number" step="any"
+                                                class="form-control text-right qty reset_qty" placeholder="Qty"
+                                                min="0">
+                                        </td>
+                                        <td>
+                                            <input type="number" step="any" min="0" id="unitprice"
+                                                class="form-control text-right unitprice reset_unitprice"
+                                                placeholder="Unit Price">
+                                        </td>
+                                        <td>
+                                            <input type="number" step="any" readonly
+                                                class="form-control text-right total reset_total" id="total"
+                                                placeholder="Total">
+                                        </td>
+                                        <td>
+                                            <a id="add_item" class="btn btn-info" style="white-space: nowrap"
+                                                href="javascript:;" title="Add Item">
+                                                <i class="fa fa-plus"></i>
+                                                Add Item
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    @foreach ($editInfo->details as $detail)
+                                        <tr class="new_item">
+                                            <td style="padding-left:15px;">
+                                                {{ $detail->product->category->name ?? '' }}
+                                                <input type="hidden" name="catName[]"
+                                                    value="{{ $detail->product->category->id ?? '' }}">
+                                            </td>
+                                            <td class="text-right">
+                                                {{ $detail->product->name ?? '' }}
+                                                <input type="hidden" class="add_quantity" name="proName[]"
+                                                    value="{{ $detail->product->id ?? '' }}">
+                                            </td>
+                                            <input type="hidden" name="stockDetailsId[]" value="{{ $detail->id }}">
+                                            {{-- notun: existing detail er purchase_type value dekhano hocche --}}
+                                            <td class="text-right">
+                                                {{ $detail->purchase_type ?? '' }}
+                                                <input type="hidden" name="purchaseType[]"
+                                                    value="{{ $detail->purchase_type ?? '' }}">
+                                            </td>
+                                            <td class="text-right">
+                                                <input type="number" class="ttlqty qnty form-control" name="qty[]"
+                                                    value="{{ $detail->quantity }}">
+                                            </td>
+                                            <td class="text-right">
+                                                {{ $detail->unit_price }}
+                                                <input type="hidden" class="ttlunitprice unitprice" id="unitprice"
+                                                    name="unitprice[]" value="{{ $detail->unit_price }}">
+                                            </td>
+                                            <td class="text-right">
+                                                <input type="text" readonly class="total form-control" id="total"
+                                                    name="total[]" value="{{ $detail->total_price }}">
+                                            </td>
+                                            <td>
+                                                <a class="delete_item btn form-control btn-danger" href="javascript:;">
+                                                    <i class="fa fa-times"></i>&nbsp;Remove
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td class="text-right"><strong>Sub-Total(BDT)</strong></td>
+                                        <td class="text-right"><strong class=""></strong></td>
+                                        <td class="text-right"><strong class=""></strong></td>
+                                        <td class="text-right"><strong
+                                                class="ttlqty">{{ $editInfo->quantity ?? 0 }}</strong>
+                                        </td>
+                                        <td class="text-right"><strong
+                                                class="ttlunitprice">{{ $editInfo->subtotal ?? 0 }}</strong></td>
+                                        <td class="text-right"><strong
+                                                class="grandtotal">{{ $editInfo->grand_total ?? 0 }}</strong></td>
+                                        <td class="text-right"><strong class=""></strong></td>
+                                    </tr>
+                                </tfoot>
                             </table>
+
                         </div>
 
                         <div class="row mb-2">
@@ -296,71 +425,125 @@
             };
 
 
+            // $(document).on('click', '#add_item', function() {
+
+            //     var parent = $(this).parents('tr');
+
+            //     var supid = $('.supid').val();
+            //     var catId = $('.catName').val();
+
+            //     var catName = $(".catName").find('option:selected').attr('catName');
+
+            //     //            var subcatID = $('.subCat').val();
+            //     //            var subCat = $(".subCat").find('option:selected').attr('subCat');
+
+            //     var proId = $('.proName').val();
+            //     var proName = $(".proName").find('option:selected').attr('proName');
+
+            //     //            var unit_id = $('.unitName').val();
+            //     //            var unitName = $(".unitName").find('option:selected').attr('unitName');
+
+            //     //  var unit = $('.unit').val();
+            //     var qty = number_format(parent.find('.qty').val());
+
+
+
+            //     var unitprice = number_format(parent.find('.unitprice').val());
+
+
+
+
+            //     //            if (supid == '' || supid == null) {
+            //     //               // productItemValidation("Supplier can't be empty.");
+            //     //                return false;
+            //     //            }
+            //     //            if (catId == '' || catId == null) {
+            //     //               // productItemValidation("Category can't be empty.");
+            //     //                return false;
+            //     //            }
+            //     //            if (proId == '' || proId == null) {
+            //     //               // productItemValidation("Product can't be empty.");
+            //     //                return false;
+            //     //            }
+
+
+            //     if (qty == '' || qty == null || qty == 0) {
+
+            //         return false;
+            //     } else {
+            //         var total = qty * unitprice;
+            //         const row = `
+        //         <tr class="new_item${proId}">
+        //             <td style="padding-left:15px;">${catName}<input type="hidden" name="catName[]" value="${catId}"></td>
+        //             <td class="text-right">${proName}<input type="hidden" class="add_quantity" name="proName[]" value="${proId}"></td>
+
+        //             <td class="text-right">${qty}<input type="hidden" class="ttlqty" name="qty[]" value="${qty}"></td>
+        //             <td class="text-right">${unitprice}<input type="hidden" class="ttlunitprice" name="unitprice[]" value="${unitprice}">
+        //             </td>
+        //             <td class="text-right">${total}
+        //                 <input type="hidden" class="total" name="total[]" value="${total}">
+        //             </td>
+        //             <td>
+        //                 <a del_id="${proId}" class="delete_item btn form-control btn-danger" href="javascript:;" title="">
+        //                     <i class="fa fa-times"></i>&nbsp;Remove
+        //                 </a>
+        //             </td>
+        //         </tr>
+        //     `;
+            //         $("#show_item tbody").append(row);
+            //     }
+
+            //     $('.reset_unitprice').val('');
+            //     $('.reset_qty').val('');
+            //     $('.reset_total').val('');
+            //     $(".reset").val(null).trigger("change");
+
+            //     findqtyamoun();
+            //     findunitamount();
+            //     findgrandtottal();
+            // });
+
             $(document).on('click', '#add_item', function() {
 
                 var parent = $(this).parents('tr');
-
-                var supid = $('.supid').val();
                 var catId = $('.catName').val();
-
                 var catName = $(".catName").find('option:selected').attr('catName');
-
-                //            var subcatID = $('.subCat').val();
-                //            var subCat = $(".subCat").find('option:selected').attr('subCat');
-
                 var proId = $('.proName').val();
                 var proName = $(".proName").find('option:selected').attr('proName');
 
-                //            var unit_id = $('.unitName').val();
-                //            var unitName = $(".unitName").find('option:selected').attr('unitName');
+                // notun: purchaseType value neya hocche
+                var purchaseType = $('.purchaseType').val();
 
-                //  var unit = $('.unit').val();
                 var qty = number_format(parent.find('.qty').val());
-
-
-
                 var unitprice = number_format(parent.find('.unitprice').val());
 
-
-
-
-                //            if (supid == '' || supid == null) {
-                //               // productItemValidation("Supplier can't be empty.");
-                //                return false;
-                //            }
-                //            if (catId == '' || catId == null) {
-                //               // productItemValidation("Category can't be empty.");
-                //                return false;
-                //            }
-                //            if (proId == '' || proId == null) {
-                //               // productItemValidation("Product can't be empty.");
-                //                return false;
-                //            }
-
+                if (purchaseType == '' || purchaseType == null) {
+                    alertMessage.error('Please select Product Type (Local/Import).');
+                    return false;
+                }
 
                 if (qty == '' || qty == null || qty == 0) {
-
                     return false;
                 } else {
                     var total = qty * unitprice;
                     const row = `
-                    <tr class="new_item${proId}">
-                        <td style="padding-left:15px;">${catName}<input type="hidden" name="catName[]" value="${catId}"></td>
-                        <td class="text-right">${proName}<input type="hidden" class="add_quantity" name="proName[]" value="${proId}"></td>
-                    
-                        <td class="text-right">${qty}<input type="hidden" class="ttlqty" name="qty[]" value="${qty}"></td>
-                        <td class="text-right">${unitprice}<input type="hidden" class="ttlunitprice" name="unitprice[]" value="${unitprice}">
-                        </td>
-                        <td class="text-right">${total}
-                            <input type="hidden" class="total" name="total[]" value="${total}">
-                        </td>
-                        <td>
-                            <a del_id="${proId}" class="delete_item btn form-control btn-danger" href="javascript:;" title="">
-                                <i class="fa fa-times"></i>&nbsp;Remove
-                            </a>
-                        </td>
-                    </tr>
-                `;
+        <tr class="new_item${proId}">
+            <td style="padding-left:15px;">${catName}<input type="hidden" name="catName[]" value="${catId}"></td>
+            <td class="text-right">${proName}<input type="hidden" class="add_quantity" name="proName[]" value="${proId}"></td>
+            <td class="text-right">${purchaseType}<input type="hidden" name="purchaseType[]" value="${purchaseType}"></td>
+            <td class="text-right">${qty}<input type="hidden" class="ttlqty" name="qty[]" value="${qty}"></td>
+            <td class="text-right">${unitprice}<input type="hidden" class="ttlunitprice" name="unitprice[]" value="${unitprice}">
+            </td>
+            <td class="text-right">${total}
+                <input type="hidden" class="total" name="total[]" value="${total}">
+            </td>
+            <td>
+                <a del_id="${proId}" class="delete_item btn form-control btn-danger" href="javascript:;" title="">
+                    <i class="fa fa-times"></i>&nbsp;Remove
+                </a>
+            </td>
+        </tr>
+        `;
                     $("#show_item tbody").append(row);
                 }
 

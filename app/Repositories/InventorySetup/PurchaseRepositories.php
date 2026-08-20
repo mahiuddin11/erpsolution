@@ -2044,8 +2044,6 @@ class PurchaseRepositories
     public function update($request, $id)
     {
 
-
-
         DB::beginTransaction();
         try {
             $purchase = $this->purchases::findOrFail($id);

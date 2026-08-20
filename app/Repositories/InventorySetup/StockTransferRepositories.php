@@ -198,6 +198,8 @@ class StockTransferRepositories
 
     public function store($request)
     {
+
+
         DB::beginTransaction();
         try {
             $transfer = new $this->transfer();
@@ -256,9 +258,115 @@ class StockTransferRepositories
         return $transfer;
     }
 
+    // public function approval($request)
+    // {
+
+
+    //     DB::beginTransaction();
+    //     try {
+    //         $transferId = $request->transferId;
+    //         $transfer = Transfer::find($transferId);
+    //         $oldData = $transfer->toArray();
+
+    //         $transfer->approved_date =  date('Y-m-d');
+    //         $transfer->status = 'Approved';
+    //         $transfer->approve_qty = array_sum($request->qty);
+    //         $transfer->note = $request->narration;
+    //         $transfer->updated_by = Auth::user()->id;
+    //         $transfer->save();
+
+    //         foreach ($transfer->details as $item) {
+
+
+
+    //             $item->update([
+    //                 "approve_qty" => $item->qty,
+    //                 "updated_by" => auth()->id(),
+    //                 "status" => "Approved"
+    //             ]);
+
+
+    //             $from_array = array(
+    //                 'branch_id' => $item->from_branch_id,
+    //                 'product_id' => $item->product_id,
+    //             );
+
+    //             $to_array = array(
+    //                 'branch_id' => $item->to_branch_id,
+    //                 'product_id' => $item->product_id,
+    //             );
+
+    //             $currentStock = StockSummary::where($from_array)->first();
+
+
+
+    //             $currentStock->quantity = $currentStock->quantity - $item->qty;
+    //             $currentStock->save();
+    //             $updatestock = StockSummary::where($to_array)->first();
+
+    //             if ($updatestock) :
+    //                 $updatestock->quantity = $updatestock->quantity + $item->qty;
+    //                 $updatestock->save();
+    //             else :
+    //                 $updatestock = new StockSummary();
+    //                 $updatestock->branch_id =  $item->to_branch_id;
+    //                 $updatestock->product_id =  $item->product_id;
+    //                 $updatestock->quantity =  $item->qty;
+    //                 $updatestock->save();
+    //             endif;
+    //         }
+
+    //         $category_id = $request->catName;
+    //         $proName = $request->proName;
+    //         $subtotal = $request->unitprice;
+    //         $grand_total = $request->total;
+    //         $qty = $request->qty;
+    //         for ($i = 0; $i < count($category_id); $i++) {
+    //             $stock = new Stock();
+    //             $stock->date = $request->date;
+    //             $stock->invoice_no = $transfer->voucher_code;
+    //             $stock->general_id = $transferId;
+    //             $stock->branch_id = $request->from_branch_id;
+    //             $stock->product_id = $proName[$i];
+    //             $stock->unit_price = $subtotal[$i];
+    //             $stock->total_price = $grand_total[$i];
+    //             $stock->quantity = $qty[$i];
+    //             $stock->status = 'Transfer Out';
+    //             $stock->created_by = Auth::user()->id;
+    //             $stock->save();
+
+    //             $stock = new Stock();
+    //             $stock->date = $request->date;
+    //             $stock->invoice_no = $transfer->voucher_code;
+    //             $stock->general_id = $transferId;
+    //             $stock->branch_id = $request->to_branch_id;
+    //             $stock->product_id = $proName[$i];
+    //             $stock->unit_price = $subtotal[$i];
+    //             $stock->total_price = $grand_total[$i];
+    //             $stock->quantity = $qty[$i];
+    //             $stock->status = 'Transfer In';
+    //             $stock->created_by = Auth::user()->id;
+    //             $stock->save();
+    //         }
+
+    //         activity_log(
+    //             'approve',
+    //             'stock_transfer',
+    //             $transfer->toArray(),
+    //             $oldData,
+    //             "Transfer approved successfully (Transfer ID: {$transfer->voucher_code}) — Status: Pending → Approved"
+    //         );
+
+    //         DB::commit();
+    //     } catch (\Exception $e) {
+    //         DB::rollback();
+    //         redirect('inventorySetup-transfer-create')->with('error', 'Something Wrong Please try again');
+    //     }
+    //     return $transfer;
+    // }
+
     public function approval($request)
     {
-
         DB::beginTransaction();
         try {
             $transferId = $request->transferId;
@@ -273,6 +381,7 @@ class StockTransferRepositories
             $transfer->save();
 
             foreach ($transfer->details as $item) {
+
                 $item->update([
                     "approve_qty" => $item->qty,
                     "updated_by" => auth()->id(),
@@ -284,16 +393,29 @@ class StockTransferRepositories
                     'product_id' => $item->product_id,
                 );
 
-                $to_array = array(
-                    'branch_id' => $item->to_branch_id,
-                    'product_id' => $item->product_id,
-                );
-
                 $currentStock = StockSummary::where($from_array)->first();
+
+
+                if (!$currentStock) {
+                    throw new \Exception("Source stock not found for product ID {$item->product_id} at branch {$item->from_branch_id}");
+                }
+
+
                 $currentStock->quantity = $currentStock->quantity - $item->qty;
                 $currentStock->save();
 
+
+                $to_array = array(
+                    'branch_id' => $item->to_branch_id,
+                    'product_id' => $item->product_id,
+                    'purchasetype' => $currentStock->purchasetype,
+                    'type' => $currentStock->type,
+                );
+
                 $updatestock = StockSummary::where($to_array)->first();
+
+                // dd($updatestock, $currentStock, $currentStock);
+
                 if ($updatestock) :
                     $updatestock->quantity = $updatestock->quantity + $item->qty;
                     $updatestock->save();
@@ -302,6 +424,9 @@ class StockTransferRepositories
                     $updatestock->branch_id =  $item->to_branch_id;
                     $updatestock->product_id =  $item->product_id;
                     $updatestock->quantity =  $item->qty;
+                    $updatestock->type = $currentStock->type;
+                    $updatestock->purchasetype = $currentStock->purchasetype;
+                    // $updatestock->warehouse_id = $item->to_branch_id; // consistent with purchase module's strangler pattern
                     $updatestock->save();
                 endif;
             }
@@ -323,6 +448,7 @@ class StockTransferRepositories
                 $stock->quantity = $qty[$i];
                 $stock->status = 'Transfer Out';
                 $stock->created_by = Auth::user()->id;
+                // $stock->warehouse_id = $request->from_branch_id;
                 $stock->save();
 
                 $stock = new Stock();
@@ -336,6 +462,7 @@ class StockTransferRepositories
                 $stock->quantity = $qty[$i];
                 $stock->status = 'Transfer In';
                 $stock->created_by = Auth::user()->id;
+                // $stock->warehouse_id = $request->to_branch_id;
                 $stock->save();
             }
 
@@ -350,6 +477,7 @@ class StockTransferRepositories
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
+            dd($e->getMessage(), $e->getLine(), $e->getFile());
             redirect('inventorySetup-transfer-create')->with('error', 'Something Wrong Please try again');
         }
         return $transfer;
