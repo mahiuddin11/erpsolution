@@ -57,20 +57,17 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         // Route::get('/inventory-setup-product-list', 'ProductController@index')->name('inventorySetup.product.index');
         Route::get('/inventory-setup-product-list', [ProductController::class, 'index'])->name('inventorySetup.product.index');
 
-
-
-
-        Route::get('/dataProcessingProduct', 'ProductController@dataProcessingProduct')->name('inventorySetup.product.dataProcessingProduct');
-        Route::get('/inventory-setup-product-create', 'ProductController@create')->name('inventorySetup.product.create');
-        Route::post('/inventory-setup-product-store', 'ProductController@store')->name('inventorySetup.product.store');
-        Route::get('/inventory-setup-product-edit/{id}', 'ProductController@edit')->name('inventorySetup.product.edit');
-        Route::get('/inventory-setup-product-show/{id}', 'ProductController@show')->name('inventorySetup.product.show');
-        Route::post('/inventory-setup-product-update/{id}', 'ProductController@update')->name('inventorySetup.product.update');
-        Route::get('/inventory-setup-product-delete/{id}', 'ProductController@destroy')->name('inventorySetup.product.destroy');
-        Route::get('/inventory-setup-product-status/{id}/{status}', 'ProductController@statusUpdate')->name('inventorySetup.product.status');
-        Route::post('/inventory-setup-product-quickCategoryStore', 'ProductController@quickCategoryStore')->name('inventorySetup.production.quickCategoryStore');
-        Route::post('/inventory-setup-product-quickBrandStore', 'ProductController@quickBrandStore')->name('inventorySetup.production.quickBrandStore');
-        Route::post('/inventory-setup-product-quickUnitStore', 'ProductController@quickUnitStore')->name('inventorySetup.production.quickUnitStore');
+        Route::get('/dataProcessingProduct', [ProductController::class, 'dataProcessingProduct'])->name('inventorySetup.product.dataProcessingProduct');
+        Route::get('/inventory-setup-product-create', [ProductController::class, 'create'])->name('inventorySetup.product.create');
+        Route::post('/inventory-setup-product-store', [ProductController::class, 'store'])->name('inventorySetup.product.store');
+        Route::get('/inventory-setup-product-edit/{id}', [ProductController::class, 'edit'])->name('inventorySetup.product.edit');
+        Route::get('/inventory-setup-product-show/{id}', [ProductController::class, 'show'])->name('inventorySetup.product.show');
+        Route::post('/inventory-setup-product-update/{id}', [ProductController::class, 'update'])->name('inventorySetup.product.update');
+        Route::get('/inventory-setup-product-delete/{id}', [ProductController::class, 'destroy'])->name('inventorySetup.product.destroy');
+        Route::get('/inventory-setup-product-status/{id}/{status}', [ProductController::class, 'statusUpdate'])->name('inventorySetup.product.status');
+        Route::post('/inventory-setup-product-quickCategoryStore', [ProductController::class, 'quickCategoryStore'])->name('inventorySetup.production.quickCategoryStore');
+        Route::post('/inventory-setup-product-quickBrandStore', [ProductController::class, 'quickBrandStore'])->name('inventorySetup.production.quickBrandStore');
+        Route::post('/inventory-setup-product-quickUnitStore', [ProductController::class, 'quickUnitStore'])->name('inventorySetup.production.quickUnitStore');
 
         //product crud operation end
 
@@ -265,6 +262,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::post('/inventory-purchase-store', [PurchaseController::class, 'store'])->name('inventorySetup.purchase.store');
         Route::get('/inventory-purchase-edit/{id}', [PurchaseController::class, 'edit'])->name('inventorySetup.purchase.edit');
         Route::get('/inventory-purchase-show/{id}', [PurchaseController::class, 'show'])->name('inventorySetup.purchase.show');
+        Route::get('inventory-setup/get-warehouses-by-branch', [PurchaseController::class, 'getWarehousesByBranch'])->name('inventorySetup.getWarehousesByBranch');
 
 
         Route::post('/inventory-purchase-update/{id}', [PurchaseController::class, 'update'])->name('inventorySetup.purchase.update');

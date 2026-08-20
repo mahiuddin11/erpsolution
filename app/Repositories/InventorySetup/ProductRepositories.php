@@ -172,6 +172,7 @@ class ProductRepositories
 
     public function store($request)
     {
+
         try {
             DB::beginTransaction();
             $product = new $this->product();
@@ -247,7 +248,7 @@ class ProductRepositories
             }
             DB::table('products')->insert($suppliersaleprice);
         }
-        
+
         return $product;
     }
 

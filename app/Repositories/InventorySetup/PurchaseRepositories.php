@@ -536,6 +536,7 @@ class PurchaseRepositories
     public function store($request)
     {
 
+
         DB::beginTransaction();
         try {
 
@@ -572,6 +573,8 @@ class PurchaseRepositories
             $purchase->due_amount = $request->cart_due;
             $purchase->created_by = Auth::user()->id;
             $purchase->narration = $request->narration;
+
+            $purchase->warehouse_id = $request->sub_warehouse_id ?? null;
 
 
             if ($request->has('chart_of_account_id')) {
@@ -617,6 +620,7 @@ class PurchaseRepositories
 
 
             for ($i = 0; $i < count($category_id); $i++) {
+
                 $purchaseDetail = new PurchasesDetails();
                 $purchaseDetail->product_id = $proName[$i];
                 $purchaseDetail->category_id = $category_id[$i];
@@ -628,6 +632,7 @@ class PurchaseRepositories
                 $purchaseDetail->purchases_id = $purchases_id;
                 $purchaseDetail->date = $request->date;
                 $purchaseDetail->created_by = Auth::user()->id;
+                $purchaseDetail->warehouse_id = $request->sub_warehouse_id ?? null;
                 $purchaseDetail->save();
 
                 $stock = new Stock();
@@ -641,13 +646,17 @@ class PurchaseRepositories
                 $stock->status = 'Purchase';
                 $stock->invoice_no = $request->invoice_no;
                 $stock->created_by = Auth::user()->id;
+                $stock->warehouse_id = $request->sub_warehouse_id ?? null;
                 $stock->save();
 
                 $existingCheck = StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->where('type', "Branch")->first();
                 if (!empty($existingCheck)) :
                     $newQty = $existingCheck->quantity + $qty[$i];
-                    StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->where('type', "Branch")->update(array('quantity' => $newQty));
-
+                    StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->where('type', "Branch")
+                        ->update([
+                            'quantity' => $newQty,
+                            'warehouse_id' => $request->sub_warehouse_id ?? null,
+                        ]);
                 else :
                     $stockSummary = new StockSummary();
                     $stockSummary->branch_id = $request->branch_id;
@@ -655,6 +664,7 @@ class PurchaseRepositories
                     $stockSummary->purchasetype = $request->purchasetype[$i];
                     $stockSummary->quantity = $qty[$i];
                     $stockSummary->type = "Branch";
+                    $stockSummary->warehouse_id = $request->sub_warehouse_id ?? null;
                     $stockSummary->save();
                 endif;
             }
@@ -695,6 +705,171 @@ class PurchaseRepositories
         }
         return $purchase;
     }
+
+
+    // public function store($request)
+    // {
+
+
+    //     DB::beginTransaction();
+    //     try {
+
+    //         $invoice_no = $request->invoice_no;
+
+    //         $exists = Purchases::where('invoice_no', $invoice_no)->select('invoice_no')->exists();
+    //         if ($exists) {
+    //             $lastPurchase = Purchases::latest('id')->first();
+    //             if ($lastPurchase) {
+    //                 $nextCode = $lastPurchase->id + 1;
+    //             } else {
+    //                 $nextCode = 1;
+    //             }
+    //             $invoice_no = 'PV' . str_pad($nextCode, 5, "0", STR_PAD_LEFT);
+    //         }
+
+    //         $branch_id = $request->branch_id;
+    //         $request->branch_id = $request->sub_warehouse_id ?? $request->branch_id;
+    //         $purchase = new $this->purchases();
+    //         $purchase->invoice_no =  $invoice_no ?? $request->invoice_no;
+    //         $purchase->custom_invoice = $request->custom_invoice;
+    //         $purchase->date = $request->date;
+    //         $purchase->ledger_id = $request->ledger_id ?? 0;
+    //         $purchase->branch_id = $request->branch_id ?? 0;
+    //         $purchase->supplier_id = $request->supplier_id ?? 0;
+    //         $purchase->quantity = array_sum($request->qty);
+    //         $purchase->purchase_type = 'Direct';
+    //         $purchase->subtotal = array_sum($request->unitprice);
+    //         $purchase->grand_total = array_sum($request->total);
+    //         $purchase->status = 'Active';
+    //         $purchase->payment_type = $request->payment_type;
+    //         $purchase->discount = $request->discount;
+    //         $purchase->paid_amount = $request->paid_amount;
+    //         $purchase->due_amount = $request->cart_due;
+    //         $purchase->created_by = Auth::user()->id;
+    //         $purchase->narration = $request->narration;
+
+
+    //         if ($request->has('chart_of_account_id')) {
+    //             $purchase->chart_of_account_id = $request->chart_of_account_id;
+    //         }
+    //         if ($request->has('account_number')) {
+    //             $purchase->account_number = $request->account_number;
+    //         }
+    //         if ($request->has('check_number')) {
+    //             $purchase->check_number = $request->check_number;
+    //         }
+    //         if ($request->has('bank')) {
+    //             $purchase->bank = $request->bank;
+    //         }
+    //         if ($request->has('bank_branch')) {
+    //             $purchase->bank_branch = $request->bank_branch;
+    //         }
+    //         if ($request->has('input_net_total')) {
+    //             $purchase->net_total = $request->input_net_total;
+    //         }
+    //         $purchase->save();
+    //         $purchases_id = $purchase->id;
+
+    //         // $supplierName = ChartOfAccount::find($request->ledger_id)?->account_name ?? 'N/A';
+
+    //         $account = ChartOfAccount::find($request->ledger_id);
+    //         $supplierName = $account ? $account->account_name : 'N/A';
+
+
+    //         activity_log(
+    //             'create',
+    //             'derect_purchase',
+    //             $purchase->toArray(),
+    //             [],
+    //             "Direct Purchase created (Invoice: {$request->invoice_no}) — Supplier: {$supplierName}, Total: {$purchase->grand_total}, Payment: {$request->payment_type} , "
+    //         );
+
+    //         $category_id = $request->catName;
+    //         $proName = $request->proName;
+    //         $subtotal = $request->unitprice;
+    //         $grand_total = $request->total;
+    //         $qty = $request->qty;
+
+
+    //         for ($i = 0; $i < count($category_id); $i++) {
+    //             $purchaseDetail = new PurchasesDetails();
+    //             $purchaseDetail->product_id = $proName[$i];
+    //             $purchaseDetail->category_id = $category_id[$i];
+    //             $purchaseDetail->quantity = $qty[$i];
+    //             $purchaseDetail->purchasetype = $request->purchasetype[$i];
+    //             $purchaseDetail->branch_id = $request->branch_id ?? 0;
+    //             $purchaseDetail->unit_price = $subtotal[$i];
+    //             $purchaseDetail->total_price = $grand_total[$i];
+    //             $purchaseDetail->purchases_id = $purchases_id;
+    //             $purchaseDetail->date = $request->date;
+    //             $purchaseDetail->created_by = Auth::user()->id;
+    //             $purchaseDetail->save();
+
+    //             $stock = new Stock();
+    //             $stock->product_id = $proName[$i];
+    //             $stock->quantity = $qty[$i];
+    //             $stock->branch_id = $request->branch_id;
+    //             $stock->unit_price = $subtotal[$i];
+    //             $stock->total_price = $grand_total[$i];
+    //             $stock->general_id = $purchases_id;
+    //             $stock->date = $request->date;
+    //             $stock->status = 'Purchase';
+    //             $stock->invoice_no = $request->invoice_no;
+    //             $stock->created_by = Auth::user()->id;
+    //             $stock->save();
+
+    //             $existingCheck = StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->where('type', "Branch")->first();
+    //             if (!empty($existingCheck)) :
+    //                 $newQty = $existingCheck->quantity + $qty[$i];
+    //                 StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->where('type', "Branch")->update(array('quantity' => $newQty));
+
+    //             else :
+    //                 $stockSummary = new StockSummary();
+    //                 $stockSummary->branch_id = $request->branch_id;
+    //                 $stockSummary->product_id = $proName[$i];
+    //                 $stockSummary->purchasetype = $request->purchasetype[$i];
+    //                 $stockSummary->quantity = $qty[$i];
+    //                 $stockSummary->type = "Branch";
+    //                 $stockSummary->save();
+    //             endif;
+    //         }
+
+    //         // $invoice = AccountTransaction::accountInvoice();
+
+    //         $invoice = (new AccountTransaction())->accountInvoice();
+    //         // $transactionPay['payment_invoice'] = $request->invoice_no;
+    //         $transactionPay['invoice'] = $invoice_no ?? $request->invoice_no;
+    //         $transactionPay['table_id'] = $purchases_id;
+    //         $transactionPay['account_id'] = getAccountByUniqueID(22)->id; // ->purchase
+    //         $transactionPay['type'] = 1;
+    //         $transactionPay['branch_id'] = $branch_id ?? 0;
+    //         $transactionPay['debit'] =  array_sum($request->total);
+    //         $transactionPay['remark'] = $request->narration;
+    //         $transactionPay['created_by'] = Auth::id();
+    //         $transactionPay['supplier_id'] = $request->supplier_id ?? 0;
+    //         $transactionPay['created_at'] = $request->date;
+    //         AccountTransaction::create($transactionPay);
+
+    //         // $transaction['payment_invoice'] = $request->invoice_no;
+    //         $transaction['invoice'] = $request->invoice_no;
+    //         $transaction['table_id'] = $purchases_id;
+    //         $transaction['account_id'] = $request->ledger_id; // account payable
+    //         $transaction['type'] = 1;
+    //         $transaction['branch_id'] = $branch_id ?? 0;
+    //         $transaction['credit'] = (array_sum($request->total));
+    //         $transaction['remark'] = $request->narration;
+    //         $transaction['created_by'] = Auth::id();
+    //         $transaction['supplier_id'] = $request->supplier_id ?? 0;
+    //         $transaction['created_at'] = $request->date;
+    //         AccountTransaction::create($transaction);
+
+    //         DB::commit();
+    //     } catch (\Exception $e) {
+    //         DB::rollback();
+    //         redirect('inventory-purchase-create')->with('error', 'Something Wrong Please try again');
+    //     }
+    //     return $purchase;
+    // }
 
     /*   public function prstore($request)
     {
@@ -1707,12 +1882,176 @@ class PurchaseRepositories
         return $purchase;
     }
 
+    // public function update($request, $id)
+    // {
+
+    //     dd($request->all());
+
+    //     DB::beginTransaction();
+    //     try {
+    //         $purchase = $this->purchases::findOrFail($id);
+
+    //         $purchase->date = $request->date;
+    //         $purchase->branch_id = $request->branch_id;
+    //         $purchase->ledger_id = $request->ledger_id;
+    //         $purchase->supplier_id = $request->supplier_id;
+    //         $purchase->quantity = array_sum($request->qty);
+    //         $purchase->subtotal = array_sum($request->unitprice);
+    //         $purchase->grand_total = array_sum($request->total);
+    //         $purchase->payment_type = $request->payment_type;
+    //         $purchase->discount = $request->discount;
+    //         $purchase->paid_amount = $request->paid_amount;
+    //         $purchase->due_amount = $request->cart_due;
+    //         $purchase->created_by = Auth::user()->id;
+    //         $purchase->narration = $request->narration;
+
+
+    //         if ($request->has('chart_of_account_id')) {
+    //             $purchase->chart_of_account_id = $request->chart_of_account_id;
+    //         }
+    //         if ($request->has('account_number')) {
+    //             $purchase->account_number = $request->account_number;
+    //         }
+    //         if ($request->has('check_number')) {
+    //             $purchase->check_number = $request->check_number;
+    //         }
+    //         if ($request->has('bank')) {
+    //             $purchase->bank = $request->bank;
+    //         }
+    //         if ($request->has('bank_branch')) {
+    //             $purchase->bank_branch = $request->bank_branch;
+    //         }
+    //         if ($request->has('input_net_total')) {
+    //             $purchase->net_total = $request->input_net_total;
+    //         }
+
+
+    //         $purchase->save();
+    //         $purchases_id = $purchase->id;
+
+
+    //         $category_id = $request->catName;
+    //         $oldproName =  $request->oldproName;
+    //         $oldqty =  $request->oldqty;
+    //         $proName = $request->proName;
+    //         $subtotal = $request->unitprice;
+    //         $grand_total = $request->total;
+    //         $qty = $request->qty;
+
+    //         for ($w = 0; $w < count($oldproName); $w++) {
+    //             // echo $oldproName[$i];
+    //             $mywhereCondition = array(
+    //                 'branch_id' => $request->old_branch_id,
+    //                 'product_id' => $oldproName[$w],
+    //                 'type' => 'Branch',
+    //             );
+
+    //             $oldstockupdate = StockSummary::where($mywhereCondition)->first();
+    //             // dd($oldstockupdate);
+
+    //             DB::table('stock_summaries')
+    //                 ->where($mywhereCondition)
+    //                 ->update(
+    //                     ['quantity' => ($oldstockupdate->quantity ?? 0) - $oldqty[$w]],
+    //                 );
+    //         }
+
+    //         PurchasesDetails::where('purchases_id', $purchase->id)->forceDelete();
+    //         Stock::where('general_id', $purchase->id)->where('status', 'Purchase')->forceDelete();
+
+    //         for ($i = 0; $i < count($category_id); $i++) {
+    //             $purchaseDetail = new PurchasesDetails();
+    //             $purchaseDetail->product_id = $proName[$i];
+    //             $purchaseDetail->quantity = $qty[$i];
+    //             $purchaseDetail->purchasetype = $request->purchasetype[$i];
+    //             $purchaseDetail->branch_id = $request->branch_id;
+    //             $purchaseDetail->unit_price = $subtotal[$i];
+    //             $purchaseDetail->total_price = $grand_total[$i];
+    //             $purchaseDetail->purchases_id = $purchases_id;
+    //             $purchaseDetail->date = $request->date;
+    //             $purchaseDetail->created_by = Auth::user()->id;
+    //             $purchaseDetail->save();
+
+    //             $stock = new Stock();
+    //             $stock->product_id = $proName[$i];
+    //             $stock->quantity = $qty[$i];
+    //             $stock->branch_id = $request->branch_id;
+    //             $stock->unit_price = $subtotal[$i];
+    //             $stock->total_price = $grand_total[$i];
+    //             $stock->general_id = $purchases_id;
+    //             $stock->date = $request->date;
+    //             $stock->status = 'Purchase';
+    //             $stock->created_by = Auth::user()->id;
+    //             $stock->save();
+
+    //             $existingCheck = StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->where('type', 'Branch')->first();
+
+    //             if (!empty($existingCheck) && $existingCheck->quantity >= 0) :
+    //                 $newQty = $existingCheck->quantity + $qty[$i];
+    //                 StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->where('type', 'Branch')->update(array('quantity' => $newQty));
+    //             else :
+    //                 $stockSummary = new StockSummary();
+    //                 $stockSummary->branch_id = $request->branch_id;
+    //                 $stockSummary->product_id = $proName[$i];
+    //                 $stockSummary->purchasetype = $request->purchasetype[$i];
+    //                 $stockSummary->quantity = $qty[$i];
+    //                 $stockSummary->type = 'Branch';
+    //                 $stockSummary->save();
+    //             endif;
+    //         }
+
+    //         supplierLedger::where('purchase_id', $purchases_id)->delete();
+    //         AccountTransaction::where('table_id', $purchases_id)->where('type', 1)->delete();
+
+    //         // $invoice = AccountTransaction::accountInvoice();
+    //         $invoice = (new AccountTransaction())->accountInvoice();
+
+    //         $transactionPay['payment_invoice'] = null;
+    //         $transactionPay['invoice'] = $purchase->invoice_no;
+    //         $transactionPay['table_id'] = $purchases_id;
+    //         $transactionPay['account_id'] = getAccountByUniqueID(22)->id; // ->purchase
+    //         $transactionPay['type'] = 1;
+    //         $transactionPay['branch_id'] = $request->branch_id ?? 0;
+    //         $transactionPay['debit'] =  array_sum($request->total);
+    //         $transactionPay['remark'] = $request->narration;
+    //         $transactionPay['created_by'] = Auth::id();
+    //         $transactionPay['supplier_id'] = $request->supplier_id ?? 0;
+    //         $transactionPay['created_at'] = $request->date;
+    //         AccountTransaction::create($transactionPay);
+
+    //         $transaction['payment_invoice'] = null;
+    //         $transaction['invoice'] = $purchase->invoice_no;
+    //         $transaction['table_id'] = $purchases_id;
+    //         $transaction['account_id'] = $request->ledger_id; // account payable
+    //         $transaction['type'] = 1;
+    //         $transaction['branch_id'] = $request->branch_id ?? 0;
+    //         $transaction['credit'] = (array_sum($request->total));
+    //         $transaction['remark'] = $request->narration;
+    //         $transaction['created_by'] = Auth::id();
+    //         $transaction['supplier_id'] = $request->supplier_id ?? 0;
+    //         $transaction['created_at'] = $request->date;
+    //         AccountTransaction::create($transaction);
+
+    //         DB::commit();
+    //     } catch (\Exception $e) {
+    //         DB::rollback();
+    //         dd($e->getMessage(), $e->getLine());
+    //         redirect('inventory-purchase-create')->with('error', 'Something Wrong Please try again' . $e->getMessage());
+    //     }
+    //     return $purchase;
+    // }
+
     public function update($request, $id)
     {
+
+
 
         DB::beginTransaction();
         try {
             $purchase = $this->purchases::findOrFail($id);
+
+            $branch_id = $request->branch_id; //new add
+            $request->branch_id = $request->sub_warehouse_id ?? $request->branch_id; //new add
 
             $purchase->date = $request->date;
             $purchase->branch_id = $request->branch_id;
@@ -1727,7 +2066,7 @@ class PurchaseRepositories
             $purchase->due_amount = $request->cart_due;
             $purchase->created_by = Auth::user()->id;
             $purchase->narration = $request->narration;
-
+            $purchase->warehouse_id = $request->sub_warehouse_id ?? null;
 
             if ($request->has('chart_of_account_id')) {
                 $purchase->chart_of_account_id = $request->chart_of_account_id;
@@ -1793,6 +2132,7 @@ class PurchaseRepositories
                 $purchaseDetail->purchases_id = $purchases_id;
                 $purchaseDetail->date = $request->date;
                 $purchaseDetail->created_by = Auth::user()->id;
+                $purchaseDetail->warehouse_id = $request->sub_warehouse_id ?? null;
                 $purchaseDetail->save();
 
                 $stock = new Stock();
@@ -1805,13 +2145,18 @@ class PurchaseRepositories
                 $stock->date = $request->date;
                 $stock->status = 'Purchase';
                 $stock->created_by = Auth::user()->id;
+                $stock->warehouse_id = $request->sub_warehouse_id ?? null;
                 $stock->save();
 
                 $existingCheck = StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->where('type', 'Branch')->first();
 
                 if (!empty($existingCheck) && $existingCheck->quantity >= 0) :
                     $newQty = $existingCheck->quantity + $qty[$i];
-                    StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->where('type', 'Branch')->update(array('quantity' => $newQty));
+                    StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->where('type', 'Branch')
+                        ->update([
+                            'quantity' => $newQty,
+                            'warehouse_id' => $request->sub_warehouse_id ?? null,
+                        ]);
                 else :
                     $stockSummary = new StockSummary();
                     $stockSummary->branch_id = $request->branch_id;
@@ -1819,6 +2164,7 @@ class PurchaseRepositories
                     $stockSummary->purchasetype = $request->purchasetype[$i];
                     $stockSummary->quantity = $qty[$i];
                     $stockSummary->type = 'Branch';
+                    $stockSummary->warehouse_id = $request->sub_warehouse_id ?? null;
                     $stockSummary->save();
                 endif;
             }

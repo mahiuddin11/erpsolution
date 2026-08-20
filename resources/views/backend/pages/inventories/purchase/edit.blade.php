@@ -88,7 +88,8 @@
                                     <span class=" error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
-                            <div class="col-md-2 mb-3">
+
+                            {{-- <div class="col-md-2 mb-3">
                                 <label for="validationCustom01">Branch * :</label>
                                 @php
                                     $sub_branch = App\Models\Branch::find($editInfo->branch_id);
@@ -128,7 +129,49 @@
                                 @error('sub_warehouse_id')
                                     <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror
+                            </div> --}}
+
+                            <div class="col-md-2 mb-3">
+                                <label for="validationCustom01">Branch * :</label>
+                                <select class="form-control select2" id="branch_id_display" disabled>
+                                    <option selected disabled value="">--Select Branch--</option>
+                                    @foreach ($branch as $key => $value)
+                                        <option value="{{ $value->id }}"
+                                            {{ $parentBranchId == $value->id ? 'selected' : '' }}>
+                                            {{ $value->branchCode . ' - ' . $value->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                {{-- >>> NEW — actual submitted value, since the visible select is disabled --}}
+                                <input type="hidden" name="branch_id" value="{{ $parentBranchId }}">
+                                {{-- <<< END NEW --}}
+                                @error('branch_id')
+                                    <span class="error text-red text-bold">{{ $message }}</span>
+                                @enderror
                             </div>
+
+                            <div class="col-md-2 mb-3">
+                                <label for="validationCustom02">Sub-Warehouse * :</label>
+                                <select class="form-control select2" id="sub_warehouse_id_display" disabled>
+                                    <option selected disabled value="">--Select Sub-Warehouse--</option>
+                                    @foreach ($subWarehouses as $subWarehouse)
+                                        <option value="{{ $subWarehouse->id }}"
+                                            {{ $subWarehouse->id == $selectedWarehouseId ? 'selected' : '' }}>
+                                            {{ $subWarehouse->text }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                {{-- >>> NEW — actual submitted values, since the visible select is disabled --}}
+                                <input type="hidden" name="sub_warehouse_id" value="{{ $selectedWarehouseId }}">
+                                <input type="hidden" name="warehouse_source" value="{{ $warehouseSource }}">
+                                <input type="hidden" name="old_branch_id" value="{{ $editInfo->branch_id }}">
+                                {{-- <<< END NEW --}}
+                                @error('sub_warehouse_id')
+                                    <span class="error text-red text-bold">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+
                             {{-- <div class="col-md-3 mb-3">
                                 <label>Supplier * :</label>
                                 <select class="form-control select2 supid" name="supplier_id">
@@ -1039,49 +1082,99 @@
                 clearTimeout(debounceTimer);
 
                 // Start a new debounce timer
-                debounceTimer = setTimeout(function() {
-                    if (branchId) {
-                        // Show loading spinner
-                        $('#loadingSpinner').show();
+                // debounceTimer = setTimeout(function() {
+                //     if (branchId) {
+                //         // Show loading spinner
+                //         $('#loadingSpinner').show();
 
-                        // Make the AJAX request to get sub-warehouses
-                        $.ajax({
-                            url: '/admin/settings-get-sub-warehouses/' + branchId,
-                            type: 'GET',
-                            dataType: 'json',
-                            success: function(data) {
-                                // Clear the sub-warehouse dropdown
-                                $('#sub_warehouse_id').empty().append(
-                                    '<option selected disabled value="">--Select Sub-Warehouse--</option>'
+                //         // Make the AJAX request to get sub-warehouses
+                //         $.ajax({
+                //             url: '/admin/settings-get-sub-warehouses/' + branchId,
+                //             type: 'GET',
+                //             dataType: 'json',
+                //             success: function(data) {
+                //                 // Clear the sub-warehouse dropdown
+                //                 $('#sub_warehouse_id').empty().append(
+                //                     '<option selected disabled value="">--Select Sub-Warehouse--</option>'
+                //                 );
+
+                //                 // Populate the sub-warehouse dropdown if data exists
+                //                 if (data.length > 0) {
+                //                     $('#sub_warehouse_id').removeAttr('disabled');
+                //                     $.each(data, function(key, value) {
+                //                         $('#sub_warehouse_id').append(
+                //                             '<option value="' + value.id +
+                //                             '">' + value.name + '</option>');
+                //                     });
+                //                 } else {
+                //                     $('#sub_warehouse_id').attr('disabled', 'disabled');
+                //                 }
+                //             },
+                //             error: function() {
+                //                 alert('Failed to retrieve data.');
+                //             },
+                //             complete: function() {
+                //                 // Hide loading spinner after the request completes
+                //                 $('#loadingSpinner').hide();
+                //             }
+                //         });
+                //     } else {
+                //         // If no branch is selected, reset the sub-warehouse dropdown
+                //         $('#sub_warehouse_id').empty().append(
+                //             '<option selected disabled value="">--Select Sub-Warehouse--</option>'
+                //         ).attr('disabled', 'disabled');
+                //     }
+                // }, 300);
+                // // Set debounce delay to 300ms
+
+                // >>> NEW — same dynamic branch->warehouse AJAX as create page (new warehouses table with old-branch fallback)
+                function getWarehousesByBranch(branch_id) {
+                    if (!branch_id) return;
+
+                    $('#loadingSpinner').show();
+
+                    $.ajax({
+                        url: "{{ route('inventorySetup.getWarehousesByBranch') }}",
+                        type: "GET",
+                        dataType: 'json',
+                        cache: false,
+                        data: {
+                            "_token": "{{ csrf_token() }}",
+                            branch_id: branch_id
+                        },
+                        success: function(response) {
+                            let $warehouseSelect = $('#sub_warehouse_id');
+
+                            $warehouseSelect.select2('destroy');
+                            $warehouseSelect.empty().append(
+                                '<option selected disabled value="">--Select Sub-Warehouse--</option>'
+                            );
+
+                            if (response.data.length > 0) {
+                                $.each(response.data, function(index, item) {
+                                    $warehouseSelect.append(
+                                        `<option value="${item.id}">${item.text}</option>`
                                     );
-
-                                // Populate the sub-warehouse dropdown if data exists
-                                if (data.length > 0) {
-                                    $('#sub_warehouse_id').removeAttr('disabled');
-                                    $.each(data, function(key, value) {
-                                        $('#sub_warehouse_id').append(
-                                            '<option value="' + value.id +
-                                            '">' + value.name + '</option>');
-                                    });
-                                } else {
-                                    $('#sub_warehouse_id').attr('disabled', 'disabled');
-                                }
-                            },
-                            error: function() {
-                                alert('Failed to retrieve data.');
-                            },
-                            complete: function() {
-                                // Hide loading spinner after the request completes
-                                $('#loadingSpinner').hide();
+                                });
+                            } else {
+                                $warehouseSelect.append(
+                                    '<option disabled value="">--No Warehouse Found--</option>'
+                                );
                             }
-                        });
-                    } else {
-                        // If no branch is selected, reset the sub-warehouse dropdown
-                        $('#sub_warehouse_id').empty().append(
-                            '<option selected disabled value="">--Select Sub-Warehouse--</option>'
-                            ).attr('disabled', 'disabled');
-                    }
-                }, 300); // Set debounce delay to 300ms
+
+                            $('#warehouse_source').val(response.source);
+                            $warehouseSelect.select2();
+                        },
+                        error: function() {
+                            alertMessage.error('Failed to load warehouses for this branch.');
+                        },
+                        complete: function() {
+                            $('#loadingSpinner').hide();
+                        }
+                    });
+                }
+
+
             });
         });
     </script>

@@ -21,6 +21,7 @@ use App\Models\PurchasesDetails;
 use App\Models\supplierSalePrice;
 use App\Models\SupplierSelectPrice;
 use App\Models\Transection;
+use App\Models\Warehouse;
 use App\Services\InventorySetup\PurchaseService;
 use App\Transformers\PurchaseTransformer;
 use Illuminate\Support\Facades\Auth;
@@ -76,33 +77,111 @@ class PurchaseController extends Controller
     }
 
 
+    // public function create()
+    // {
+
+    //     $title = 'Add New purchase';
+    //     $category_info = Category::with('parent')->get()->where('status', 'Active');
+    //     $supplier = Supplier::get()->where('status', 'Active');
+    //     $ledgers = ChartOfAccount::where('parent_id', 0)->get();
+
+    //     $user = auth()->user();
+    //     $branch = Branch::where('status', 'Active')->where("parent_id", 0);
+    //     $branch = $branch->get();
+
+    //     $wearhouses = Branch::where("parent_id", "!=", 0)->get();
+
+    //     $purchaseLastData = Purchases::latest('id')->first();
+
+    //     if ($purchaseLastData) :
+    //         $purchaseData = $purchaseLastData->id + 1;
+    //     else :
+    //         $purchaseData = 1;
+    //     endif;
+
+    //     $invoice_no = 'PV' . str_pad($purchaseData, 5, "0", STR_PAD_LEFT);
+    //     $accounts = ChartOfAccount::getaccount(4)->get();
+    //     $projects = Project::where('condition', 'One Going')->get();
+    //     return view('backend.pages.inventories.purchase.create', get_defined_vars());
+    // }
+
     public function create()
     {
-
         $title = 'Add New purchase';
         $category_info = Category::with('parent')->get()->where('status', 'Active');
         $supplier = Supplier::get()->where('status', 'Active');
         $ledgers = ChartOfAccount::where('parent_id', 0)->get();
 
         $user = auth()->user();
-        $branch = Branch::where('status', 'Active')->where("parent_id", 0);
-        $branch = $branch->get();
+        $branch = Branch::where('status', 'Active')->where("parent_id", 0)->get();
 
-        $wearhouses = Branch::where("parent_id", "!=", 0)->get();
+        $usingNewWarehouseTable = false;
+        $wearhouses = Warehouse::where('status', 'Active')->get();
+
+        if ($wearhouses->isNotEmpty()) {
+            $usingNewWarehouseTable = true;
+
+            $wearhouses = $wearhouses->map(function ($w) {
+                return (object) [
+                    'id'         => $w->id,
+                    'warehouseCode' => $w->warehouseCode ?? '', // adjust field name if different
+                    'name'       => $w->name,
+                ];
+            });
+        } else {
+            $wearhouses = Branch::where("parent_id", "!=", 0)->get();
+        }
+
 
         $purchaseLastData = Purchases::latest('id')->first();
-
-        if ($purchaseLastData) :
-            $purchaseData = $purchaseLastData->id + 1;
-        else :
-            $purchaseData = 1;
-        endif;
-
+        $purchaseData = $purchaseLastData ? $purchaseLastData->id + 1 : 1;
         $invoice_no = 'PV' . str_pad($purchaseData, 5, "0", STR_PAD_LEFT);
+
         $accounts = ChartOfAccount::getaccount(4)->get();
         $projects = Project::where('condition', 'One Going')->get();
+
         return view('backend.pages.inventories.purchase.create', get_defined_vars());
     }
+
+
+    public function getWarehousesByBranch(Request $request)
+    {
+        $branch_id = $request->branch_id;
+
+        if (!$branch_id) {
+            return response()->json(['source' => 'none', 'data' => []]);
+        }
+
+
+        $warehouses = Warehouse::where('branch_id', $branch_id)
+            ->where('status', 'Active')
+            ->get();
+
+        if ($warehouses->isNotEmpty()) {
+            $data = $warehouses->map(function ($w) {
+                return [
+                    'id'   => $w->id,
+                    'text' => $w->warehouseCode . ' - ' . $w->name,
+                ];
+            });
+            return response()->json(['source' => 'new', 'data' => $data]);
+        }
+
+        // Fallback: old branch-based sub-warehouse system
+        $oldWarehouses = Branch::where('parent_id', $branch_id)
+            ->where('status', 'Active')
+            ->get();
+
+        $data = $oldWarehouses->map(function ($b) {
+            return [
+                'id'   => $b->id,
+                'text' => $b->branchCode . ' - ' . $b->name,
+            ];
+        });
+
+        return response()->json(['source' => 'old', 'data' => $data]);
+    }
+
 
     public function supplierCreate(Request $request)
     {
@@ -218,6 +297,39 @@ class PurchaseController extends Controller
      * @param $slug
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
+    // public function edit($id)
+    // {
+    //     if (!is_numeric($id)) {
+    //         session()->flash('error', 'Edit id must be numeric!!');
+    //         return redirect()->back();
+    //     }
+
+    //     $editInfo = $this->systemService->details($id)->load('details');
+
+    //     if (!$editInfo) {
+    //         session()->flash('error', 'Edit info is invalid!!');
+    //         return redirect()->back();
+    //     }
+    //     $ledgers = ChartOfAccount::where('parent_id', 0)->get();
+
+    //     $purchase = $this->systemService->getAllList();
+    //     $category_info = Category::get()->where('status', 'Active');
+    //     $supplier = Supplier::get()->where('status', 'Active');
+    //     $branch = Branch::get()->where('status', 'Active');
+    //     $title = 'Edit Purchase';
+    //     $accounts = ChartOfAccount::getaccount(4)->get();
+
+    //     $sub_branch = Branch::find($editInfo->branch_id);
+    //     $subWarehouses = Branch::where("parent_id", $sub_branch->parent_id)->where('status', 'Active')->get();
+    //     $account_id = $editInfo->chart_of_account_id;
+    //     $debit = Transection::where('account_id', '=', $account_id)->sum('debit');
+    //     $credit = Transection::where('account_id', '=', $account_id)->sum('credit');
+
+    //     $remainingBalance = $debit - $credit;
+
+    //     return view('backend.pages.inventories.purchase.edit', get_defined_vars());
+    // }
+
     public function edit($id)
     {
         if (!is_numeric($id)) {
@@ -236,12 +348,50 @@ class PurchaseController extends Controller
         $purchase = $this->systemService->getAllList();
         $category_info = Category::get()->where('status', 'Active');
         $supplier = Supplier::get()->where('status', 'Active');
-        $branch = Branch::get()->where('status', 'Active');
+
+        $branch = Branch::where('status', 'Active')->where('parent_id', 0)->get();
         $title = 'Edit Purchase';
         $accounts = ChartOfAccount::getaccount(4)->get();
 
-        $sub_branch = Branch::find($editInfo->branch_id);
-        $subWarehouses = Branch::where("parent_id", $sub_branch->parent_id)->where('status', 'Active')->get();
+        // >>> NEW — determine source (new warehouses table vs old branches table) and build dropdown data accordingly
+        $usingNewWarehouseTable = !empty($editInfo->warehouse_id);
+
+        if ($usingNewWarehouseTable) {
+            $warehouseRow = Warehouse::find($editInfo->warehouse_id);
+            $parentBranchId = $warehouseRow->branch_id ?? null;
+
+            $subWarehouses = Warehouse::where('branch_id', $parentBranchId)
+                ->where('status', 'Active')
+                ->get()
+                ->map(function ($w) {
+                    return (object) [
+                        'id'   => $w->id,
+                        'text' => $w->warehouseCode . ' - ' . $w->name,
+                    ];
+                });
+
+            $selectedWarehouseId = $editInfo->warehouse_id;
+        } else {
+            // old system — exactly the same lookup as before
+            $sub_branch = Branch::find($editInfo->branch_id);
+            $parentBranchId = $sub_branch->parent_id ?? null;
+
+            $subWarehouses = Branch::where('parent_id', $parentBranchId)
+                ->where('status', 'Active')
+                ->get()
+                ->map(function ($b) {
+                    return (object) [
+                        'id'   => $b->id,
+                        'text' => $b->branchCode . ' - ' . $b->name,
+                    ];
+                });
+
+            $selectedWarehouseId = $editInfo->branch_id;
+        }
+
+        $warehouseSource = $usingNewWarehouseTable ? 'new' : 'old';
+        // <<< END NEW
+
         $account_id = $editInfo->chart_of_account_id;
         $debit = Transection::where('account_id', '=', $account_id)->sum('debit');
         $credit = Transection::where('account_id', '=', $account_id)->sum('credit');
