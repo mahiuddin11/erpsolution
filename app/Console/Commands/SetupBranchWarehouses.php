@@ -166,7 +166,17 @@ class SetupBranchWarehouses extends Command
 
                 $defaultClause = '';
                 if ($column->COLUMN_DEFAULT !== null) {
-                    $defaultClause = "DEFAULT '" . addslashes($column->COLUMN_DEFAULT) . "'";
+                    $cleanDefault = trim($column->COLUMN_DEFAULT, "'");
+
+                    if ($cleanDefault !== '' && !str_contains($enumType, "'" . $cleanDefault . "'")) {
+                        $this->warn("Existing default '{$cleanDefault}' is not a valid member of the enum — falling back to the first enum option.");
+                        preg_match("/^enum\('([^']+)'/", $enumType, $m);
+                        $cleanDefault = $m[1] ?? $cleanDefault;
+                    }
+
+                    if ($cleanDefault !== '') {
+                        $defaultClause = "DEFAULT '" . addslashes($cleanDefault) . "'";
+                    }
                 }
 
                 $sql = "ALTER TABLE stocks MODIFY status {$enumType} {$nullClause} {$defaultClause}";
