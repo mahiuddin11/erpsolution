@@ -363,12 +363,12 @@
                 margin: 0 !important;
                 /* This removes all margins */
                 /* Alternative options:
-               margin: 0mm !important;
-               margin-top: 0 !important;
-               margin-bottom: 0 !important;
-               margin-left: 0 !important;
-               margin-right: 0 !important;
-            */
+                                       margin: 0mm !important;
+                                       margin-top: 0 !important;
+                                       margin-bottom: 0 !important;
+                                       margin-left: 0 !important;
+                                       margin-right: 0 !important;
+                                    */
             }
 
             /* Main container with proper flexbox layout */
@@ -790,9 +790,9 @@
                                     </th>
 
                                 </tr>
-                                <tr>
+                                {{-- <tr>
                                     <td colspan="6"><b>Note :</b> {{ $invoice->narration ?? 'N/A' }}</td>
-                                </tr>
+                                </tr> --}}
                             </tfoot>
                         </table>
                     </section>
