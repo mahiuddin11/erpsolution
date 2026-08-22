@@ -523,6 +523,137 @@ class StockAdjustmentRepositories
     //     }
     // }
 
+    // public function storeapproval($request, $id)
+    // {
+
+    //     if ($request->adjustment_type == 'Lost') {
+    //         $adjustment_type = 'Loss';
+    //     } else {
+    //         $adjustment_type = $request->adjustment_type;
+    //     }
+
+    //     DB::beginTransaction();
+    //     try {
+    //         $StockAjdustment = $this->StockAjdustment::findOrFail($id);
+
+    //         // Old Data
+    //         $oldData = $StockAjdustment->toArray();
+
+    //         // ==================== Main Record Update ====================
+    //         $StockAjdustment->date            = $request->date;
+    //         $StockAjdustment->branch_id       = $request->branch_id;
+    //         $StockAjdustment->quantity        = array_sum($request->qty);
+    //         $StockAjdustment->approval_qty    = array_sum($request->qty);
+    //         $StockAjdustment->subtotal        = array_sum($request->unitprice);
+    //         $StockAjdustment->grand_total     = array_sum($request->total);
+    //         $StockAjdustment->status          = 'Active';
+    //         $StockAjdustment->adjustment_type = $adjustment_type;
+    //         $StockAjdustment->approve_by      = Auth::user()->id;
+    //         $StockAjdustment->approval_date   = date('Y-m-d');
+    //         $StockAjdustment->note            = $request->narration;
+
+
+    //         $StockAjdustment->save();
+
+    //         $StockAjdustment_id = $StockAjdustment->id;
+    //         StockAjdustmentDetailst::where('purchases_id', $StockAjdustment_id)->delete();
+
+
+    //         $category_id    = $request->catName;
+    //         $proName        = $request->proName;
+    //         $subtotal       = $request->unitprice;
+    //         // purchaseType form theke na ashle null hobe, tai default empty array
+    //         $purchaseType   = $request->purchaseType ?? [];
+    //         $grand_total    = $request->total;
+    //         $qty            = $request->qty;
+
+
+    //         for ($i = 0; $i < count($category_id); $i++) {
+
+
+    //             $itemPurchaseType = $purchaseType[$i] ?? '';
+
+
+
+    //             // ==================== Stock Adjustment Details Create ====================
+    //             $purchaseDetail = new StockAjdustmentDetailst();
+    //             $purchaseDetail->product_id    = $proName[$i];
+    //             $purchaseDetail->quantity      = $qty[$i];
+    //             $purchaseDetail->category_id   = $category_id[$i];
+    //             $purchaseDetail->purchase_type = $itemPurchaseType;
+    //             $purchaseDetail->branch_id     = $request->branch_id;
+    //             $purchaseDetail->unit_price    = $subtotal[$i];
+    //             $purchaseDetail->total_price   = $grand_total[$i];
+    //             $purchaseDetail->purchases_id  = $StockAjdustment_id;
+    //             $purchaseDetail->date          = $request->date;
+    //             $purchaseDetail->status        = 'Active';
+    //             $purchaseDetail->approval_date = date('Y-m-d');
+    //             $purchaseDetail->created_by    = Auth::id();
+    //             $purchaseDetail->save();
+
+    //             // ==================== Stock Transaction ====================
+    //             $stock = new Stock();
+    //             $stock->general_id    = $StockAjdustment_id;
+    //             $stock->date          = $StockAjdustment->date;
+    //             $stock->branch_id     = $request->branch_id;
+    //             $stock->invoice_no    = $StockAjdustment->invoice_no;
+    //             $stock->product_id    = $proName[$i];
+    //             $stock->unit_price    = $subtotal[$i];
+    //             $stock->total_price   = $grand_total[$i];
+    //             $stock->quantity      = $qty[$i];
+    //             $stock->status        = $request->adjustment_type;
+    //             $stock->created_by    = Auth::id();
+
+
+    //             $stock->save();
+
+
+
+
+    //             // ==================== StockSummary Update ====================
+    //             $summary = StockSummary::firstOrNew([
+    //                 'product_id'    => $proName[$i],
+    //                 'branch_id'     => $request->branch_id,
+    //                 'type'          => 'Branch',
+    //                 'purchasetype' => $itemPurchaseType,
+    //             ]);
+
+
+
+    //             if ($adjustment_type == 'Gain') {
+    //                 $summary->quantity = ($summary->quantity ?? 0) + $qty[$i];
+    //             } else if (in_array($adjustment_type, ['Loss', 'Damage', 'Lost'])) {
+    //                 $summary->quantity = ($summary->quantity ?? 0) - $qty[$i];
+    //             }
+
+    //             $summary->save();
+    //         }
+
+
+    //         // Activity Log
+    //         activity_log(
+    //             'approve',
+    //             'stock_adjustments',
+    //             $StockAjdustment->toArray(),
+    //             $oldData,
+    //             "Stock Adjustment Approved by " . Auth::user()->name .
+    //                 " (Invoice: {$StockAjdustment->invoice_no}) — Type: {$adjustment_type}"
+    //         );
+
+    //         DB::commit();
+    //         return $StockAjdustment;
+    //     } catch (\Exception $e) {
+    //         DB::rollback();
+    //         dd([
+    //             'message' => $e->getMessage(),
+    //             'file'    => $e->getFile(),
+    //             'line'    => $e->getLine(),
+    //         ]);
+    //         return redirect('inventory-purchase-create')
+    //             ->with('error', 'Something Wrong Please try again: ' . $e->getMessage());
+    //     }
+    // }
+
     public function storeapproval($request, $id)
     {
         if ($request->adjustment_type == 'Lost') {
@@ -550,29 +681,23 @@ class StockAdjustmentRepositories
             $StockAjdustment->approve_by      = Auth::user()->id;
             $StockAjdustment->approval_date   = date('Y-m-d');
             $StockAjdustment->note            = $request->narration;
-
-
             $StockAjdustment->save();
 
             $StockAjdustment_id = $StockAjdustment->id;
-            StockAjdustmentDetailst::where('purchases_id', $StockAjdustment_id)->delete();
 
+
+            DB::table('stock_ajdustment_detailsts')->where('purchases_id', $StockAjdustment_id)->delete();
 
             $category_id    = $request->catName;
             $proName        = $request->proName;
             $subtotal       = $request->unitprice;
-            // purchaseType form theke na ashle null hobe, tai default empty array
             $purchaseType   = $request->purchaseType ?? [];
             $grand_total    = $request->total;
             $qty            = $request->qty;
 
-
             for ($i = 0; $i < count($category_id); $i++) {
 
-
                 $itemPurchaseType = $purchaseType[$i] ?? '';
-
-
 
                 // ==================== Stock Adjustment Details Create ====================
                 $purchaseDetail = new StockAjdustmentDetailst();
@@ -602,22 +727,15 @@ class StockAdjustmentRepositories
                 $stock->quantity      = $qty[$i];
                 $stock->status        = $request->adjustment_type;
                 $stock->created_by    = Auth::id();
-
-
                 $stock->save();
-
-
-
 
                 // ==================== StockSummary Update ====================
                 $summary = StockSummary::firstOrNew([
-                    'product_id'    => $proName[$i],
-                    'branch_id'     => $request->branch_id,
-                    'type'          => 'Branch',
+                    'product_id'   => $proName[$i],
+                    'branch_id'    => $request->branch_id,
+                    'type'         => 'Branch',
                     'purchasetype' => $itemPurchaseType,
                 ]);
-
-
 
                 if ($adjustment_type == 'Gain') {
                     $summary->quantity = ($summary->quantity ?? 0) + $qty[$i];
@@ -627,7 +745,6 @@ class StockAdjustmentRepositories
 
                 $summary->save();
             }
-
 
             // Activity Log
             activity_log(
@@ -643,11 +760,6 @@ class StockAdjustmentRepositories
             return $StockAjdustment;
         } catch (\Exception $e) {
             DB::rollback();
-            dd([
-                'message' => $e->getMessage(),
-                'file'    => $e->getFile(),
-                'line'    => $e->getLine(),
-            ]);
             return redirect('inventory-purchase-create')
                 ->with('error', 'Something Wrong Please try again: ' . $e->getMessage());
         }

@@ -89,7 +89,7 @@
                                 @enderror
                             </div>
 
-                            <div class="col-md-2 mb-3">
+                            {{-- <div class="col-md-2 mb-3">
                                 <div class="form-group">
                                     <label>Adjustment Type * :</label>
                                     <select class="form-control select2 " name="adjustment_type">
@@ -104,9 +104,28 @@
                                             {{ $editInfo->adjustment_type == 'Damage' ? 'selected' : '' }}>
                                             Damage
                                         </option>
-                                        {{-- <option value="Others"
-                                            {{ $editInfo->adjustment_type == 'Others' ? 'selected' : '' }}>Others
-                                    </option> --}}
+                                    </select>
+                                    @error('adjustment_type')
+                                        <span class=" error text-red text-bold">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div> --}}
+
+                            <div class="col-md-2 mb-3">
+                                <div class="form-group">
+                                    <label>Adjustment Type * :</label>
+                                    <select class="form-control select2 " name="adjustment_type">
+                                        <option selected disabled value="">--Adjustment Type--</option>
+                                        <option value="Gain"
+                                            {{ $editInfo->adjustment_type == 'Gain' ? 'selected' : '' }}>
+                                            Gain</option>
+                                        <option value="Lost"
+                                            {{ in_array($editInfo->adjustment_type, ['Loss', 'Lost']) ? 'selected' : '' }}>
+                                            Lost</option>
+                                        <option value="Damage"
+                                            {{ $editInfo->adjustment_type == 'Damage' ? 'selected' : '' }}>
+                                            Damage
+                                        </option>
                                     </select>
                                     @error('adjustment_type')
                                         <span class=" error text-red text-bold">{{ $message }}</span>
