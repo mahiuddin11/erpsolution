@@ -455,6 +455,7 @@ class HrmDashboardApiController extends Controller
             'has_out'       => !empty($a->sign_out) && $a->sign_out != '00:00:00',
         ]);
 
+
         return response()->json($data);
     }
 
