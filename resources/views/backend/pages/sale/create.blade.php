@@ -153,11 +153,8 @@
                             <div class="col-md-2 mb-3">
                                 <label for="sales_person_id">Sales Representative :</label>
 
-                                <select class="form-control select2" id="sales_person_id" name="sales_person_id">
-
-                                    <option selected value="">
-                                        -- Not Assigned --
-                                    </option>
+                                <select class="form-control select2" id="sales_person_id" name="sales_person_id"
+                                    required>
 
                                     @foreach ($employees as $employee)
                                         <option value="{{ $employee->id }}">
@@ -792,17 +789,17 @@
 
                     $("#show_item tbody").append('<tr class="new_item' + proId +
                         '">\n\
-                                                                                                                                                                                                                                                                                                                                                                            <td style="padding-left:15px;">' +
+                                                                                                                                                                                                                                                                                                                                                                                                <td style="padding-left:15px;">' +
                         catName +
                         '<input type="hidden" name="catName[]" value="' +
                         catId +
                         '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                                                            <td align="right">' +
+                                                                                                                                                                                                                                                                                                                                                                                                <td align="right">' +
                         proName +
                         '<input type="hidden" class="add_quantity" name="proName[]" value="' +
                         proId +
                         '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                                                            <td align="right">' +
+                                                                                                                                                                                                                                                                                                                                                                                                <td align="right">' +
                         purchasetypetext +
                         '<input type="hidden" class="add_quantity" name="purchasetype[]" value="' +
                         purchasetypeval +
@@ -815,14 +812,14 @@
                         '<input type="hidden" class="ttlunitprice unitparice" name="unitprice[]" value="' +
                         unitprice +
                         '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                                                            <td align="right">' +
+                                                                                                                                                                                                                                                                                                                                                                                                <td align="right">' +
                         total +
                         '<input type="hidden" class="grandtotal" name="total[]" value="' +
                         total +
                         '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                                                            \n\
-                                                                                                                                                                                                                                                                                                                                                                            \n\
-                                                                                                                                                                                                                                                                                                                                                                            <td><a del_id="' +
+                                                                                                                                                                                                                                                                                                                                                                                                \n\
+                                                                                                                                                                                                                                                                                                                                                                                                \n\
+                                                                                                                                                                                                                                                                                                                                                                                                <td><a del_id="' +
                         proId +
                         '" class="delete_item btn form-control btn-danger" href="javascript:;" title=""><i class="fa fa-times"></i></a></td></tr>'
                     );

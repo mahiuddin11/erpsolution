@@ -118,7 +118,7 @@ class SaleRepositories
                 $nestedData['date'] = $esale->date;
                 $nestedData['branch_id'] = $esale->branch->branchCode . ' - ' . $esale->branch->name;
                 $nestedData['customer_id'] = $esale->customer->account_name ?? "";
-                $nestedData['sales_person_id'] = $esale->salesPerson->name ?? 'no asign';
+                $nestedData['sales_person_id'] = $esale->salesPerson->name ?? 'Not Assigned';
                 $nestedData['qty'] = $esale->qty;
                 $nestedData['sub_total'] = $esale->sub_total;
                 $nestedData['discount'] = $esale->discount;
