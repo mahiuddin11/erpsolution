@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Sale extends Model
 {
     use HasFactory;
-   // use SoftDeletes;
+    // use SoftDeletes;
 
     protected $table = 'sales';
 
@@ -35,5 +35,10 @@ class Sale extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'created_by', 'id');
+    }
+
+    public function salesPerson()
+    {
+        return $this->belongsTo(Employee::class, 'sales_person_id');
     }
 }

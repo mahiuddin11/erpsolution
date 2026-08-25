@@ -95,6 +95,9 @@ class SaleRepositories
                 ->orWhereHas('branch', function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%");
                 })
+                ->orWhereHas('salesPerson', function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%");
+                })
 
                 ->orWhere('date', 'like', "%$search%");
 
@@ -108,15 +111,14 @@ class SaleRepositories
         $data = array();
         if ($Sale) {
             foreach ($Sale as $key => $esale) {
+
                 $nestedData['id'] = $key + 1;
                 $nestedData['invoice_no'] = $esale->invoice_no;
                 $nestedData['po_invoice'] = $esale->po_invoice;
                 $nestedData['date'] = $esale->date;
                 $nestedData['branch_id'] = $esale->branch->branchCode . ' - ' . $esale->branch->name;
                 $nestedData['customer_id'] = $esale->customer->account_name ?? "";
-
-
-
+                $nestedData['sales_person_id'] = $esale->salesPerson->name ?? 'no asign';
                 $nestedData['qty'] = $esale->qty;
                 $nestedData['sub_total'] = $esale->sub_total;
                 $nestedData['discount'] = $esale->discount;
@@ -183,14 +185,13 @@ class SaleRepositories
 
     public function store($request)
     {
+        // dd('sales repo', $request->all());
+
         DB::beginTransaction();
         try {
 
             $invoice_no = $request->invoice_no;
-
             $exists = Sale::where('invoice_no', $invoice_no)->select('invoice_no')->exists();
-
-
             if ($exists) {
                 $lastSales = Sale::latest('id')->first();
                 if ($lastSales) {
@@ -208,6 +209,7 @@ class SaleRepositories
             $esale = new $this->Sale();
             $esale->invoice_no = $invoice_no ?? $request->invoice_no;
             $esale->date = $request->date;
+            $esale->sales_person_id = $request->sales_person_id ?? null;
             $esale->po_invoice = $request->po_invoice;
             $esale->po_date = $request->po_date;
             // $esale->account_id = $request->account_id ? $request->account_id : '';
@@ -334,116 +336,120 @@ class SaleRepositories
 
     public function update($request, $id)
     {
-        $finalprice = (array_sum($request->price) + $request->carrying_cost + $request->labor_bill) - $request->discount;
-        $mailbranhc = $request->branch_id;
-        $request->branch_id = $request->sub_warehouse_id ?? $request->branch_id;
-        // DB::beginTransaction();
-        // try {
-        $esale = $this->Sale::find($id);
-        $esale->invoice_no = $request->invoice_no;
-        $esale->date = $request->date;
-        $esale->po_date = $request->po_date;
-        $esale->po_invoice = $request->po_invoice;
-        $esale->branch_id = $request->branch_id;
-        $esale->carrying_cost = $request->carrying_cost;
-        $esale->labor_bill = $request->labor_bill;
-        $esale->ledger_id = $request->ledger_id;
-        $esale->payment_type = $request->payment_type;
-        $esale->qty = array_sum($request->qty);
-        $esale->sub_total = $finalprice;
-        $esale->discount = $request->discount;
-        $esale->net_total = $finalprice;
-        $esale->partialPayment = $request->partialPayment;
-        $esale->grand_total = $finalprice;
-        $esale->narration = $request->narration;
-        $esale->updated_by = Auth::user()->id;
-        $esale->save();
-        $Sale_id = $esale->id;
 
-        $category_id = $request->catName;
-        $proName = $request->proName;
-        $subtotal = $request->unitprice;
-        $grand_total = $request->price;
-        $qty = $request->qty;
-        $slDetails = sales_Details::where('sale_id', $id)->get();
-        foreach ($slDetails as $slDetail) {
-            $quantitys =  StockSummary::where('product_id', $slDetail->product_id)->where('type', "Branch")->where('branch_id', $slDetail->branch_id)->where('purchasetype', $slDetail->purchasetype)->pluck('quantity')->first();
-            $stocksum['quantity'] = abs($quantitys + $slDetail->qty);
-            StockSummary::where('product_id', $slDetail->product_id)->where('type', "Branch")->where('branch_id', $slDetail->branch_id)->where('purchasetype', $slDetail->purchasetype)->update($stocksum);
+
+        DB::beginTransaction();
+        try {
+            $finalprice = (array_sum($request->price) + $request->carrying_cost + $request->labor_bill) - $request->discount;
+            $mailbranhc = $request->branch_id;
+            $request->branch_id = $request->sub_warehouse_id ?? $request->branch_id;
+
+            $esale = $this->Sale::find($id);
+            $esale->invoice_no = $request->invoice_no;
+            $esale->date = $request->date;
+            $esale->po_date = $request->po_date;
+            $esale->po_invoice = $request->po_invoice;
+            $esale->branch_id = $request->branch_id;
+            $esale->carrying_cost = $request->carrying_cost;
+            $esale->labor_bill = $request->labor_bill;
+            $esale->ledger_id = $request->ledger_id;
+            $esale->payment_type = $request->payment_type;
+            $esale->qty = array_sum($request->qty);
+            $esale->sub_total = $finalprice;
+            $esale->discount = $request->discount;
+            $esale->net_total = $finalprice;
+            $esale->partialPayment = $request->partialPayment;
+            $esale->grand_total = $finalprice;
+            $esale->narration = $request->narration;
+            $esale->updated_by = Auth::user()->id;
+            $esale->sales_person_id = $request->sales_person_id;
+
+            $esale->save();
+            $Sale_id = $esale->id;
+
+            $category_id = $request->catName;
+            $proName = $request->proName;
+            $subtotal = $request->unitprice;
+            $grand_total = $request->price;
+            $qty = $request->qty;
+            $slDetails = sales_Details::where('sale_id', $id)->get();
+            foreach ($slDetails as $slDetail) {
+                $quantitys =  StockSummary::where('product_id', $slDetail->product_id)->where('type', "Branch")->where('branch_id', $slDetail->branch_id)->where('purchasetype', $slDetail->purchasetype)->pluck('quantity')->first();
+                $stocksum['quantity'] = abs($quantitys + $slDetail->qty);
+                StockSummary::where('product_id', $slDetail->product_id)->where('type', "Branch")->where('branch_id', $slDetail->branch_id)->where('purchasetype', $slDetail->purchasetype)->update($stocksum);
+            }
+            Stock::where('general_id', $id)->Where('status', 'Sale')->forceDelete();
+            sales_Details::where('sale_id', $id)->delete();
+
+            $vat = $request->vat;
+            $cty_size = $request->cty_size;
+            $gas_qty = $request->gas_qty;
+
+            for ($i = 0; $i < count($category_id); $i++) {
+                $esaleDetail = new sales_Details();
+                $esaleDetail->product_id = $proName[$i];
+                $esaleDetail->qty = $qty[$i];
+                $esaleDetail->purchasetype = $request->purchasetype[$i];
+                $esaleDetail->vat = $vat[$i];
+                $esaleDetail->gas_qty = $gas_qty[$i] ?? 0;
+                $esaleDetail->category_id = $category_id[$i];
+                $esaleDetail->branch_id = $request->branch_id;
+                $esaleDetail->rate = $subtotal[$i];
+                $esaleDetail->price = $grand_total[$i];
+                $esaleDetail->Sale_id = $Sale_id;
+                $esaleDetail->date = $request->date;
+                $esaleDetail->save();
+
+                $stock = new Stock();
+                $stock->product_id = $proName[$i];
+                $stock->quantity = $qty[$i];
+                $stock->branch_id = $request->branch_id;
+                $stock->unit_price = $subtotal[$i];
+                $stock->total_price = $grand_total[$i];
+                $stock->general_id = $Sale_id;
+                $stock->date = $request->date;
+                $stock->status = 'Sale';
+                $stock->save();
+
+                $existingCheck = StockSummary::where('product_id', $proName[$i])->where('type', "Branch")->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->first();
+                if (!empty($existingCheck->quantity) && $existingCheck->quantity > 0) :
+                    $newQty = $existingCheck->quantity - $qty[$i];
+                    StockSummary::where('product_id', $proName[$i])->where('type', "Branch")->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->update(array('quantity' => $newQty));
+                endif;
+            }
+
+            customerLedger::where('sale_id', $id)->delete();
+            $invoice =  AccountTransaction::where('table_id', $id)->where('type', 2)->first()->invoice;
+            AccountTransaction::where('table_id', $id)->where('type', 2)->delete();
+
+
+            $transaction['invoice'] = $request->invoice_no;
+            $transaction['table_id'] = $Sale_id;
+            $transaction['account_id'] = getAccountByUniqueID(18)->id; // sale
+            $transaction['type'] = 2;
+            $transaction['branch_id'] = $mailbranhc;
+            $transaction['credit'] = $finalprice;
+            $transaction['remark'] = $request->narration;
+            $transaction['created_by'] = Auth::id();
+            $transaction['created_at'] = $request->date;
+            AccountTransaction::create($transaction);
+
+            $transactionPay['invoice'] = $request->invoice_no;
+            $transactionPay['table_id'] = $Sale_id;
+            $transactionPay['account_id'] = $request->ledger_id; // Account Receivable;
+            $transactionPay['type'] = 2;
+            $transactionPay['branch_id'] = $mailbranhc;
+            $transactionPay['debit'] =  $finalprice;
+            $transactionPay['remark'] = $request->narration;
+            $transactionPay['created_by'] = Auth::id();
+            $transactionPay['created_at'] = $request->date;
+            AccountTransaction::create($transactionPay);
+            DB::commit();
+            return $esale;
+        } catch (\Exception $e) {
+            DB::rollback();
+            redirect('inventory-purchase-create')->with('error', 'Something Wrong Please try again');
         }
-        Stock::where('general_id', $id)->Where('status', 'Sale')->forceDelete();
-        sales_Details::where('sale_id', $id)->delete();
-
-        $vat = $request->vat;
-        $cty_size = $request->cty_size;
-        $gas_qty = $request->gas_qty;
-
-        for ($i = 0; $i < count($category_id); $i++) {
-            $esaleDetail = new sales_Details();
-            $esaleDetail->product_id = $proName[$i];
-            $esaleDetail->qty = $qty[$i];
-            $esaleDetail->purchasetype = $request->purchasetype[$i];
-            $esaleDetail->vat = $vat[$i];
-            $esaleDetail->gas_qty = $gas_qty[$i] ?? 0;
-            $esaleDetail->category_id = $category_id[$i];
-            $esaleDetail->branch_id = $request->branch_id;
-            $esaleDetail->rate = $subtotal[$i];
-            $esaleDetail->price = $grand_total[$i];
-            $esaleDetail->Sale_id = $Sale_id;
-            $esaleDetail->date = $request->date;
-            $esaleDetail->save();
-
-            $stock = new Stock();
-            $stock->product_id = $proName[$i];
-            $stock->quantity = $qty[$i];
-            $stock->branch_id = $request->branch_id;
-            $stock->unit_price = $subtotal[$i];
-            $stock->total_price = $grand_total[$i];
-            $stock->general_id = $Sale_id;
-            $stock->date = $request->date;
-            $stock->status = 'Sale';
-            $stock->save();
-
-            $existingCheck = StockSummary::where('product_id', $proName[$i])->where('type', "Branch")->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->first();
-            if (!empty($existingCheck->quantity) && $existingCheck->quantity > 0) :
-                $newQty = $existingCheck->quantity - $qty[$i];
-                StockSummary::where('product_id', $proName[$i])->where('type', "Branch")->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->update(array('quantity' => $newQty));
-            endif;
-        }
-
-        customerLedger::where('sale_id', $id)->delete();
-        $invoice =  AccountTransaction::where('table_id', $id)->where('type', 2)->first()->invoice;
-        AccountTransaction::where('table_id', $id)->where('type', 2)->delete();
-
-
-        $transaction['invoice'] = $request->invoice_no;
-        $transaction['table_id'] = $Sale_id;
-        $transaction['account_id'] = getAccountByUniqueID(18)->id; // sale
-        $transaction['type'] = 2;
-        $transaction['branch_id'] = $mailbranhc;
-        $transaction['credit'] = $finalprice;
-        $transaction['remark'] = $request->narration;
-        $transaction['created_by'] = Auth::id();
-        $transaction['created_at'] = $request->date;
-        AccountTransaction::create($transaction);
-
-        $transactionPay['invoice'] = $request->invoice_no;
-        $transactionPay['table_id'] = $Sale_id;
-        $transactionPay['account_id'] = $request->ledger_id; // Account Receivable;
-        $transactionPay['type'] = 2;
-        $transactionPay['branch_id'] = $mailbranhc;
-        $transactionPay['debit'] =  $finalprice;
-        $transactionPay['remark'] = $request->narration;
-        $transactionPay['created_by'] = Auth::id();
-        $transactionPay['created_at'] = $request->date;
-        AccountTransaction::create($transactionPay);
-
-        //     DB::commit();
-        // } catch (\Exception $e) {
-        //     DB::rollback();
-        //     redirect('inventory-purchase-create')->with('error', 'Something Wrong Please try again');
-        // }
-        return $esale;
     }
 
     public function statusUpdate($id, $status)

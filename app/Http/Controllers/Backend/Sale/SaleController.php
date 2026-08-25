@@ -18,6 +18,7 @@ use App\Models\StockSummary;
 use App\Models\Company;
 use App\Models\CustomerGroup;
 use App\Models\customerLedger;
+use App\Models\Employee;
 use App\Models\PurchasesDetails;
 use App\Models\ReturnDeposit;
 use App\Models\sales_Details;
@@ -143,6 +144,10 @@ class SaleController extends Controller
         else :
             $saleData = 1;
         endif;
+        $employees = Employee::where('status', 'Active')
+            ->where('employee_status', 'present')
+            ->select('id', 'name', 'id_card')
+            ->get();
 
         $invoice_no = 'SV' . str_pad($saleData, 5, "0", STR_PAD_LEFT);
         return view('backend.pages.sale.create', get_defined_vars());
@@ -179,8 +184,7 @@ class SaleController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
-    {
-        // dd($request->all());
+    {;
         try {
             $this->validate($request, $this->systemService->storeValidation($request));
         } catch (ValidationException $e) {
@@ -226,6 +230,10 @@ class SaleController extends Controller
         } elseif ($user->type == "Admin" || $user->branch_id) {
             $account = ChartOfAccount::get()->where('status', 'Active')->where('branch_id', $user->branch_id);
         }
+        $employees = Employee::where('status', 'Active')
+            ->where('employee_status', 'present')
+            ->select('id', 'name', 'id_card')
+            ->get();
         $saletlist = Sale::findOrFail($id);
         $subWarehouses = Branch::where("parent_id", "!=", 0)->where('status', 'Active')->get();
         $saledetails = sales_Details::where('sale_id', $id)->get();

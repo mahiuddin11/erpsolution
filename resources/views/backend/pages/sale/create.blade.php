@@ -17,7 +17,7 @@
             <div class="row mb-2">
                 <div class="col-sm-6">
                     <h1 class="m-0">
-                        Inventory </h1>
+                        Sale </h1>
                 </div><!-- /.col -->
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
@@ -38,7 +38,7 @@
         <div class="col-md-12">
             <div class="card card-default">
                 <div class="card-header">
-                    <h3 class="card-title">Sale Invoice</h3>
+                    <h3 class="card-title">New Sale Create</h3>
                 </div>
                 <div class="card-body">
                     <form class="needs-validation" method="POST" action="{{ route('sale.sale.store') }}" novalidate>
@@ -118,6 +118,7 @@
                             </div>
 
 
+
                             {{-- <div class="col-md-2 mb-3">
                             <label for="validationCustom01">Customer * :</label>
                             <select class="form-control select2" name="customer_id" id="customer_id">
@@ -148,6 +149,29 @@
                                     <span class=" error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
+
+                            <div class="col-md-2 mb-3">
+                                <label for="sales_person_id">Sales Representative :</label>
+
+                                <select class="form-control select2" id="sales_person_id" name="sales_person_id">
+
+                                    <option selected value="">
+                                        -- Not Assigned --
+                                    </option>
+
+                                    @foreach ($employees as $employee)
+                                        <option value="{{ $employee->id }}">
+                                            {{ $employee->id_card . ' - ' . $employee->name }}
+                                        </option>
+                                    @endforeach
+
+                                </select>
+
+                                @error('sales_person_id')
+                                    <span class="error text-red text-bold">{{ $message }}</span>
+                                @enderror
+                            </div>
+
                             <div class="col-md-2 mb-3">
                                 <label for="validationCustom01">Balance * :</label>
                                 <input type="text" id="customer_currentBalance" class="form-control" readonly>
@@ -768,17 +792,17 @@
 
                     $("#show_item tbody").append('<tr class="new_item' + proId +
                         '">\n\
-                                                                                                                                                                                                                                                                                                                                            <td style="padding-left:15px;">' +
+                                                                                                                                                                                                                                                                                                                                                                            <td style="padding-left:15px;">' +
                         catName +
                         '<input type="hidden" name="catName[]" value="' +
                         catId +
                         '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                            <td align="right">' +
+                                                                                                                                                                                                                                                                                                                                                                            <td align="right">' +
                         proName +
                         '<input type="hidden" class="add_quantity" name="proName[]" value="' +
                         proId +
                         '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                            <td align="right">' +
+                                                                                                                                                                                                                                                                                                                                                                            <td align="right">' +
                         purchasetypetext +
                         '<input type="hidden" class="add_quantity" name="purchasetype[]" value="' +
                         purchasetypeval +
@@ -791,14 +815,14 @@
                         '<input type="hidden" class="ttlunitprice unitparice" name="unitprice[]" value="' +
                         unitprice +
                         '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                            <td align="right">' +
+                                                                                                                                                                                                                                                                                                                                                                            <td align="right">' +
                         total +
                         '<input type="hidden" class="grandtotal" name="total[]" value="' +
                         total +
                         '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                            \n\
-                                                                                                                                                                                                                                                                                                                                            \n\
-                                                                                                                                                                                                                                                                                                                                            <td><a del_id="' +
+                                                                                                                                                                                                                                                                                                                                                                            \n\
+                                                                                                                                                                                                                                                                                                                                                                            \n\
+                                                                                                                                                                                                                                                                                                                                                                            <td><a del_id="' +
                         proId +
                         '" class="delete_item btn form-control btn-danger" href="javascript:;" title=""><i class="fa fa-times"></i></a></td></tr>'
                     );
