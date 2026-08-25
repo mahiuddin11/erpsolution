@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\FinancialDashboardApiController;
 use App\Http\Controllers\Api\HrmDashboardApiController;
 use App\Http\Controllers\Api\StoreDashboardApiController;
 use App\Http\Controllers\Api\PosDashboardApiController;
+use App\Http\Controllers\Api\SmsConfigurationApiController;
 use Illuminate\Support\Facades\Route;
 
 // 'web' ekhon RouteServiceProvider theke ashche, tai shudhu 'auth' likhle hobe
@@ -70,6 +71,23 @@ Route::middleware('auth')->prefix('pos-dashboard')->group(function () {
     Route::get('supplier-due', [PosDashboardApiController::class, 'supplierDue']);
     Route::get('supplier-due-invoices/{supplierId}', [PosDashboardApiController::class, 'supplierDueInvoices']);
 });
+
+Route::middleware('auth')->prefix('sms-configuration')->group(function () {
+    Route::get('/stats', [SmsConfigurationApiController::class, 'stats']);
+    Route::get('/config', [SmsConfigurationApiController::class, 'getConfig']);
+    Route::post('/config', [SmsConfigurationApiController::class, 'saveConfig']);
+    Route::post('/config/test', [SmsConfigurationApiController::class, 'testConnection']);
+    Route::get('/templates', [SmsConfigurationApiController::class, 'templatesIndex']);
+    Route::post('/templates', [SmsConfigurationApiController::class, 'templatesStore']);
+    Route::put('/templates/{template}', [SmsConfigurationApiController::class, 'templatesUpdate']);
+    Route::delete('/templates/{template}', [SmsConfigurationApiController::class, 'templatesDestroy']);
+    Route::get('/recipients-count', [SmsConfigurationApiController::class, 'recipientsCount']);
+    Route::get('/departments', [SmsConfigurationApiController::class, 'departments']);
+    Route::get('/contacts', [SmsConfigurationApiController::class, 'contacts']);
+    Route::post('/send', [SmsConfigurationApiController::class, 'send']);
+});
+
+
 
 // Route::middleware('auth:api')->get('/user', function (Request $request) {
 //     return $request->user();

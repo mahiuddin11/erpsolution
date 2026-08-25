@@ -185,7 +185,7 @@ SELECT
     pos.invoice_no
 FROM product_opening_stock_details posd
 JOIN product_opening_stocks pos ON pos.id = posd.product_opening_stock_id
-WHERE posd.product_id = 5216
+WHERE posd.product_id = 1225
 AND NOT EXISTS (
     SELECT 1
     FROM stocks s
@@ -285,7 +285,7 @@ AND NOT EXISTS (
       AND s.quantity    = pd.quantity
 );
 
--- terget product purchase to stok check 
+-- terget product purchase to stok check php 
 SELECT
     pd.date,
     pd.project_id,

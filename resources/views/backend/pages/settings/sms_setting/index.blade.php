@@ -256,22 +256,35 @@
                                 <input type="text" class="form-control" id="cfgApiUrl" required
                                     placeholder="https://api.smsprovider.com/send">
                             </div>
+
                             <div class="col-md-6 ecf-field">
                                 <label>API Key / Token <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control" id="cfgApiKey" required
-                                    placeholder="••••••••••••">
-                                <span class="form-text">Stored encrypted, never shown again in full.</span>
+                                <input type="text" class="form-control" id="cfgApiKey" required
+                                    placeholder="e.g. 8f92a1c3-xxxx-xxxx-xxxx">
+                                <span class="form-text">Sent exactly as-is to the provider -- must match
+                                    their dashboard value.</span>
                             </div>
+
                             <div class="col-md-6 ecf-field">
                                 <label>Username (optional)</label>
                                 <input type="text" class="form-control" id="cfgUsername"
                                     placeholder="Only if your provider requires it">
                             </div>
+
+                            {{-- >>> FIX: Password field-e eye-toggle icon jog kora hoyeche,
+                                 jate click korle password ta text hisebe dekha jay. <<< --}}
                             <div class="col-md-6 ecf-field">
                                 <label>Password (optional)</label>
-                                <input type="password" class="form-control" id="cfgPassword"
-                                    placeholder="Only if your provider requires it">
+                                <div class="input-icon-group">
+                                    <input type="password" class="form-control" id="cfgPassword"
+                                        placeholder="Leave blank to keep the current password">
+                                    <button type="button" class="input-icon-btn" id="toggleCfgPassword" tabindex="-1"
+                                        aria-label="Show password">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
                             </div>
+
                             <div class="col-md-6 ecf-field d-flex align-items-end">
                                 <div class="custom-control custom-switch mb-1">
                                     <input type="checkbox" class="custom-control-input" id="cfgEnabled" checked>
@@ -288,8 +301,10 @@
                         <button type="button" class="sms-btn sms-btn-outline" id="btnTestConnection">
                             <i class="bi bi-broadcast"></i> Test Connection
                         </button>
-                        <button type="button" class="sms-btn sms-btn-outline" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="sms-btn sms-btn-primary" id="btnSaveConfig">
+                        <button type="button" class="sms-btn sms-btn-outline" data-dismiss="modal">
+                            <i class="bi bi-x-lg"></i> Cancel
+                        </button>
+                        <button type="submit" class="sms-btn sms-btn-outline" id="btnSaveConfig">
                             <i class="bi bi-check-lg"></i> Save Configuration
                         </button>
                     </div>
@@ -343,7 +358,9 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="sms-btn sms-btn-outline" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="sms-btn sms-btn-outline" data-dismiss="modal">
+                            <i class="bi bi-x-lg"></i> Cancel
+                        </button>
                         <button type="submit" class="sms-btn sms-btn-primary">
                             <i class="bi bi-check-lg"></i> Save Template
                         </button>
@@ -356,12 +373,6 @@
     <div class="sms-toast" id="smsToast"></div>
 
     <style>
-        /* ==========================================================================
-                                           SMS Configuration dashboard -- page specific styles.
-                                           Reuses .dashboard-wrap / .panel / .metric-card / .status-badge from the
-                                           shared dashboard-style.css, adds only what's specific to this page.
-                                           ========================================================================== */
-
         .sms-wrap {
             --sms-blue: #2563eb;
             --sms-blue-dark: #1d4ed8;
@@ -396,27 +407,53 @@
             border: 1px solid #fde68a;
         }
 
-        /* ---- Buttons ---- */
+        /* ==========================================================================
+                                                                                                                                                                                                                                   >>> FIX: Button base style -- age ekhane border: 1px solid #0c0101 ar
+                                                                                                                                                                                                                                   .sms-btn-primary e color: #301010 bosano chilo, jar fole nil background-e
+                                                                                                                                                                                                                                   ghar-kalo/lal-kalo lekha khub kom dekha jachhilo (readability nosto).
+                                                                                                                                                                                                                                   Ekhon proper white text, transparent border, hover lift, focus-visible
+                                                                                                                                                                                                                                   outline (accessibility), ar disabled state shoho design kora holo --
+                                                                                                                                                                                                                                   button golo user-friendly ar consistent.
+                                                                                                                                                                                                                                ========================================================================== */
         .sms-btn {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 6px;
             border-radius: 10px;
-            padding: 8px 16px;
+            padding: 9px 18px;
             font-size: .85rem;
             font-weight: 600;
             border: 1px solid transparent;
-            transition: .15s;
+            cursor: pointer;
+            transition: background-color .15s, border-color .15s, transform .1s, box-shadow .15s;
+        }
+
+        .sms-btn:active {
+            transform: translateY(1px);
+        }
+
+        .sms-btn:focus-visible {
+            outline: 2px solid var(--sms-blue);
+            outline-offset: 2px;
+        }
+
+        .sms-btn:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .sms-btn-primary {
             background: var(--sms-blue);
             color: #fff;
+            box-shadow: 0 2px 6px -1px rgba(37, 99, 235, .35);
         }
 
         .sms-btn-primary:hover {
             background: var(--sms-blue-dark);
             color: #fff;
+            box-shadow: 0 4px 10px -2px rgba(37, 99, 235, .45);
         }
 
         .sms-btn-outline {
@@ -428,7 +465,10 @@
         .sms-btn-outline:hover {
             background: var(--gray-50);
             border-color: var(--gray-500);
+            color: var(--gray-700);
         }
+
+        /* <<< END FIX */
 
         .sms-btn-send {
             background: var(--emerald-600);
@@ -656,10 +696,14 @@
         }
 
         .recip-panel {
+            width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
             border: 1px solid var(--gray-100);
             border-radius: 10px;
             padding: 12px;
             background: var(--gray-50);
+            overflow: hidden;
         }
 
         .sms-note {
@@ -681,34 +725,131 @@
 
         /* ---- Department checklist ---- */
         .dept-check-list {
+            width: 100%;
+            height: 220px;
             max-height: 220px;
-            overflow-y: auto;
+
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+
             display: flex;
             flex-direction: column;
             gap: 6px;
+
+            padding: 2px 8px 8px 2px;
+            margin: 0;
+
+            box-sizing: border-box;
+
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
         }
 
         .dept-check-row {
+            width: 100%;
+            min-height: 42px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            box-sizing: border-box;
+            flex: 0 0 auto;
+
             background: #fff;
             border: 1px solid var(--gray-200);
             border-radius: 8px;
             padding: 8px 10px;
             font-size: .82rem;
+            transition: .15s;
         }
 
-        .dept-check-row .form-check-input {
-            margin-right: 8px;
+
+        .dept-check-row.is-checked {
+            background: var(--blue-50);
+            border-color: var(--blue-200);
         }
 
-        .dept-check-count {
-            font-size: .72rem;
-            color: var(--gray-500);
-            background: var(--gray-100);
-            padding: 2px 8px;
-            border-radius: 999px;
+        #recipPanelDepartment {
+            width: 100%;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        #deptCheckList {
+            width: 100%;
+            height: 220px;
+            max-height: 220px;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+
+            padding: 4px 8px 8px 4px;
+            margin: 0;
+
+            box-sizing: border-box;
+            position: relative;
+
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #deptCheckList .dept-check-row {
+            position: relative;
+
+            width: 100%;
+            min-width: 0;
+            min-height: 42px;
+
+            flex: 0 0 auto;
+
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+
+            padding: 8px 10px;
+
+            box-sizing: border-box;
+
+            background: #fff;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+
+            font-size: .82rem;
+        }
+
+        #deptCheckList .dept-check-row input[type="checkbox"] {
+            position: static !important;
+
+            width: 16px;
+            height: 16px;
+
+            margin: 0 10px 0 0 !important;
+
+            flex: 0 0 auto;
+
+            transform: none !important;
+        }
+
+        #deptCheckList .dept-check-row label {
+            position: static !important;
+
+            flex: 1;
+            min-width: 0;
+
+            margin: 0;
+
+            cursor: pointer;
+
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        #deptCheckList .dept-check-row.is-checked {
+            background: var(--blue-50);
+            border-color: var(--blue-200);
         }
 
         /* ---- Single number search ---- */
@@ -801,6 +942,7 @@
             box-shadow: 0 16px 32px -14px rgba(0, 0, 0, .35);
         }
 
+
         .sms-phone-notch {
             width: 60px;
             height: 5px;
@@ -876,6 +1018,44 @@
             background: var(--emerald-700);
         }
 
+
+        .input-icon-group {
+            position: relative;
+        }
+
+        .input-icon-group .form-control {
+            padding-right: 40px;
+        }
+
+        .input-icon-btn {
+            position: absolute;
+            top: 50%;
+            right: 6px;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-500);
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .input-icon-btn:hover {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        .input-icon-btn:focus-visible {
+            outline: 2px solid var(--sms-blue);
+            outline-offset: 1px;
+        }
+
+        /* <<< END FIX */
+
         @media (max-width: 576px) {
             .recip-tab {
                 min-width: 100%;
@@ -889,10 +1069,38 @@
                 flex: 1;
             }
         }
+
+        #smsConfigModal .modal-footer,
+        #templateModal .modal-footer {
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        #smsConfigModal .modal-footer .sms-btn,
+        #templateModal .modal-footer .sms-btn {
+            flex: 1 1 auto;
+            min-width: 140px;
+        }
+
+        @media (max-width: 576px) {
+
+            #smsConfigModal .modal-footer,
+            #templateModal .modal-footer {
+                flex-direction: column-reverse;
+            }
+
+            #smsConfigModal .modal-footer .sms-btn,
+            #templateModal .modal-footer .sms-btn {
+                width: 100%;
+            }
+        }
+
+        /* <<< END FIX */
     </style>
 
     <script>
         const SMS_API_BASE = '/api/sms-configuration';
+
 
         const TEMPLATE_TYPES = {
             absence_notice: {
@@ -921,9 +1129,7 @@
             }
         };
 
-        // Variables a user can insert into a template / message.
-        // Kept as single-brace placeholders (not double-brace) so they never
-        // get mistaken for Blade's own double-curly echo syntax.
+
         const SMS_VARIABLES = [{
                 key: '{name}',
                 label: 'User Name'
@@ -964,13 +1170,7 @@
             date: new Date().toLocaleDateString()
         };
 
-        /* ------------------------------------------------------------
-           DEMO DATA
-           Shown automatically whenever a real API call isn't available
-           yet (endpoint missing, network error, etc). Build the real
-           routes at ${SMS_API_BASE} whenever you're ready -- nothing
-           else on this page needs to change.
-        ------------------------------------------------------------ */
+
         const DEMO_STATS = {
             balance: 2450,
             sent_count: 1180,
@@ -1071,31 +1271,27 @@
             }
         ];
 
-        let demoActive = false;
+
         let localDemoConfig = null; // holds a config saved locally while the API isn't reachable yet
 
-        function markDemoMode() {
-            demoActive = true;
-            document.getElementById('demoModePill').style.display = 'inline-flex';
-        }
 
-        // GET wrapper: tries the real API, silently falls back to demo data
-        // (no error toast) if the endpoint isn't built yet or fails.
         function apiGet(path, demoData) {
             return fetch(`${SMS_API_BASE}${path}`)
                 .then(r => {
                     if (!r.ok) throw new Error('not ok');
                     return r.json();
                 })
-                .catch(() => {
-                    markDemoMode();
-                    return demoData;
-                });
+                .then(data => ({
+                    demo: false,
+                    data
+                }))
+                .catch(() => ({
+                    demo: true,
+                    data: demoData
+                }));
         }
 
-        // Write wrapper (POST/PUT/DELETE): tries the real API; if it isn't
-        // reachable yet, runs onDemo() to simulate the change locally so
-        // the UI keeps working while the backend is being built.
+
         function apiWrite(path, method, payload, onDemo) {
             return fetch(`${SMS_API_BASE}${path}`, {
                     method,
@@ -1105,16 +1301,34 @@
                     },
                     body: payload ? JSON.stringify(payload) : undefined
                 })
-                .then(r => {
-                    if (!r.ok) throw new Error('not ok');
-                    return r.json().catch(() => ({}));
+                .then(async r => {
+                    const data = await r.json().catch(() => ({}));
+
+                    if (r.ok) {
+                        return {
+                            demo: false,
+                            data
+                        };
+                    }
+
+                    // Server response dilo, kintu error status (422 validation,
+                    // 500 server error ityadi) -- eta real error, demo mode na.
+                    const errMsg = data?.message ||
+                        (data?.errors ? Object.values(data.errors).flat().join(' ') : null) ||
+                        `Server error (${r.status})`;
+
+                    throw {
+                        isServerError: true,
+                        message: errMsg
+                    };
                 })
-                .then(data => ({
-                    demo: false,
-                    data
-                }))
-                .catch(() => {
-                    markDemoMode();
+                .catch(err => {
+                    if (err && err.isServerError) {
+                        // Real validation/server error -- caller (submit handler)
+                        // eta dhore real message dekhabe.
+                        throw err;
+                    }
+                    // Network fail (server e pouchai ni) -- eta e sudhu demo mode.
                     return {
                         demo: true,
                         data: onDemo ? onDemo() : null
@@ -1160,7 +1374,16 @@
                         sender_id: localDemoConfig.sender_id
                     } : {})
                 })
-                .then(data => {
+                .then(({
+                    demo,
+                    data
+                }) => {
+                    // >>> FIX: demo pill ekhon SHUDHU ei /stats call-er
+                    // nijer result onujayi dekhano hoy -- onno section
+                    // (templates/departments) demo-te thakleo eta
+                    // prophavito hobe na.
+                    document.getElementById('demoModePill').style.display = demo ? 'inline-flex' : 'none';
+
                     document.getElementById('statBalance').textContent = Number(data.balance ?? 0)
                         .toLocaleString();
                     document.getElementById('statSent').textContent = Number(data.sent_count ?? 0)
@@ -1170,20 +1393,24 @@
 
                     const connBadge = document.getElementById('statConnection');
                     const providerText = document.getElementById('smsProviderText');
+                    const senderId = document.getElementById('previewSenderName');
 
                     if (data.connected) {
-                        connBadge.textContent = demoActive ? 'Demo Mode' : 'Connected';
-                        connBadge.className = 'status-badge ' + (demoActive ? 'status-pending' :
+                        connBadge.textContent = demo ? 'Demo Mode' : 'Connected';
+                        connBadge.className = 'status-badge ' + (demo ? 'status-pending' :
                             'status-approved');
                         providerText.innerHTML =
                             `Provider: <b>${data.provider ?? '—'}</b>${data.sender_id ? ' &middot; Sender ID: <b>' + data.sender_id + '</b>' : ''}`;
+                        senderId.innerHTML = data.sender_id;
+
                     } else {
-                        connBadge.textContent = demoActive ? 'Demo Mode' : 'Not Connected';
-                        connBadge.className = 'status-badge ' + (demoActive ? 'status-pending' :
+                        connBadge.textContent = demo ? 'Demo Mode' : 'Not Connected';
+                        connBadge.className = 'status-badge ' + (demo ? 'status-pending' :
                             'status-rejected');
-                        providerText.textContent = demoActive ?
+                        providerText.textContent = demo ?
                             'No portal configured yet -- showing sample stats below.' :
                             'No SMS portal configured yet.';
+                        senderId.innerHTML = 'demo';
                     }
                 });
         }
@@ -1194,17 +1421,32 @@
                 .then(r => r.ok ? r.json() : null)
                 .then(cfg => {
                     cfg = cfg || localDemoConfig;
+
+
+
                     if (cfg && cfg.provider) {
                         document.getElementById('cfgProviderName').value = cfg.provider ?? '';
                         document.getElementById('cfgSenderId').value = cfg.sender_id ?? '';
                         document.getElementById('cfgApiUrl').value = cfg.api_url ?? '';
+                        document.getElementById('cfgApiKey').value = cfg.api_key ?? '';
                         document.getElementById('cfgUsername').value = cfg.username ?? '';
                         document.getElementById('cfgEnabled').checked = !!cfg.enabled;
                         document.getElementById('cfgSavedNote').style.display = 'flex';
+
                     }
                 })
                 .catch(() => {})
                 .finally(() => $('#smsConfigModal').modal('show'));
+        });
+
+
+        document.getElementById('toggleCfgPassword').addEventListener('click', function() {
+            const input = document.getElementById('cfgPassword');
+            const icon = this.querySelector('i');
+            const willShow = input.type === 'password';
+            input.type = willShow ? 'text' : 'password';
+            icon.className = willShow ? 'bi bi-eye-slash' : 'bi bi-eye';
+            this.setAttribute('aria-label', willShow ? 'Hide password' : 'Show password');
         });
 
         document.getElementById('smsConfigForm').addEventListener('submit', function(e) {
@@ -1221,23 +1463,37 @@
 
             const btn = document.getElementById('btnSaveConfig');
             btn.disabled = true;
-            apiWrite('/config', 'POST', payload, () => {
-                    localDemoConfig = payload;
-                    return payload;
-                })
+            apiWrite('/send', 'POST', payload)
                 .then(({
-                    demo
+                    demo,
+                    data
                 }) => {
+
+                    if (data?.success === false) {
+                        throw new Error(
+                            data.message || 'No recipients found for the selected option.'
+                        );
+                    }
+
                     showToast(
                         demo ?
-                        'Saved locally in demo mode. Connect the SMS API to make this permanent.' :
-                        'SMS portal configuration saved.',
+                        'Demo mode: SMS simulated (not actually sent). Connect the API to send for real.' :
+                        (data?.message || 'SMS queued for sending.'),
                         demo ? '' : 'success'
                     );
-                    $('#smsConfigModal').modal('hide');
+
                     loadSmsStats();
                 })
-                .finally(() => btn.disabled = false);
+                .catch(err => {
+                    showToast(
+                        err.message || 'Could not send SMS.',
+                        'error'
+                    );
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-send"></i> Send SMS';
+                });
         });
 
         document.getElementById('btnTestConnection').addEventListener('click', () => {
@@ -1304,8 +1560,10 @@
                     ...DEMO_TEMPLATES.filter(t => !DEMO_TEMPLATES_HIDDEN.has(String(t.id))),
                     ...localOnlyTemplates
                 ])
-                .then(rows => {
-                    allTemplates = rows;
+                .then(({
+                    data
+                }) => {
+                    allTemplates = data;
                     renderTemplates();
                 });
         }
@@ -1402,6 +1660,9 @@
                     );
                     $('#templateModal').modal('hide');
                     loadTemplates();
+                })
+                .catch(err => {
+                    showToast(err.message || 'Could not save template.', 'error');
                 });
         });
 
@@ -1417,6 +1678,9 @@
                     showToast(demo ? 'Removed locally in demo mode.' : 'Template deleted.', demo ? '' :
                         'success');
                     loadTemplates();
+                })
+                .catch(err => {
+                    showToast(err.message || 'Could not delete template.', 'error');
                 });
         }
 
@@ -1510,13 +1774,18 @@
             apiGet('/recipients-count?type=all', {
                     count: DEMO_DEPARTMENTS.reduce((s, d) => s + d.employee_count, 0)
                 })
-                .then(res => document.getElementById('allEmpCount').textContent = Number(res.count ?? 0)
+                .then(({
+                        data
+                    }) => document.getElementById('allEmpCount').textContent = Number(data.count ?? 0)
                     .toLocaleString());
         }
 
         function loadDepartments() {
             apiGet('/departments', DEMO_DEPARTMENTS)
-                .then(rows => {
+                .then(({
+                    data
+                }) => {
+                    const rows = data;
                     const box = document.getElementById('deptCheckList');
                     box.innerHTML = rows.length ? rows.map(d => `
     <label class="dept-check-row">
@@ -1527,6 +1796,9 @@
 
                     box.querySelectorAll('.dept-check').forEach(cb => {
                         cb.addEventListener('change', () => {
+                            // checked/unchecked অনুযায়ী row highlight টগল
+                            cb.closest('.dept-check-row').classList.toggle('is-checked', cb.checked);
+
                             sendState.departmentIds = Array.from(box.querySelectorAll(
                                     '.dept-check:checked'))
                                 .map(el => el.value);
@@ -1548,7 +1820,11 @@
             singleSearchTimer = setTimeout(() => {
                 apiGet(`/contacts?search=${encodeURIComponent(q)}`,
                         DEMO_CONTACTS.filter(c => c.name.toLowerCase().includes(q.toLowerCase())))
-                    .then(rows => {
+                    .then(({
+                        data
+                    }) => {
+                        const rows = data;
+
                         resultsBox.innerHTML = rows.length ? rows.map(c => `
       <div class="sms-search-result-item" data-id="${c.id}" data-name="${c.name}" data-phone="${c.phone}" data-type="${c.type}">
         <span>${c.name} <span class="text-muted" style="font-size:.7rem">(${c.type})</span></span>
@@ -1581,6 +1857,10 @@
 
         function renderSelectedChip() {
             const chip = document.getElementById('singleSelectedChip');
+
+
+
+
             if (sendState.selectedContact) {
                 chip.style.display = 'inline-flex';
                 chip.innerHTML =
@@ -1615,11 +1895,14 @@
                 return;
             }
 
+
+
             const payload = {
                 template_id: document.getElementById('sendTplSelect').value || null,
                 message,
                 recipient_type: sendState.mode
             };
+
 
             if (sendState.mode === 'department') {
                 if (!sendState.departmentIds.length) {
@@ -1630,9 +1913,9 @@
             }
 
             if (sendState.mode === 'single') {
+
                 if (sendState.selectedContact) {
-                    payload.contact_id = sendState.selectedContact.id;
-                    payload.contact_type = sendState.selectedContact.type;
+                    payload.contact_id = sendState.selectedContact.id; // employid na, contact_id
                 } else if (sendState.manualNumber) {
                     payload.phone = sendState.manualNumber;
                 } else {
@@ -1660,15 +1943,16 @@
                     );
                     loadSmsStats();
                 })
+                .catch(err => {
+                    showToast(err.message || 'Could not send SMS.', 'error');
+                })
                 .finally(() => {
                     btn.disabled = false;
                     btn.innerHTML = '<i class="bi bi-send"></i> Send SMS';
                 });
         });
 
-        /* ============================================================
-           Init
-        ============================================================ */
+
         renderVarChips();
         loadSmsStats();
         loadTemplates();
