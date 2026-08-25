@@ -239,7 +239,7 @@ class LeaveApplicationRepositories
     {
         $LeaveApplication = new $this->model;
         $LeaveApplication->employee_id = $request->employee_id;
-        $LeaveApplication->branch_id = $request->branch_id;
+        $LeaveApplication->branch_id = $request->branch_id ?? '';
         $LeaveApplication->apply_date = $request->apply_date;
         $LeaveApplication->end_date = $request->end_date;
         $LeaveApplication->reason = $request->reason;

@@ -8,7 +8,7 @@ use App\Repositories\Hrm\LeaveApplicationRepositories;
 class LeaveApplicationService
 {
 
-   
+
     private $LeaveApplicationRepositories;
 
     public function __construct(LeaveApplicationRepositories $LeaveApplicationRepositories)
@@ -67,7 +67,6 @@ class LeaveApplicationService
 
         return [
             'employee_id' => 'required',
-            'branch_id' => 'required',
             'apply_date' => 'required',
             'end_date' => 'required',
             'reason' => 'required',
