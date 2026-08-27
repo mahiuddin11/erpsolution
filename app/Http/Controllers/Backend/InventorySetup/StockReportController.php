@@ -82,10 +82,15 @@ class StockReportController extends Controller
 
     public function productLedgerModal(Request $request)
     {
+
+
+
         $product_id = $request->product_id;
+        $purchase_type = $request->purchase_type ?? 'all';
         $branch_id  = $request->branch_id ?? 'all';
         $from_date  = $request->from_date ?? '';
         $to_date    = $request->to_date   ?? '';
+
 
 
 
@@ -99,9 +104,9 @@ class StockReportController extends Controller
             $product_id,
             $branch_id,
             $from_date,
-            $to_date
+            $to_date,
+            $purchase_type
         );
-
 
 
         return view('backend.pages.reports.partials.productledger-content', get_defined_vars());

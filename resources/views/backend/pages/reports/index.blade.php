@@ -196,6 +196,10 @@
                     <a onclick="window.print()" target="_blank" class="btn btn-default float-right my-2 no-print"><i
                             class="fas fa-print"></i> Print</a>
 
+                    {{-- Added: 2026-07-20 - Excel export button --}}
+                    <a onclick="exportStockSummaryToExcel()" class="btn btn-success float-right my-2 mr-2 no-print"><i
+                            class="fas fa-file-excel"></i> Excel</a>
+
                     <form action="{{ route('inventorySetup.currentStock.index') }}" method="post">
                         @csrf
                         <div class="row justify-content-center">
@@ -265,7 +269,8 @@
 
                                                 {{-- Modified: 2026-07-20 - whole row click opens ledger modal --}}
                                                 <tr class="ledger-row" data-product-id="{{ $item->product_id }}"
-                                                    data-branch-id="{{ $item->branch_id }}">
+                                                    data-branch-id="{{ $item->branch_id }}"
+                                                    data-purchase-type="{{ $item->purchasetype ?? '' }}">
                                                     <td>{{ $i++ }}</td>
                                                     <td>{{ optional($item->products)->getRawOriginal('productCode') }}</td>
                                                     <td>{{ optional($item->products)->getRawOriginal('name') }}
@@ -367,11 +372,11 @@
 @endsection
 
 @section('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script>
-        // Added: 2026-08-13 - which product/branch the modal currently represents,
-        // and whether diagnosis has already been fetched for it (avoid refetching on every tab click)
         let modalProductId = null;
         let modalBranchId = null;
+        let modalPurchaseType = null;
         let diagnosisLoadedForProductId = null;
 
         $(document).ready(function() {
@@ -395,11 +400,13 @@
             $('#stockSummaryTable tbody').on('click', 'tr.ledger-row', function() {
                 modalProductId = $(this).data('product-id');
                 modalBranchId = $(this).data('branch-id');
+                modalPurchaseType = $(this).data('purchase-type');
                 diagnosisLoadedForProductId = null; // force diagnosis reload for the newly selected product
 
                 let url = "{{ route('inventorySetup.productledger.modal') }}" +
                     "?product_id=" + modalProductId +
                     "&branch_id=" + modalBranchId +
+                    "&purchase_type=" + encodeURIComponent(modalPurchaseType || '') +
                     "&from_date={{ date('2020-01-01') }}" +
                     "&to_date={{ date('Y-12-d') }}";
 
@@ -429,6 +436,7 @@
                 let url = "{{ route('inventorySetup.stockDiagnosis.modal') }}" +
                     "?product_id=" + modalProductId +
                     "&branch_id=" + modalBranchId +
+                    "&purchase_type=" + encodeURIComponent(modalPurchaseType || '') +
                     "&from_date={{ date('2020-01-01') }}" +
                     "&to_date={{ date('Y-12-d') }}";
 
@@ -502,6 +510,18 @@
                 $diagBtn.addClass('btn-warning active').removeClass('btn-outline-warning');
                 $ledgerBtn.addClass('btn-outline-primary').removeClass('btn-primary active');
             }
+        }
+
+        function exportStockSummaryToExcel() {
+            const table = document.getElementById('stockSummaryTable');
+
+            const wb = XLSX.utils.table_to_book(table, {
+                sheet: 'Stock Summary',
+                raw: false
+            });
+
+            const today = new Date().toISOString().slice(0, 10);
+            XLSX.writeFile(wb, `stock-summary-${today}.xlsx`);
         }
     </script>
 @endsection

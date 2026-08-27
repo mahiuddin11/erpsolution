@@ -5712,6 +5712,9 @@ NULLIF(
 
     public function productledger(Request $request)
     {
+
+
+
         $title      = 'Product Ledger';
         $branch_id  = $request->branch_id ?? 'all';
         $product_id = $request->product_id ?? null;

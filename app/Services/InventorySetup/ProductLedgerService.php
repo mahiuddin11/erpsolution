@@ -11,15 +11,16 @@ use Illuminate\Support\Facades\DB;
 class ProductLedgerService
 {
 
-    public function getProductLedgerData($product_id, $branch_id, $from_date, $to_date)
+    public function getProductLedgerData($product_id, $branch_id, $from_date, $to_date, $purchase_type = 'all')
     {
         $isAllBranch = ($branch_id === 'all' || empty($branch_id));
-
+        $isAllType   = ($purchase_type === 'all' || empty($purchase_type));
 
         // ── 1. Opening Stock ──────────────────────────────────────────────
         $openingRows = ProductOpeningStockDetails::with(['branch:id,name', 'product:id,name', 'ProductOpeningStock:id,invoice_no'])
             ->where('product_id', $product_id)
             ->when(!$isAllBranch, fn($q) => $q->where('branch_id', $branch_id))
+            ->when(!$isAllType, fn($q) => $q->where('purchasetype', $purchase_type))
             ->whereNull('deleted_at')
             ->get()
             ->map(fn($item) => [
@@ -44,6 +45,7 @@ class ProductLedgerService
         ])
             ->where('product_id', $product_id)
             ->when(!$isAllBranch, fn($q) => $q->where('branch_id', $branch_id))
+            ->when(!$isAllType, fn($q) => $q->where('purchasetype', $purchase_type))
             ->whereBetween('date', [$from_date, $to_date])
             ->get();
 
@@ -97,6 +99,7 @@ class ProductLedgerService
             ->leftJoin('products as p', 'p.id', '=', 'sad.product_id')
             ->where('sad.product_id', $product_id)
             ->when(!$isAllBranch, fn($q) => $q->where('sad.branch_id', $branch_id))
+            ->when(!$isAllType, fn($q) => $q->where('sad.purchase_type', $purchase_type))
             ->whereNotNull('sad.date')
             ->where('sad.date', '>=', $from_date)
             ->where('sad.date', '<=', $to_date)
@@ -146,6 +149,7 @@ class ProductLedgerService
             ->where('td.product_id', $product_id)
             ->where('td.status', 'Approved')
             ->when(!$isAllBranch, fn($q) => $q->where('td.to_branch_id', $branch_id))
+            // ->when(!$isAllType, fn($q) => $q->where('td.purchasetype', $purchase_type))
             ->whereNull('td.deleted_at')
             ->whereBetween('td.date', [$from_date, $to_date])
             ->select('td.date', 'td.approve_qty', 'td.transfer_id', 'td.created_at', 'b.name as branch_name', 'p.name as product_name')
@@ -191,6 +195,7 @@ class ProductLedgerService
         $salesRows = sales_Details::with(['branch:id,name', 'product:id,name', 'sales:id,invoice_no'])
             ->where('product_id', $product_id)
             ->when(!$isAllBranch, fn($q) => $q->where('branch_id', $branch_id))
+            ->when(!$isAllType, fn($q) => $q->where('purchasetype', $purchase_type))
             ->whereBetween('date', [$from_date, $to_date])
             ->get()
             ->map(fn($item) => [
@@ -217,6 +222,7 @@ class ProductLedgerService
             ->where('pt.transfer_type', 'branch_to_project')
             ->where('ptd.status', 'Accepted')
             ->when(!$isAllBranch, fn($q) => $q->where('ptd.branch_id', $branch_id))
+            ->when(!$isAllType, fn($q) => $q->where('ptd.purchasetype', $purchase_type))
             ->whereBetween('pt.order_date', [$from_date, $to_date])
             ->select(
                 'pt.order_date as date',

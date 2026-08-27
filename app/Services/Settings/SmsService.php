@@ -245,12 +245,29 @@ class SmsService
                     $providerResponse = 'Invalid phone number format: ' . $recipient['phone'];
                 } else {
 
-                    $response = Http::asForm()->timeout(10)->post($config->api_url, [
-                        'api_key'  => $config->api_key,
-                        'senderid' => $config->sender_id,
-                        'number'   => $number,
-                        'message'  => $personalizedMessage,
-                    ]);
+                    // $response = Http::asForm()->timeout(10)->post($config->api_url, [
+                    //     'api_key'  => $config->api_key,
+                    //     'senderid' => $config->sender_id,
+                    //     'number'   => $number,
+                    //     'message'  => $personalizedMessage,
+                    // ]);
+
+                    $curl = curl_init();
+                    curl_setopt_array($curl, array(
+                        CURLOPT_URL => $config->api_url,
+                        CURLOPT_RETURNTRANSFER => true,
+                        CURLOPT_CUSTOMREQUEST => 'POST',
+                        CURLOPT_POSTFIELDS => array(
+                            'api_key' => $config->api_key,
+                            'msg' => $personalizedMessage,
+                            'to' => $number
+                        ),
+                    ));
+
+                    $response = curl_exec($curl);
+
+                    dd('response', $response);
+                    // curl_close($curl);
 
                     $providerResponse = $response->body();
                     $body = json_decode($providerResponse, true);
