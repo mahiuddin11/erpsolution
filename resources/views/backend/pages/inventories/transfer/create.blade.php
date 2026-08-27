@@ -125,12 +125,17 @@
                                                             id="show_item">
                                                             <thead>
                                                                 <tr>
-                                                                    <th nowrap style="width:20%" align="center">
+                                                                    <th nowrap style="width:18%" align="center">
                                                                         <strong>Product Category <span
                                                                                 style="color:red;">*</span></strong>
                                                                     </th>
-                                                                    <th nowrap style="width:25%" align="center">
+                                                                    <th nowrap style="width:22%" align="center">
                                                                         <strong>Product <span
+                                                                                style="color:red;">*</span></strong>
+                                                                    </th>
+                                                                    {{-- Added: 2026-08-27 - Purchase Type (Local/Imported) column --}}
+                                                                    <th nowrap style="width:10%" align="center">
+                                                                        <strong>Type <span
                                                                                 style="color:red;">*</span></strong>
                                                                     </th>
                                                                     <th nowrap style="width:10%" align="center">
@@ -170,12 +175,26 @@
                                                                     </td>
                                                                     <td>
                                                                         <select class="select2 form-control proName"
-                                                                            id="productID" data-placeholder="Search Product"
+                                                                            id="productID"
+                                                                            data-placeholder="Search Product"
                                                                             onchange="getUnitPrice(this.value)">
                                                                             <option disabled selected>---Select
                                                                                 Product---</option>
                                                                         </select>
                                                                     </td>
+
+                                                                    {{-- Added: 2026-08-27 - static Local/Imported type dropdown --}}
+                                                                    <td>
+                                                                        <select class="form-control purchaseType"
+                                                                            id="purchaseType"
+                                                                            onchange="onProductOrTypeChange()">
+                                                                            <option disabled selected value="">
+                                                                                --Select Type--</option>
+                                                                            <option value="local">Local</option>
+                                                                            <option value="imported">Imported</option>
+                                                                        </select>
+                                                                    </td>
+
                                                                     <td>
 
                                                                         <small class="text-muted">Available</small>
@@ -214,11 +233,11 @@
                                                             </tbody>
                                                             <tfoot>
                                                                 <tr>
-                                                                    <td align="right" colspan="2">
+                                                                    {{-- Modified: 2026-08-27 - colspan 2 → 3 (Category + Product + Type) so totals still align under Quantity --}}
+                                                                    <td align="right" colspan="3">
                                                                         <strong>Sub-Total (BDT)</strong>
                                                                     </td>
                                                                     <td align="right">
-                                                                        {{-- ✅ tfoot এ আলাদা id ব্যবহার — class loop conflict নেই --}}
                                                                         <strong id="foot-ttlqty">0.00</strong>
                                                                     </td>
                                                                     <td align="right">
@@ -255,7 +274,6 @@
                                                                             <strong>Total</strong>
                                                                         </td>
                                                                         <td align="right">
-                                                                            {{-- ✅ FIX: grandtotal class সরানো হয়েছে — loop conflict ছিল --}}
                                                                             <strong id="gtoal"></strong>
                                                                         </td>
                                                                     </tr>
@@ -277,7 +295,6 @@
                                                                             <strong>Net Total</strong>
                                                                         </td>
                                                                         <td align="right">
-                                                                            {{-- FIX: grandtotal class , loop conflict  --}}
                                                                             <strong id="ntotal"></strong>
                                                                         </td>
                                                                     </tr>
@@ -318,14 +335,13 @@
 
             /*
              * =====================================================
-             * ✅ FIX: Calculation functions
+             * ✅ Calculation functions
              * শুধু item-row class এর hidden input থেকে value নেওয়া হচ্ছে।
              * tfoot strong (#foot-*), #gtoal, #ntotal — এগুলোতে
              * কোনো shared class নেই, তাই double-count সম্পূর্ণ দূর।
              * =====================================================
              */
 
-            // Added rows এর qty sum → tfoot update
             var findqtyamount = function() {
                 var ttlqty = 0;
                 $('#show_item tbody tr.item-row input.row-qty').each(function() {
@@ -334,7 +350,6 @@
                 $('#foot-ttlqty').text(parseFloat(ttlqty).toFixed(2));
             };
 
-            // Added rows এর unit price sum → tfoot update
             var findunitamount = function() {
                 var ttlunitprice = 0;
                 $('#show_item tbody tr.item-row input.row-unitprice').each(function() {
@@ -343,7 +358,6 @@
                 $('#foot-ttlunitprice').text(parseFloat(ttlunitprice).toFixed(2));
             };
 
-            // Added rows এর total sum → grand total + net total update
             var findgrandtottal = function() {
                 var grandtotal = 0;
                 $('#show_item tbody tr.item-row input.row-total').each(function() {
@@ -363,6 +377,7 @@
                 var catName = $('#form-field-select-3').find('option:selected').attr('catName');
                 var proId = $('#productID').val();
                 var proName = $('#productID').find('option:selected').attr('proName');
+                var purchaseType = $('#purchaseType').val(); // Added: 2026-08-27
                 var qty = parseFloat($('#qty').val()) || 0;
                 var unitprice = parseFloat($('#unitpice').val()) || 0;
                 var total = parseFloat($('#total').val()) || 0;
@@ -377,6 +392,10 @@
                     alertMessage.error("Product can't be empty.");
                     return false;
                 }
+                if (!purchaseType) { // Added: 2026-08-27
+                    alertMessage.error("Purchase Type can't be empty.");
+                    return false;
+                }
                 if (qty <= 0) {
                     alertMessage.error("Quantity can't be empty or zero.");
                     return false;
@@ -386,17 +405,19 @@
                     return false;
                 }
 
-                // Duplicate product check — data-proid attribute দিয়ে
-                if ($('#show_item tbody tr.item-row[data-proid="' + proId + '"]').length > 0) {
-                    alertMessage.error(
-                        'This product is already added. Remove it first to change quantity.');
+                // Modified: 2026-08-27 - duplicate check now considers product + type combo
+                // (same product with different type is allowed as a separate line)
+                if ($('#show_item tbody tr.item-row[data-proid="' + proId + '"][data-ptype="' +
+                        purchaseType + '"]').length > 0) {
+                    alertMessage.error('This product (' + purchaseType +
+                        ') is already added. Remove it first to change quantity.');
                     return false;
                 }
 
                 /*
                  *  FIX: Added row এ আলাদা class ব্যবহার:
                  *   - tr.item-row          → calculation loop এর জন্য
-                 *   - data-proid           → duplicate check এর জন্য
+                 *   - data-proid + data-ptype → duplicate/delete check এর জন্য
                  *   - input.row-qty        → qty loop
                  *   - input.row-unitprice  → unit price loop
                  *   - input.row-total      → grand total loop
@@ -404,11 +425,14 @@
                  */
 
                 $('#show_item tbody').append(
-                    '<tr class="item-row" data-proid="' + proId + '">' +
+                    '<tr class="item-row" data-proid="' + proId + '" data-ptype="' + purchaseType +
+                    '">' +
                     '<td style="padding-left:12px;">' + catName +
                     '<input type="hidden" name="catName[]" value="' + catId + '"></td>' +
                     '<td>' + proName +
                     '<input type="hidden" name="proName[]" value="' + proId + '"></td>' +
+                    '<td>' + purchaseType + // Added: 2026-08-27
+                    '<input type="hidden" name="purchaseType[]" value="' + purchaseType + '"></td>' +
                     '<td align="right">' + qty +
                     '<input type="hidden" class="row-qty" name="qty[]" value="' + qty + '"></td>' +
                     '<td align="right">' + parseFloat(unitprice).toFixed(2) +
@@ -426,7 +450,7 @@
                     '</tr>'
                 );
 
-                // Input row reset — id  target, class conflict 
+                // Input row reset
                 $('#total').val('');
                 $('#unitpice').val('');
                 $('#currentStock').val('');
@@ -434,6 +458,7 @@
                 $('#productID').empty()
                     .append('<option disabled selected>---Select Product---</option>')
                     .trigger('change');
+                $('#purchaseType').val(''); // Added: 2026-08-27
 
                 findqtyamount();
                 findunitamount();
@@ -441,13 +466,15 @@
             });
 
             // =====================================================
-            // ✅ Delete item — data-proid  row remove
+            // ✅ Delete item — data-proid + data-ptype ধরে row remove
             // =====================================================
             $(document).on('click', '.delete_item', function() {
                 var $this = $(this);
                 var deleteitem = function() {
                     var proid = $this.attr('del_id');
-                    $('#show_item tbody tr.item-row[data-proid="' + proid + '"]').remove();
+                    var ptype = $this.closest('tr').attr('data-ptype'); // Added: 2026-08-27
+                    $('#show_item tbody tr.item-row[data-proid="' + proid + '"][data-ptype="' + ptype +
+                        '"]').remove();
                     findqtyamount();
                     findunitamount();
                     findgrandtottal();
@@ -463,6 +490,7 @@
                 $('#productID').empty()
                     .append('<option disabled selected>---Select Product---</option>')
                     .trigger('change');
+                $('#purchaseType').val(''); // Added: 2026-08-27
                 $('#currentStock').val('');
                 $('#unitpice').val('');
                 $('#qty').val('');
@@ -514,8 +542,9 @@
                 $('#form-field-select-3').val(null).trigger('change');
                 return;
             }
-            // Product dropdown reset while loading
+            // Product + Type dropdown reset while loading
             $('#productID').empty().append('<option disabled selected>Loading...</option>');
+            $('#purchaseType').val(''); // Added: 2026-08-27
             $('#currentStock').val('');
             $('#unitpice').val('');
             $('#qty').val('');
@@ -539,13 +568,40 @@
         }
 
         // =====================================================
-        // ✅ Product change → Unit Price + Branch-wise Stock
+        // ✅ Product change → শুধু Type dropdown reset করে;
+        // price/stock fetch হবে না যতক্ষণ না Type-ও সিলেক্ট হয়
+        // Modified: 2026-08-27 - price/stock lookup moved to onProductOrTypeChange()
+        // so both Product + Type are always considered together
         // =====================================================
         function getUnitPrice(productId) {
             if (!productId) return;
+
+            $('#purchaseType').val(''); // নতুন প্রোডাক্ট বাছলে টাইপ আবার বেছে নিতে হবে
+            $('#unitpice').val('');
+            $('#currentStock').val('');
+            $('#qty').val('');
+            $('#total').val('');
+        }
+
+        // =====================================================
+        // ✅ Product + Type দুটোই সিলেক্ট হলে price + stock fetch
+        // Added: 2026-08-27
+        // =====================================================
+        function onProductOrTypeChange() {
+            var productId = $('#productID').val();
+            var purchaseType = $('#purchaseType').val();
             var from_branch_id = $('#from_branch_id').val();
 
-            // Unit Price fetch
+            $('#unitpice').val('');
+            $('#currentStock').val('');
+            $('#qty').val('');
+            $('#total').val('');
+
+            if (!productId || !purchaseType) {
+                return; // দুটোই সিলেক্ট না হওয়া পর্যন্ত কিছু করবে না
+            }
+
+            // Unit Price (product + branch + type wise)
             $.ajax({
                 url: "{{ route('InventorySetup.unitPiceForSale') }}",
                 type: "GET",
@@ -553,12 +609,13 @@
                 data: {
                     "_token": "{{ csrf_token() }}",
                     productId: productId,
-                    branch_id: from_branch_id
+                    branch_id: from_branch_id,
+                    purchase_type: purchaseType
                 },
                 success: function(data) {
                     var parsed = (typeof data === 'string') ? JSON.parse(data) : data;
                     $('#unitpice').val(parsed.purchases_price);
-                    // price আসার পর qty থাকলে total recalculate
+
                     var qty = parseFloat($('#qty').val()) || 0;
                     if (qty > 0) {
                         qtyPriceCal(qty);
@@ -566,7 +623,7 @@
                 }
             });
 
-            // Branch-wise Available Stock fetch
+            // Available Stock (product + branch + type wise)
             $.ajax({
                 url: "{{ route('InventorySetup.getProductStock') }}",
                 type: "GET",
@@ -574,17 +631,22 @@
                 data: {
                     "_token": "{{ csrf_token() }}",
                     productId: productId,
-                    branch_id: from_branch_id
+                    branch_id: from_branch_id,
+                    purchase_type: purchaseType
                 },
                 success: function(data) {
-                    $('#currentStock').val(data || 0);
+                    var stock = parseFloat(data) || 0;
+                    $('#currentStock').val(stock);
+
+                    if (stock <= 0) {
+                        alertMessage.error('No available stock for this product as ' + purchaseType +
+                            ' in the selected branch.');
+                    }
                 }
             });
         }
 
-        // =====================================================
-        // ✅ From/To Branch duplicate check
-        // =====================================================
+
         function duplicateBranchCheck() {
             var fromBranch = $('#from_branch_id').val();
             var toBranch = $('#to_branch_id').val();

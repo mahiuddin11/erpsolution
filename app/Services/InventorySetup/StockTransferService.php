@@ -50,19 +50,20 @@ class StockTransferService
     public function storeValidation($request)
     {
 
-        // dd($request->all());
+
         return [
             'invoice_no'                   => 'required',
-            'date'                   => 'required',
-            'catName'                   => 'required',
-            'proName'                   => 'required',
-            'from_branch_id'                   => 'required',
-            'to_branch_id'                   => 'required',
-            'qty'                   => 'required',
-            'unitprice'                   => 'required',
-            'total'                   => 'required',
-            'qty'                   => 'required',
-            'status' => 'nullable',
+            'date'                         => 'required',
+            'catName'                      => 'required',
+            'purchaseType'                 => 'required',
+            'proName'                      => 'required',
+            'from_branch_id'               => 'required',
+            'to_branch_id'                 => 'required',
+            'qty'                          => 'required',
+            'unitprice'                    => 'required',
+            'total'                        => 'required',
+            'qty'                          => 'required',
+            'status'                       => 'nullable',
         ];
     }
     public function storeValidation_approval($request)
@@ -81,6 +82,7 @@ class StockTransferService
             'total'                   => 'required',
             'qty'                   => 'required',
             'status' => 'nullable',
+            'purchaseType'                 => 'required',
         ];
     }
 

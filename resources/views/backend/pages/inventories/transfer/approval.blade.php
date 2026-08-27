@@ -28,8 +28,6 @@
 @endsection
 
 @section('admin-content')
-
-
     <div class="row">
         <div class="col-md-12">
             <div class="card card-default">
@@ -41,9 +39,6 @@
                                     class="fa fa-list"></i>
                                 Transfer List</a>
                         @endif
-
-
-
 
                         <span id="buttons"></span>
 
@@ -116,11 +111,12 @@
 
                                 <thead>
                                     <tr>
-                                        <th colspan="8">Select Product Item</th>
+                                        <th colspan="9">Select Product Item</th>
                                     </tr>
                                     <tr>
                                         <td class="text-center"><strong>Category</strong></td>
                                         <td class="text-center"><strong>Product</strong></td>
+                                        <td class="text-center"><strong>Type</strong></td>
                                         <td class="text-center"><strong>Quantity</strong></td>
                                         <td class="text-center"><strong>Unit Price</strong></td>
                                         <td class="text-center"><strong>Total</strong></td>
@@ -171,7 +167,6 @@
                                         </td>
                                     </tr> --}}
                                     @foreach ($editInfo->details as $detail)
-
                                         <tr class="new_item">
                                             <td style="padding-left:15px;">
                                                 {{ $detail->product->category->name ?? '' }}
@@ -182,6 +177,13 @@
                                                 {{ $detail->product->name ?? '' }}
                                                 <input type="hidden" class="add_quantity" name="proName[]"
                                                     value="{{ $detail->product->id ?? '' }}">
+                                            </td>
+
+
+                                            <td class="text-center">
+                                                {{ $detail->purchasetype ?? '-' }}
+                                                <input type="hidden" name="purchaseType[]"
+                                                    value="{{ $detail->purchasetype ?? '' }}">
                                             </td>
 
                                             <td class="text-right">
@@ -207,11 +209,11 @@
 
                                     <tr>
                                         <td class="text-right"><strong>Sub-Total(BDT)</strong></td>
-                                        <td class="text-right"><strong
-                                                class=""></strong></td>
-                                    <td class="
+                                        <td class="text-right"><strong class=""></strong></td>
+                                        <td class="text-right"><strong class=""></strong></td>
+                                        <td class="
                                                 text-right"><strong
-                                                    class="ttlqty">{{ $editInfo->qty ?? 0 }}</strong>
+                                                class="ttlqty">{{ $editInfo->qty ?? 0 }}</strong>
                                         </td>
                                         <td class="text-right"><strong
                                                 class="ttlunitprice">{{ $editInfo->subtotal ?? 0 }}</strong></td>
@@ -229,9 +231,8 @@
                                 <div class="form-group">
 
                                     <div class="input-group">
-                                        <textarea cols="100" rows="3" class="form-control" name="narration"
-                                            placeholder="Narration"
-                                            type="text">{{ $editInfo->narration ?? '' }}</textarea>
+                                        <textarea cols="100" rows="3" class="form-control" name="narration" placeholder="Narration"
+                                            type="text">{{ $editInfo->note ?? $editInfo->narration }}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -258,7 +259,8 @@
                                         </tr>
                                         <tr>
                                             <td nowrap align="right"><strong>Net Total</strong></td>
-                                            <td align="right"><strong id="ntotal">{{ $editInfo->subtotal }}</strong></td>
+                                            <td align="right"><strong id="ntotal">{{ $editInfo->subtotal }}</strong>
+                                            </td>
                                         </tr>
                                         <tr>
                                             <td colspan="2" style="height: 102px;">
@@ -444,8 +446,8 @@
                 grandtotal = Number(grandtotal);
 
                 if (isNaN(grandtotal) || grandtotal < 1) {
-               // lert('Please Add some item first.');
-               alertMessage.error('Please Add some item first.');
+                    // lert('Please Add some item first.');
+                    alertMessage.error('Please Add some item first.');
                     return false;
                 }
                 findgrandtottal();
@@ -677,5 +679,4 @@
 
         }
     </script>
-
 @endsection

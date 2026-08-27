@@ -42,8 +42,6 @@ class AttendanceLogController extends Controller
 
             $attendances = $attendances->get();
 
-
-
             $dayes = Attendance::selectRaw('DATE(date) date');
             if ($request->from && $request->to) {
                 $dayes =  $dayes->where('date', '>=', $request->from);
@@ -72,24 +70,6 @@ class AttendanceLogController extends Controller
         return view('backend.pages.hrm.attendance.attendance-log.newemployee', compact("employees", "title"));
     }
 
-    /* ══════════════════════════════════════════════════════════
-     | JSON API — attendance log
-     |
-     | GET params:
-     |   start_date  (Y-m-d)  default: today
-     |   end_date    (Y-m-d)  default: today
-     |
-     | Status rules:
-     |   Holiday → date is in $holidays array
-     |   Leave   → employee has an approved leave on that date
-     |             (requires a Leave model; see note below)
-     |   Absent  → no attendance row (and not Holiday/Leave), not Friday
-     |   Late    → check-in > office_start + 15 min
-     |   Present → check-in exists and not Late
-     |
-     | Friday and $holidays are always SKIPPED (not in result at all).
-     | Holidays still appear but with status = 'Holiday'.
-     ══════════════════════════════════════════════════════════ */
 
 
     public function attandanceLog(Request $request)

@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\Navigation;
 use App\Models\StockSummary;
 use App\Models\Company;
+use App\Models\PurchasesDetails;
 use App\Models\StockTransfer;
 use App\Models\Transfer;
 use App\Models\TransferDetails;
@@ -92,14 +93,11 @@ class StockTransferController extends Controller
         $user = auth()->user();
 
         $category_info = Category::where('status', 'Active')->get();
-
-
         $branchQuery = Branch::where('status', 'Active');
         if ($user->branch_id !== null) {
             $branchQuery = $branchQuery->where('id', $user->branch_id);
         }
         $branches = $branchQuery->orderBy('parent_id')->orderBy('name')->get();
-
 
         $toBranches = Branch::where('status', 'Active')
             ->orderBy('parent_id')
@@ -383,18 +381,59 @@ class StockTransferController extends Controller
         endif;
     }
 
+    // public function unitPiceForSale(Request $request)
+    // {
+    //     $proid = $request->productId;
+    //     $productPrice = Product::where('id', $proid)->first();
+    //     echo json_encode(array('purchases_price' => $productPrice->purchases_price, 'sale_price' => $productPrice->sale_price));
+    // }
+
     public function unitPiceForSale(Request $request)
     {
         $proid = $request->productId;
-        $productPrice = Product::where('id', $proid)->first();
-        echo json_encode(array('purchases_price' => $productPrice->purchases_price, 'sale_price' => $productPrice->sale_price));
+        $branchId = $request->branch_id;
+        $purchaseType = $request->purchase_type; // Added: 2026-08-27
+        $product = Product::where('id', $proid)->first();
+        $purchasesPriceQuery = PurchasesDetails::where('product_id', $proid);
+
+        if (!empty($branchId)) {
+            $purchasesPriceQuery->where('branch_id', $branchId);
+        }
+        if (!empty($purchaseType)) {
+            $purchasesPriceQuery->where('purchasetype', $purchaseType);
+        }
+
+        $avgPurchasePrice = $purchasesPriceQuery->avg('unit_price');
+
+        $purchasesPrice = $avgPurchasePrice ?: ($product->purchases_price ?? 0);
+
+        echo json_encode([
+            'purchases_price' => round($purchasesPrice, 2),
+            'sale_price'       => $product->sale_price ?? 0,
+        ]);
     }
+
+    // function getProductStock(Request $request)
+    // {
+
+    //     $productStock = StockSummary::where('product_id',  $request->productId)->where('branch_id', $request->branch_id)->first();
+    //     if (!empty($productStock->quantity) && $productStock->quantity > 0) :
+    //         echo $productStock->quantity;
+    //     endif;
+    // }
 
     function getProductStock(Request $request)
     {
-        $productStock = StockSummary::where('product_id',  $request->productId)->where('branch_id', $request->branch_id)->first();
-        if (!empty($productStock->quantity) && $productStock->quantity > 0) :
+        $query = StockSummary::where('product_id', $request->productId)
+            ->where('branch_id', $request->branch_id);
+        if (!empty($request->purchase_type)) {
+            $query->where('purchasetype', $request->purchase_type);
+        }
+        $productStock = $query->first();
+        if (!empty($productStock->quantity) && $productStock->quantity > 0) {
             echo $productStock->quantity;
-        endif;
+        } else {
+            echo 0;
+        }
     }
 }

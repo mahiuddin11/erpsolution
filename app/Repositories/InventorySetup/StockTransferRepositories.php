@@ -199,6 +199,7 @@ class StockTransferRepositories
     public function store($request)
     {
 
+        // dd('repositoy', $request->all());
 
         DB::beginTransaction();
         try {
@@ -220,6 +221,7 @@ class StockTransferRepositories
             $category_id = $request->catName;
             $proName = $request->proName;
             $subtotal = $request->unitprice;
+            $purchasetype = $request->purchaseType;
             $grand_total = $request->total;
             $qty = $request->qty;
 
@@ -227,6 +229,7 @@ class StockTransferRepositories
                 $transferDetails = new TransferDetails();
                 $transferDetails->product_id = $proName[$i];
                 $transferDetails->category_id = $category_id[$i];
+                $transferDetails->purchasetype =  $purchasetype[$i];
                 $transferDetails->qty = $qty[$i];
                 $transferDetails->from_branch_id = $request->from_branch_id;
                 $transferDetails->to_branch_id = $request->to_branch_id;
@@ -238,6 +241,8 @@ class StockTransferRepositories
                 $transferDetails->created_by = Auth::user()->id;
                 $transferDetails->save();
             }
+
+
 
             activity_log(
                 'create',
@@ -367,12 +372,12 @@ class StockTransferRepositories
 
     public function approval($request)
     {
+
         DB::beginTransaction();
         try {
             $transferId = $request->transferId;
             $transfer = Transfer::find($transferId);
             $oldData = $transfer->toArray();
-
             $transfer->approved_date =  date('Y-m-d');
             $transfer->status = 'Approved';
             $transfer->approve_qty = array_sum($request->qty);
@@ -391,6 +396,7 @@ class StockTransferRepositories
                 $from_array = array(
                     'branch_id' => $item->from_branch_id,
                     'product_id' => $item->product_id,
+                    'purchasetype' =>  $item->purchasetype,
                 );
 
                 $currentStock = StockSummary::where($from_array)->first();
@@ -399,7 +405,6 @@ class StockTransferRepositories
                 if (!$currentStock) {
                     throw new \Exception("Source stock not found for product ID {$item->product_id} at branch {$item->from_branch_id}");
                 }
-
 
                 $currentStock->quantity = $currentStock->quantity - $item->qty;
                 $currentStock->save();

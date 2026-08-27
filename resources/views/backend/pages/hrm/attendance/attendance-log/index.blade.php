@@ -46,7 +46,7 @@
             --transition: 0.2s ease;
         }
 
-    
+
         .profile_information a {
             font-size: 18px;
             font-weight: 600;
@@ -899,7 +899,7 @@
             }
 
             /* ── Print header top bar ──
-                           To change header border color: edit border-bottom value below */
+                                                                       To change header border color: edit border-bottom value below */
             .print-ph-top {
                 display: flex !important;
                 justify-content: space-between;
@@ -949,8 +949,8 @@
             }
 
             /* ── Summary line (replaces dashboard cards) ──
-                           To change the header background color: edit print-ph-top border-bottom color
-                           To change summary text colors: edit .ps-present, .ps-late, .ps-absent strong colors below */
+                                                                       To change the header background color: edit print-ph-top border-bottom color
+                                                                       To change summary text colors: edit .ps-present, .ps-late, .ps-absent strong colors below */
             .print-summary-line {
                 display: flex !important;
                 align-items: center;
@@ -994,7 +994,7 @@
             /* ▲ ─────────────────────────────────────────── ▲ */
 
             /* ── Table header color note ──
-                           To change table header background: edit the background value below */
+                                                                       To change table header background: edit the background value below */
             #attendanceTable {
                 font-size: 9.5px !important;
                 width: 100%;
@@ -1214,6 +1214,7 @@
                             <label class="filter-label">Status</label>
                             <select class="form-select filter-input" id="statusFilter">
                                 <option value="">All Status</option>
+                                <option value="Present+Late">Present + Late</option>
                                 <option value="Present">Present</option>
                                 <option value="Late">Late</option>
                                 <option value="Absent">Absent</option>
@@ -1370,9 +1371,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
     <script>
-        /* ═══════════════════════════════════════════════════
-               STATE
-               ═══════════════════════════════════════════════════ */
         let allData = [];
         let filteredData = [];
         let currentPage = 1;
@@ -1382,9 +1380,7 @@
 
         const ATTENDANCE_API = "{{ route('hrm.attendancelog.log') }}";
 
-        /* ═══════════════════════════════════════════════════
-           INIT  — single DOMContentLoaded, nothing nested
-           ═══════════════════════════════════════════════════ */
+
         $(document).ready(function() {
 
             /* 1. Date labels */
@@ -1420,9 +1416,7 @@
                 applyClientFilters();
             });
 
-            /* 5. Month picker → sets date range + server fetch
-                  new Date(year, monthIndex, 0) gives last day of previous month
-                  monthIndex is 0-based, so for April (04) we pass 4 → last day of April  */
+
             $('#monthFilter').on('change', function() {
                 const val = $(this).val();
                 if (!val) return;
@@ -1518,11 +1512,7 @@
             state ? el.classList.add('active') : el.classList.remove('active');
         }
 
-        /* ═══════════════════════════════════════════════════
-           POPULATE EMPLOYEE SELECT2 DROPDOWN
-           Called after every server fetch. Remembers current
-           selection and restores it if still valid.
-           ═══════════════════════════════════════════════════ */
+
         function populateEmployeeSelect() {
             const $sel = $('#searchInput');
             const prevVal = $sel.val(); // remember what was selected
@@ -1558,7 +1548,10 @@
 
             filteredData = allData.filter(rec => {
                 const mEmp = !empId || rec.empId === empId;
-                const mStatus = !status || rec.status === status;
+                const mStatus = !status ||
+                    rec.status === status ||
+                    (status === 'Present+Late' && (rec.status === 'Present' || rec.status === 'Late'));
+                // const mStatus = !status || rec.status === status;
                 return mEmp && mStatus;
             });
 
@@ -1575,10 +1568,6 @@
             }
         }
 
-        /* ═══════════════════════════════════════════════════
-           RESET — clears all filters, goes back to today
-           Does NOT cause page reload
-           ═══════════════════════════════════════════════════ */
         function resetFilters() {
             // Reset Select2 cleanly
             $('#searchInput').val('').trigger('change.select2');
@@ -1606,7 +1595,7 @@
         /* ═══════════════════════════════════════════════════
            PRINT SUMMARY
            ═══════════════════════════════════════════════════ */
-       
+
 
         function updatePrintSummary() {
             const total = filteredData.length;
@@ -1619,7 +1608,7 @@
             const holiday = filteredData.filter(r => r.status === 'Holiday').length;
             // Working days (exclude absent and holiday)
             const wDays = [...new Set(
-                filteredData.filter(r => r.status !== 'Absent' && r.status !== 'Holiday' ).map(r => r.date)
+                filteredData.filter(r => r.status !== 'Absent' && r.status !== 'Holiday').map(r => r.date)
             )].length;
 
             $('#ps-total').text(total);
