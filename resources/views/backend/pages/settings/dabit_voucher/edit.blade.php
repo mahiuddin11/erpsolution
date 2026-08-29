@@ -62,7 +62,7 @@
                                     style="padding: 5px; font-weight : bold; width: 100%"
                                     value="{{ $editInfo->voucher_no }} ">
                             </div>
-{{--
+                            {{--
                             <div class="col-md-4 mb-3">
                                 <label for="validationCustom01">Cost Center *:</label>
                                 <select class="form-control select2" disabled id="cost_center">
@@ -173,55 +173,70 @@
                                     <tr>
                                         <td>
                                             {{ $details->account->account_name }}
-                                            <input type="hidden" value="{{ $details->account_id }}"
-                                                name="account_id[]">
+                                            <input type="hidden" value="{{ $details->account_id }}" name="account_id[]">
 
 
 
-        <div class="d-flex align-items-start gap-1 flex-wrap">
-@if(empty($details->check_number) || empty($details->check_date))
-            <div class="mr-3">
-              <select name="cost_center_type[]" class="form-control form-control-sm cost_center_type">
-                <option value="">Select</option>
-                <option {{ !empty($details->branch_id) ? "selected":"" }} value="branch">Branch</option>
-                <option {{ !empty($details->project_id) ? "selected":"" }} value="project">Project</option>
-              </select>
-            </div>
+                                            <div class="d-flex align-items-start gap-1 flex-wrap">
+                                                @if (empty($details->check_number) || empty($details->check_date))
+                                                    <div class="mr-3">
+                                                        <select name="cost_center_type[]"
+                                                            class="form-control form-control-sm cost_center_type">
+                                                            <option value="">Select</option>
+                                                            <option {{ !empty($details->branch_id) ? 'selected' : '' }}
+                                                                value="branch">Branch</option>
+                                                            <option {{ !empty($details->project_id) ? 'selected' : '' }}
+                                                                value="project">Project</option>
+                                                        </select>
+                                                    </div>
 
-            <div class="{{ empty($details->branch_id) ? "d-none":"" }}">
-              <select name="branch_id[]" class="form-control select2 form-control-sm branch-section " style="min-width: 150px;">
-                <option value="">Select Branch</option>
-                @foreach($branches as $branch)
-                  <option {{ $details->branch_id == $branch->id ? "selected":"" }} value="{{ $branch->id }}">{{ $branch->name }}</option>
-                @endforeach
-              </select>
-            </div>
+                                                    <div class="{{ empty($details->branch_id) ? 'd-none' : '' }}">
+                                                        <select name="branch_id[]"
+                                                            class="form-control select2 form-control-sm branch-section "
+                                                            style="min-width: 150px;">
+                                                            <option value="">Select Branch</option>
+                                                            @foreach ($branches as $branch)
+                                                                <option
+                                                                    {{ $details->branch_id == $branch->id ? 'selected' : '' }}
+                                                                    value="{{ $branch->id }}">{{ $branch->name }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
 
-            <div class="{{ empty($details->project_id) ? "d-none":"" }}">
-              <select name="project_id[]" class="form-control select2 form-control-sm project-section " style="min-width: 150px;">
-                <option value="">Select Project</option>
-                @foreach($projects as $project)
-                  <option {{ $details->project_id == $project->id ? "selected":"" }} value="{{ $project->id }}">{{ $project->name }}</option>
-                @endforeach
-              </select>
-            </div>
-           @else
-             <input type="hidden" name="project_id[]"/>
-             <input type="hidden" name="branch_id[]"/>
-             <input type="hidden" name="cost_center_type[]"/>
-             <div class="mt-3 ml-3">
-                <input type="text" class="form-control" placeholder="Voucher Number" value="{{$details->check_number}}" name="voucher_number[{{$count}}]"/>
-             </div>
-             <div class="mt-3">
-                <input type="date" class="form-control" placeholder="Voucher Date" value="{{$details->check_date}}" name="voucher_date[{{$count}}]"/>
-             </div>
-
-
-  @endif
-             @php
-             $count += 1;
-         @endphp
-          </div>
+                                                    <div class="{{ empty($details->project_id) ? 'd-none' : '' }}">
+                                                        <select name="project_id[]"
+                                                            class="form-control select2 form-control-sm project-section "
+                                                            style="min-width: 150px;">
+                                                            <option value="">Select Project</option>
+                                                            @foreach ($projects as $project)
+                                                                <option
+                                                                    {{ $details->project_id == $project->id ? 'selected' : '' }}
+                                                                    value="{{ $project->id }}">{{ $project->name }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                @else
+                                                    <input type="hidden" name="project_id[]" />
+                                                    <input type="hidden" name="branch_id[]" />
+                                                    <input type="hidden" name="cost_center_type[]" />
+                                                    <div class="mt-3 ml-3">
+                                                        <input type="text" class="form-control"
+                                                            placeholder="Voucher Number"
+                                                            value="{{ $details->check_number }}"
+                                                            name="voucher_number[{{ $count }}]" />
+                                                    </div>
+                                                    <div class="mt-3">
+                                                        <input type="date" class="form-control"
+                                                            placeholder="Voucher Date" value="{{ $details->check_date }}"
+                                                            name="voucher_date[{{ $count }}]" />
+                                                    </div>
+                                                @endif
+                                                @php
+                                                    $count += 1;
+                                                @endphp
+                                            </div>
 
                                         </td>
                                         <td>
@@ -286,7 +301,13 @@
                 debitamount += Number($(this).val());
             })
 
-            if (creditamount != debitamount) {
+            // if (creditamount != debitamount) {
+            //     alert('Debit and Credit Amount Not Same');
+            // } else {
+            //     $('#getform').submit();
+            // }
+
+            if (creditamount.toFixed(2) != debitamount.toFixed(2)) {
                 alert('Debit and Credit Amount Not Same');
             } else {
                 $('#getform').submit();
@@ -297,6 +318,7 @@
         $(document).on('click', '.remove_item', function() {
             if (confirm('Are You Sure')) {
                 $(this).closest('tr').remove();
+                totalAmount();
             }
         })
 
@@ -316,8 +338,11 @@
                 debitamount += Number($(this).val());
             })
 
-            $("#creditTotal").text(creditamount);
-            $("#debitTotal").text(debitamount);
+            // $("#creditTotal").text(creditamount);
+            // $("#debitTotal").text(debitamount);
+
+            $("#creditTotal").text(creditamount.toFixed(2));
+            $("#debitTotal").text(debitamount.toFixed(2));
 
         }
         totalAmount();
@@ -366,41 +391,41 @@
               <input type="hidden" value="${account_id}" name="account_id[]">
             </div>
            ${!is_bank ? `
-            <div class="mr-3">
-              <select name="cost_center_type[]" class="form-control form-control-sm cost_center_type">
-                <option value="">Select</option>
-                <option value="branch">Branch</option>
-                <option value="project">Project</option>
-              </select>
-            </div>
+                                                    <div class="mr-3">
+                                                      <select name="cost_center_type[]" class="form-control form-control-sm cost_center_type">
+                                                        <option value="">Select</option>
+                                                        <option value="branch">Branch</option>
+                                                        <option value="project">Project</option>
+                                                      </select>
+                                                    </div>
 
-            <div class="d-none">
-              <select name="branch_id[]" class="form-control select2 form-control-sm branch-section " style="min-width: 150px;">
-                <option value="">Select Branch</option>
-                @foreach($branches as $branch)
-                  <option value="{{ $branch->id }}">{{ $branch->name }}</option>
-                @endforeach
-              </select>
-            </div>
+                                                    <div class="d-none">
+                                                      <select name="branch_id[]" class="form-control select2 form-control-sm branch-section " style="min-width: 150px;">
+                                                        <option value="">Select Branch</option>
+                                                        @foreach ($branches as $branch)
+                                                          <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                                        @endforeach
+                                                      </select>
+                                                    </div>
 
-            <div class="d-none">
-              <select name="project_id[]" class="form-control select2 form-control-sm project-section " style="min-width: 150px;">
-                <option value="">Select Project</option>
-                @foreach($projects as $project)
-                  <option value="{{ $project->id }}">{{ $project->name }}</option>
-                @endforeach
-              </select>
-            </div>` : `
-              <input type="hidden" name="project_id[]"/>
-              <input type="hidden" name="branch_id[]"/>
-              <input type="hidden" name="cost_center_type[]"/>
-               <div class="mt-3 ml-3">
-                  <input type="text" class="form-control" placeholder="Voucher Number" name="voucher_number[${rowCount}]"/>
-               </div>
-               <div class="mt-3">
-                  <input type="date" class="form-control" placeholder="Voucher Date" name="voucher_date[${rowCount}]"/>
-               </div>
-            ` }
+                                                    <div class="d-none">
+                                                      <select name="project_id[]" class="form-control select2 form-control-sm project-section " style="min-width: 150px;">
+                                                        <option value="">Select Project</option>
+                                                        @foreach ($projects as $project)
+                                                          <option value="{{ $project->id }}">{{ $project->name }}</option>
+                                                        @endforeach
+                                                      </select>
+                                                    </div>` : `
+                                                      <input type="hidden" name="project_id[]"/>
+                                                      <input type="hidden" name="branch_id[]"/>
+                                                      <input type="hidden" name="cost_center_type[]"/>
+                                                       <div class="mt-3 ml-3">
+                                                          <input type="text" class="form-control" placeholder="Voucher Number" name="voucher_number[${rowCount}]"/>
+                                                       </div>
+                                                       <div class="mt-3">
+                                                          <input type="date" class="form-control" placeholder="Voucher Date" name="voucher_date[${rowCount}]"/>
+                                                       </div>
+                                                    ` }
 
        </div>
      </td>
@@ -415,16 +440,17 @@
    </td>
 
    <td>
-       <a id="add_item" class="btn btn-danger" style="white-space: nowrap" href="javascript:;" title="Delete Item">
+      
+ <a class="btn btn-danger remove_item" style="white-space: nowrap" href="javascript:;" title="Delete Item">
            <i class="fa fa-trash"></i>
        </a>
    </td>
 </tr>`;
             $('#main-table').append(html);
             $('.select2').select2({
-    theme: 'bootstrap4', // Optional, depends on your theme
-    width: '100%'
-});
+                theme: 'bootstrap4', // Optional, depends on your theme
+                width: '100%'
+            });
             $('#account_id').select2().val(null);
             $('#credit').val('');
             $('#debit').val('');
@@ -433,20 +459,20 @@
             totalAmount();
         })
 
-        $('#main-table').on('change', '.cost_center_type', function () {
-    let type = $(this).val();
-    let row = $(this).closest('td');
+        $('#main-table').on('change', '.cost_center_type', function() {
+            let type = $(this).val();
+            let row = $(this).closest('td');
 
-    if (type === 'branch') {
-        row.find('.branch-section').closest("div").removeClass('d-none').prop('disabled', false);
-        row.find('.project-section').closest("div").addClass('d-none').prop('disabled', true);
-    } else if (type === 'project') {
-        row.find('.project-section').closest("div").removeClass('d-none').prop('disabled', false);
-        row.find('.branch-section').closest("div").addClass('d-none').prop('disabled', true);
-    } else {
-        row.find('.branch-section, .project-section').addClass('d-none').prop('disabled', true);
-    }
-});
+            if (type === 'branch') {
+                row.find('.branch-section').closest("div").removeClass('d-none').prop('disabled', false);
+                row.find('.project-section').closest("div").addClass('d-none').prop('disabled', true);
+            } else if (type === 'project') {
+                row.find('.project-section').closest("div").removeClass('d-none').prop('disabled', false);
+                row.find('.branch-section').closest("div").addClass('d-none').prop('disabled', true);
+            } else {
+                row.find('.branch-section, .project-section').addClass('d-none').prop('disabled', true);
+            }
+        });
 
         function getSubCat(catId) {
             $.ajax({

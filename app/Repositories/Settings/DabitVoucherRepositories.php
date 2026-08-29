@@ -85,7 +85,8 @@ class DabitVoucherRepositories
             foreach ($dabitvoucher as $key => $item) {
                 $nestedData['id'] = $key + 1;
                 $nestedData['voucher_no'] = $item->voucher_no;
-                $nestedData['amount'] = $item->details->sum("debit") ?? "N/A";
+                // $nestedData['amount'] = $item->details->sum("debit") ?? "N/A";
+                $nestedData['amount'] = number_format($item->details->sum("debit"), 2) ?? "N/A";
                 $nestedData['project_id'] = $item->project->name ?? "N/A";
                 $nestedData['approved_by'] = $item->user->name  ?? "Admin still not view";
                 $nestedData['viewed'] = $item->viewed == 1 ? "Viewed" : "N/A";
@@ -201,44 +202,90 @@ class DabitVoucherRepositories
     }
 
 
+    // public function update($request, $id)
+    // {
+    //     $dabitvoucher = DabitVoucher::find($id);
+    //     $dabitvoucher->branch_id = $request->branch_id ?? 0;
+    //     // $dabitvoucher->account_id = $request->credit_account_id;
+    //     $dabitvoucher->project_id = $request->project_id;
+    //     $dabitvoucher->date = $request->date;
+    //     $dabitvoucher->note = $request->note;
+    //     $dabitvoucher->updated_by = auth()->id();
+    //     $dabitvoucher->save();
+
+    //     $dabitvoucher->details()->delete();
+
+    //     if (!empty($request->debit) || !empty($request->credit)) {
+    //         for ($i = 0; $i < count($request->account_id); $i++) {
+    //             $dabitvoucherdetails = new DabitVoucherDetails();
+    //             $dabitvoucherdetails->payment_invoice = $request->payment_invoice[$i] ?? null;
+    //             $dabitvoucherdetails->dabit_voucher_id = $dabitvoucher->id;
+
+    //             if ($request->cost_center_type[$i] == "project") {
+    //                 $dabitvoucherdetails->project_id = $request->project_id[$i];
+    //             } elseif ($request->cost_center_type[$i] == "branch") {
+    //                 $dabitvoucherdetails->branch_id = $request->branch_id[$i];
+    //             }
+
+    //             $dabitvoucherdetails->check_number = isset($request->voucher_number[$i]) ? $request->voucher_number[$i] : null;
+    //             $dabitvoucherdetails->check_date = isset($request->voucher_date[$i]) ? $request->voucher_date[$i] : null;
+
+
+    //             $dabitvoucherdetails->account_id = $request->account_id[$i];
+    //             $dabitvoucherdetails->debit = $request->debit[$i];
+    //             $dabitvoucherdetails->credit = $request->credit[$i];
+    //             $dabitvoucherdetails->amount = $request->debit[$i] ?? $request->credit[$i];
+    //             $dabitvoucherdetails->save();
+    //         }
+    //     }
+
+    //     return $dabitvoucher;
+    // }
+
     public function update($request, $id)
     {
-        $dabitvoucher = DabitVoucher::find($id);
-        $dabitvoucher->branch_id = $request->branch_id ?? 0;
-        // $dabitvoucher->account_id = $request->credit_account_id;
-        $dabitvoucher->project_id = $request->project_id;
-        $dabitvoucher->date = $request->date;
-        $dabitvoucher->note = $request->note;
-        $dabitvoucher->updated_by = auth()->id();
-        $dabitvoucher->save();
+        return DB::transaction(function () use ($request, $id) {
+            $dabitvoucher = DabitVoucher::find($id);
+            $dabitvoucher->branch_id = $request->branch_id ?? 0;
+            $dabitvoucher->project_id = $request->project_id;
+            $dabitvoucher->date = $request->date;
+            $dabitvoucher->note = $request->note;
+            $dabitvoucher->updated_by = auth()->id();
+            $dabitvoucher->save();
 
-        $dabitvoucher->details()->delete();
+            $dabitvoucher->details()->delete();
 
-        if (!empty($request->debit) || !empty($request->credit)) {
-            for ($i = 0; $i < count($request->account_id); $i++) {
-                $dabitvoucherdetails = new DabitVoucherDetails();
-                $dabitvoucherdetails->payment_invoice = $request->payment_invoice[$i] ?? null;
-                $dabitvoucherdetails->dabit_voucher_id = $dabitvoucher->id;
+            if (!empty($request->debit) || !empty($request->credit)) {
+                for ($i = 0; $i < count($request->account_id); $i++) {
+                    $dabitvoucherdetails = new DabitVoucherDetails();
+                    $dabitvoucherdetails->payment_invoice = $request->payment_invoice[$i] ?? null;
+                    $dabitvoucherdetails->dabit_voucher_id = $dabitvoucher->id;
 
-                if ($request->cost_center_type[$i] == "project") {
-                    $dabitvoucherdetails->project_id = $request->project_id[$i];
-                } elseif ($request->cost_center_type[$i] == "branch") {
-                    $dabitvoucherdetails->branch_id = $request->branch_id[$i];
+                    $costCenterType = $request->cost_center_type[$i] ?? null;
+                    if ($costCenterType == "project") {
+                        $dabitvoucherdetails->project_id = $request->project_id[$i] ?? null;
+                    } elseif ($costCenterType == "branch") {
+                        $dabitvoucherdetails->branch_id = $request->branch_id[$i] ?? null;
+                    }
+
+                    $dabitvoucherdetails->check_number = $request->voucher_number[$i] ?? null;
+                    $dabitvoucherdetails->check_date = $request->voucher_date[$i] ?? null;
+
+                    $dabitvoucherdetails->account_id = $request->account_id[$i];
+
+                    $debitVal = $request->debit[$i] ?? null;
+                    $creditVal = $request->credit[$i] ?? null;
+
+                    $dabitvoucherdetails->debit = !empty($debitVal) ? $debitVal : 0;
+                    $dabitvoucherdetails->credit = !empty($creditVal) ? $creditVal : 0;
+                    $dabitvoucherdetails->amount = !empty($debitVal) ? $debitVal : $creditVal;
+
+                    $dabitvoucherdetails->save();
                 }
-
-                $dabitvoucherdetails->check_number = isset($request->voucher_number[$i]) ? $request->voucher_number[$i] : null;
-                $dabitvoucherdetails->check_date = isset($request->voucher_date[$i]) ? $request->voucher_date[$i] : null;
-
-
-                $dabitvoucherdetails->account_id = $request->account_id[$i];
-                $dabitvoucherdetails->debit = $request->debit[$i];
-                $dabitvoucherdetails->credit = $request->credit[$i];
-                $dabitvoucherdetails->amount = $request->debit[$i] ?? $request->credit[$i];
-                $dabitvoucherdetails->save();
             }
-        }
 
-        return $dabitvoucher;
+            return $dabitvoucher;
+        });
     }
 
     public function statusUpdate($id, $status)
