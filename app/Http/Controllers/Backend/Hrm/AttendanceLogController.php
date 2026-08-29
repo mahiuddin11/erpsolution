@@ -24,7 +24,6 @@ class AttendanceLogController extends Controller
 
 
         $title = 'Attendance Log';
-
         $employees = Employee::where('employee_status', 'present');
 
 

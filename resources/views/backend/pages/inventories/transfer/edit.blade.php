@@ -41,6 +41,8 @@
                 <div class="card-header">
                     <h3 class="card-title">Stock Tranfer </h3>
                 </div>
+
+
                 <div class="card-body">
                     <form class="needs-validation" method="POST"
                         action="{{ route('inventorySetup.transfer.update', $transfe->id) }}" novalidate>
@@ -105,7 +107,7 @@
                                 <tr>
                                     <td>
                                         <div class="col-md-9 float-left ">
-                                            Sales Item
+                                            Transfer Item
                                         </div>
                                         <div class="col-md-3 float-right">
                                         </div>
@@ -130,6 +132,10 @@
                                                                     <th nowrap style="width:25%" align="center"
                                                                         id="">
                                                                         <strong>Product <span style="color:red;">
+                                                                                *</span></strong>
+                                                                    </th>
+                                                                    <th nowrap style="width:10%" align="center">
+                                                                        <strong>Type <span style="color:red;">
                                                                                 *</span></strong>
                                                                     </th>
                                                                     <th nowrap style="width:10%" align="center">
@@ -173,6 +179,16 @@
                                                                             </option>
                                                                         </select>
                                                                     </td>
+                                                                    <td>
+                                                                        <select class="form-control purchaseType"
+                                                                            id="purchaseType"
+                                                                            onchange="getUnitPrice($('#productID').val())">
+                                                                            <option disabled selected value="">
+                                                                                --Type--</option>
+                                                                            <option value="local">Local</option>
+                                                                            <option value="imported">Imported</option>
+                                                                        </select>
+                                                                    </td>
 
                                                                     <td>
                                                                         <input type="text" readonly
@@ -198,6 +214,8 @@
                                                                         </a>
                                                                     </td>
                                                                 </tr>
+
+
                                                                 @foreach ($transfeDetails as $value)
                                                                     <tr class="new_item{{ $value->product_id }}">
                                                                         <td style="padding-left:15px;">
@@ -209,6 +227,11 @@
                                                                                 type="hidden" class="add_quantity"
                                                                                 name="proName[]"
                                                                                 value="{{ $value->product_id }}"></td>
+                                                                        <td align="right">
+                                                                            {{ $value->purchasetype ?? '-' }}
+                                                                            <input type="hidden" name="purchaseType[]"
+                                                                                value="{{ $value->purchasetype ?? '' }}">
+                                                                        </td>
 
                                                                         <td align="right">{{ $value->qty }}<input
                                                                                 type="hidden" class="ttlqty"
@@ -237,6 +260,8 @@
                                                                     <td align="right"><strong>Sub-Total(BDT)</strong></td>
                                                                     <td align="right"><strong class=""></strong>
                                                                     </td>
+                                                                    <td align="right"><strong class=""></strong>
+                                                                    </td>
                                                                     <td
                                                                         align="
                                                                             right">
@@ -258,6 +283,8 @@
                                                     </div>
                                                 </div>
                                             </div>
+
+
                                             <div class="row">
 
                                                 <div class="col-md-8">
@@ -267,7 +294,7 @@
                                                                 <textarea
                                                                     style="
                                                                                                                                                         border:none;"
-                                                                    cols="157" class="form-control" name="narration" placeholder="Note......" type="text"></textarea>
+                                                                    cols="157" class="form-control" name="narration" placeholder="Note......" type="text">{{ $transfe->note ?? '' }} </textarea>
                                                             </td>
                                                         </tr>
                                                     </table>
@@ -398,11 +425,9 @@
 
             $("#add_item").click(function() {
 
-
                 // var supid = $('.supid').val();
                 var catId = $('.catName').val();
                 var catName = $(".catName").find('option:selected').attr('catName');
-
 
                 var proId = $('.proName').val();
                 var proName = $(".proName").find('option:selected').attr('proName');
@@ -411,9 +436,13 @@
                 //            var unitName = $(".unitName").find('option:selected').attr('unitName');
 
                 var unit = $('.unit').val();
+                var purchaseType = $('#purchaseType').val(); // Added: 2026-08-27
                 var qty = $('.qty').val();
 
-
+                if (purchaseType == '' || purchaseType == null) {
+                    alertMessage.error("Purchase Type can't be empty.");
+                    return false;
+                }
 
                 var unitprice = $('.unitprice').val();
 
@@ -428,51 +457,41 @@
                     return false;
                 }
 
-
                 if (qty == '' || qty == null || qty == 0) {
                     //   productItemValidation("Quantity can't be empty or zero.");
                     return false;
                 } else {
 
-                    $("#show_item tbody").append('<tr class="new_item' + proId +
-                        '">\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <td style="padding-left:15px;">' +
-                        catName +
-                        '<input type="hidden" name="catName[]" value="' +
-                        catId +
-                        '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <td align="right">' +
-                        proName +
-                        '<input type="hidden" class="add_quantity" name="proName[]" value="' +
-                        proId +
-                        '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    \n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <td align="right">' +
-                        qty +
-                        '<input type="hidden" class="ttlqty" name="qty[]" value="' +
-                        qty +
-                        '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <td align="right">' +
-                        unitprice +
+                    // Fixed: 2026-08-27 - previous version had a broken/mismatched template string here
+                    // (stray '<', 'td', 'align', '=' tokens split across lines) which was a JS syntax error.
+                    // Rebuilt cleanly as a single valid string concatenation, Type <td> included after Product.
+                    var rowHtml = '<tr class="new_item' + proId + '">' +
+                        '<td style="padding-left:15px;">' + catName +
+                        '<input type="hidden" name="catName[]" value="' + catId + '"></td>' +
+                        '<td align="right">' + proName +
+                        '<input type="hidden" class="add_quantity" name="proName[]" value="' + proId +
+                        '"></td>' +
+                        '<td align="right">' + purchaseType +
+                        '<input type="hidden" name="purchaseType[]" value="' + purchaseType + '"></td>' +
+                        '<td align="right">' + qty +
+                        '<input type="hidden" class="ttlqty" name="qty[]" value="' + qty + '"></td>' +
+                        '<td align="right">' + unitprice +
                         '<input type="hidden" class="ttlunitprice unitparice" name="unitprice[]" value="' +
-                        unitprice +
-                        '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <td align="right">' +
-                        total +
-                        '<input type="hidden" class="grandtotal" name="total[]" value="' +
-                        total +
-                        '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    \n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    \n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <td><a del_id="' +
-                        proId +
-                        '" class="delete_item btn form-control btn-danger" href="javascript:;" title=""><i class="fa fa-times"></i></a></td></tr>'
-                    );
+                        unitprice + '"></td>' +
+                        '<td align="right">' + total +
+                        '<input type="hidden" class="grandtotal" name="total[]" value="' + total +
+                        '"></td>' +
+                        '<td><a del_id="' + proId +
+                        '" class="delete_item btn form-control btn-danger" href="javascript:;" title=""><i class="fa fa-times"></i></a></td>' +
+                        '</tr>';
+
+                    $("#show_item tbody").append(rowHtml);
                 }
 
                 $('.unitprice').val('');
                 $('.qty').val('');
                 $('.total').val('');
+                $('#purchaseType').val('').trigger('select2:updated'); // Added: 2026-08-27
                 // $('.unitName').val('').trigger('chosen:updated');
                 $('.proName').val('').trigger('select2:updated');
                 $('.catId').val('').trigger('select2:updated');
@@ -599,13 +618,17 @@
 
 
         function getUnitPrice(productId) {
+            // Modified: 2026-08-27 - now also sends branch_id + purchase_type so backend
+            // can return price/stock filtered by Local/Imported for this branch.
             $.ajax({
                 "url": "{{ route('inventorySetup.purchase.unitPice') }}",
                 "type": "GET",
                 cache: false,
                 data: {
                     "_token": "{{ csrf_token() }}",
-                    productId: productId
+                    productId: productId,
+                    branch_id: $('#from_branch_id').val(),
+                    purchase_type: $('#purchaseType').val()
                 },
                 success: function(data) {
                     $("#unitpice").val(data);
@@ -618,7 +641,9 @@
                 cache: false,
                 data: {
                     "_token": "{{ csrf_token() }}",
-                    productId: productId
+                    productId: productId,
+                    branch_id: $('#from_branch_id').val(),
+                    purchase_type: $('#purchaseType').val()
                 },
                 success: function(data) {
                     $("#currentStock").val(data);

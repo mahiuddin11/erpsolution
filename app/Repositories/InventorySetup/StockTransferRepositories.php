@@ -373,6 +373,7 @@ class StockTransferRepositories
     public function approval($request)
     {
 
+        // dd($request->all());
         DB::beginTransaction();
         try {
             $transferId = $request->transferId;
@@ -511,12 +512,14 @@ class StockTransferRepositories
 
             $category_id = $request->catName;
             $proName = $request->proName;
+            $purchaseType = $request->purchaseType;
             $subtotal = $request->unitprice;
             $grand_total = $request->total;
             $qty = $request->qty;
             for ($i = 0; $i < count($category_id); $i++) {
                 $transferDetails = new TransferDetails();
                 $transferDetails->product_id = $proName[$i];
+                $transferDetails->purchasetype = $purchaseType[$i] ?? null;
                 $transferDetails->category_id = $category_id[$i];
                 $transferDetails->qty = $qty[$i];
                 $transferDetails->from_branch_id = $request->from_branch_id;

@@ -166,6 +166,8 @@
                                             </a>
                                         </td>
                                     </tr> --}}
+
+
                                     @foreach ($editInfo->details as $detail)
                                         <tr class="new_item">
                                             <td style="padding-left:15px;">

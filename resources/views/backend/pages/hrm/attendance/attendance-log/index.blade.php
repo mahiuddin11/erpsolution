@@ -899,7 +899,7 @@
             }
 
             /* ── Print header top bar ──
-                                                                       To change header border color: edit border-bottom value below */
+                                                                           To change header border color: edit border-bottom value below */
             .print-ph-top {
                 display: flex !important;
                 justify-content: space-between;
@@ -949,8 +949,8 @@
             }
 
             /* ── Summary line (replaces dashboard cards) ──
-                                                                       To change the header background color: edit print-ph-top border-bottom color
-                                                                       To change summary text colors: edit .ps-present, .ps-late, .ps-absent strong colors below */
+                                                                           To change the header background color: edit print-ph-top border-bottom color
+                                                                           To change summary text colors: edit .ps-present, .ps-late, .ps-absent strong colors below */
             .print-summary-line {
                 display: flex !important;
                 align-items: center;
@@ -994,7 +994,7 @@
             /* ▲ ─────────────────────────────────────────── ▲ */
 
             /* ── Table header color note ──
-                                                                       To change table header background: edit the background value below */
+                                                                           To change table header background: edit the background value below */
             #attendanceTable {
                 font-size: 9.5px !important;
                 width: 100%;

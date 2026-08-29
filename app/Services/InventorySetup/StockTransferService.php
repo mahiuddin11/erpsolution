@@ -103,6 +103,7 @@ class StockTransferService
             'total'                   => 'required',
             'qty'                   => 'required',
             'status' => 'nullable',
+            // 'purchaseType'                 => 'required',
         ];
     }
     public function transferApprove($request)
