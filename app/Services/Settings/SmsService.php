@@ -24,10 +24,10 @@ class SmsService
         return [
             'name'          => $employee->name,
             'contact_number' => $employee->personal_phone,
-            'address'       => $employee->address ?? '',        // TODO-CONFIRM: actual column name
-            'department'    => $employee->position_name ?? '',   // positions table e grouped, department = designation
+            'address'       => $employee->address ?? '',
+            'department'    => $employee->position_name ?? '',
             'designation'   => $employee->position_name ?? '',
-            'company_name'  => config('app.name', 'WTBL'),        // TODO-CONFIRM: company settings theke asha uchit hole bolo
+            'company_name'  => 'WTBL',
             'date'          => now()->format('d M, Y'),
         ];
     }
@@ -234,6 +234,7 @@ class SmsService
         foreach ($recipients as $recipient) {
             $personalizedMessage = $this->fillTemplate($payload['message'], $recipient['vars'] ?? []);
 
+
             $status = 'Pending';
             $providerResponse = null;
 
@@ -335,14 +336,13 @@ class SmsService
                         'address' => '',
                         'department' => '',
                         'designation' => '',
-                        // 'company_name' => config('app.name', 'WTBL'),
-                        'company_name' => '',
+                        'company_name' => 'WTBL',
                         'date' => now()->format('d M, Y'),
                     ],
                 ]];
             }
 
-            // Employee select kora hoyeche (search theke)
+
             if (!empty($payload['contact_id'])) {
                 $employeeId = (int) $payload['contact_id']; // searchContacts() ekhon raw id dey, 'emp-' prefix nei
 
@@ -353,7 +353,7 @@ class SmsService
                     ->first([
                         'employees.name',
                         'employees.personal_phone',
-                        'employees.present_address',       // TODO-CONFIRM column name
+                        'employees.present_address',
                         'positions.name as position_name',
                     ]);
 

@@ -21,11 +21,11 @@ class CompanySeeder extends Seeder
         $companySetUp->logo = 'logo.png';
         $companySetUp->favicon = '';
         $companySetUp->invoice_logo = 'logo.png';
-        $companySetUp->company_name = 'Xtreem Erp';
-        $companySetUp->website = 'http://itwaybd.com/';
-        $companySetUp->phone = '01854125454';
-        $companySetUp->email = 'info@itwaybd.com';
-        $companySetUp->address = 'House-1(2nd floor), Road-1, Sector-05, Uttara, Dhaka-1230, Bangladesh';
+        $companySetUp->company_name = 'WTBL';
+        $companySetUp->website = 'http://wtbl.com.bd/';
+        $companySetUp->phone = '01785654241';
+        $companySetUp->email = 'info@wtbl.com.bd';
+        $companySetUp->address = 'House-1248(5nd floor), Road-9, Mirpur Dohs, Bangladesh';
         $companySetUp->task_identification_number = '000000';
         $companySetUp->updated_by = 1;
         $companySetUp->created_by = 1;
