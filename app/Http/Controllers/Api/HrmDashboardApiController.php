@@ -250,7 +250,7 @@ class HrmDashboardApiController extends Controller
                     ->whereNotIn('id', $presentIds)
                     ->whereNotIn('id', $onLeaveIds)
                     ->take(50)->get()
-                    ->map(fn($e) => ['title' => $e->name, 'subtitle' => $e->department ?? 'N/A']);
+                    ->map(fn($e) => ['id'       => $e->id, 'title' => $e->name, 'subtitle' => $e->department ?? 'N/A']);
                 break;
 
             case 'new_employee_this_month':

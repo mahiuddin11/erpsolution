@@ -292,6 +292,8 @@
             return `<span class="badge badge-info loc-btn" style="cursor:pointer" data-lat="${lat}" data-lng="${lng}"><i class="bi bi-geo-alt-fill"></i> Location</span>`;
         }
 
+
+
         // Location badge e click korle -- direct 1 click e notun tab e Google Maps khule jabe,
         // kono modal-er dorkar nei
         document.addEventListener('click', function(e) {
@@ -376,24 +378,59 @@
                         // Point: Check-in, Check-in Location, Check-out, Check-out Location -- structured
                         body.innerHTML =
                             `<ul class="list-group">${rows.map(r => `
-                                                                                                                                                                                                                        <li class="list-group-item">
-                                                                                                                                                                                                                            <div class="fw-bold mb-2">${r.title}</div>
-                                                                                                                                                                                                                            <div class="d-flex justify-content-between align-items-center small mb-1">
-                                                                                                                                                                                                                                <span class="text-muted">Check-in: ${r.sign_in ?? '-'}</span>
-                                                                                                                                                                                                                                ${locationBadge(r.in_lat, r.in_lng)}
-                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                            <div class="d-flex justify-content-between align-items-center small">
-                                                                                                                                                                                                                                <span class="text-muted">Check-out: ${r.sign_out ?? 'Not yet'}</span>
-                                                                                                                                                                                                                                ${r.sign_out ? locationBadge(r.out_lat, r.out_lng) : '<span class="badge badge-secondary">Pending</span>'}
-                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                        </li>`).join('')}</ul>`;
+                                                                                                                                                                                                      <li class="list-group-item">
+                                                                                                                                                                                                          <div class="fw-bold mb-2">${r.title}</div>
+                                                                                                                                                                                                          <div class="d-flex justify-content-between align-items-center small mb-1">
+                                                                                                                                                                                                              <span class="text-muted">Check-in: ${r.sign_in ?? '-'}</span>
+                                                                                                                                                                                                              ${locationBadge(r.in_lat, r.in_lng)}
+                                                                                                                                                                                                          </div>
+                                                                                                                                                                                                          <div class="d-flex justify-content-between align-items-center small">
+                                                                                                                                                                                                              <span class="text-muted">Check-out: ${r.sign_out ?? 'Not yet'}</span>
+                                                                                                                                                                                                              ${r.sign_out ? locationBadge(r.out_lat, r.out_lng) : '<span class="badge badge-secondary">Pending</span>'}
+                                                                                                                                                                                                          </div>
+                                                                                                                                                                                                      </li>`).join('')}</ul>`;
+                    } else if (type === 'absent_today') {
+                        body.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <label class="mb-0">
+                <input type="checkbox" id="absentSelectAll"> Select All
+            </label>
+            <span class="text-muted small"><span id="absentSelectedCount">0</span> employee(s) selected</span>
+        </div>
+
+        <ul class="list-group mb-3" id="absentEmployeeList" style="max-height:260px; overflow-y:auto;">
+            ${rows.map(r => `
+                                                                            <li class="list-group-item d-flex justify-content-between align-items-center absent-emp-row">
+                                                                                <span>
+                                                                                    <input type="checkbox" class="absent-sms-check mr-2" value="${r.id}" data-name="${r.title}">
+                                                                                    ${r.title}
+                                                                                    ${r.id_card ? `<span class="text-muted small">(${r.id_card})</span>` : ''}
+                                                                                </span>
+                                                                                <span class="text-muted small">${r.subtitle}</span>
+                                                                            </li>`).join('')}
+        </ul>
+
+        <div class="font-weight-bold mb-2">Select a Message Template</div>
+        <div class="row" id="absentTemplateGrid" style="max-height:240px; overflow-y:auto; margin:0 -4px;">
+            <div class="col-12 text-center text-muted py-3">Loading templates...</div>
+        </div>
+
+        <div class="mt-3 pt-3 border-top">
+            <button type="button" class="btn btn-sm btn-primary" id="btnSendAbsentSms" disabled>
+                <i class="bi bi-send"></i> Send SMS
+            </button>
+        </div>`;
+
+                        bindAbsentSmsControls();
+                        loadAbsentTemplateGrid();
                     } else {
                         body.innerHTML =
                             `<ul class="list-group">${rows.map(r => `
-                                                                                                                                                                                                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                                                                                                                                                                                            <span>${r.title}</span>
-                                                                                                                                                                                                                            <span class="text-muted small">${r.subtitle}</span>
-                                                                                                                                                                                                                        </li>`).join('')}</ul>`;
+                                                                                                                                                                                                   <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                                                                                                                                                                       <span>${r.title}</span>
+                                                                                                                                                                                                       <span class="text-muted small">${r.subtitle}</span>
+                                                                                                                                                                                                   </li>`).join('')}
+                            </ul>`;
                     }
                 })
                 .catch(() => {
@@ -533,13 +570,13 @@
                         // Percent onujayi color: high present = green, medium = amber, kom = red
                         const ringColor = d.present_percent >= 75 ? '#22c55e' : d.present_percent >= 40 ? '#f59e0b' : '#ef4444';
                         return `
-                                                                                                                                                                                                <div class="dept-card" title="${d.name}: ${d.present}/${d.total} present">
-                                                                                                                                                                                                  <div class="dept-circle" style="background: conic-gradient(${ringColor} ${d.present_percent}%, #e5e7eb ${d.present_percent}% 100%);">
-                                                                                                                                                                                                    <div class="dept-circle-inner">${d.present_percent}%</div>
-                                                                                                                                                                                                  </div>
-                                                                                                                                                                                                  <div class="dept-card-name">${d.name}</div>
-                                                                                                                                                                                                  <div class="dept-card-sub">${d.present}/${d.total} present</div>
-                                                                                                                                                                                                </div>`;
+                                                                                                                                                                                                                                                                                                                                                                        <div class="dept-card" title="${d.name}: ${d.present}/${d.total} present">
+                                                                                                                                                                                                                                                                                                                                                                          <div class="dept-circle" style="background: conic-gradient(${ringColor} ${d.present_percent}%, #e5e7eb ${d.present_percent}% 100%);">
+                                                                                                                                                                                                                                                                                                                                                                            <div class="dept-circle-inner">${d.present_percent}%</div>
+                                                                                                                                                                                                                                                                                                                                                                          </div>
+                                                                                                                                                                                                                                                                                                                                                                          <div class="dept-card-name">${d.name}</div>
+                                                                                                                                                                                                                                                                                                                                                                          <div class="dept-card-sub">${d.present}/${d.total} present</div>
+                                                                                                                                                                                                                                                                                                                                                                        </div>`;
                     }).join('')}</div>`;
                 } else {
                     deptBox.innerHTML =
@@ -562,13 +599,13 @@
                 const ringColor = d.present_percent >= 75 ? '#22c55e' : d.present_percent >= 40 ? '#f59e0b' : '#ef4444';
                
                 return `
-                                                                                                                                                                        <div class="dept-card dept-card-clickable" style="cursor:pointer" data-position-id="${d.position_id}" title="${d.name}: ${d.present}/${d.total} present">
-                                                                                                                                                                          <div class="dept-circle" style="background: conic-gradient(${ringColor} ${d.present_percent}%, #e5e7eb ${d.present_percent}% 100%);">
-                                                                                                                                                                            <div class="dept-circle-inner">${d.present_percent}%</div>
-                                                                                                                                                                          </div>
-                                                                                                                                                                          <div class="dept-card-name">${d.name}</div>
-                                                                                                                                                                          <div class="dept-card-sub">${d.present}/${d.total} present</div>
-                                                                                                                                                                        </div>`;
+                                                                                                                                                                                                                                                                                                                                                <div class="dept-card dept-card-clickable" style="cursor:pointer" data-position-id="${d.position_id}" title="${d.name}: ${d.present}/${d.total} present">
+                                                                                                                                                                                                                                                                                                                                                  <div class="dept-circle" style="background: conic-gradient(${ringColor} ${d.present_percent}%, #e5e7eb ${d.present_percent}% 100%);">
+                                                                                                                                                                                                                                                                                                                                                    <div class="dept-circle-inner">${d.present_percent}%</div>
+                                                                                                                                                                                                                                                                                                                                                  </div>
+                                                                                                                                                                                                                                                                                                                                                  <div class="dept-card-name">${d.name}</div>
+                                                                                                                                                                                                                                                                                                                                                  <div class="dept-card-sub">${d.present}/${d.total} present</div>
+                                                                                                                                                                                                                                                                                                                                                </div>`;
             }).join('')}</div>`;
 
                     // Added: 2026-08-02 -- render hobar por click bind kora hocche
@@ -614,10 +651,10 @@
                     // Added: 2026-08-02 -- present/absent onujayi badge color
                     body.innerHTML =
                         `<ul class="list-group">${rows.map(r => `
-                                                                                                                                                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                                                                                                                                            <span>${r.title}</span>
-                                                                                                                                                                            <span class="badge ${r.status === 'present' ? 'badge-success' : 'badge-danger'}">${r.subtitle}</span>
-                                                                                                                                                                        </li>`).join('')}</ul>`;
+                                                                                                                                                                                                                                                                                                                                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                                                                                                                                                                                                                                                                                                                    <span>${r.title}</span>
+                                                                                                                                                                                                                                                                                                                                                    <span class="badge ${r.status === 'present' ? 'badge-success' : 'badge-danger'}">${r.subtitle}</span>
+                                                                                                                                                                                                                                                                                                                                                </li>`).join('')}</ul>`;
                 })
                 .catch(() => {
                     document.getElementById('kpiDetailModalBody').innerHTML =
@@ -1163,6 +1200,165 @@
                         const errBox = document.getElementById('announcementFormError');
                         errBox.textContent = err.message || 'Something went wrong. Please check the form.';
                         errBox.classList.remove('d-none');
+                    });
+            });
+        }
+
+        //sms sand section 
+
+
+        let selectedAbsentTemplate = null;
+
+        function loadAbsentTemplateGrid() {
+            fetch(`${SMS_API_BASE}/templates`)
+                .then(r => r.json())
+                .then(templates => {
+                    const grid = document.getElementById('absentTemplateGrid');
+
+                    templates = templates.filter(t => [3, 1].includes(Number(t.id)));
+
+                    if (!templates.length) {
+                        grid.innerHTML =
+                            `<div class="col-12 text-center text-muted py-3">No templates found. Create one from SMS Configuration.</div>`;
+                        return;
+                    }
+
+                    grid.innerHTML = templates.map(t => `
+                <div class="col-6 mb-2">
+                    <div class="absent-tpl-card p-2 border rounded" style="cursor:pointer" data-id="${t.id}" data-message="${t.message.replace(/"/g, '&quot;')}">
+                        <div class="small font-weight-bold text-truncate">${t.name}</div>
+                        <div class="small text-muted" style="font-size:.72rem; -webkit-line-clamp:2; overflow:hidden; display:-webkit-box; -webkit-box-orient:vertical;">${t.message}</div>
+                    </div>
+                </div>`).join('');
+
+                    document.querySelectorAll('.absent-tpl-card').forEach(card => {
+                        card.addEventListener('click', () => {
+                            document.querySelectorAll('.absent-tpl-card').forEach(c => {
+                                c.classList.remove('border-primary', 'bg-light');
+                            });
+                            card.classList.add('border-primary', 'bg-light');
+
+                            selectedAbsentTemplate = {
+                                id: card.dataset.id,
+                                message: card.dataset.message
+                            };
+
+                            updateAbsentSendButtonState();
+                        });
+                    });
+                })
+                .catch(() => {
+                    document.getElementById('absentTemplateGrid').innerHTML =
+                        `<div class="col-12 text-center text-muted py-3">Failed to load templates.</div>`;
+                });
+        }
+
+        function bindAbsentSmsControls() {
+            const checkboxes = document.querySelectorAll('.absent-sms-check');
+            const selectAll = document.getElementById('absentSelectAll');
+            const btn = document.getElementById('btnSendAbsentSms');
+
+            checkboxes.forEach(cb => cb.addEventListener('change', () => {
+                selectAll.checked = Array.from(checkboxes).every(c => c.checked);
+                updateAbsentSendButtonState();
+            }));
+
+            selectAll.addEventListener('change', () => {
+                checkboxes.forEach(cb => cb.checked = selectAll.checked);
+                updateAbsentSendButtonState();
+            });
+
+
+
+            btn.addEventListener('click', sendAbsentEmployeeSms);
+        }
+
+        function updateAbsentSendButtonState() {
+            const checkedCount = document.querySelectorAll('.absent-sms-check:checked').length;
+            document.getElementById('absentSelectedCount').textContent = checkedCount;
+
+            const btn = document.getElementById('btnSendAbsentSms');
+            btn.disabled = !(checkedCount > 0 && selectedAbsentTemplate);
+        }
+
+        const SMS_API_BASE = '/api/sms-configuration';
+
+        function sendAbsentEmployeeSms() {
+            const checked = Array.from(document.querySelectorAll('.absent-sms-check:checked'));
+            const employeeIds = checked.map(cb => cb.value);
+
+            if (!selectedAbsentTemplate) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Template Required',
+                    text: 'Please select a message template.',
+                    confirmButtonColor: '#2563eb'
+                });
+                return;
+            }
+
+            if (!employeeIds.length) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No Employee Selected',
+                    text: 'Please select at least one employee.',
+                    confirmButtonColor: '#2563eb'
+                });
+                return;
+            }
+
+            Swal.fire({
+                icon: 'question',
+                title: `Send SMS to ${employeeIds.length} employee?`,
+                showCancelButton: true,
+                confirmButtonText: 'Send',
+                confirmButtonColor: '#2563eb',
+                cancelButtonText: 'Cancel'
+            }).then(result => {
+                if (!result.isConfirmed) return;
+
+                const btn = document.getElementById('btnSendAbsentSms');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Sending...';
+
+
+                fetch(`${SMS_API_BASE}/send`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': CSRF_TOKEN
+                        },
+                        body: JSON.stringify({
+                            template_id: selectedAbsentTemplate.id,
+                            message: selectedAbsentTemplate.message,
+                            recipient_type: 'selected',
+                            employee_ids: employeeIds
+                        })
+                    })
+
+                    .then(async r => {
+                        const data = await r.json().catch(() => ({}));
+                        if (!r.ok) throw new Error(data.message || 'Failed to send SMS.');
+                        return data;
+                    })
+                    .then(data => {
+                        Swal.fire({
+                                icon: 'success',
+                                title: 'SMS Sent!',
+                                text: data.message || 'SMS sent successfully.',
+                                confirmButtonColor: '#2563eb'
+                            })
+                            .then(() => $('#kpiDetailModal').modal('hide'));
+                    })
+                    .catch(err => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Failed to Send',
+                            text: err.message,
+                            confirmButtonColor: '#2563eb'
+                        });
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="bi bi-send"></i> Send SMS';
                     });
             });
         }

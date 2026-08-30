@@ -140,16 +140,26 @@ class SmsConfigurationApiController extends Controller
     public function send(Request $request)
     {
 
+        // $data = $request->validate([
+        //     'template_id'     => 'nullable',
+        //     'message'         => 'required|string|max:1000',
+        //     'recipient_type'  => 'required|in:all,department,single',
+        //     'department_ids'  => 'required_if:recipient_type,department|array',
+        //     'contact_id'      => 'nullable|string',
+        //     'contact_type'    => 'nullable|string',
+        //     'phone'           => 'nullable|string|max:20',
+        // ]);
         $data = $request->validate([
             'template_id'     => 'nullable',
             'message'         => 'required|string|max:1000',
-            'recipient_type'  => 'required|in:all,department,single',
+            'recipient_type'  => 'required|in:all,department,single,selected',
             'department_ids'  => 'required_if:recipient_type,department|array',
+            'employee_ids'    => 'required_if:recipient_type,selected|array',
+            'employee_ids.*'  => 'integer|exists:employees,id',
             'contact_id'      => 'nullable|string',
             'contact_type'    => 'nullable|string',
             'phone'           => 'nullable|string|max:20',
         ]);
-
 
 
         $result = $this->smsService->send($data, Auth::id());

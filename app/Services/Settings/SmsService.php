@@ -211,6 +211,7 @@ class SmsService
 
     public function send(array $payload, $userId): array
     {
+
         $config = $this->getConfig();
 
 
@@ -219,6 +220,7 @@ class SmsService
         }
 
         $recipients = $this->resolveRecipients($payload);
+
 
         if (empty($recipients)) {
             return ['success' => false, 'message' => 'No recipients found for the selected option.'];
@@ -270,7 +272,6 @@ class SmsService
                         $response = curl_exec($ch);
                         curl_close($ch);
                     }
-
 
                     $providerResponse = $response;
                     $body = json_decode($providerResponse ?? '', true);
@@ -348,7 +349,7 @@ class SmsService
                 $employee = DB::table('employees')
                     ->leftJoin('positions', 'employees.position_id', '=', 'positions.id')
                     ->where('employees.id', $employeeId)
-                    ->where('employees.status', 'Active')
+                    ->where('employees.employee_status', 'present')
                     ->first([
                         'employees.name',
                         'employees.personal_phone',
@@ -375,7 +376,7 @@ class SmsService
             return DB::table('employees')
                 ->leftJoin('positions', 'employees.position_id', '=', 'positions.id')
                 ->whereIn('employees.position_id', $payload['department_ids'] ?? [])
-                ->where('employees.status', 'Active')
+                ->where('employees.employee_status', 'present')
                 ->get([
                     'employees.name',
                     'employees.personal_phone',
@@ -392,7 +393,36 @@ class SmsService
                 ->toArray();
         }
 
-        // 'all' -- shokol active employee
+
+        if ($payload['recipient_type'] === 'selected') {
+            $employeeIds = $payload['employee_ids'] ?? [];
+
+            if (empty($employeeIds)) {
+                return [];
+            }
+
+            return DB::table('employees')
+                ->leftJoin('positions', 'employees.position_id', '=', 'positions.id')
+                ->whereIn('employees.id', $employeeIds)
+                ->where('employees.employee_status', 'present')
+                ->get([
+                    'employees.name',
+                    'employees.personal_phone',
+                    'employees.present_address',
+                    'positions.name as position_name',
+                ])
+                ->filter(fn($r) => !empty($r->personal_phone))
+                ->map(fn($r) => [
+                    'name'  => $r->name,
+                    'phone' => $r->personal_phone,
+                    'vars'  => $this->buildRecipientVars($r),
+                ])
+                ->values()
+                ->toArray();
+        }
+
+
+
         return DB::table('employees')
             ->leftJoin('positions', 'employees.position_id', '=', 'positions.id')
             ->where('employees.status', 'Active')
