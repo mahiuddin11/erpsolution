@@ -150,6 +150,8 @@ class SmsConfigurationApiController extends Controller
             'phone'           => 'nullable|string|max:20',
         ]);
 
+
+
         $result = $this->smsService->send($data, Auth::id());
 
         return response()->json($result, $result['success'] ? 200 : 422);

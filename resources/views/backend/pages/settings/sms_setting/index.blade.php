@@ -228,9 +228,7 @@
 
     </div>
 
-    {{-- ==========================================================================
-         MODAL: Configure SMS Portal
-    ========================================================================== --}}
+
     <div class="modal fade" id="smsConfigModal" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
@@ -266,13 +264,11 @@
                             </div>
 
                             <div class="col-md-6 ecf-field">
-                                <label>Username (optional)</label>
+                                <label>Secret Key</label>
                                 <input type="text" class="form-control" id="cfgUsername"
                                     placeholder="Only if your provider requires it">
                             </div>
 
-                            {{-- >>> FIX: Password field-e eye-toggle icon jog kora hoyeche,
-                                 jate click korle password ta text hisebe dekha jay. <<< --}}
                             <div class="col-md-6 ecf-field">
                                 <label>Password (optional)</label>
                                 <div class="input-icon-group">
@@ -408,13 +404,13 @@
         }
 
         /* ==========================================================================
-                                                                                                                                                                                                                                   >>> FIX: Button base style -- age ekhane border: 1px solid #0c0101 ar
-                                                                                                                                                                                                                                   .sms-btn-primary e color: #301010 bosano chilo, jar fole nil background-e
-                                                                                                                                                                                                                                   ghar-kalo/lal-kalo lekha khub kom dekha jachhilo (readability nosto).
-                                                                                                                                                                                                                                   Ekhon proper white text, transparent border, hover lift, focus-visible
-                                                                                                                                                                                                                                   outline (accessibility), ar disabled state shoho design kora holo --
-                                                                                                                                                                                                                                   button golo user-friendly ar consistent.
-                                                                                                                                                                                                                                ========================================================================== */
+                                                                                                                                                                                                                                                                               >>> FIX: Button base style -- age ekhane border: 1px solid #0c0101 ar
+                                                                                                                                                                                                                                                                               .sms-btn-primary e color: #301010 bosano chilo, jar fole nil background-e
+                                                                                                                                                                                                                                                                               ghar-kalo/lal-kalo lekha khub kom dekha jachhilo (readability nosto).
+                                                                                                                                                                                                                                                                               Ekhon proper white text, transparent border, hover lift, focus-visible
+                                                                                                                                                                                                                                                                               outline (accessibility), ar disabled state shoho design kora holo --
+                                                                                                                                                                                                                                                                               button golo user-friendly ar consistent.
+                                                                                                                                                                                                                                                                            ========================================================================== */
         .sms-btn {
             display: inline-flex;
             align-items: center;
@@ -1463,36 +1459,26 @@
 
             const btn = document.getElementById('btnSaveConfig');
             btn.disabled = true;
-            apiWrite('/send', 'POST', payload)
+            apiWrite('/config', 'POST', payload)
                 .then(({
                     demo,
                     data
                 }) => {
-
-                    if (data?.success === false) {
-                        throw new Error(
-                            data.message || 'No recipients found for the selected option.'
-                        );
-                    }
-
                     showToast(
                         demo ?
-                        'Demo mode: SMS simulated (not actually sent). Connect the API to send for real.' :
-                        (data?.message || 'SMS queued for sending.'),
+                        'Saved locally in demo mode. Connect the SMS API to make this permanent.' :
+                        'SMS portal configuration saved.',
                         demo ? '' : 'success'
                     );
-
+                    $('#smsConfigModal').modal('hide');
                     loadSmsStats();
                 })
                 .catch(err => {
-                    showToast(
-                        err.message || 'Could not send SMS.',
-                        'error'
-                    );
+                    showToast(err.message || 'Could not save configuration.', 'error');
                 })
                 .finally(() => {
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="bi bi-send"></i> Send SMS';
+                    btn.innerHTML = '<i class="bi bi-check-lg"></i> Save Configuration'; // ✅ thik text
                 });
         });
 
@@ -1888,14 +1874,91 @@
         });
 
         // ---- send ----
+        // document.getElementById('btnSendSms').addEventListener('click', function() {
+        //     const message = document.getElementById('sendMessageBox').value.trim();
+        //     if (!message) {
+        //         showToast('Please select a template or write a message first.', 'error');
+        //         return;
+        //     }
+
+
+
+        //     const payload = {
+        //         template_id: document.getElementById('sendTplSelect').value || null,
+        //         message,
+        //         recipient_type: sendState.mode
+        //     };
+
+
+        //     if (sendState.mode === 'department') {
+        //         if (!sendState.departmentIds.length) {
+        //             showToast('Please select at least one department.', 'error');
+        //             return;
+        //         }
+        //         payload.department_ids = sendState.departmentIds;
+        //     }
+
+        //     if (sendState.mode === 'single') {
+
+        //         if (sendState.selectedContact) {
+        //             payload.contact_id = sendState.selectedContact.id; // employid na, contact_id
+        //         } else if (sendState.manualNumber) {
+        //             payload.phone = sendState.manualNumber;
+        //         } else {
+        //             showToast('Please select a recipient or enter a phone number.', 'error');
+        //             return;
+        //         }
+        //     }
+
+        //     if (!confirm('Send this SMS now? This action cannot be undone.')) return;
+
+        //     const btn = this;
+        //     btn.disabled = true;
+        //     btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Sending...';
+
+        //     apiWrite('/send', 'POST', payload)
+        //         .then(({
+        //             demo,
+        //             data
+        //         }) => {
+        //             const successMsg = demo ?
+        //                 'Demo mode: SMS simulated (not actually sent). Connect the API to send for real.' :
+        //                 (data?.message || 'SMS sent successfully.');
+
+        //             Swal.fire({
+        //                 icon: demo ? 'info' : 'success',
+        //                 title: demo ? 'Demo Mode' : 'SMS Sent!',
+        //                 text: successMsg,
+        //                 confirmButtonColor: '#2563eb'
+        //             }).then(() => {
+        //                 if (!demo) {
+        //                     window.location.reload();
+        //                 }
+        //             });
+        //         })
+        //         .catch(err => {
+        //             Swal.fire({
+        //                 icon: 'error',
+        //                 title: 'Failed to Send',
+        //                 text: err.message || 'Could not send SMS.',
+        //                 confirmButtonColor: '#2563eb'
+        //             });
+        //             btn.disabled = false;
+        //             btn.innerHTML = '<i class="bi bi-send"></i> Send SMS';
+        //         });
+        // });
+
         document.getElementById('btnSendSms').addEventListener('click', function() {
             const message = document.getElementById('sendMessageBox').value.trim();
             if (!message) {
-                showToast('Please select a template or write a message first.', 'error');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Message Required',
+                    text: 'Please select a template or write a message first.',
+                    confirmButtonColor: '#2563eb'
+                });
                 return;
             }
-
-
 
             const payload = {
                 template_id: document.getElementById('sendTplSelect').value || null,
@@ -1903,55 +1966,78 @@
                 recipient_type: sendState.mode
             };
 
-
             if (sendState.mode === 'department') {
                 if (!sendState.departmentIds.length) {
-                    showToast('Please select at least one department.', 'error');
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Select Department',
+                        text: 'Please select at least one department.',
+                        confirmButtonColor: '#2563eb'
+                    });
                     return;
                 }
                 payload.department_ids = sendState.departmentIds;
             }
 
             if (sendState.mode === 'single') {
-
                 if (sendState.selectedContact) {
-                    payload.contact_id = sendState.selectedContact.id; // employid na, contact_id
+                    payload.contact_id = sendState.selectedContact.id;
                 } else if (sendState.manualNumber) {
                     payload.phone = sendState.manualNumber;
                 } else {
-                    showToast('Please select a recipient or enter a phone number.', 'error');
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Recipient Required',
+                        text: 'Please select a recipient or enter a phone number.',
+                        confirmButtonColor: '#2563eb'
+                    });
                     return;
                 }
             }
 
-            if (!confirm('Send this SMS now? This action cannot be undone.')) return;
+            Swal.fire({
+                icon: 'question',
+                title: 'Send this SMS now?',
+                text: 'This action cannot be undone.',
+                showCancelButton: true,
+                confirmButtonText: 'Send',
+                confirmButtonColor: '#2563eb',
+                cancelButtonText: 'Cancel'
+            }).then(result => {
+                if (!result.isConfirmed) return;
 
-            const btn = this;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Sending...';
+                const btn = document.getElementById('btnSendSms');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Sending...';
 
-            apiWrite('/send', 'POST', payload)
-                .then(({
-                    demo,
-                    data
-                }) => {
-                    showToast(
-                        demo ?
-                        'Demo mode: SMS simulated (not actually sent). Connect the API to send for real.' :
-                        (data?.message || 'SMS queued for sending.'),
-                        demo ? '' : 'success'
-                    );
-                    loadSmsStats();
-                })
-                .catch(err => {
-                    showToast(err.message || 'Could not send SMS.', 'error');
-                })
-                .finally(() => {
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="bi bi-send"></i> Send SMS';
-                });
+                apiWrite('/send', 'POST', payload)
+                    .then(({
+                        demo,
+                        data
+                    }) => {
+                        Swal.fire({
+                            icon: demo ? 'info' : 'success',
+                            title: demo ? 'Demo Mode' : 'SMS Sent!',
+                            text: demo ?
+                                'Demo mode: SMS simulated (not actually sent). Connect the API to send for real.' :
+                                (data?.message || 'SMS sent successfully.'),
+                            confirmButtonColor: '#2563eb'
+                        }).then(() => {
+                            if (!demo) window.location.reload();
+                        });
+                    })
+                    .catch(err => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Failed to Send',
+                            text: err.message || 'Could not send SMS.',
+                            confirmButtonColor: '#2563eb'
+                        });
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="bi bi-send"></i> Send SMS';
+                    });
+            });
         });
-
 
         renderVarChips();
         loadSmsStats();

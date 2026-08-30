@@ -3,6 +3,7 @@
 
 namespace App\Services\Settings;
 
+use App\Models\Employee;
 use App\Models\SmsConfiguration;
 use App\Models\SmsLog;
 use App\Models\SmsTemplate;
@@ -140,9 +141,9 @@ class SmsService
 
     public function allEmployeeCount(): int
     {
-        return DB::table('employees')
-            ->where('status', 'Active') // correct active-status column/value
+        $employee = Employee::where('employee_status', 'present')
             ->count();
+        return  $employee;
     }
 
     public function departmentsWithCount()
@@ -150,7 +151,7 @@ class SmsService
         return DB::table('positions')
             ->leftJoin('employees', function ($join) {
                 $join->on('employees.position_id', '=', 'positions.id')
-                    ->where('employees.status', 'Active')
+                    // ->where('employees.status', 'Active')
                     ->where('employees.employee_status', 'present');
             })
             ->select('positions.id', 'positions.name', DB::raw('COUNT(employees.id) as employee_count'))
@@ -212,6 +213,7 @@ class SmsService
     {
         $config = $this->getConfig();
 
+
         if (!$config || !$config->enabled) {
             return ['success' => false, 'message' => 'SMS portal is not configured or is disabled.'];
         }
@@ -225,6 +227,7 @@ class SmsService
         $sentCount = 0;
         $failedCount = 0;
         $lastErrorMessage = null;
+
 
         foreach ($recipients as $recipient) {
             $personalizedMessage = $this->fillTemplate($payload['message'], $recipient['vars'] ?? []);
@@ -245,41 +248,39 @@ class SmsService
                     $providerResponse = 'Invalid phone number format: ' . $recipient['phone'];
                 } else {
 
-                    // $response = Http::asForm()->timeout(10)->post($config->api_url, [
-                    //     'api_key'  => $config->api_key,
-                    //     'senderid' => $config->sender_id,
-                    //     'number'   => $number,
-                    //     'message'  => $personalizedMessage,
-                    // ]);
+                    $data = [
+                        "apikey" => $config->api_key,
+                        "secretkey" => $config->username,
+                        "callerID" => $config->sender_id,
+                        "toUser" => $number,
+                        "messageContent" => $personalizedMessage
+                    ];
 
-                    $curl = curl_init();
-                    curl_setopt_array($curl, array(
-                        CURLOPT_URL => $config->api_url,
-                        CURLOPT_RETURNTRANSFER => true,
-                        CURLOPT_CUSTOMREQUEST => 'POST',
-                        CURLOPT_POSTFIELDS => array(
-                            'api_key' => $config->api_key,
-                            'msg' => $personalizedMessage,
-                            'to' => $number
-                        ),
-                    ));
+                    $response = null;
 
-                    $response = curl_exec($curl);
+                    if ($config->enabled == 1) {
 
-                    dd('response', $response);
-                    // curl_close($curl);
-
-                    $providerResponse = $response->body();
-                    $body = json_decode($providerResponse, true);
+                        $ch = curl_init();
+                        curl_setopt($ch, CURLOPT_URL, $config->api_url);
+                        curl_setopt($ch, CURLOPT_POST, 1);
+                        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+                        $response = curl_exec($ch);
+                        curl_close($ch);
+                    }
 
 
-                    $responseCode = $body['response_code'] ?? null;
-                    $status = ((int) $responseCode === 202) ? 'Sent' : 'Rejected';
+                    $providerResponse = $response;
+                    $body = json_decode($providerResponse ?? '', true);
 
-
+                    $status = (isset($body['Status']) && (string) $body['Status'] === '0' && !empty($body['Message_ID']))
+                        ? 'Sent'
+                        : 'Rejected';
 
                     if ($status === 'Rejected') {
-                        $lastErrorMessage = $body['error_message'] ?? "Provider error code: {$responseCode}";
+                        $lastErrorMessage = $body['StatusDescription'] ?? $body['Text'] ?? 'Unknown provider error';
                     }
                 }
             } catch (\Throwable $e) {
@@ -300,6 +301,10 @@ class SmsService
                 'provider_response' => $providerResponse,
                 'sent_by'           => $userId,
             ]);
+        }
+
+        if ($sentCount > 0) {
+            $this->refreshBalance($config);
         }
 
         $message = "SMS queued: {$sentCount} sent, {$failedCount} failed.";
@@ -407,6 +412,47 @@ class SmsService
             ->toArray();
     }
 
+    private function refreshBalance(SmsConfiguration $config): void
+    {
+        try {
+            $urlBalanceCheck = 'https://portal.khudebarta.com:3770/api/v3/balance';
+            $balanceData = [
+                'apikey'        => $config->api_key,
+                'secretkey'     => $config->username,
+                'clienttransid' => (string) \Illuminate\Support\Str::uuid(),
+            ];
+
+            $response = null;
+
+            if ($config->enabled == 1) {
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $urlBalanceCheck);
+                curl_setopt($ch, CURLOPT_POST, 1);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($balanceData));
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Khudebarta cert expired thakle/hang korle jate SMS send block na hoy
+                curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+                $response = curl_exec($ch);
+                curl_close($ch);
+            }
+
+            $providerResponse = $response;
+            $body = json_decode($providerResponse ?? '', true);
+
+            // Khudebarta balance nested thake statusInfo.availablebalance-e
+            $balance = $body['statusInfo']['availablebalance'] ?? null;
+
+            if ($balance !== null) {
+                $config->update([
+                    'last_known_balance' => (float) $balance,
+                    'balance_checked_at' => Carbon::now(),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            // Silent fail -- balance check e problem hole SMS sending process block hobe na.
+        }
+    }
 
     public function listTemplates()
     {
