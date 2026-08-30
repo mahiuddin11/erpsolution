@@ -14,4 +14,6 @@ step 6: stock table e status change korte hobe
 step 7 : stock adjuest ment table e data thakle checck kore remove korte hobe 
 
 
+sms template migration and seeding template 
 
+php artisan db:seed --class=SmsTemplateSeeder

@@ -34,8 +34,7 @@ class HrmDashboardApiController extends Controller
         $monthStart = Carbon::now()->startOfMonth();
         $monthEnd   = Carbon::now()->endOfMonth();
 
-        $totalEmployee = Employee::where('status', 'Active')
-            ->where('employee_status', 'present')
+        $totalEmployee = Employee::where('employee_status', 'present')
             ->count();
 
         $todayPresent = Attendance::whereDate('date', $today)
