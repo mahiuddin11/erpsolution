@@ -337,7 +337,6 @@ class SaleRepositories
     public function update($request, $id)
     {
 
-
         DB::beginTransaction();
         try {
             $finalprice = (array_sum($request->price) + $request->carrying_cost + $request->labor_bill) - $request->discount;

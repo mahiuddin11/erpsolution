@@ -87,7 +87,7 @@
                                 @enderror
                             </div>
 
-                            <div class="col-md-2 mb-3">
+                            {{-- <div class="col-md-2 mb-3">
                                 <label for="validationCustom01">Branch * :</label>
                                 <select class="form-control select2" id="branch_id" name="branch_id">
                                     <option selected disabled value="">--Select Branch--</option>
@@ -115,9 +115,38 @@
                                 @error('sub_warehouse_id')
                                     <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror
+                            </div> --}}
+
+
+                            <div class="col-md-2 mb-3">
+                                <label for="validationCustom01">Branch * :</label>
+                                <select class="form-control select2" id="branch_id" name="branch_id"
+                                    onchange="getWarehousesByBranch(this.value)">
+                                    <option selected disabled value="">--Select Branch--</option>
+                                    @foreach ($branch as $key => $value)
+                                        <option value="{{ $value->id }}">
+                                            {{ $value->branchCode . ' - ' . $value->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('branch_id')
+                                    <span class="error text-red text-bold">{{ $message }}</span>
+                                @enderror
                             </div>
 
 
+                            <div class="col-md-2 mb-3">
+                                <label for="validationCustom02">Sub-Warehouse * :</label>
+                                <select class="form-control select2" id="sub_warehouse_id" name="sub_warehouse_id">
+                                    <option selected disabled value="">--Select Branch First--</option>
+                                </select>
+
+                                <input type="hidden" name="warehouse_source" id="warehouse_source" value="">
+
+                                @error('sub_warehouse_id')
+                                    <span class="error text-red text-bold">{{ $message }}</span>
+                                @enderror
+                            </div>
 
                             {{-- <div class="col-md-2 mb-3">
                             <label for="validationCustom01">Customer * :</label>
@@ -789,17 +818,17 @@
 
                     $("#show_item tbody").append('<tr class="new_item' + proId +
                         '">\n\
-                                                                                                                                                                                                                                                                                                                                                                                                <td style="padding-left:15px;">' +
+                                                                                                                                                                                                                                                                                                                                                                                                                            <td style="padding-left:15px;">' +
                         catName +
                         '<input type="hidden" name="catName[]" value="' +
                         catId +
                         '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                                                                                <td align="right">' +
+                                                                                                                                                                                                                                                                                                                                                                                                                            <td align="right">' +
                         proName +
                         '<input type="hidden" class="add_quantity" name="proName[]" value="' +
                         proId +
                         '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                                                                                <td align="right">' +
+                                                                                                                                                                                                                                                                                                                                                                                                                            <td align="right">' +
                         purchasetypetext +
                         '<input type="hidden" class="add_quantity" name="purchasetype[]" value="' +
                         purchasetypeval +
@@ -812,14 +841,14 @@
                         '<input type="hidden" class="ttlunitprice unitparice" name="unitprice[]" value="' +
                         unitprice +
                         '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                                                                                <td align="right">' +
+                                                                                                                                                                                                                                                                                                                                                                                                                            <td align="right">' +
                         total +
                         '<input type="hidden" class="grandtotal" name="total[]" value="' +
                         total +
                         '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                                                                                \n\
-                                                                                                                                                                                                                                                                                                                                                                                                \n\
-                                                                                                                                                                                                                                                                                                                                                                                                <td><a del_id="' +
+                                                                                                                                                                                                                                                                                                                                                                                                                            \n\
+                                                                                                                                                                                                                                                                                                                                                                                                                            \n\
+                                                                                                                                                                                                                                                                                                                                                                                                                            <td><a del_id="' +
                         proId +
                         '" class="delete_item btn form-control btn-danger" href="javascript:;" title=""><i class="fa fa-times"></i></a></td></tr>'
                     );
@@ -870,7 +899,45 @@
             });
         });
 
+        function getWarehousesByBranch(branch_id) {
+            if (!branch_id) return;
 
+            $.ajax({
+                url: "{{ route('inventorySetup.getWarehousesByBranch') }}",
+                type: "GET",
+                dataType: 'json',
+                cache: false,
+                data: {
+                    "_token": "{{ csrf_token() }}",
+                    branch_id: branch_id
+                },
+                success: function(response) {
+                    let $warehouseSelect = $('#sub_warehouse_id');
+
+                    $warehouseSelect.select2('destroy');
+
+                    $warehouseSelect.empty().append(
+                        '<option selected disabled value="">--Select Warehouse--</option>');
+
+                    if (response.data.length > 0) {
+                        $.each(response.data, function(index, item) {
+                            $warehouseSelect.append(
+                                `<option value="${item.id}">${item.text}</option>`
+                            );
+                        });
+                    } else {
+                        $warehouseSelect.append('<option disabled value="">--No Warehouse Found--</option>');
+                    }
+
+                    $('#warehouse_source').val(response.source);
+
+                    $warehouseSelect.select2();
+                },
+                error: function() {
+                    alertMessage.error('Failed to load warehouses for this branch.');
+                }
+            });
+        }
 
         function checkDepositAndCreditBalance() {
 

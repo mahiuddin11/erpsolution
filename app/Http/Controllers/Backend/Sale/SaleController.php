@@ -23,6 +23,7 @@ use App\Models\PurchasesDetails;
 use App\Models\ReturnDeposit;
 use App\Models\sales_Details;
 use App\Models\Transection;
+use App\Models\Warehouse;
 use DB;
 use App\Services\Sale\SalesService;
 use App\Transformers\SalesTransformer;
@@ -130,7 +131,23 @@ class SaleController extends Controller
         $branch = $branch->get();
         $customerGroup = CustomerGroup::all();
 
-        $wearhouses = Branch::where("parent_id", "!=", 0)->where('status', 'Active')->get();
+        // $wearhouses = Branch::where("parent_id", "!=", 0)->where('status', 'Active')->get();
+
+        $usingNewWarehouseTable = false;
+        $wearhouses = Warehouse::where('status', 'Active')->get();
+
+        if ($wearhouses->isNotEmpty()) {
+            $usingNewWarehouseTable = true;
+            $wearhouses = $wearhouses->map(function ($w) {
+                return (object) [
+                    'id'            => $w->id,
+                    'warehouseCode' => $w->warehouseCode ?? '',
+                    'name'          => $w->name,
+                ];
+            });
+        } else {
+            $wearhouses = Branch::where("parent_id", "!=", 0)->where('status', 'Active')->get();
+        }
 
         if ($user->type == "Admin" || $user->branch_id) {
             $account = ChartOfAccount::whereIn('id', [16, 17])->get()->where('status', 'Active');
@@ -234,8 +251,27 @@ class SaleController extends Controller
             ->where('employee_status', 'present')
             ->select('id', 'name', 'id_card')
             ->get();
+        // $saletlist = Sale::findOrFail($id);
+        // $subWarehouses = Branch::where("parent_id", "!=", 0)->where('status', 'Active')->get();
+
         $saletlist = Sale::findOrFail($id);
-        $subWarehouses = Branch::where("parent_id", "!=", 0)->where('status', 'Active')->get();
+        $selectedWarehouse = Warehouse::find($saletlist->branch_id);
+
+        if ($selectedWarehouse) {
+            $warehouseSource = 'new';
+            $selectedParentBranchId = $selectedWarehouse->branch_id;
+            $subWarehouses = Warehouse::where('branch_id', $selectedParentBranchId)
+                ->where('status', 'Active')
+                ->get();
+        } else {
+            $warehouseSource = 'old';
+            $selectedSubBranch = Branch::find($saletlist->branch_id);
+            $selectedParentBranchId = $selectedSubBranch->parent_id ?? null;
+            $subWarehouses = Branch::where('parent_id', $selectedParentBranchId)
+                ->where('status', 'Active')
+                ->get();
+        }
+
         $saledetails = sales_Details::where('sale_id', $id)->get();
         return view('backend.pages.sale.edit', get_defined_vars());
     }
