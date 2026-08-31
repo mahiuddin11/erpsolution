@@ -234,9 +234,6 @@ class PurchaseRepositories
             $nestedData['date'] = $purchase->date;
             $nestedData['branch'] = $purchase->branch->name ?? 'N/A';
 
-            /* =========================
-            Supplier / Ledger Logic (FIXED)
-        ========================= */
             $partyName = 'N/A';
 
             if (!empty($purchase->supplier_id) && $purchase->supplier) {
@@ -251,10 +248,9 @@ class PurchaseRepositories
             $nestedData['subtotal'] = $purchase->subtotal;
             $nestedData['discount'] = $purchase->discount;
             $nestedData['grand_total'] = $purchase->grand_total;
+            $nestedData['net_total'] = $purchase->net_total;
 
-            /* =========================
-           STATUS TOGGLE
-        ========================= */
+
             if ($purchase->status == 'Active') :
                 $status = '<input class="status_row" status_route="' . route('inventorySetup.purchase.status', [$purchase->id, 'Inactive']) . '"   id="toggle-demo" type="checkbox" name="my-checkbox" checked data-bootstrap-switch data-off-color="danger" data-on-color="success">';
             else :
@@ -402,6 +398,8 @@ class PurchaseRepositories
 
     public function getpvList($request)
     {
+
+
         $columns = [
             0 => 'id',
             1 => 'invoice_no',
@@ -456,7 +454,7 @@ class PurchaseRepositories
             $nestedData['id'] = $key + 1;
             $nestedData['invoice_no'] = $purchase->invoice_no;
             $nestedData['date'] = $purchase->date;
-            $nestedData['branch'] = $purchase->branch->name ?? 'N/A';
+            // $nestedData['branch'] = $purchase->branch->name ?? 'N/A';
             $nestedData['project'] = $purchase->project->name ?? 'N/A';
 
 
@@ -483,11 +481,12 @@ class PurchaseRepositories
 
             $nestedData['supplier'] = $supplierHtml ?: 'N/A';
             $nestedData['payment_type'] = $purchase->payment_type;
+            $nestedData['quantity'] = $purchase->quantity;
             $nestedData['subtotal'] = $purchase->subtotal;
             $nestedData['discount'] = $purchase->discount;
             $nestedData['grand_total'] = $purchase->grand_total;
+            $nestedData['net_total'] = $purchase->net_total;
             $nestedData['status'] = $purchase->status == 'Active' ? 'Accepted' : 'Pending';
-
 
             if ($ced != 0) {
 

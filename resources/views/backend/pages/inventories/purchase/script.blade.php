@@ -11,62 +11,67 @@
             }
         },
         "columns": [{
-            "data": "id",
-            "orderable": true
-        },
-        {
-            "data": "invoice_no",
-            "orderable": true
-        },
-        {
-            "data": "date",
-            "orderable": true
-        },
-        {
-            "data": "branch",
-            "orderable": true,
-            "orderable": false
-        },
-        {
-            "data": "supplier",
-            "orderable": true,
-            "orderable": false
-        },
-        {
-            "data": "payment_type",
-            "orderable": true
-        },
-        {
-            "data": "quantity",
-            "orderable": true
-        },
-        {
-            "data": "subtotal",
-            "orderable": true
-        },
-        {
-            "data": "discount",
-            "orderable": true
-        },
-        {
-            "data": "grand_total",
-            "orderable": true
-        },
+                "data": "id",
+                "orderable": true
+            },
+            {
+                "data": "invoice_no",
+                "orderable": true
+            },
+            {
+                "data": "date",
+                "orderable": true
+            },
+            {
+                "data": "branch",
+                "orderable": true,
+                "orderable": false
+            },
+            {
+                "data": "supplier",
+                "orderable": true,
+                "orderable": false
+            },
+            {
+                "data": "payment_type",
+                "orderable": true
+            },
+            {
+                "data": "quantity",
+                "orderable": true
+            },
+            {
+                "data": "subtotal",
+                "orderable": true
+            },
+            {
+                "data": "grand_total",
+                "orderable": true
+            },
+            {
+                "data": "discount",
+                "orderable": true
+            },
 
-        {
-            "data": "status",
-            "orderable": false,
-            "class": 'text-nowrap',
-        },
-        {
-            "data": "action",
-            "class": 'text-nowrap',
-            "searchable": false,
-            "orderable": false
-        },
+            {
+                "data": "net_total",
+                "orderable": true
+            },
+
+            {
+                "data": "status",
+                "orderable": false,
+                "class": 'text-nowrap',
+            },
+            {
+                "data": "action",
+                "class": 'text-nowrap',
+                "searchable": false,
+                "orderable": false
+            },
         ],
 
-        "fnDrawCallback": function () {
+        "fnDrawCallback": function() {
             $("[name='my-checkbox']").bootstrapSwitch({
                 size: "small",
                 onColor: "success",
