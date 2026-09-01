@@ -24,10 +24,10 @@ use App\Models\ReturnDeposit;
 use App\Models\sales_Details;
 use App\Models\Transection;
 use App\Models\Warehouse;
-use DB;
 use App\Services\Sale\SalesService;
 use App\Transformers\SalesTransformer;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\ValifdationException;
 use Illuminate\Support\Facades\Validator;
@@ -114,15 +114,162 @@ class SaleController extends Controller
     /**
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
+
+    // public function create()
+    // {
+    //     $title = 'Add New sale';
+
+
+    //     $category_info = Category::where('status', 'Active')->get();
+    //     $customer = Customer::where('status', 'Active')->get();
+    //     $ledgers = ChartOfAccount::whereIn('id', [getAccountByUniqueID(5)->id, getAccountByUniqueID(16)->id])->get();
+    //     // $branch = Branch::get()->where('status', 'Active');
+    //     $user = auth()->user();
+    //     $branch = Branch::where("parent_id", 0)->where('status', 'Active');
+    //     if ($user->branch_id) {
+    //         $branch = $branch->where('id', $user->branch_id);
+    //     }
+    //     $branch = $branch->get();
+    //     $customerGroup = CustomerGroup::all();
+
+    //     // $wearhouses = Branch::where("parent_id", "!=", 0)->where('status', 'Active')->get();
+
+    //     $usingNewWarehouseTable = false;
+    //     $wearhouses = Warehouse::where('status', 'Active')->get();
+
+    //     if ($wearhouses->isNotEmpty()) {
+    //         $usingNewWarehouseTable = true;
+    //         $wearhouses = $wearhouses->map(function ($w) {
+    //             return (object) [
+    //                 'id'            => $w->id,
+    //                 'warehouseCode' => $w->warehouseCode ?? '',
+    //                 'name'          => $w->name,
+    //             ];
+    //         });
+    //     } else {
+    //         $wearhouses = Branch::where("parent_id", "!=", 0)->where('status', 'Active')->get();
+    //     }
+
+    //     if ($user->type == "Admin" || $user->branch_id) {
+    //         $account = ChartOfAccount::whereIn('id', [16, 17])->where('status', 'Active')->get();
+    //     } elseif ($user->type == "Admin" || !$user->branch_id) {
+    //         $account = ChartOfAccount::whereIn('id', [16, 17])->where('status', 'Active')->where('branch_id', $user->branch_id)->get();
+    //     }
+
+    //     $saleLastData = Sale::latest('id')->first();
+    //     if ($saleLastData) :
+    //         $saleData = $saleLastData->id + 1;
+    //     else :
+    //         $saleData = 1;
+    //     endif;
+    //     $employees = Employee::where('status', 'Active')
+    //         ->where('employee_status', 'present')
+    //         ->select('id', 'name', 'id_card')
+    //         ->get();
+
+    //     $invoice_no = 'SV' . str_pad($saleData, 5, "0", STR_PAD_LEFT);
+    //     return view('backend.pages.sale.create', get_defined_vars());
+    // }
+
+    // public function create()
+    // {
+    //     DB::enableQueryLog();
+    //     $start = microtime(true);
+
+    //     $title = 'Add New sale';
+
+    //     $category_info = Category::where('status', 'Active')->get();
+    //     $customer = Customer::where('status', 'Active')->get();
+
+    //     $ledgers = ChartOfAccount::whereIn('id', [getAccountByUniqueID(5)->id, getAccountByUniqueID(16)->id])
+    //         ->with([
+    //             'parent',
+    //             'subAccount.parent',
+    //             'subAccount.subAccount.parent',
+    //             'subAccount.subAccount.subAccount.parent',
+    //         ])
+    //         ->get();
+
+    //     $user = auth()->user();
+    //     $branch = Branch::where("parent_id", 0)->where('status', 'Active');
+    //     if ($user->branch_id) {
+    //         $branch = $branch->where('id', $user->branch_id);
+    //     }
+    //     $branch = $branch->get();
+    //     $customerGroup = CustomerGroup::all();
+
+    //     $usingNewWarehouseTable = false;
+    //     $wearhouses = Warehouse::where('status', 'Active')->get();
+
+    //     if ($wearhouses->isNotEmpty()) {
+    //         $usingNewWarehouseTable = true;
+    //         $wearhouses = $wearhouses->map(function ($w) {
+    //             return (object) [
+    //                 'id'            => $w->id,
+    //                 'warehouseCode' => $w->warehouseCode ?? '',
+    //                 'name'          => $w->name,
+    //             ];
+    //         });
+    //     } else {
+    //         $wearhouses = Branch::where("parent_id", "!=", 0)->where('status', 'Active')->get();
+    //     }
+
+    //     $accountEagerLoad = [
+    //         'parent',
+    //         'subAccount.parent',
+    //         'subAccount.subAccount.parent',
+    //         'subAccount.subAccount.subAccount.parent',
+    //     ];
+
+    //     if ($user->type == "Admin" || $user->branch_id) {
+    //         $account = ChartOfAccount::whereIn('id', [16, 17])->where('status', 'Active')->with($accountEagerLoad)->get();
+    //     } elseif ($user->type == "Admin" || !$user->branch_id) {
+    //         $account = ChartOfAccount::whereIn('id', [16, 17])->where('status', 'Active')->where('branch_id', $user->branch_id)->with($accountEagerLoad)->get();
+    //     }
+
+    //     $saleLastData = Sale::latest('id')->first();
+    //     if ($saleLastData) :
+    //         $saleData = $saleLastData->id + 1;
+    //     else :
+    //         $saleData = 1;
+    //     endif;
+    //     $employees = Employee::where('status', 'Active')
+    //         ->where('employee_status', 'present')
+    //         ->select('id', 'name', 'id_card')
+    //         ->get();
+
+    //     $invoice_no = 'SV' . str_pad($saleData, 5, "0", STR_PAD_LEFT);
+
+
+    //     $html = view('backend.pages.sale.create', get_defined_vars())->render();
+
+
+    //     $queries = DB::getQueryLog();
+    //     $totalTime = 0;
+    //     foreach ($queries as $q) {
+    //         $totalTime += $q['time'];
+    //     }
+    //     \Log::info('SALE CREATE PAGE (with render) - Total queries: ' . count($queries) . ', Total DB time: ' . $totalTime . 'ms, Total execution time: ' . round((microtime(true) - $start) * 1000, 2) . 'ms');
+
+    //     return response($html);
+    // }
+
     public function create()
     {
         $title = 'Add New sale';
 
+        $category_info = Category::where('status', 'Active')->get();
+        $customer = Customer::where('status', 'Active')->get();
 
-        $category_info = Category::get()->where('status', 'Active');
-        $customer = Customer::get()->where('status', 'Active');
-        $ledgers = ChartOfAccount::whereIn('id', [getAccountByUniqueID(5)->id, getAccountByUniqueID(16)->id])->get();
-        // $branch = Branch::get()->where('status', 'Active');
+        $ledgers = ChartOfAccount::whereIn('id', [getAccountByUniqueID(5)->id, getAccountByUniqueID(16)->id])
+            ->with([
+                'parent',
+                'subAccount.parent',
+                'subAccount.subAccount.parent',
+                'subAccount.subAccount.subAccount.parent',
+            ])
+            ->get();
+
         $user = auth()->user();
         $branch = Branch::where("parent_id", 0)->where('status', 'Active');
         if ($user->branch_id) {
@@ -130,8 +277,6 @@ class SaleController extends Controller
         }
         $branch = $branch->get();
         $customerGroup = CustomerGroup::all();
-
-        // $wearhouses = Branch::where("parent_id", "!=", 0)->where('status', 'Active')->get();
 
         $usingNewWarehouseTable = false;
         $wearhouses = Warehouse::where('status', 'Active')->get();
@@ -149,10 +294,17 @@ class SaleController extends Controller
             $wearhouses = Branch::where("parent_id", "!=", 0)->where('status', 'Active')->get();
         }
 
+        $accountEagerLoad = [
+            'parent',
+            'subAccount.parent',
+            'subAccount.subAccount.parent',
+            'subAccount.subAccount.subAccount.parent',
+        ];
+
         if ($user->type == "Admin" || $user->branch_id) {
-            $account = ChartOfAccount::whereIn('id', [16, 17])->get()->where('status', 'Active');
+            $account = ChartOfAccount::whereIn('id', [16, 17])->where('status', 'Active')->with($accountEagerLoad)->get();
         } elseif ($user->type == "Admin" || !$user->branch_id) {
-            $account = ChartOfAccount::whereIn('id', [16, 17])->get()->where('status', 'Active')->where('branch_id', $user->branch_id);
+            $account = ChartOfAccount::whereIn('id', [16, 17])->where('status', 'Active')->where('branch_id', $user->branch_id)->with($accountEagerLoad)->get();
         }
 
         $saleLastData = Sale::latest('id')->first();
@@ -167,6 +319,7 @@ class SaleController extends Controller
             ->get();
 
         $invoice_no = 'SV' . str_pad($saleData, 5, "0", STR_PAD_LEFT);
+
         return view('backend.pages.sale.create', get_defined_vars());
     }
 

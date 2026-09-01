@@ -61,7 +61,7 @@ Route::middleware('auth')->prefix('pos-dashboard')->group(function () {
     Route::get('top-products', [PosDashboardApiController::class, 'topProducts']);
     Route::get('product-invoices/{productId}', [PosDashboardApiController::class, 'productInvoices']);
     Route::get('sale-invoice/{saleId}', [PosDashboardApiController::class, 'saleInvoiceDetail']);
-    Route::get('recent-transactions', [PosDashboardApiController::class, 'recentTransactions']);
+    Route::get('recent-purchase-sales', [PosDashboardApiController::class, 'recentPurchaseSales']);
     Route::get('product-consumption', [PosDashboardApiController::class, 'productConsumption']);
     Route::get('project-options', [PosDashboardApiController::class, 'projectOptions']);
     Route::get('product-options', [PosDashboardApiController::class, 'productOptions']);

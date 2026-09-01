@@ -40,6 +40,13 @@
         }
 
         @media (max-width: 768px) {
+            .txn-invoice-modal-dialog {
+                max-width: 95vw;
+                width: 95vw;
+                height: 90vh;
+                margin: 5vh auto;
+            }
+
             .chart-wrap {
                 height: 220px;
             }
@@ -227,11 +234,7 @@
             font-size: .78rem;
         }
 
-        /* ==========================================================================
-                                                                                   Financial-Dashboard style, ported to POS -- flat white KPI cards,
-                                                                                   consistent panel headers, pill-shaped controls, light color palette.
-                                                                                   Scoped to this page only (dashboard-wrap already shared globally).
-                                                                                   ========================================================================== */
+
         .pos-wrap {
             --fin-green: #10b981;
             --fin-green-dark: #059669;
@@ -359,6 +362,23 @@
             color: #dc2626;
         }
 
+        .txn-invoice-modal-dialog {
+            max-width: 90vw;
+            width: 90vw;
+            height: 90vh;
+            margin: 5vh auto;
+        }
+
+        .txn-invoice-modal-dialog .modal-content {
+            height: 100%;
+        }
+
+        .txn-invoice-modal-dialog .modal-body {
+            height: calc(100% - 56px);
+            /* header height baad diye */
+        }
+
+
         /* ---- Panel header -- title left, helper text/legend right ---- */
         .panel-header.fin-panel-header {
             display: flex;
@@ -385,6 +405,8 @@
             border: 1px dashed #a7f3d0;
             color: var(--fin-green-dark, #059669);
         }
+
+
 
         @media (max-width: 480px) {
             .pos-toolbar {
@@ -490,8 +512,12 @@
             <div class="col-lg-6">
                 <div class="panel h-100">
                     <div class="panel-header fin-panel-header">
-                        <span class="fin-panel-title"><i class="bi bi-receipt"></i> Recent Transactions</span>
-                        <span class="text-muted small">Click for invoice</span>
+                        <span class="fin-panel-title"><i class="bi bi-receipt"></i> Recent Purchases & Sales</span>
+                        <div class="search-box" style="min-width:190px">
+                            <i class="bi bi-search"></i>
+                            <input type="text" id="recentTxnSearch" class="form-control form-control-sm"
+                                placeholder="Search invoice, party...">
+                        </div>
                     </div>
                     <div class="panel-body">
                         <div class="scroll-box" id="recentTransactionsList"></div>
@@ -599,18 +625,33 @@
         </div>
     </div>
 
-    {{-- Single Sale Invoice Modal --}}
-    <div class="modal fade" id="saleInvoiceModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-dialog-scrollable" role="document">
+    <div class="modal fade" id="quickActionModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog txn-invoice-modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Invoice Details</h5>
+                    <h5 class="modal-title" id="quickActionModalTitle">Action</h5>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
-                <div class="modal-body" id="saleInvoiceModalBody">
-                    <div class="text-center text-muted py-3">Loading...</div>
+                <div class="modal-body p-0">
+                    <div id="quickActionLoading" class="text-center text-muted py-5">Loading...</div>
+                    <iframe id="quickActionIframe" style="width:100%;height:100%;border:0;display:none;"></iframe>
                 </div>
-                <div class="modal-footer" id="saleInvoiceModalFooter"></div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Single Sale Invoice Modal --}}
+    <div class="modal fade" id="txnInvoiceModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog txn-invoice-modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="txnInvoiceModalTitle">Invoice</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="txnInvoiceLoading" class="text-center text-muted py-5">Loading...</div>
+                    <iframe id="txnInvoiceIframe" style="width:100%;height:100%;border:0;display:none;"></iframe>
+                </div>
             </div>
         </div>
     </div>
@@ -665,11 +706,43 @@
         function loadQuickActions() {
             fetch(`${API_BASE}/quick-actions`).then(r => r.json()).then(actions => {
                 document.getElementById('posQuickActions').innerHTML = actions.length ? actions.map(a =>
-                    `<a href="${a.url}" class="btn btn-sm btn-success"><i class="bi ${a.icon}"></i> ${a.label}</a>`
+                    `<button type="button" class="btn btn-sm btn-success" data-url="${a.url}" data-label="${a.label}">
+               <i class="bi ${a.icon}"></i> ${a.label}
+             </button>`
                 ).join('') : '';
+
+                // >>> NEW: quick action button click -> modal e iframe open
+                document.querySelectorAll('#posQuickActions button[data-url]').forEach(btn => {
+                    btn.addEventListener('click', () => openQuickActionModal(btn.dataset.url, btn.dataset
+                        .label));
+                });
             }).catch(() => {});
         }
 
+        function openQuickActionModal(url, label) {
+            const iframe = document.getElementById('quickActionIframe');
+            const loading = document.getElementById('quickActionLoading');
+
+            document.getElementById('quickActionModalTitle').textContent = label || 'Action';
+
+            iframe.style.display = 'none';
+            loading.style.display = 'block';
+            loading.textContent = 'Loading...';
+
+            iframe.src = url;
+            $('#quickActionModal').modal('show');
+        }
+
+        document.getElementById('quickActionIframe').addEventListener('load', function() {
+            document.getElementById('quickActionLoading').style.display = 'none';
+            this.style.display = 'block';
+        });
+
+
+        $('#quickActionModal').on('hidden.bs.modal', function() {
+            document.getElementById('quickActionIframe').src = 'about:blank';
+            loadAllSections();
+        });
         /* ---------------- KPI Cards ---------------- */
         function loadKpis() {
             fetch(`${API_BASE}/kpis?filter=${currentFilter}`).then(r => r.json()).then(kpi => {
@@ -696,12 +769,22 @@
                         theme: 'green'
                     }),
                     metricCard({
-                        title: 'Due',
+                        title: 'Customer Due',
                         value: fmtMoney(kpi.receivable_amount),
                         sub: 'Outstanding due',
                         icon: 'bi-exclamation-circle-fill',
                         theme: 'red'
+                    }),
+
+                    metricCard({
+                        title: 'Supplier Due',
+                        value: fmtMoney(kpi.supplier_due_amount),
+                        sub: 'Payable to suppliers',
+                        icon: 'bi-truck',
+                        theme: 'red'
                     })
+
+
                 ].join('');
             }).catch(() => {
                 document.getElementById('posMetrics').innerHTML =
@@ -969,25 +1052,135 @@
             });
         }
 
-        /* ---------------- Recent Transactions (click -> invoice modal) ---------------- */
-        function loadRecentTransactions() {
-            fetch(`${API_BASE}/recent-transactions?filter=${currentFilter}`).then(r => r.json()).then(data => {
-                const box = document.getElementById('recentTransactionsList');
-                box.innerHTML = data.length ? data.map(t => `
-  <div class="person-row clickable-row" data-sale-id="${t.id}">
-    <div><div class="person-name">${t.invoice_no}</div><div class="person-sub">${t.customer_name} &middot; ${fmtDateTime(t.created_at)}</div></div>
-    <div class="text-right"><div class="text-muted small mb-1">${fmtMoney(t.grand_total)}</div><span class="badge ${t.payment_status === 'Paid' ? 'badge-success' : 'badge-danger'}">${t.payment_status}</span></div>
-  </div>`).join('') :
-                    `<div class="empty-state"><i class="bi bi-receipt"></i><p>No transactions in this period</p></div>`;
 
-                document.querySelectorAll('#recentTransactionsList .clickable-row').forEach(row => {
-                    row.addEventListener('click', () => openSaleInvoiceModal(row.dataset.saleId));
-                });
-            }).catch(() => {
-                document.getElementById('recentTransactionsList').innerHTML =
-                    `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load transactions</p></div>`;
+        /* ---------------- Recent Purchases & Sales (search + infinite scroll + iframe modal) ---------------- */
+        const recentTxnState = {
+            page: 1,
+            perPage: 15,
+            hasMore: true,
+            loading: false,
+            search: ''
+        };
+
+        function resetRecentTxnState() {
+            recentTxnState.page = 1;
+            recentTxnState.hasMore = true;
+            recentTxnState.loading = false;
+        }
+
+        function renderTxnRow(t) {
+            return `
+  <div class="person-row clickable-row" data-print-url="${t.print_url ?? ''}" data-invoice-no="${t.invoice_no}" data-type="${t.type}">
+    <div>
+      <div class="person-name">
+        <span class="badge ${t.type === 'purchase' ? 'badge-warning' : 'badge-primary'}" style="margin-right:6px">${t.type === 'purchase' ? 'Purchase' : 'Sale'}</span>
+        ${t.invoice_no}
+      </div>
+      <div class="person-sub">${t.party_name} &middot; ${fmtDateTime(t.created_at)}</div>
+    </div>
+    <div class="text-right"><div class="text-muted small mb-1">${fmtMoney(t.grand_total)}</div><span class="badge ${t.payment_status === 'Paid' ? 'badge-success' : 'badge-danger'}">${t.payment_status}</span></div>
+  </div>`;
+        }
+
+        function bindTxnRowClicks(container) {
+            container.querySelectorAll('.clickable-row').forEach(row => {
+                row.addEventListener('click', () => openTxnInvoiceModal(row.dataset.printUrl, row.dataset.invoiceNo,
+                    row.dataset.type));
             });
         }
+
+        function loadRecentPurchaseSales(append = false) {
+            if (recentTxnState.loading) return;
+            if (append && !recentTxnState.hasMore) return;
+            recentTxnState.loading = true;
+
+            const box = document.getElementById('recentTransactionsList');
+
+            if (!append) {
+                box.innerHTML = `<div class="text-center text-muted py-3">Loading...</div>`;
+            } else {
+                box.insertAdjacentHTML('beforeend',
+                    `<div class="text-center text-muted py-2 recent-txn-loading-more">Loading more...</div>`);
+            }
+
+            const params = new URLSearchParams({
+                filter: currentFilter,
+                page: recentTxnState.page,
+                per_page: recentTxnState.perPage
+            });
+            if (recentTxnState.search) params.append('search', recentTxnState.search);
+
+            fetch(`${API_BASE}/recent-purchase-sales?${params.toString()}`).then(r => r.json()).then(res => {
+                document.querySelector('.recent-txn-loading-more')?.remove();
+                if (!append) box.innerHTML = '';
+
+                if (!res.data.length && !append) {
+                    box.innerHTML =
+                        `<div class="empty-state"><i class="bi bi-receipt"></i><p>No transactions found</p></div>`;
+                } else {
+                    box.insertAdjacentHTML('beforeend', res.data.map(renderTxnRow).join(''));
+                    bindTxnRowClicks(box);
+                }
+
+                recentTxnState.hasMore = res.has_more;
+                recentTxnState.page += 1;
+                recentTxnState.loading = false;
+            }).catch(() => {
+                document.querySelector('.recent-txn-loading-more')?.remove();
+                if (!append) {
+                    box.innerHTML =
+                        `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load transactions</p></div>`;
+                }
+                recentTxnState.loading = false;
+            });
+        }
+
+
+        document.getElementById('recentTransactionsList').addEventListener('scroll', function() {
+            const nearBottom = this.scrollTop + this.clientHeight >= this.scrollHeight - 40;
+            if (nearBottom && recentTxnState.hasMore && !recentTxnState.loading) {
+                loadRecentPurchaseSales(true);
+            }
+        });
+
+
+        document.getElementById('recentTxnSearch').addEventListener('input', debounce((e) => {
+            recentTxnState.search = e.target.value.trim();
+            resetRecentTxnState();
+            loadRecentPurchaseSales(false);
+        }, 400));
+
+        function openTxnInvoiceModal(printUrl, invoiceNo, type) {
+            const iframe = document.getElementById('txnInvoiceIframe');
+            const loading = document.getElementById('txnInvoiceLoading');
+
+            document.getElementById('txnInvoiceModalTitle').textContent =
+                `${type === 'purchase' ? 'Purchase' : 'Sale'} Invoice -- ${invoiceNo || ''}`;
+
+            iframe.style.display = 'none';
+            loading.style.display = 'block';
+
+            if (!printUrl) {
+                loading.textContent = 'Invoice print link not available';
+                iframe.src = 'about:blank';
+                $('#txnInvoiceModal').modal('show');
+                return;
+            }
+
+            loading.textContent = 'Loading...';
+            iframe.src = printUrl;
+            $('#txnInvoiceModal').modal('show');
+        }
+
+        document.getElementById('txnInvoiceIframe').addEventListener('load', function() {
+            document.getElementById('txnInvoiceLoading').style.display = 'none';
+            this.style.display = 'block';
+        });
+
+        $('#txnInvoiceModal').on('hidden.bs.modal', function() {
+            document.getElementById('txnInvoiceIframe').src = 'about:blank';
+        });
+
 
         function openSaleInvoiceModal(saleId) {
             document.getElementById('saleInvoiceModalBody').innerHTML =
@@ -1052,13 +1245,13 @@
                     </thead>
                 <tbody>
                         ${data.map(r => `
-                     <tr>
-                    <td>${r.invoice_no ?? '-'}</td>
-                      <td>${r.project_name ?? '-'}</td>
-                      <td>${r.product_code ?? ''} - ${r.product_name ?? '-'}</td>
-                      <td>${r.total_qty}</td>
-                      <td>${fmtMoney(r.total_amount)}</td>
-                </tr>`
+                                                                                                                                                                                     <tr>
+                                                                                                                                                                                    <td>${r.invoice_no ?? '-'}</td>
+                                                                                                                                                                                      <td>${r.project_name ?? '-'}</td>
+                                                                                                                                                                                      <td>${r.product_code ?? ''} - ${r.product_name ?? '-'}</td>
+                                                                                                                                                                                      <td>${r.total_qty}</td>
+                                                                                                                                                                                      <td>${fmtMoney(r.total_amount)}</td>
+                                                                                                                                                                                </tr>`
                   ).join('')}
     </tbody>
   </table>
@@ -1097,7 +1290,7 @@
       <span class="rank-badge ${i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-other'}">${i + 1}</span>
       <div class="person-name">${c.name}</div>
     </div>
-    <div class="text-right"><div class="small text-muted">${c.txn_count} txn</div><div class="small">${fmtMoney(c.total_sales)}</div></div>
+    <div class="text-right"><div class="small text-muted">${c.txn_count} sales</div><div class="small">${fmtMoney(c.total_sales)}</div></div>
   </div>`).join('') : `<div class="empty-state"><i class="bi bi-trophy"></i><p>No performance data yet</p></div>`;
             }).catch(() => {
                 document.getElementById('salesPerformanceList').innerHTML =
@@ -1184,7 +1377,8 @@
             loadKpis();
             loadPaymentBreakdown();
             loadTopProducts();
-            loadRecentTransactions();
+            resetRecentTxnState();
+            loadRecentPurchaseSales(false);
             loadProductConsumption();
             loadSalesPerformance();
             loadTopReceivables();

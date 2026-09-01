@@ -8,6 +8,58 @@
         .bootstrap-switch-large {
             width: 200px;
         }
+
+        /* Added: 2026-09-01 - responsive fix styles */
+        .sale-item-table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #show_item {
+            min-width: 900px;
+        }
+
+        textarea[name="narration"] {
+            width: 100% !important;
+            max-width: 100%;
+        }
+
+        .select2-container {
+            width: 100% !important;
+        }
+
+        .select2-container .select2-selection--single {
+            height: 38px !important;
+            min-height: 38px !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 38px !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px !important;
+        }
+
+        @media (max-width: 767px) {
+            .form-row>[class*="col-"] {
+                margin-bottom: 10px;
+            }
+
+            .card-body {
+                padding: 10px;
+            }
+
+            .btn-group-toggle {
+                display: flex;
+                flex-wrap: wrap;
+            }
+
+            #show_item {
+                min-width: 800px;
+            }
+        }
     </style>
 @endsection
 
@@ -44,7 +96,7 @@
                     <form class="needs-validation" method="POST" action="{{ route('sale.sale.store') }}" novalidate>
                         @csrf
                         <div class="form-row">
-                            <div class="col-md-2 mb-3">
+                            <div class="col-md-2 col-sm-6 col-12 mb-3">
                                 <label for="validationCustom01">Invoice Number :</label>
                                 <input class="bg-green form-control" readonly=""
                                     style="padding: 5px; font-weight : bold; width: 100%" value="{{ $invoice_no }} "
@@ -52,11 +104,11 @@
                                 <input type="hidden" name="invoice_no" class="form-control" id=""
                                     value="{{ $invoice_no }}">
                             </div>
-                            <div class="col-md-2 mb-3">
+                            <div class="col-md-2 col-sm-6 col-12 mb-3">
                                 <label for="validationCustom01">Po Number :</label>
                                 <input type="text" name="po_invoice" class="form-control">
                             </div>
-                            <div class="col-md-2 mb-3">
+                            <div class="col-md-2 col-sm-6 col-12 mb-3">
                                 <label>Po Date:</label>
                                 <div class="input-group date" id="reservationdate1" data-target-input="nearest">
                                     <input type="text" name="po_date" data-toggle="datetimepicker"
@@ -71,7 +123,7 @@
                                     <span class=" error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
-                            <div class="col-md-2 mb-3">
+                            <div class="col-md-2 col-sm-6 col-12 mb-3">
                                 <label>Date:</label>
                                 <div class="input-group date" id="reservationdate" data-target-input="nearest">
                                     <input type="text" name="date" data-toggle="datetimepicker"
@@ -87,38 +139,7 @@
                                 @enderror
                             </div>
 
-                            {{-- <div class="col-md-2 mb-3">
-                                <label for="validationCustom01">Branch * :</label>
-                                <select class="form-control select2" id="branch_id" name="branch_id">
-                                    <option selected disabled value="">--Select Branch--</option>
-                                    @foreach ($branch as $key => $value)
-                                        <option value="{{ $value->id }}">
-                                            {{ $value->branchCode . ' - ' . $value->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('branch_id')
-                                    <span class="error text-red text-bold">{{ $message }}</span>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-2 mb-3">
-                                <label for="validationCustom02">Sub-Warehouse * :</label>
-                                <select class="form-control select2" id="sub_warehouse_id" name="sub_warehouse_id">
-                                    <option selected disabled value="">--Select Sub-Warehouse--</option>
-                                    @foreach ($wearhouses as $key => $value)
-                                        <option value="{{ $value->id }}">
-                                            {{ $value->branchCode . ' - ' . $value->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('sub_warehouse_id')
-                                    <span class="error text-red text-bold">{{ $message }}</span>
-                                @enderror
-                            </div> --}}
-
-
-                            <div class="col-md-2 mb-3">
+                            <div class="col-md-2 col-sm-6 col-12 mb-3">
                                 <label for="validationCustom01">Branch * :</label>
                                 <select class="form-control select2" id="branch_id" name="branch_id"
                                     onchange="getWarehousesByBranch(this.value)">
@@ -134,8 +155,7 @@
                                 @enderror
                             </div>
 
-
-                            <div class="col-md-2 mb-3">
+                            <div class="col-md-2 col-sm-6 col-12 mb-3">
                                 <label for="validationCustom02">Sub-Warehouse * :</label>
                                 <select class="form-control select2" id="sub_warehouse_id" name="sub_warehouse_id">
                                     <option selected disabled value="">--Select Branch First--</option>
@@ -148,22 +168,7 @@
                                 @enderror
                             </div>
 
-                            {{-- <div class="col-md-2 mb-3">
-                            <label for="validationCustom01">Customer * :</label>
-                            <select class="form-control select2" name="customer_id" id="customer_id">
-                                <option selected disabled value="">--Select Customer--</option>
-                                @foreach ($customer as $key => $value)
-                                <option value="{{ $value->id }}">
-                                    {{ $value->customerCode . ' - ' . $value->co_name }}
-                                </option>
-                                @endforeach
-                            </select>
-                            @error('customer_id')
-                            <span class=" error text-red text-bold">{{ $message }}</span>
-                            @enderror
-                        </div> --}}
-
-                            <div class="col-md-2 mb-3">
+                            <div class="col-md-2 col-sm-6 col-12 mb-3">
                                 <label for="ledger_id">Ledger * :
                                     <button type="button" class="btn btn-sm btn-primary ml-2" data-toggle="modal"
                                         data-target="#addCustomerModel">
@@ -179,7 +184,7 @@
                                 @enderror
                             </div>
 
-                            <div class="col-md-2 mb-3">
+                            <div class="col-md-2 col-sm-6 col-12 mb-3">
                                 <label for="sales_person_id">Sales Representative :</label>
 
                                 <select class="form-control select2" id="sales_person_id" name="sales_person_id"
@@ -198,11 +203,11 @@
                                 @enderror
                             </div>
 
-                            <div class="col-md-2 mb-3">
+                            <div class="col-md-2 col-sm-6 col-12 mb-3">
                                 <label for="validationCustom01">Balance * :</label>
                                 <input type="text" id="customer_currentBalance" class="form-control" readonly>
                             </div>
-                            <div class="col-md-2 mb-3">
+                            <div class="col-md-2 col-sm-6 col-12 mb-3">
                                 <label for="validationCustom01">Payment Type * :</label>
                                 <br>
                                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
@@ -211,385 +216,300 @@
                                             onchange="getCustomerBalance('Due')" checked id="option3"
                                             autocomplete="off"> Due
                                     </label>
-                                    {{-- <label class="btn bg-olive active">
-                                    <input type="radio" name="payment_type" value="Cash"
-                                        onchange="getCustomerBalance('Cash')" id="option1" autocomplete="off"> Cash
-                                </label> --}}
-                                    {{-- <label class="btn bg-olive">
-                                    <input type="radio" name="payment_type" value="Deposit"
-                                        onchange="getCustomerBalance('Deposit')" id="option2" autocomplete="off">
-                                    Deposit
-                                </label> --}}
-
                                 </div>
                                 <input type="hidden" id="paymentType">
                                 <input type="hidden" id="expireData">
                             </div>
-                            <table class=" table-responsive table table-bordered">
-                                <tr>
-                                    <td>
-                                        <div class="col-md-9 float-left ">
-                                            Sales Item
-                                        </div>
-                                        <div class="col-md-3 float-right">
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 10px!important;">
-                                        <div class="col-md-12">
-                                            <div class="col-md-12 float-left">
-                                                <div class="panel panel-default">
-                                                    <div class="panel-body">
-
-                                                        <table class="table table-bordered table-hover tableAddItem"
-                                                            id="show_item">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th nowrap style="width:15%" align="center"
-                                                                        id="">
-                                                                        <strong>Product Category <span style="color:red;">
-                                                                                *</span></strong>
-                                                                    </th>
-                                                                    <th nowrap style="width:15%" align="center"
-                                                                        id="">
-                                                                        <strong>Product <span style="color:red;">
-                                                                                *</span></strong>
-                                                                    </th>
-                                                                    <th nowrap style="width:11%" align="center">
-                                                                        <strong>Type <span style="color:red;">
-                                                                                *</span></strong>
-                                                                    </th>
-                                                                    <th nowrap style="width:11%" align="center">
-                                                                        <strong>Quantity <span style="color:red;">
-                                                                                *</span></strong>
-                                                                    </th>
-                                                                    <th nowrap style="width:11%" align="center">
-                                                                        <strong>Vat <span style="color:red;">
-                                                                                *</span></strong>
-                                                                    </th>
-                                                                    <th nowrap style="width:12%" align="center">
-                                                                        <strong>Unit
-                                                                            Price(BDT) <span style="color:red;">
-                                                                                *</span></strong>
-                                                                    </th>
-                                                                    <th nowrap style="width:13%" align="center">
-                                                                        <strong>Total Price(BDT) <span style="color:red;">
-                                                                                *</span></strong>
-                                                                    </th>
-                                                                    <th align="center" style="width:5%">
-                                                                        <strong>Action</strong>
-                                                                    </th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <tr>
-                                                                    <td id="product_td">
-                                                                        <select onchange="getProductList(this.value)"
-                                                                            class="select2 form-control catName"
-                                                                            id="form-field-select-3"
-                                                                            data-placeholder="Search Category">
-                                                                            <option disabled selected>--- Select Category
-                                                                                ---</option>
-                                                                            <?php foreach ($category_info as $eachInfo) : ?>
-                                                                            <option catName="{{ $eachInfo->name }}"
-                                                                                value="{{ $eachInfo->id }}">
-                                                                                {{ $eachInfo->name }}</option>
-                                                                            <?php endforeach; ?>
-                                                                        </select>
-                                                                    </td>
-                                                                    <td id="product_td">
-                                                                        <select class="select2 form-control proName"
-                                                                            id="productID"
-                                                                            data-placeholder="Search Product"
-                                                                            onchange="getUnitPrice(this.value)">
-                                                                            <option disabled selected>---Select Product---
-                                                                            </option>
-                                                                        </select>
-                                                                        <span class="text-success purchaseprice"></span>
-                                                                    </td>
-                                                                    <td>
-                                                                        <select class="select2 form-control purchasetype"
-                                                                            id="purchasetype"
-                                                                            data-placeholder="Search Product"
-                                                                            onchange="getUnitPrice(this.value)">
-                                                                            @foreach (config('purchaseType') as $key => $value)
-                                                                                <option value="{{ $key }}">
-                                                                                    {{ $value }}</option>
-                                                                            @endforeach
-                                                                        </select>
-                                                                        <span
-                                                                            class="text-success purchasetypeerror"></span>
-                                                                    </td>
-                                                                    <td>
-                                                                        <input type="text" readonly
-                                                                            class="form-control" style="height: 20px;"
-                                                                            id="currentStock" placeholder="0">
-                                                                        <input type="text" style="height: 20px;"
-                                                                            class="form-control qty" id="qty"
-                                                                            onkeyup="qtyPriceCal();" placeholder="0">
-                                                                    </td>
-                                                                    {{-- <td>
-                                                                    <input type="number" readonly class="form-control"
-                                                                        id="gas_qty" min="0" value="0" placeholder="0">
-                                                                    </td> --}}
-                                                                    <td>
-                                                                        <input type="text"
-                                                                            class="form-control text-right vat"
-                                                                            id="vat" onkeyup="qtyPriceCal();"
-                                                                            placeholder="0.00">
-                                                                    </td>
-                                                                    <td>
-                                                                        <input type="text"
-                                                                            class="form-control text-right  unitprice"
-                                                                            id="unitpice" onkeyup="qtyPriceCal();"
-                                                                            placeholder="0.00">
-                                                                    </td>
-                                                                    <td><input type="text"
-                                                                            class="form-control text-right ttlamount total"
-                                                                            id="total" placeholder="0.00"
-                                                                            readonly="readonly"></td>
-                                                                    <td>
-                                                                        <a id="add_item"
-                                                                            class="btn btn-info form-control"
-                                                                            href="javascript:;" title="Add Item">
-                                                                            <i class="fa fa-plus"></i>
-                                                                        </a>
-                                                                    </td>
-                                                                </tr>
-                                                            </tbody>
-                                                            <tfoot>
-                                                                <tr>
-                                                                    <td align="right"><strong>Sub-Total(BDT)</strong></td>
-                                                                    <td align="right"><strong class=""></strong>
-                                                                    </td>
-                                                                    <td align="right"><strong class=""></strong>
-                                                                    </td>
-                                                                    <td
-                                                                        align="
-                                                                                right">
-                                                                        <strong class="ttlqty"></strong>
-                                                                    </td>
-                                                                    <td align="right"><strong
-                                                                            class="ttlunitprice"></strong>
-                                                                    </td>
-                                                                    <td align="right"><strong
-                                                                            class="grandtotal"></strong>
-                                                                    </td>
-                                                                    <td align="right"><strong class=""></strong>
-                                                                    </td>
-                                                                </tr>
-                                                            </tfoot>
-
-
-                                                            <div
-                                                                class="
-                                                                            col-md-9">
-                                                                <table class="">
-                                                                    <tr>
-                                                                        <td>
-                                                                            <textarea style=""
-                                                                                cols="
-                                                                                    157"
-                                                                                class="form-control" name="narration" placeholder="Note......" type="text">
-                                                                                    </textarea>
-                                                                        </td>
-                                                                        <td>
-                                                                            <div class="panel  panel-default">
-                                                                                <div class="panel-body">
-
-                                                                                    <table
-                                                                                        class="table table-bordered table-hover ">
-                                                                                        <tbody>
-                                                                                            <tr>
-                                                                                                <td nowrap align="right">
-                                                                                                    <strong>Total </strong>
-                                                                                                </td>
-                                                                                                <td align="right"> <strong
-                                                                                                        id="gtoal"
-                                                                                                        class="grandtotal"></strong>
-                                                                                                </td>
-                                                                                            </tr>
-                                                                                            <tr>
-                                                                                                <td nowrap align="right">
-                                                                                                    <strong>Discount ( -
-                                                                                                        )</strong>
-                                                                                                </td>
-                                                                                                <td>
-                                                                                                    <div
-                                                                                                        class="input-group">
-                                                                                                        <input
-                                                                                                            type="text"
-                                                                                                            autocomplete="off"
-                                                                                                            onkeyup="discountCalculation(this.value)"
-                                                                                                            id="disCount"
-                                                                                                            style="text-align: right"
-                                                                                                            name="discount"
-                                                                                                            value=""
-                                                                                                            class="form-control"
-                                                                                                            placeholder="0.00"
-                                                                                                            oninput="this.value = this.value.replace(/[^0-9.]/g, ''); this.value = this.value.replace(/(\..*)\./g, '$1');" />
-                                                                                                        <select
-                                                                                                            id="discountType"
-                                                                                                            class="form-control"
-                                                                                                            onchange="discountCalculation(document.getElementById('disCount').value)">
-                                                                                                            <option
-                                                                                                                value="flat">
-                                                                                                                Flat
-                                                                                                            </option>
-                                                                                                            <option
-                                                                                                                value="percentage">
-                                                                                                                Percentage
-                                                                                                            </option>
-                                                                                                        </select>
-                                                                                                    </div>
-                                                                                                </td>
-                                                                                            </tr>
-                                                                                            <tr>
-                                                                                                <td nowrap align="right">
-                                                                                                    <strong>Carrying Cost (
-                                                                                                        + )
-                                                                                                    </strong>
-                                                                                                </td>
-                                                                                                <td><input type="text"
-                                                                                                        autocomplete="off"
-                                                                                                        onkeyup="carrying_cost_Calculation(this.value)"
-                                                                                                        id="carrying_cost"
-                                                                                                        style="text-align: right"
-                                                                                                        name="carrying_cost"
-                                                                                                        class="form-control"
-                                                                                                        placeholder="0.00"
-                                                                                                        oninput="this.value = this.value.replace(/[^0-9.]/g, ''); this.value = this.value.replace(/(\..*)\./g, '$1');" />
-                                                                                                </td>
-                                                                                            </tr>
-                                                                                            <tr>
-                                                                                                <td nowrap align="right">
-                                                                                                    <strong>Labor bill ( + )
-                                                                                                    </strong>
-                                                                                                </td>
-                                                                                                <td><input type="text"
-                                                                                                        autocomplete="off"
-                                                                                                        onkeyup="labor_bill_Calculation(this.value)"
-                                                                                                        id="labor_bill"
-                                                                                                        style="text-align: right"
-                                                                                                        name="labor_bill"
-                                                                                                        class="form-control"
-                                                                                                        placeholder="0.00"
-                                                                                                        oninput="this.value = this.value.replace(/[^0-9.]/g, ''); this.value = this.value.replace(/(\..*)\./g, '$1');" />
-                                                                                                </td>
-                                                                                            </tr>
-                                                                                            <tr id="netTotal">
-                                                                                                <td nowrap align="right">
-                                                                                                    <strong>Net
-                                                                                                        Total</strong>
-                                                                                                </td>
-                                                                                                <td align="right"><strong
-                                                                                                        id="ntotal"
-                                                                                                        class="grandtotal"></strong>
-                                                                                                </td>
-                                                                                            </tr>
-                                                                                            <tr id="account_id"
-                                                                                                class="d-none">
-                                                                                                <td nowrap align="right">
-                                                                                                    <strong>Account <span
-                                                                                                            style="color:red;">
-                                                                                                            *
-                                                                                                        </span></strong>
-                                                                                                </td>
-                                                                                                <td>
-                                                                                                    <select
-                                                                                                        class="form-control  select2"
-                                                                                                        name="account_id"
-                                                                                                        require>
-                                                                                                        <option selected
-                                                                                                            disabled>--
-                                                                                                            Select a Account
-                                                                                                            --</option>
-                                                                                                        <x-account
-                                                                                                            :setAccounts="$account" />
-
-                                                                                                    </select>
-                                                                                                </td>
-                                                                                            </tr>
-
-                                                                                            <tr class="partisals d-none">
-                                                                                                <td nowrap align="right">
-                                                                                                    <strong>Payment ( -
-                                                                                                        )<span
-                                                                                                            style="color:red;">
-                                                                                                            *
-                                                                                                        </span></strong>
-                                                                                                </td>
-                                                                                                <td><input type="text"
-                                                                                                        id="payment"
-                                                                                                        onkeyup="paymentCalculation(this.value)"
-                                                                                                        style="text-align: right"
-                                                                                                        name="partialPayment"
-                                                                                                        value=""
-                                                                                                        readonly
-                                                                                                        class="form-control"
-                                                                                                        autocomplete="off"
-                                                                                                        placeholder="0.00"
-                                                                                                        oninput="this.value = this.value.replace(/[^0-9.]/g, ''); this.value = this.value.replace(/(\..*)\./g, '$1');" />
-                                                                                                </td>
-
-                                                                                                <!-- <input type="hidden" id="duePayment" style="text-align: right" name="duePayment" value="" readonly class="form-control" placeholder="0.00" /> -->
-                                                                                            </tr>
-
-                                                                                            <tr>
-                                                                                                <td nowrap align="right">
-                                                                                                    <strong>Total
-                                                                                                        Due</strong>
-                                                                                                </td>
-                                                                                                <td align="right"><strong
-                                                                                                        id="totalDue"
-                                                                                                        class="grandtotal finalDue"></strong>
-                                                                                                </td>
-                                                                                            </tr>
-                                                                                        </tbody>
-                                                                                    </table>
-
-                                                                                </div>
-                                                                            </div>
-                                                                        </td>
-                                                                    </tr>
-                                                                </table>
-                                                            </div>
-                                                        </table>
-
-                                                    </div>
-                                    <td>
-                                        <div class="clearfix"></div>
-                                        <div class="clearfix form-actions float-right">
-                                            <div class="col-md-offset-1 col-md-10">
-                                                <button class="btn btn-info float-right" id="subMitButton"
-                                                    type="submit">
-                                                    Save
-                                                </button>
-                                                &nbsp; &nbsp; &nbsp;
-
-                                            </div>
-                                        </div>
-                                    </td>
                         </div>
+
+                        <!-- Modified: 2026-09-01 - broken table-in-table layout replaced with Bootstrap grid for full responsiveness -->
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <h5>Sales Item</h5>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="panel panel-default">
+                                    <div class="panel-body">
+                                        <div class="table-responsive sale-item-table-wrapper">
+                                            <table class="table table-bordered table-hover tableAddItem" id="show_item">
+                                                <thead>
+                                                    <tr>
+                                                        <th nowrap style="width:15%" align="center" id="">
+                                                            <strong>Product Category <span style="color:red;">
+                                                                    *</span></strong>
+                                                        </th>
+                                                        <th nowrap style="width:15%" align="center" id="">
+                                                            <strong>Product <span style="color:red;">
+                                                                    *</span></strong>
+                                                        </th>
+                                                        <th nowrap style="width:11%" align="center">
+                                                            <strong>Type <span style="color:red;">
+                                                                    *</span></strong>
+                                                        </th>
+                                                        <th nowrap style="width:11%" align="center">
+                                                            <strong>Quantity <span style="color:red;">
+                                                                    *</span></strong>
+                                                        </th>
+                                                        <th nowrap style="width:11%" align="center">
+                                                            <strong>Vat <span style="color:red;">
+                                                                    *</span></strong>
+                                                        </th>
+                                                        <th nowrap style="width:12%" align="center">
+                                                            <strong>Unit
+                                                                Price(BDT) <span style="color:red;">
+                                                                    *</span></strong>
+                                                        </th>
+                                                        <th nowrap style="width:13%" align="center">
+                                                            <strong>Total Price(BDT) <span style="color:red;">
+                                                                    *</span></strong>
+                                                        </th>
+                                                        <th align="center" style="width:5%">
+                                                            <strong>Action</strong>
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td id="product_td">
+                                                            <select onchange="getProductList(this.value)"
+                                                                class="select2 form-control catName"
+                                                                id="form-field-select-3"
+                                                                data-placeholder="Search Category">
+                                                                <option disabled selected>--- Select Category
+                                                                    ---</option>
+                                                                <?php foreach ($category_info as $eachInfo) : ?>
+                                                                <option catName="{{ $eachInfo->name }}"
+                                                                    value="{{ $eachInfo->id }}">
+                                                                    {{ $eachInfo->name }}</option>
+                                                                <?php endforeach; ?>
+                                                            </select>
+                                                        </td>
+                                                        <td id="product_td_2">
+                                                            <select class="select2 form-control proName" id="productID"
+                                                                data-placeholder="Search Product"
+                                                                onchange="getUnitPrice(this.value)">
+                                                                <option disabled selected>---Select Product---
+                                                                </option>
+                                                            </select>
+                                                            <span class="text-success purchaseprice"></span>
+                                                        </td>
+                                                        <td>
+                                                            <select class="select2 form-control purchasetype"
+                                                                id="purchasetype" data-placeholder="Search Product"
+                                                                onchange="getUnitPrice(this.value)">
+                                                                @foreach (config('purchaseType') as $key => $value)
+                                                                    <option value="{{ $key }}">
+                                                                        {{ $value }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                            <span class="text-success purchasetypeerror"></span>
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" readonly class="form-control"
+                                                                style="height: 20px;" id="currentStock" placeholder="0">
+                                                            <input type="text" style="height: 20px;"
+                                                                class="form-control qty" id="qty"
+                                                                onkeyup="qtyPriceCal();" placeholder="0">
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" class="form-control text-right vat"
+                                                                id="vat" onkeyup="qtyPriceCal();"
+                                                                placeholder="0.00">
+                                                        </td>
+                                                        <td>
+                                                            <input type="text"
+                                                                class="form-control text-right  unitprice" id="unitpice"
+                                                                onkeyup="qtyPriceCal();" placeholder="0.00">
+                                                        </td>
+                                                        <td><input type="text"
+                                                                class="form-control text-right ttlamount total"
+                                                                id="total" placeholder="0.00" readonly="readonly">
+                                                        </td>
+                                                        <td>
+                                                            <a id="add_item" class="btn btn-info form-control"
+                                                                href="javascript:;" title="Add Item">
+                                                                <i class="fa fa-plus"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                                <tfoot>
+                                                    <tr>
+                                                        <td align="right"><strong>Sub-Total(BDT)</strong></td>
+                                                        <td align="right"><strong class=""></strong>
+                                                        </td>
+                                                        <td align="right"><strong class=""></strong>
+                                                        </td>
+                                                        <td align="right">
+                                                            <strong class="ttlqty"></strong>
+                                                        </td>
+                                                        <td align="right"><strong class="ttlunitprice"></strong>
+                                                        </td>
+                                                        <td align="right"><strong class="grandtotal"></strong>
+                                                        </td>
+                                                        <td align="right"><strong class=""></strong>
+                                                        </td>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-8 col-12 mb-3">
+                                <textarea class="form-control" name="narration" placeholder="Note......" rows="8"></textarea>
+                            </div>
+                            <div class="col-md-4 col-12 mb-3">
+                                <div class="panel panel-default">
+                                    <div class="panel-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-hover">
+                                                <tbody>
+                                                    <tr>
+                                                        <td nowrap align="right">
+                                                            <strong>Total </strong>
+                                                        </td>
+                                                        <td align="right"> <strong id="gtoal"
+                                                                class="grandtotal"></strong>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td nowrap align="right">
+                                                            <strong>Discount ( -
+                                                                )</strong>
+                                                        </td>
+                                                        <td>
+                                                            <div class="input-group">
+                                                                <input type="text" autocomplete="off"
+                                                                    onkeyup="discountCalculation(this.value)"
+                                                                    id="disCount" style="text-align: right"
+                                                                    name="discount" value="" class="form-control"
+                                                                    placeholder="0.00"
+                                                                    oninput="this.value = this.value.replace(/[^0-9.]/g, ''); this.value = this.value.replace(/(\..*)\./g, '$1');" />
+                                                                <select id="discountType" class="form-control"
+                                                                    onchange="discountCalculation(document.getElementById('disCount').value)">
+                                                                    <option value="flat">
+                                                                        Flat
+                                                                    </option>
+                                                                    <option value="percentage">
+                                                                        Percentage
+                                                                    </option>
+                                                                </select>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td nowrap align="right">
+                                                            <strong>Carrying Cost (
+                                                                + )
+                                                            </strong>
+                                                        </td>
+                                                        <td><input type="text" autocomplete="off"
+                                                                onkeyup="carrying_cost_Calculation(this.value)"
+                                                                id="carrying_cost" style="text-align: right"
+                                                                name="carrying_cost" class="form-control"
+                                                                placeholder="0.00"
+                                                                oninput="this.value = this.value.replace(/[^0-9.]/g, ''); this.value = this.value.replace(/(\..*)\./g, '$1');" />
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td nowrap align="right">
+                                                            <strong>Labor bill ( + )
+                                                            </strong>
+                                                        </td>
+                                                        <td><input type="text" autocomplete="off"
+                                                                onkeyup="labor_bill_Calculation(this.value)"
+                                                                id="labor_bill" style="text-align: right"
+                                                                name="labor_bill" class="form-control" placeholder="0.00"
+                                                                oninput="this.value = this.value.replace(/[^0-9.]/g, ''); this.value = this.value.replace(/(\..*)\./g, '$1');" />
+                                                        </td>
+                                                    </tr>
+                                                    <tr id="netTotal">
+                                                        <td nowrap align="right">
+                                                            <strong>Net
+                                                                Total</strong>
+                                                        </td>
+                                                        <td align="right"><strong id="ntotal"
+                                                                class="grandtotal"></strong>
+                                                        </td>
+                                                    </tr>
+                                                    <tr id="account_id" class="d-none">
+                                                        <td nowrap align="right">
+                                                            <strong>Account <span style="color:red;">
+                                                                    *
+                                                                </span></strong>
+                                                        </td>
+                                                        <td>
+                                                            <select class="form-control  select2" name="account_id"
+                                                                require>
+                                                                <option selected disabled>--
+                                                                    Select a Account
+                                                                    --</option>
+                                                                <x-account :setAccounts="$account" />
+
+                                                            </select>
+                                                        </td>
+                                                    </tr>
+
+                                                    <tr class="partisals d-none">
+                                                        <td nowrap align="right">
+                                                            <strong>Payment ( -
+                                                                )<span style="color:red;">
+                                                                    *
+                                                                </span></strong>
+                                                        </td>
+                                                        <td><input type="text" id="payment"
+                                                                onkeyup="paymentCalculation(this.value)"
+                                                                style="text-align: right" name="partialPayment"
+                                                                value="" readonly class="form-control"
+                                                                autocomplete="off" placeholder="0.00"
+                                                                oninput="this.value = this.value.replace(/[^0-9.]/g, ''); this.value = this.value.replace(/(\..*)\./g, '$1');" />
+                                                        </td>
+                                                    </tr>
+
+                                                    <tr>
+                                                        <td nowrap align="right">
+                                                            <strong>Total
+                                                                Due</strong>
+                                                        </td>
+                                                        <td align="right"><strong id="totalDue"
+                                                                class="grandtotal finalDue"></strong>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="clearfix"></div>
+                                <div class="clearfix form-actions float-right">
+                                    <div class="col-md-offset-1 col-md-10">
+                                        <button class="btn btn-info float-right" id="subMitButton" type="submit">
+                                            Save
+                                        </button>
+                                        &nbsp; &nbsp; &nbsp;
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- End Modified: 2026-09-01 -->
+
+                    </form>
                 </div>
-
             </div>
-
-            </td>
-            </tr>
-
-            </table>
-
-
-
         </div>
-
-        </form>
-    </div>
-    </div>
-    </div>
-    <!-- /.col-->
+        <!-- /.col-->
     </div>
 
     <div class="modal fade" id="addCustomerModel" tabindex="-1" role="dialog" aria-labelledby="addCustomerModelLabel"
@@ -606,14 +526,14 @@
                     @csrf
                     <div class="modal-body">
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-6 col-12">
                                 <div class="form-group">
                                     <label for="validationCustom01">Company Name *:</label>
                                     <input type="text" name="co_name" class="form-control" id="validationCustom01"
                                         placeholder="Company Name" value="{{ old('co_name') }}">
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-6 col-12">
                                 <div class="form-group">
                                     <label for="validationCustom01">Customer Group Name *:</label>
                                     <select name="customergroup_id" class="form-control select2">
@@ -624,35 +544,35 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-6 col-12">
                                 <div class="form-group">
                                     <label for="validationCustom01">Contact Person:</label>
                                     <input type="text" name="name" class="form-control" id="validationCustom01"
                                         placeholder="Contact Person" value="{{ old('name') }}">
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-6 col-12">
                                 <div class="form-group">
                                     <label for="validationCustom02">E-mail:</label>
                                     <input type="text" name="email" class="form-control" id="validationCustom02"
                                         placeholder="E-mail" value="{{ old('email') }}" required>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-6 col-12">
                                 <div class="form-group">
                                     <label for="validationCustom01">Phone:</label>
                                     <input type="text" name="phone" class="form-control" id="validationCustom01"
                                         placeholder="Phone" value="{{ old('phone') }}" required>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-6 col-12">
                                 <div class="form-group">
                                     <label for="validationCustom02">Address:</label>
                                     <input name="address" class="form-control" id="validationCustom02"
                                         placeholder="Address" value="{{ old('address') }}" required>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-6 col-12">
                                 <div class="form-group">
                                     <label for="validationCustom07">Bin:</label>
                                     <input name="bin" class="form-control" id="validationCustom07" placeholder="Bin"
@@ -672,7 +592,29 @@
 
 
     <script type="text/javascript">
+        function initSaleSelect2() {
+
+            $('.select2').each(function() {
+                let $select = $(this);
+                if ($select.hasClass('select2-hidden-accessible')) {
+                    $select.select2('destroy');
+                }
+                let $modal = $select.closest('.modal');
+                let options = {
+                    width: '100%',
+                    dropdownAutoWidth: false
+                };
+
+                if ($modal.length) {
+                    options.dropdownParent = $modal;
+                }
+                $select.select2(options);
+            });
+        }
+
+
         $(document).ready(function() {
+            initSaleSelect2();
             // Supplier  Create 
             $('#addCustomerFOrm').on('submit', function(e) {
                 e.preventDefault();
@@ -773,15 +715,11 @@
                 var proId = $('.proName').val();
                 var proName = $(".proName").find('option:selected').attr('proName');
 
-                //            var unit_id = $('.unitName').val();
-                //            var unitName = $(".unitName").find('option:selected').attr('unitName');
-
                 var unit = $('.unit').val();
                 var qty = $('.qty').val();
                 var vat = parseFloat($('#vat').val()) || 0;
 
                 var patmentType = $('input[name="payment_type"]:checked').val();
-                // alert(patmentType);
                 var customer_id = $('#customer_id').val();
 
                 var unitprice = $('.unitprice').val();
@@ -817,38 +755,39 @@
 
 
                     $("#show_item tbody").append('<tr class="new_item' + proId +
-                        '">\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                            <td style="padding-left:15px;">' +
+                        '">' +
+                        '<td style="padding-left:15px;">' +
                         catName +
                         '<input type="hidden" name="catName[]" value="' +
                         catId +
-                        '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                            <td align="right">' +
+                        '"></td>' +
+                        '<td align="right">' +
                         proName +
                         '<input type="hidden" class="add_quantity" name="proName[]" value="' +
                         proId +
-                        '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                            <td align="right">' +
+                        '"></td>' +
+                        '<td align="right">' +
                         purchasetypetext +
                         '<input type="hidden" class="add_quantity" name="purchasetype[]" value="' +
                         purchasetypeval +
-                        '"></td>\n\\n\<td align="right">' + qty +
+                        '"></td>' +
+                        '<td align="right">' + qty +
                         '<input type="hidden" class="ttlqty" name="qty[]" value="' + qty +
-                        '">                               </td>\n\\n\  <td align="right">' + vat +
+                        '"></td>' +
+                        '<td align="right">' + vat +
                         '<input type="hidden" class="ttlqty" name="vat[]" value="' + vat +
-                        '"></td>\n\\n\                                                                                                                                                          <td align="right">' +
+                        '"></td>' +
+                        '<td align="right">' +
                         unitprice +
                         '<input type="hidden" class="ttlunitprice unitparice" name="unitprice[]" value="' +
                         unitprice +
-                        '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                            <td align="right">' +
+                        '"></td>' +
+                        '<td align="right">' +
                         total +
                         '<input type="hidden" class="grandtotal" name="total[]" value="' +
                         total +
-                        '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                            \n\
-                                                                                                                                                                                                                                                                                                                                                                                                                            \n\
-                                                                                                                                                                                                                                                                                                                                                                                                                            <td><a del_id="' +
+                        '"></td>' +
+                        '<td><a del_id="' +
                         proId +
                         '" class="delete_item btn form-control btn-danger" href="javascript:;" title=""><i class="fa fa-times"></i></a></td></tr>'
                     );
@@ -876,15 +815,6 @@
             })
 
             $(document).on('click', '.delete_item', function() {
-                // if (confirm("Are you sure?")) {
-                //     var id = $(this).attr("del_id");
-                //     $('.new_item' + id).remove();
-                //     findqtyamount();
-                //     findunitamount();
-                //     findgrandtottal();
-                //     checkDepositAndCreditBalance();
-                // }
-
                 let deleteitem = () => {
                     var id = $(this).attr("del_id");
                     $('.new_item' + id).remove();
@@ -931,7 +861,12 @@
 
                     $('#warehouse_source').val(response.source);
 
-                    $warehouseSelect.select2();
+                    // $warehouseSelect.select2();
+                    $warehouseSelect.select2({
+                        width: '100%',
+                        dropdownParent: $warehouseSelect.closest('.modal').length ?
+                            $warehouseSelect.closest('.modal') : $(document.body)
+                    });
                 },
                 error: function() {
                     alertMessage.error('Failed to load warehouses for this branch.');
@@ -949,7 +884,6 @@
 
             console.log(paymentType);
             var customer_currentBalance = $("#customer_currentBalance").val();
-            // var totalDue = document.getElementById("totalDue").innerText;
 
             var totalDue = $("#totalDue").text();
             var expireDatas = $("#expireData").val();
@@ -964,10 +898,6 @@
             if ((paymentType == 'Deposit') && (parseFloat(customer_currentBalance) < parseFloat(totalDue))) {
                 console.log('1');
                 btn.disabled = true;
-                // } else if (((paymentType == 'Credit') && (parseFloat(customer_currentBalance) < parseFloat(totalDue))) || (
-                //     expireDatas < todaysDate)) {
-                //     console.log('2');
-                //     btn.disabled = true;
             } else if (paymentType == 'Cash') {
                 console.log('3');
                 btn.disabled = false;
@@ -977,6 +907,28 @@
             }
 
         }
+
+        $(document).on('shown.bs.modal', '.modal', function() {
+
+            let $modal = $(this);
+
+            $modal.find('.select2').each(function() {
+
+                let $select = $(this);
+
+                if ($select.hasClass('select2-hidden-accessible')) {
+                    $select.select2('destroy');
+                }
+
+                $select.select2({
+                    width: '100%',
+                    dropdownAutoWidth: false,
+                    dropdownParent: $modal
+                });
+
+            });
+
+        });
     </script>
 
 
@@ -993,9 +945,8 @@
         function discountCalculation(amount) {
             var gtoal = parseFloat(document.getElementById("gtoal").innerText);
             var discountType = document.getElementById("discountType").value;
-            var discount = parseFloat(amount) || 0; // Parse the discount value, default to 0
+            var discount = parseFloat(amount) || 0;
 
-            // Calculate discount based on type
             if (discountType === "percentage") {
                 if (discount > 100) {
                     alertMessage.error("Percentage discount cannot exceed 100%");
@@ -1004,7 +955,7 @@
                     $('#totalDue').text(gtoal.toFixed(2));
                     return;
                 }
-                discount = (gtoal * discount) / 100; // Convert percentage to amount
+                discount = (gtoal * discount) / 100;
             }
 
             if (discount > gtoal) {
@@ -1059,7 +1010,6 @@
             if (parseFloat(qty) > currentStock) {
                 $('.ttlamount').val('');
                 $('#qty').val('');
-                // lert('The desired product stock is not available');
                 alertMessage.error('The desired product stock is not available.');
             } else {
                 var totalWithoutVAT = unitpice * qty;
@@ -1095,11 +1045,45 @@
                     $('#productID').empty().append(data);
 
 
-                    $('#productID').select2({
+                    // $('#productID').select2({
+                    //     matcher: function(params, data) {
+                    //         if ($.trim(params.term) === '') {
+                    //             return data;
+                    //         }
+                    //         if (typeof data.text === 'undefined' || !data.id) {
+                    //             return null;
+                    //         }
+
+                    //         let term = params.term.toLowerCase().trim();
+                    //         let code = ($(data.element).attr('procode') || '').toLowerCase();
+                    //         let name = ($(data.element).attr('proname') || data.text || '')
+                    //             .toLowerCase();
+                    //         let numericCode = code.replace(/[^0-9]/g, '');
+                    //         let numericTerm = term.replace(/[^0-9]/g, '');
+
+                    //         if (
+                    //             code.includes(term) ||
+                    //             name.includes(term) ||
+                    //             (numericTerm !== '' && numericCode.includes(numericTerm))
+                    //         ) {
+                    //             return data;
+                    //         }
+                    //         return null;
+                    //     }
+                    // });
+
+                    let $productSelect = $('#productID');
+
+                    let productSelectOptions = {
+                        width: '100%',
+                        dropdownAutoWidth: false,
+
                         matcher: function(params, data) {
+
                             if ($.trim(params.term) === '') {
                                 return data;
                             }
+
                             if (typeof data.text === 'undefined' || !data.id) {
                                 return null;
                             }
@@ -1108,6 +1092,7 @@
                             let code = ($(data.element).attr('procode') || '').toLowerCase();
                             let name = ($(data.element).attr('proname') || data.text || '')
                                 .toLowerCase();
+
                             let numericCode = code.replace(/[^0-9]/g, '');
                             let numericTerm = term.replace(/[^0-9]/g, '');
 
@@ -1118,9 +1103,18 @@
                             ) {
                                 return data;
                             }
+
                             return null;
                         }
-                    });
+                    };
+
+                    let $modal = $productSelect.closest('.modal');
+
+                    if ($modal.length) {
+                        productSelectOptions.dropdownParent = $modal;
+                    }
+
+                    $productSelect.select2(productSelectOptions);
                 }
             });
         }

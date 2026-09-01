@@ -209,8 +209,10 @@ class AccountTransaction extends Model
                     ? route('settings.contra.voucher.show', $this->table_id) : null;
 
             case 'journal_voucher':
-                return \App\Models\JournalVoucher::where('id', $this->table_id)->exists()
-                    ? route('settings.journal.voucher.show', $this->table_id) : null;
+
+                return null;
+                // return \App\Models\JournalVoucher::where('id', $this->table_id)->exists()
+                //     ? route('settings.journal.voucher.show', $this->table_id) : null;
 
             default:
                 return null;

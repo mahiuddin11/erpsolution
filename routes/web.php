@@ -748,15 +748,3 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         return view('debug');
     });
 });
-
-// Route::middleware('auth')->prefix('api/hrm-dashboard')->group(function () {
-//     Route::get('kpis', [HrmDashboardApiController::class, 'kpis']);
-//     Route::get('department-distribution', [HrmDashboardApiController::class, 'departmentDistribution']);
-//     Route::get('quick-actions', [HrmDashboardApiController::class, 'quickActions']);
-//     Route::get('employees-on-leave', [HrmDashboardApiController::class, 'employeesOnLeave']);
-//     Route::get('attendance-list', [HrmDashboardApiController::class, 'attendanceList']);
-//     Route::get('employee-options', [HrmDashboardApiController::class, 'employeeOptions']);
-//     Route::get('calendar-events', [HrmDashboardApiController::class, 'calendarEvents']);
-//     Route::get('recent-leave-applications', [HrmDashboardApiController::class, 'recentLeaveApplications']);
-//     Route::get('announcements', [HrmDashboardApiController::class, 'announcements']);
-// });

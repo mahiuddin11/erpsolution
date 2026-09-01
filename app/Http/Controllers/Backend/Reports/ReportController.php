@@ -2834,7 +2834,7 @@ class ReportController extends Controller
                     }
                 }
 
-                // ── Opposite পাওয়া না গেলে fallback ──
+                // ── Opposite  fallback ──
                 if ($oppositeName === 'N/A') {
 
                     if (
