@@ -151,7 +151,7 @@ class GrnRepositories
         return $result;
     }
 
-    // public function store($request)
+    // public function store01($request)
     // {
 
     //     $invoice_no = $request->grnCode;
@@ -268,9 +268,215 @@ class GrnRepositories
     //     return;
     // }
 
+    // public function store0($request)
+    // {
+
+    //     dd($request->all());
+
+    //     $invoice_no = $request->grnCode;
+    //     $exists = Grn::where('invoice_no', $invoice_no)->select('invoice_no')->exists();
+
+    //     if ($exists) {
+    //         $lastGrn    = Grn::latest('id')->first();
+    //         $nextCode   = $lastGrn ? $lastGrn->id + 1 : 1;
+    //         $invoice_no = 'GRN' . str_pad($nextCode, 5, "0", STR_PAD_LEFT);
+    //     }
+
+    //     DB::beginTransaction();
+    //     try {
+    //         $remainingtt  = $request->remaining;
+    //         $approve_qtyt = $request->approve_qty;
+    //         $statuscheck  = array_sum($remainingtt) + array_sum($approve_qtyt);
+
+    //         // ── GRN Header ───────────────────────────────────────────
+    //         $goodrcvnote                      = new Grn();
+    //         $goodrcvnote->date                = $request->date;
+    //         $goodrcvnote->invoice_no          = $invoice_no;
+    //         $goodrcvnote->supplier_id         = $request->subblier_id ?? 0;
+    //         $goodrcvnote->purchase_voucher_id = $request->purchase_voucher;
+    //         $goodrcvnote->project_id          = $request->project_id;
+    //         $goodrcvnote->total_price         = array_sum($request->total);
+    //         $goodrcvnote->total_qty           = array_sum($request->qty);
+    //         $goodrcvnote->note                = $request->note;
+    //         $goodrcvnote->create_by           = Auth::user()->id;
+    //         $goodrcvnote->save();
+    //         $grnId = $goodrcvnote->id;
+
+    //         //  Supplier name
+    //         $supplierName = \App\Models\Supplier::find($request->subblier_id)?->name ?? 'N/A';
+
+    //         //  GRN CREATE log
+    //         activity_log(
+    //             'create',
+    //             'grns',
+    //             $goodrcvnote->toArray(),
+    //             [],
+    //             "GRN created (Invoice: {$invoice_no}) — Supplier: {$supplierName}, Total Qty: {$goodrcvnote->total_qty}, Total Price: {$goodrcvnote->total_price}"
+    //         );
+
+    //         // ── Purchase Status Update ────────────────────────────────
+    //         $purchase        = Purchases::findOrFail($request->purchase_voucher);
+    //         $oldPurchaseData = $purchase->toArray();
+
+    //         $purchase->status = array_sum($request->qty) > abs($statuscheck) ? 'Close' : 'Active';
+    //         $purchase->save();
+
+
+
+    //         //  Purchase status change log
+    //         activity_log(
+    //             'update',
+    //             'purchases',
+    //             $purchase->toArray(),
+    //             $oldPurchaseData,
+    //             "Purchase status updated (Invoice: {$purchase->invoice_no}) — Status: {$oldPurchaseData['status']} → {$purchase->status} via GRN: {$invoice_no}"
+    //         );
+
+    //         PurchasesDetails::where('purchases_id', $request->purchase_voucher)
+    //             ->update(['status' => 'Active']);
+
+    //         // ── Details Loop ─────────────────────────────────────────
+    //         $category     = $request->category_nm;
+    //         $product      = $request->product_nm;
+    //         $qty          = $request->qty;
+    //         $approve_qty  = $request->approve_qty;
+    //         $remainingqty = $request->remaining;
+    //         $unitprice    = $request->unitprice;
+    //         $total        = $request->total;
+
+    //         for ($i = 0; $i < count($category); $i++) {
+
+    //             // ── GRN Detail ───────────────────────────────────────
+    //             $grnDetails                   = new Grn_detail();
+    //             $grnDetails->good_rcv_note_id = $grnId;
+    //             $grnDetails->category_id      = $category[$i];
+    //             $grnDetails->product_id       = $product[$i];
+    //             $grnDetails->purchasetype     = $request->purchasetype[$i];
+    //             $grnDetails->qty              = $qty[$i];
+    //             $grnDetails->purchase_voucher = $request->purchase_voucher;
+    //             $grnDetails->approve_qty      = $approve_qty[$i] + $remainingqty[$i];
+    //             $grnDetails->unit_price       = $unitprice[$i];
+    //             $grnDetails->total_price      = $total[$i];
+    //             $grnDetails->save();
+
+
+    //             // ── Stock IN  ─────────────────────────────────
+    //             $stockIn              = new Stock();
+    //             $stockIn->invoice_no  = $invoice_no;
+    //             $stockIn->product_id  = $product[$i];
+    //             $stockIn->quantity    = $qty[$i];
+    //             $stockIn->project_id  = $request->project_id;
+    //             $stockIn->branch_id   =  $request->project_id ?? 0;
+    //             $stockIn->unit_price  = $unitprice[$i];
+    //             $stockIn->total_price = $total[$i];
+    //             $stockIn->general_id  = $request->purchase_voucher;
+    //             $stockIn->date        = $request->date;
+    //             $stockIn->status      = 'Project In';
+    //             $stockIn->created_by  = Auth::user()->id;
+    //             $stockIn->save();
+
+    //             if ($request->project_id) {
+
+    //                 // ── Project GRN → Direct Consume ─────────────────
+    //                 // Stock OUT record
+    //                 $stockOut              = new Stock();
+    //                 $stockOut->invoice_no  = $invoice_no;
+    //                 $stockOut->product_id  = $product[$i];
+    //                 $stockOut->quantity    = $qty[$i];
+    //                 $stockOut->project_id  = $request->project_id;
+    //                 $stockOut->branch_id   =  $request->project_id ?? 0;
+    //                 $stockOut->unit_price  = $unitprice[$i];
+    //                 $stockOut->total_price = $total[$i];
+    //                 $stockOut->general_id  = $request->purchase_voucher;
+    //                 $stockOut->date        = $request->date;
+    //                 $stockOut->status      = 'Project Out';
+    //                 $stockOut->created_by  = Auth::user()->id;
+    //                 $stockOut->save();
+
+    //                 // StockSummary → 0 (IN - OUT = 0)
+    //                 $existingCheck = StockSummary::where('product_id', $product[$i])
+    //                     ->where('type', 'Project')
+    //                     ->where('branch_id', $request->project_id)
+    //                     ->where('purchasetype', $request->purchasetype[$i])
+    //                     ->first();
+
+    //                 if (!empty($existingCheck)) {
+    //                     StockSummary::where('product_id', $product[$i])
+    //                         ->where('type', 'Project')
+    //                         ->where('branch_id', $request->project_id)
+    //                         ->where('purchasetype', $request->purchasetype[$i])
+    //                         ->update(['quantity' => 0]);
+    //                 } else {
+    //                     $stockSummary               = new StockSummary();
+    //                     $stockSummary->branch_id    = $request->project_id;
+    //                     $stockSummary->purchasetype = $request->purchasetype[$i];
+    //                     $stockSummary->product_id   = $product[$i];
+    //                     $stockSummary->quantity     = 0;
+    //                     $stockSummary->type         = 'Project';
+    //                     $stockSummary->save();
+    //                 }
+    //                 activity_log(
+    //                     'create',
+    //                     'stocks',
+    //                     array_merge($stockOut->toArray(), ['invoice_no' => $invoice_no]),
+    //                     [],
+    //                     "Project Direct Consume (GRN: {$invoice_no}) — Product ID: {$product[$i]}, Qty IN: {$qty[$i]}, Qty OUT: {$qty[$i]}, Stock Summary: 0"
+    //                 );
+    //             } else {
+
+    //                 $existingCheck = StockSummary::where('product_id', $product[$i])
+    //                     ->where('type', 'Project')
+    //                     ->where('branch_id', $request->project_id)
+    //                     ->where('purchasetype', $request->purchasetype[$i])
+    //                     ->first();
+    //                 if (!empty($existingCheck)) {
+    //                     StockSummary::where('product_id', $product[$i])
+    //                         ->where('type', 'Project')
+    //                         ->where('branch_id', $request->project_id)
+    //                         ->where('purchasetype', $request->purchasetype[$i])
+    //                         ->update(['quantity' => $existingCheck->quantity]); // unchanged
+    //                 } else {
+
+    //                     $stockSummary               = new StockSummary();
+    //                     $stockSummary->branch_id    = $request->project_id;
+    //                     $stockSummary->purchasetype = $request->purchasetype[$i];
+    //                     $stockSummary->product_id   = $product[$i];
+    //                     $stockSummary->quantity     = 0;
+    //                     $stockSummary->type         = 'Project';
+    //                     $stockSummary->save();
+    //                 }
+    //                 // Branch Stock IN log
+    //                 activity_log(
+    //                     'create',
+    //                     'stocks',
+    //                     array_merge($stockIn->toArray(), ['invoice_no' => $invoice_no]),
+    //                     [],
+    //                     "Branch Stock IN (GRN: {$invoice_no}) — Product ID: {$product[$i]}, Qty: {$qty[$i]}"
+    //                 );
+    //             }
+    //         }
+
+    //         DB::commit();
+    //     } catch (\Exception $e) {
+    //         DB::rollback();
+
+    //         //  Failed log
+    //         activity_log(
+    //             'failed',
+    //             'grns',
+    //             ['invoice_no' => $invoice_no],
+    //             [],
+    //             "GRN CREATE failed (Invoice: {$invoice_no}) — Error: {$e->getMessage()}"
+    //         );
+
+    //         dd($e->getMessage(), $e->getLine());
+    //     }
+
+    //     return;
+    // }
+
     public function store($request)
     {
-
         $invoice_no = $request->grnCode;
         $exists = Grn::where('invoice_no', $invoice_no)->select('invoice_no')->exists();
 
@@ -319,8 +525,6 @@ class GrnRepositories
             $purchase->status = array_sum($request->qty) > abs($statuscheck) ? 'Close' : 'Active';
             $purchase->save();
 
-
-
             //  Purchase status change log
             activity_log(
                 'update',
@@ -356,7 +560,6 @@ class GrnRepositories
                 $grnDetails->unit_price       = $unitprice[$i];
                 $grnDetails->total_price      = $total[$i];
                 $grnDetails->save();
-
 
                 // ── Stock IN  ─────────────────────────────────
                 $stockIn              = new Stock();
@@ -472,7 +675,6 @@ class GrnRepositories
 
         return;
     }
-
 
     public function update($request, $id)
     {

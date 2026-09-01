@@ -1331,6 +1331,7 @@ class PurchaseRepositories
     public function prstore($request)
     {
 
+
         DB::beginTransaction();
 
         try {
