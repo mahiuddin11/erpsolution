@@ -693,7 +693,7 @@
             theme
         }) {
             return `
-  <div class="col-6 col-lg-3">
+  <div class="col-6 col-lg-4">
     <div class="metric-card card-${theme}">
       <div class="metric-top"><div class="metric-title">${title}</div><i class="bi ${icon} metric-icon fs-5"></i></div>
       <div class="metric-value">${value}</div>
@@ -754,13 +754,7 @@
                         icon: 'bi-cart-check-fill',
                         theme: 'blue'
                     }),
-                    metricCard({
-                        title: 'Total Purchase',
-                        value: kpi.total_purchase_count,
-                        sub: `Amount: ${fmtMoney(kpi.total_purchase_amount)}`,
-                        icon: 'bi-bag-check-fill',
-                        theme: 'purple'
-                    }),
+
                     metricCard({
                         title: 'Paid',
                         value: fmtMoney(kpi.received_amount),
@@ -775,6 +769,20 @@
                         icon: 'bi-exclamation-circle-fill',
                         theme: 'red'
                     }),
+                    metricCard({
+                        title: 'Total Purchase',
+                        value: kpi.total_purchase_count,
+                        sub: `Amount: ${fmtMoney(kpi.total_purchase_amount)}`,
+                        icon: 'bi-bag-check-fill',
+                        theme: 'purple'
+                    }),
+                    metricCard({
+                        title: 'Supplier Paid',
+                        value: fmtMoney(kpi.supplier_paid_amount),
+                        sub: 'Paid to suppliers',
+                        icon: 'bi-cash-stack',
+                        theme: 'green'
+                    }),
 
                     metricCard({
                         title: 'Supplier Due',
@@ -782,7 +790,7 @@
                         sub: 'Payable to suppliers',
                         icon: 'bi-truck',
                         theme: 'red'
-                    })
+                    }),
 
 
                 ].join('');
@@ -804,14 +812,14 @@
                         datasets: [{
                                 label: 'Sales',
                                 data: res.sales,
-                                backgroundColor: '#4e73df',
+                                backgroundColor: '#b5ebc6',
                                 borderRadius: 6,
                                 maxBarThickness: 26
                             },
                             {
                                 label: 'Purchase',
                                 data: res.purchases,
-                                backgroundColor: '#f6c23e',
+                                backgroundColor: '#ceb0ef',
                                 borderRadius: 6,
                                 maxBarThickness: 26
                             }
@@ -1245,13 +1253,13 @@
                     </thead>
                 <tbody>
                         ${data.map(r => `
-                                                                                                                                                                                     <tr>
-                                                                                                                                                                                    <td>${r.invoice_no ?? '-'}</td>
-                                                                                                                                                                                      <td>${r.project_name ?? '-'}</td>
-                                                                                                                                                                                      <td>${r.product_code ?? ''} - ${r.product_name ?? '-'}</td>
-                                                                                                                                                                                      <td>${r.total_qty}</td>
-                                                                                                                                                                                      <td>${fmtMoney(r.total_amount)}</td>
-                                                                                                                                                                                </tr>`
+                                                                                                                                                                                                                                 <tr>
+                                                                                                                                                                                                                                <td>${r.invoice_no ?? '-'}</td>
+                                                                                                                                                                                                                                  <td>${r.project_name ?? '-'}</td>
+                                                                                                                                                                                                                                  <td>${r.product_code ?? ''} - ${r.product_name ?? '-'}</td>
+                                                                                                                                                                                                                                  <td>${r.total_qty}</td>
+                                                                                                                                                                                                                                  <td>${fmtMoney(r.total_amount)}</td>
+                                                                                                                                                                                                                            </tr>`
                   ).join('')}
     </tbody>
   </table>

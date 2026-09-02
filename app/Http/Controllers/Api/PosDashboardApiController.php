@@ -117,40 +117,55 @@ class PosDashboardApiController extends Controller
 
         $sales = DB::table($this->salesTable)
             ->whereBetween('created_at', [$range['start'], $range['end']])
-            ->selectRaw('COUNT(id) as cnt, COALESCE(SUM(grand_total),0) as amount')
+            ->selectRaw('COUNT(id) as cnt, COALESCE(SUM(net_total),0) as amount')
             ->first();
 
         $purchases = DB::table($this->purchaseTable)
             ->whereBetween('created_at', [$range['start'], $range['end']])
-            ->selectRaw('COUNT(id) as cnt, COALESCE(SUM(grand_total),0) as amount')
+            ->selectRaw('COUNT(id) as cnt, COALESCE(SUM(net_total),0) as amount')
             ->first();
 
-        $ledgerRows = DB::table($this->transactionsTable)
+        $salesLedger = DB::table($this->transactionsTable)
             ->where('type', 'sale')
             ->whereNotNull('debit')
             ->whereBetween('created_at', [$range['start'], $range['end']])
-            ->select('debit', 'payment_invoice')
+            ->select('invoice', 'debit')
             ->get();
 
-        $received = 0;
-        $receivable = 0;
-        foreach ($ledgerRows as $row) {
-            if (!empty(trim((string) $row->payment_invoice))) {
-                $received += (float) $row->debit;
-            } else {
-                $receivable += (float) $row->debit;
-            }
+        $saleInvoiceNos = $salesLedger->pluck('invoice')->filter()->unique()->values()->all();
+        $totalSaleDebit = (float) $salesLedger->sum('debit');
+
+        $received = 0.0;
+        if (!empty($saleInvoiceNos)) {
+            $received = (float) DB::table($this->transactionsTable)
+                ->where('type', 'credit_voucher')
+                ->whereNotNull('credit')
+                ->whereIn('payment_invoice', $saleInvoiceNos)
+                ->sum('credit');
         }
 
-        $supplierDue = DB::table($this->transactionsTable)
+        $receivable = $totalSaleDebit - $received;
+
+
+        $purchaseLedger = DB::table($this->transactionsTable)
             ->where('type', 'purchase')
             ->whereNotNull('credit')
             ->whereBetween('created_at', [$range['start'], $range['end']])
-            ->where(function ($q) {
-                $q->whereNull('payment_invoice')->orWhere('payment_invoice', '');
-            })
-            ->sum('credit');
+            ->select('invoice', 'credit')
+            ->get();
 
+        $purchaseInvoiceNos = $purchaseLedger->pluck('invoice')->filter()->unique()->values()->all();
+        $totalPurchaseCredit = (float) $purchaseLedger->sum('credit');
+
+        $supplierPaid = 0.0;
+        if (!empty($purchaseInvoiceNos)) {
+            $supplierPaid = (float) DB::table($this->transactionsTable)
+                ->whereIn('type', ['debit_voucher', 'journal_voucher'])
+                ->whereNotNull('debit')
+                ->whereIn('payment_invoice', $purchaseInvoiceNos)
+                ->sum('debit');
+        }
+        $supplierDue = $totalPurchaseCredit - $supplierPaid;
 
 
         return response()->json([
@@ -161,6 +176,7 @@ class PosDashboardApiController extends Controller
             'total_purchase_amount' => round((float) $purchases->amount, 2),
             'received_amount'       => round($received, 2),
             'receivable_amount'     => round($receivable, 2),
+            'supplier_paid_amount'  => round($supplierPaid, 2),
             'supplier_due_amount'   => round((float) $supplierDue, 2),
         ]);
     }
@@ -197,28 +213,36 @@ class PosDashboardApiController extends Controller
     public function paymentBreakdown(Request $request): JsonResponse
     {
         $range = $this->resolveDateRange($request);
-
-        $rows = DB::table($this->transactionsTable)
+        $salesLedger = DB::table($this->transactionsTable)
             ->where('type', 'sale')
             ->whereNotNull('debit')
             ->whereBetween('created_at', [$range['start'], $range['end']])
-            ->select('debit', 'payment_invoice')
+            ->select('invoice', 'debit')
             ->get();
 
-        $paid = 0;
-        $due = 0;
-        foreach ($rows as $row) {
-            if (!empty(trim((string) $row->payment_invoice))) {
-                $paid += (float) $row->debit;
-            } else {
-                $due += (float) $row->debit;
-            }
+        $saleInvoiceNos = $salesLedger->pluck('invoice')->filter()->unique()->values()->all();
+        $total = (float) $salesLedger->sum('debit');
+
+        $paid = 0.0;
+        if (!empty($saleInvoiceNos)) {
+            $paid = (float) DB::table($this->transactionsTable)
+                ->where('type', 'credit_voucher')
+                ->whereNotNull('credit')
+                ->whereIn('payment_invoice', $saleInvoiceNos)
+                ->sum('credit');
         }
 
-        $total = $paid + $due;
+        $due = $total - $paid;
+
+
         $paidPercent = $total > 0 ? round(($paid / $total) * 100, 1) : 0;
 
-        return response()->json(['paid' => round($paid, 2), 'due' => round($due, 2), 'total' => round($total, 2), 'paid_percent' => $paidPercent]);
+        return response()->json([
+            'paid' => round($paid, 2),
+            'due' => round($due, 2),
+            'total' => round($total, 2),
+            'paid_percent' => $paidPercent,
+        ]);
     }
 
     public function topProducts(Request $request): JsonResponse
@@ -376,6 +400,145 @@ class PosDashboardApiController extends Controller
     //     return response()->json($transactions);
     // }
 
+    // public function recentPurchaseSales(Request $request): JsonResponse
+    // {
+    //     $range = $this->resolveDateRange($request);
+    //     $search = trim((string) $request->query('search', ''));
+    //     $page = max(1, (int) $request->query('page', 1));
+    //     $perPage = max(1, (int) $request->query('per_page', 15));
+    //     $fetchLimit = 300;
+
+    //     // ---- Sales ----
+    //     $salesQuery = DB::table($this->salesTable)
+    //         ->whereBetween('created_at', [$range['start'], $range['end']]);
+    //     if ($search !== '') {
+    //         $salesQuery->where('invoice_no', 'like', "%{$search}%");
+    //     }
+    //     $sales = $salesQuery->select('id', 'invoice_no', 'grand_total', 'created_at')
+    //         ->orderByDesc('created_at')
+    //         ->limit($fetchLimit)
+    //         ->get();
+
+    //     $saleInvoiceNos = $sales->pluck('invoice_no')->filter()->all();
+
+    //     $saleLedgerMap = DB::table($this->transactionsTable)
+    //         ->where('type', 'sale')
+    //         ->whereNotNull('debit')
+    //         ->whereIn('invoice', $saleInvoiceNos)
+    //         ->select('invoice', 'payment_invoice', 'account_id')
+    //         ->get()
+    //         ->keyBy('invoice');
+
+    //     $saleAccountIds = $saleLedgerMap->pluck('account_id')->filter()->unique()->all();
+    //     $saleAccountNames = DB::table($this->accountsTable)->whereIn('id', $saleAccountIds)->pluck('account_name', 'id');
+
+    //     $salesFormatted = $sales->map(function ($s) use ($saleLedgerMap, $saleAccountNames) {
+    //         $ledgerRow = $saleLedgerMap->get($s->invoice_no);
+    //         $partyName = 'Walk-in Customer';
+    //         $paymentStatus = 'Due';
+
+    //         if ($ledgerRow) {
+    //             $paymentStatus = !empty(trim((string) $ledgerRow->payment_invoice)) ? 'Paid' : 'Due';
+    //             if ($ledgerRow->account_id && isset($saleAccountNames[$ledgerRow->account_id])) {
+    //                 $partyName = $saleAccountNames[$ledgerRow->account_id];
+    //             }
+    //         }
+
+    //         try {
+    //             $printUrl = route('sale.sale.show', $s->id);
+    //         } catch (\Throwable $e) {
+    //             $printUrl = null;
+    //         }
+
+    //         return (object) [
+    //             'id' => $s->id,
+    //             'type' => 'sale',
+    //             'invoice_no' => $s->invoice_no,
+    //             'party_name' => $partyName,
+    //             'grand_total' => $s->grand_total,
+    //             'payment_status' => $paymentStatus,
+    //             'created_at' => $s->created_at,
+    //             'print_url' => $printUrl,
+    //         ];
+    //     });
+
+    //     // ---- Purchases ----
+    //     $purchaseQuery = DB::table($this->purchaseTable)
+    //         ->whereBetween('created_at', [$range['start'], $range['end']]);
+    //     if ($search !== '') {
+    //         $purchaseQuery->where('invoice_no', 'like', "%{$search}%");
+    //     }
+    //     $purchases = $purchaseQuery->select('id', 'invoice_no', 'grand_total', 'created_at', 'purchase_type')
+    //         ->orderByDesc('created_at')
+    //         ->limit($fetchLimit)
+    //         ->get();
+
+    //     $purchaseInvoiceNos = $purchases->pluck('invoice_no')->filter()->all();
+
+    //     $purchaseLedgerMap = DB::table($this->transactionsTable)
+    //         ->where('type', 'purchase')
+    //         ->whereNotNull('credit')
+    //         ->whereIn('invoice', $purchaseInvoiceNos)
+    //         ->select('invoice', 'payment_invoice', 'supplier_id')
+    //         ->get()
+    //         ->keyBy('invoice');
+
+    //     $purchaseSupplierIds = $purchaseLedgerMap->pluck('supplier_id')->filter()->unique()->all();
+    //     $purchaseSupplierNames = DB::table($this->suppliersTable)->whereIn('id', $purchaseSupplierIds)->pluck('name', 'id');
+
+    //     $purchasesFormatted = $purchases->map(function ($p) use ($purchaseLedgerMap, $purchaseSupplierNames) {
+    //         $ledgerRow = $purchaseLedgerMap->get($p->invoice_no);
+    //         $partyName = 'Unknown Supplier';
+    //         $paymentStatus = 'Due';
+
+    //         if ($ledgerRow) {
+    //             $paymentStatus = !empty(trim((string) $ledgerRow->payment_invoice)) ? 'Paid' : 'Due';
+    //             if ($ledgerRow->supplier_id && isset($purchaseSupplierNames[$ledgerRow->supplier_id])) {
+    //                 $partyName = $purchaseSupplierNames[$ledgerRow->supplier_id];
+    //             }
+    //         }
+
+    //         try {
+    //             $printUrl = $p->purchase_type === 'Manual'
+    //                 ? route('inventorySetup.purchase.pvinvoice', $p->id)
+    //                 : route('inventorySetup.purchase.show', $p->id);
+    //         } catch (\Throwable $e) {
+    //             $printUrl = null;
+    //         }
+
+    //         return (object) [
+    //             'id' => $p->id,
+    //             'type' => 'purchase',
+    //             'invoice_no' => $p->invoice_no,
+    //             'party_name' => $partyName,
+    //             'grand_total' => $p->grand_total,
+    //             'payment_status' => $paymentStatus,
+    //             'created_at' => $p->created_at,
+    //             'print_url' => $printUrl,
+    //         ];
+    //     });
+
+
+    //     $combined = $salesFormatted->concat($purchasesFormatted)->sortByDesc('created_at')->values();
+
+    //     if ($search !== '') {
+    //         $combined = $combined->filter(function ($row) use ($search) {
+    //             return stripos($row->invoice_no, $search) !== false || stripos($row->party_name, $search) !== false;
+    //         })->values();
+    //     }
+
+    //     $total = $combined->count();
+    //     $paged = $combined->slice(($page - 1) * $perPage, $perPage)->values();
+
+
+    //     return response()->json([
+    //         'data'     => $paged,
+    //         'page'     => $page,
+    //         'per_page' => $perPage,
+    //         'total'    => $total,
+    //         'has_more' => ($page * $perPage) < $total,
+    //     ]);
+    // }
     public function recentPurchaseSales(Request $request): JsonResponse
     {
         $range = $this->resolveDateRange($request);
@@ -397,28 +560,42 @@ class PosDashboardApiController extends Controller
 
         $saleInvoiceNos = $sales->pluck('invoice_no')->filter()->all();
 
+        // Party name (customer) -- original sale ledger row theke
         $saleLedgerMap = DB::table($this->transactionsTable)
             ->where('type', 'sale')
             ->whereNotNull('debit')
             ->whereIn('invoice', $saleInvoiceNos)
-            ->select('invoice', 'payment_invoice', 'account_id')
+            ->select('invoice', 'account_id')
             ->get()
             ->keyBy('invoice');
 
         $saleAccountIds = $saleLedgerMap->pluck('account_id')->filter()->unique()->all();
         $saleAccountNames = DB::table($this->accountsTable)->whereIn('id', $saleAccountIds)->pluck('account_name', 'id');
 
-        $salesFormatted = $sales->map(function ($s) use ($saleLedgerMap, $saleAccountNames) {
+        // >>> FIX: payment_status -- credit_voucher (receipt) row theke ber korte hobe,
+        // original sale row er nijer payment_invoice kokhono set hoy na
+        $salePaidInvoices = [];
+        if (!empty($saleInvoiceNos)) {
+            $salePaidInvoices = DB::table($this->transactionsTable)
+                ->where('type', 'credit_voucher')
+                ->whereNotNull('credit')
+                ->whereIn('payment_invoice', $saleInvoiceNos)
+                ->pluck('payment_invoice')
+                ->unique()
+                ->flip()
+                ->all(); // invoice_no => key, isset() diye fast lookup
+        }
+        // <<< END FIX
+
+        $salesFormatted = $sales->map(function ($s) use ($saleLedgerMap, $saleAccountNames, $salePaidInvoices) {
             $ledgerRow = $saleLedgerMap->get($s->invoice_no);
             $partyName = 'Walk-in Customer';
-            $paymentStatus = 'Due';
 
-            if ($ledgerRow) {
-                $paymentStatus = !empty(trim((string) $ledgerRow->payment_invoice)) ? 'Paid' : 'Due';
-                if ($ledgerRow->account_id && isset($saleAccountNames[$ledgerRow->account_id])) {
-                    $partyName = $saleAccountNames[$ledgerRow->account_id];
-                }
+            if ($ledgerRow && $ledgerRow->account_id && isset($saleAccountNames[$ledgerRow->account_id])) {
+                $partyName = $saleAccountNames[$ledgerRow->account_id];
             }
+
+            $paymentStatus = isset($salePaidInvoices[$s->invoice_no]) ? 'Paid' : 'Due'; // >>> FIX
 
             try {
                 $printUrl = route('sale.sale.show', $s->id);
@@ -451,28 +628,41 @@ class PosDashboardApiController extends Controller
 
         $purchaseInvoiceNos = $purchases->pluck('invoice_no')->filter()->all();
 
+        // Party name (supplier) -- original purchase ledger row theke
         $purchaseLedgerMap = DB::table($this->transactionsTable)
             ->where('type', 'purchase')
             ->whereNotNull('credit')
             ->whereIn('invoice', $purchaseInvoiceNos)
-            ->select('invoice', 'payment_invoice', 'supplier_id')
+            ->select('invoice', 'supplier_id')
             ->get()
             ->keyBy('invoice');
 
         $purchaseSupplierIds = $purchaseLedgerMap->pluck('supplier_id')->filter()->unique()->all();
         $purchaseSupplierNames = DB::table($this->suppliersTable)->whereIn('id', $purchaseSupplierIds)->pluck('name', 'id');
 
-        $purchasesFormatted = $purchases->map(function ($p) use ($purchaseLedgerMap, $purchaseSupplierNames) {
+        // >>> FIX: payment_status -- debit_voucher/journal_voucher (payment/adjustment) row theke
+        $purchasePaidInvoices = [];
+        if (!empty($purchaseInvoiceNos)) {
+            $purchasePaidInvoices = DB::table($this->transactionsTable)
+                ->whereIn('type', ['debit_voucher', 'journal_voucher'])
+                ->whereNotNull('debit')
+                ->whereIn('payment_invoice', $purchaseInvoiceNos)
+                ->pluck('payment_invoice')
+                ->unique()
+                ->flip()
+                ->all();
+        }
+        // <<< END FIX
+
+        $purchasesFormatted = $purchases->map(function ($p) use ($purchaseLedgerMap, $purchaseSupplierNames, $purchasePaidInvoices) {
             $ledgerRow = $purchaseLedgerMap->get($p->invoice_no);
             $partyName = 'Unknown Supplier';
-            $paymentStatus = 'Due';
 
-            if ($ledgerRow) {
-                $paymentStatus = !empty(trim((string) $ledgerRow->payment_invoice)) ? 'Paid' : 'Due';
-                if ($ledgerRow->supplier_id && isset($purchaseSupplierNames[$ledgerRow->supplier_id])) {
-                    $partyName = $purchaseSupplierNames[$ledgerRow->supplier_id];
-                }
+            if ($ledgerRow && $ledgerRow->supplier_id && isset($purchaseSupplierNames[$ledgerRow->supplier_id])) {
+                $partyName = $purchaseSupplierNames[$ledgerRow->supplier_id];
             }
+
+            $paymentStatus = isset($purchasePaidInvoices[$p->invoice_no]) ? 'Paid' : 'Due'; // >>> FIX
 
             try {
                 $printUrl = $p->purchase_type === 'Manual'
@@ -494,7 +684,6 @@ class PosDashboardApiController extends Controller
             ];
         });
 
-
         $combined = $salesFormatted->concat($purchasesFormatted)->sortByDesc('created_at')->values();
 
         if ($search !== '') {
@@ -506,7 +695,6 @@ class PosDashboardApiController extends Controller
         $total = $combined->count();
         $paged = $combined->slice(($page - 1) * $perPage, $perPage)->values();
 
-
         return response()->json([
             'data'     => $paged,
             'page'     => $page,
@@ -515,7 +703,6 @@ class PosDashboardApiController extends Controller
             'has_more' => ($page * $perPage) < $total,
         ]);
     }
-
 
     public function productConsumption(Request $request): JsonResponse
     {
@@ -607,35 +794,92 @@ class PosDashboardApiController extends Controller
         return response()->json($performance);
     }
 
+    // public function topReceivables(Request $request): JsonResponse
+    // {
+    //     $range = $this->resolveDateRange($request);
+
+    //     $rows = DB::table($this->transactionsTable)
+    //         ->join($this->accountsTable, $this->accountsTable . '.id', '=', $this->transactionsTable . '.account_id')
+    //         ->where($this->transactionsTable . '.type', 'sale')
+    //         ->whereNotNull($this->transactionsTable . '.debit')
+    //         ->whereBetween($this->transactionsTable . '.created_at', [$range['start'], $range['end']])
+    //         ->where(function ($q) {
+    //             $q->whereNull($this->transactionsTable . '.payment_invoice')->orWhere($this->transactionsTable . '.payment_invoice', '');
+    //         })
+    //         ->select(
+    //             $this->accountsTable . '.id',
+    //             $this->accountsTable . '.account_name as name',
+    //             DB::raw('COALESCE(SUM(' . $this->transactionsTable . '.debit), 0) as due_amount')
+    //         )
+    //         ->groupBy($this->accountsTable . '.id', $this->accountsTable . '.account_name')
+    //         ->orderByDesc('due_amount')
+    //         ->limit(10)
+    //         ->get();
+
+    //     return response()->json($rows);
+    // }
+
     public function topReceivables(Request $request): JsonResponse
     {
         $range = $this->resolveDateRange($request);
 
-        $rows = DB::table($this->transactionsTable)
-            ->join($this->accountsTable, $this->accountsTable . '.id', '=', $this->transactionsTable . '.account_id')
-            ->where($this->transactionsTable . '.type', 'sale')
-            ->whereNotNull($this->transactionsTable . '.debit')
-            ->whereBetween($this->transactionsTable . '.created_at', [$range['start'], $range['end']])
-            ->where(function ($q) {
-                $q->whereNull($this->transactionsTable . '.payment_invoice')->orWhere($this->transactionsTable . '.payment_invoice', '');
-            })
-            ->select(
-                $this->accountsTable . '.id',
-                $this->accountsTable . '.account_name as name',
-                DB::raw('COALESCE(SUM(' . $this->transactionsTable . '.debit), 0) as due_amount')
-            )
-            ->groupBy($this->accountsTable . '.id', $this->accountsTable . '.account_name')
-            ->orderByDesc('due_amount')
-            ->limit(10)
+
+        $salesLedger = DB::table($this->transactionsTable)
+            ->where('type', 'sale')
+            ->whereNotNull('debit')
+            ->whereBetween('created_at', [$range['start'], $range['end']])
+            ->select('account_id', 'invoice', 'debit')
             ->get();
+
+        if ($salesLedger->isEmpty()) {
+            return response()->json([]);
+        }
+
+        $saleInvoiceNos = $salesLedger->pluck('invoice')->filter()->unique()->values()->all();
+
+
+        $paidByInvoice = DB::table($this->transactionsTable)
+            ->where('type', 'credit_voucher')
+            ->whereNotNull('credit')
+            ->whereIn('payment_invoice', $saleInvoiceNos)
+            ->groupBy('payment_invoice')
+            ->select('payment_invoice', DB::raw('SUM(credit) as paid'))
+            ->pluck('paid', 'payment_invoice');
+
+
+        $dueByAccount = [];
+        foreach ($salesLedger as $row) {
+            $paid = (float) ($paidByInvoice[$row->invoice] ?? 0);
+            $due = (float) $row->debit - $paid;
+            if ($due <= 0.01) continue; // fully paid, skip
+
+            $dueByAccount[$row->account_id] = ($dueByAccount[$row->account_id] ?? 0) + $due;
+        }
+
+        if (empty($dueByAccount)) {
+            return response()->json([]);
+        }
+
+        arsort($dueByAccount);
+        $dueByAccount = array_slice($dueByAccount, 0, 10, true);
+
+        $accountNames = DB::table($this->accountsTable)
+            ->whereIn('id', array_keys($dueByAccount))
+            ->pluck('account_name', 'id');
+
+        $rows = collect($dueByAccount)->map(function ($due, $accountId) use ($accountNames) {
+            return [
+                'id' => $accountId,
+                'name' => $accountNames[$accountId] ?? 'Unknown',
+                'due_amount' => round($due, 2),
+            ];
+        })->values();
+
 
         return response()->json($rows);
     }
 
-    /**
-     * Added: ekjon customer (account) er shob due invoice -- pagination
-     * shoho, print/export er jonno
-     */
+
     public function receivableInvoices(Request $request, $accountId): JsonResponse
     {
         $query = DB::table($this->transactionsTable)
@@ -675,6 +919,7 @@ class PosDashboardApiController extends Controller
 
         return response()->json($rows);
     }
+
 
     /**
      * Added: ekjon supplier er shob due voucher -- pagination shoho

@@ -145,6 +145,7 @@ class DabitVoucherRepositories
     public function store($request)
     {
 
+
         try {
             DB::beginTransaction();
 
@@ -171,8 +172,8 @@ class DabitVoucherRepositories
 
             for ($i = 0; $i < count($request->account_id); $i++) {
                 $dabitvoucherdetails = new DabitVoucherDetails();
-                // $dabitvoucherdetails->payment_invoice = $request->payment_invoice[$i] ?? null;
-                $dabitvoucherdetails->payment_invoice =  null;
+                $dabitvoucherdetails->payment_invoice = $request->payment_invoice[$i] ?? null;
+                // $dabitvoucherdetails->payment_invoice =  null;
                 $dabitvoucherdetails->dabit_voucher_id = $dabitvoucher->id;
 
                 if ($request->cost_center_type[$i] == "project") {
