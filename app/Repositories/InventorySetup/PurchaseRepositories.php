@@ -535,7 +535,6 @@ class PurchaseRepositories
     public function store($request)
     {
 
-
         DB::beginTransaction();
         try {
 
@@ -670,7 +669,7 @@ class PurchaseRepositories
 
             // $invoice = AccountTransaction::accountInvoice();
 
-            $invoice = (new AccountTransaction())->accountInvoice();
+            // $invoice = (new AccountTransaction())->accountInvoice();
             // $transactionPay['payment_invoice'] = $request->invoice_no;
             $transactionPay['invoice'] = $invoice_no ?? $request->invoice_no;
             $transactionPay['table_id'] = $purchases_id;

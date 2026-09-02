@@ -19,3 +19,4 @@ sms template migration and seeding template
 php artisan db:seed --class=SmsTemplateSeeder  
 
 
+new update run php artisan migrte 

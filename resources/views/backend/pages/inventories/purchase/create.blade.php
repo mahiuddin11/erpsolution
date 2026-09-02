@@ -3,6 +3,58 @@
 @section('title')
     Inventory - {{ $title }}
 @endsection
+
+@section('styles')
+    <style>
+        /* Added: 2026-09-01 - responsive + modal select2 fix styles */
+        .purchase-item-table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #show_item {
+            min-width: 900px;
+        }
+
+        textarea[name="narration"] {
+            width: 100% !important;
+            max-width: 100%;
+        }
+
+        .select2-container {
+            width: 100% !important;
+        }
+
+        .select2-container .select2-selection--single {
+            height: 38px !important;
+            min-height: 38px !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 38px !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px !important;
+        }
+
+        @media (max-width: 767px) {
+            .form-row>[class*="col-"] {
+                margin-bottom: 10px;
+            }
+
+            .card-body {
+                padding: 10px;
+            }
+
+            #show_item {
+                min-width: 800px;
+            }
+        }
+    </style>
+@endsection
+
 @section('navbar-content')
     <div class="content-header">
         <div class="container-fluid">
@@ -54,14 +106,14 @@
                         novalidate>
                         @csrf
                         <div class="form-row">
-                            <div class="col-md-2 mb-3">
+                            <div class="col-md-2 col-sm-6 col-12 mb-3">
                                 <label>Invoice Number :</label>
                                 <input class="bg-green form-control" readonly=""
                                     style="padding: 5px; font-weight : bold; width: 100%" value="{{ $invoice_no }} ">
                                 <input type="hidden" name="invoice_no" class="form-control" id=""
                                     value="{{ $invoice_no }}">
                             </div>
-                            <div class="col-md-2 mb-3">
+                            <div class="col-md-2 col-sm-6 col-12 mb-3">
                                 <label>Custom Invoice:</label>
                                 <input type="text" name="custom_invoice" required class="form-control" id=""
                                     value="">
@@ -69,7 +121,7 @@
                                     <span class=" error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
-                            <div class="col-md-2 mb-3">
+                            <div class="col-md-2 col-sm-6 col-12 mb-3">
                                 <label>Date:</label>
                                 <div class="input-group date" id="reservationdate" data-target-input="nearest">
                                     <input type="text" name="date" readonly data-toggle="datetimepicker"
@@ -84,22 +136,8 @@
                                     <span class=" error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
-                            {{-- <div class="col-md-2 mb-3">
-                                <label for="validationCustom01">Branch * :</label>
-                                <select class="form-control select2" id="branch_id" name="branch_id">
-                                    <option selected disabled value="">--Select Branch--</option>
-                                    @foreach ($branch as $key => $value)
-                                        <option value="{{ $value->id }}">
-                                            {{ $value->branchCode . ' - ' . $value->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('branch_id')
-                                    <span class="error text-red text-bold">{{ $message }}</span>
-                                @enderror
-                            </div> --}}
 
-                            <div class="col-md-2 mb-3">
+                            <div class="col-md-2 col-sm-6 col-12 mb-3">
                                 <label for="validationCustom01">Branch * :</label>
                                 <select class="form-control select2" id="branch_id" name="branch_id"
                                     onchange="getWarehousesByBranch(this.value)">
@@ -115,22 +153,7 @@
                                 @enderror
                             </div>
 
-                            {{-- <div class="col-md-2 mb-3">
-                                <label for="validationCustom02">Sub-Warehouse * :</label>
-                                <select class="form-control select2" id="sub_warehouse_id" name="sub_warehouse_id">
-                                    <option selected disabled value="">--Select Sub-Warehouse--</option>
-                                    @foreach ($wearhouses as $key => $value)
-                                        <option value="{{ $value->id }}">
-                                            {{ $value->branchCode . ' - ' . $value->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-
-                                @error('sub_warehouse_id')
-                                    <span class="error text-red text-bold">{{ $message }}</span>
-                                @enderror
-                            </div> --}}
-                            <div class="col-md-2 mb-3">
+                            <div class="col-md-2 col-sm-6 col-12 mb-3">
                                 <label for="validationCustom02">Sub-Warehouse * :</label>
                                 <select class="form-control select2" id="sub_warehouse_id" name="sub_warehouse_id">
                                     <option selected disabled value="">--Select Branch First--</option>
@@ -143,22 +166,7 @@
                                 @enderror
                             </div>
 
-                            {{-- <div class="col-md-3 mb-3">
-                                <label>Supplier * :</label>
-                                <select class="form-control select2 supid" name="supplier_id">
-                                    <option selected disabled value="">--Select Supplier--</option>
-                                    @foreach ($supplier as $key => $value)
-                                        <option value="{{ $value->id }}">
-                                            {{ $value->supplierCode . ' - ' . $value->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('supplier_id')
-                                    <span class=" error text-red text-bold">{{ $message }}</span>
-                                @enderror
-                            </div> --}}
-
-                            <div class="col-md-2 mb-3">
+                            <div class="col-md-2 col-sm-6 col-12 mb-3">
                                 <label for="ledger_id">Ledger * :
                                     <button type="button" class="btn btn-sm btn-primary ml-2" data-toggle="modal"
                                         data-target="#addSupplierModal">
@@ -173,7 +181,7 @@
                                     <span class=" error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
-                            <div class="col-md-2 mb-3">
+                            <div class="col-md-2 col-sm-6 col-12 mb-3">
                                 <div class="form-group">
                                     <label>Payment Type *: </label>
                                     <select class="form-control select2 payment_type" name="payment_type">
@@ -189,160 +197,157 @@
                             {{-- html load by js --}}
                             <div class="account-section col-md-12"></div>
 
-                            <table class="table table-bordered table-hover" id="show_item">
-                                <thead>
-                                    <tr>
-                                        <th colspan="8">Select Product Item</th>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-center"><strong>Category</strong></td>
-                                        <td class="text-center"><strong>Product</strong></td>
-                                        <td class="text-center"><strong>Type</strong></td>
-                                        <td class="text-center"><strong>Quantity</strong></td>
-                                        <td class="text-center"><strong>Unit Price</strong></td>
-                                        <td class="text-center"><strong>Total</strong></td>
-                                        <td class="text-center"><strong>Action</strong></td>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>
-                                            <select onchange="getProductList(this.value)"
-                                                class="select2 form-control catName reset" id="form-field-select-3"
-                                                data-placeholder="Search Category">
-                                                <option disabled selected>---Select Category---</option>
-                                                <?php
-                                            foreach ($category_info as $eachInfo) :
-                                                ?>
-                                                <option catName="{{ $eachInfo->name }}" value="{{ $eachInfo->id }}">
-                                                    {{ $eachInfo->name }}</option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <select class="select2 form-control proName reset" id="productID"
-                                                data-placeholder="Search Product" onchange="getUnitPrice(this.value)">
-                                                <option disabled selected>---Select Product---</option>
-                                            </select>
-                                            <span class="text-success purchaseprice"></span>
-                                        </td>
-                                        <td>
-                                            <select class="select2 form-control purchasetype" id="purchasetype"
-                                                data-placeholder="Search Product">
-                                                @foreach (config('purchaseType') as $key => $value)
-                                                    <option value="{{ $key }}">{{ $value }}</option>
-                                                @endforeach
-                                            </select>
-                                            <span class="text-success purchasetypeerror"></span>
-                                        </td>
-                                        <td>
-                                            <input type="number" step="any"
-                                                class="form-control text-right qty reset_qty" placeholder="Qty"
-                                                min="0">
-                                        </td>
-                                        <td>
-                                            <input type="number" step="any" min="0" id="unitprice"
-                                                class="form-control text-right unitprice reset_unitprice"
-                                                placeholder="Unit Price" readonly>
-                                        </td>
-                                        <td>
-                                            <input type="number" step="any" readonly
-                                                class="form-control text-right total reset_total" id="total"
-                                                placeholder="Total">
-                                        </td>
-                                        <td>
-                                            <a id="add_item" class="btn btn-info" style="white-space: nowrap"
-                                                href="javascript:;" title="Add Item">
-                                                <i class="fa fa-plus"></i>
-                                                Add Item
-                                            </a>
-                                        </td>
-                                    </tr>
+                            <div class="col-12">
+                                <div class="table-responsive purchase-item-table-wrapper">
+                                    <table class="table table-bordered table-hover" id="show_item">
+                                        <thead>
+                                            <tr>
+                                                <th colspan="8">Select Product Item</th>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-center"><strong>Category</strong></td>
+                                                <td class="text-center"><strong>Product</strong></td>
+                                                <td class="text-center"><strong>Type</strong></td>
+                                                <td class="text-center"><strong>Quantity</strong></td>
+                                                <td class="text-center"><strong>Unit Price</strong></td>
+                                                <td class="text-center"><strong>Total</strong></td>
+                                                <td class="text-center"><strong>Action</strong></td>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <select onchange="getProductList(this.value)"
+                                                        class="select2 form-control catName reset"
+                                                        id="form-field-select-3" data-placeholder="Search Category">
+                                                        <option disabled selected>---Select Category---</option>
+                                                        <?php
+                                                    foreach ($category_info as $eachInfo) :
+                                                        ?>
+                                                        <option catName="{{ $eachInfo->name }}"
+                                                            value="{{ $eachInfo->id }}">
+                                                            {{ $eachInfo->name }}</option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <select class="select2 form-control proName reset" id="productID"
+                                                        data-placeholder="Search Product"
+                                                        onchange="getUnitPrice(this.value)">
+                                                        <option disabled selected>---Select Product---</option>
+                                                    </select>
+                                                    <span class="text-success purchaseprice"></span>
+                                                </td>
+                                                <td>
+                                                    <select class="select2 form-control purchasetype" id="purchasetype"
+                                                        data-placeholder="Search Product">
+                                                        @foreach (config('purchaseType') as $key => $value)
+                                                            <option value="{{ $key }}">{{ $value }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                    <span class="text-success purchasetypeerror"></span>
+                                                </td>
+                                                <td>
+                                                    <input type="number" step="any"
+                                                        class="form-control text-right qty reset_qty" placeholder="Qty"
+                                                        min="0">
+                                                </td>
+                                                <td>
+                                                    <input type="number" step="any" min="0" id="unitprice"
+                                                        class="form-control text-right unitprice reset_unitprice"
+                                                        placeholder="Unit Price" readonly>
+                                                </td>
+                                                <td>
+                                                    <input type="number" step="any" readonly
+                                                        class="form-control text-right total reset_total" id="total"
+                                                        placeholder="Total">
+                                                </td>
+                                                <td>
+                                                    <a id="add_item" class="btn btn-info" style="white-space: nowrap"
+                                                        href="javascript:;" title="Add Item">
+                                                        <i class="fa fa-plus"></i>
+                                                        Add Item
+                                                    </a>
+                                                </td>
+                                            </tr>
 
-                                </tbody>
-                                <tfoot>
+                                        </tbody>
+                                        <tfoot>
 
-                                    <tr>
-                                        <td class="text-right"><strong>Sub-Total(BDT)</strong></td>
-                                        <td class="text-right"><strong class=""></strong></td>
-                                        <td class="text-right"><strong class=""></strong></td>
-                                        <td class="text-right"><strong class="ttlqty"></strong>
-                                        </td>
-                                        <td class="text-right"><strong class="ttlunitprice"></strong></td>
-                                        <td class="text-right"><strong class="grandtotal"></strong></td>
-                                        <td class="text-right"><strong class=""></strong></td>
-                                    </tr>
-                                </tfoot>
-                            </table>
+                                            <tr>
+                                                <td class="text-right"><strong>Sub-Total(BDT)</strong></td>
+                                                <td class="text-right"><strong class=""></strong></td>
+                                                <td class="text-right"><strong class=""></strong></td>
+                                                <td class="text-right"><strong class="ttlqty"></strong>
+                                                </td>
+                                                <td class="text-right"><strong class="ttlunitprice"></strong></td>
+                                                <td class="text-right"><strong class="grandtotal"></strong></td>
+                                                <td class="text-right"><strong class=""></strong></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="
-                                                row mb-2">
-                            <div class="col-md-8">
+                        <div class="row mb-2">
+                            <div class="col-md-8 col-12">
                                 <div class="form-group">
                                     <div class="input-group">
-                                        <textarea cols="100" rows="3" class="form-control" name="narration" placeholder="Narration"
-                                            type="text"></textarea>
+                                        <textarea rows="4" class="form-control" name="narration" placeholder="Narration" type="text"></textarea>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="col-md-4">
+                            <div class="col-md-4 col-12">
                                 <input type="hidden" name="cart_vat" class="input_vat">
                                 <input type="hidden" name="input_net_total" class="input_net_total">
                                 <input type="hidden" name="cart_due" class="input_due">
 
-                                <table class="table table-bordered table-hover" id="cart_output">
-                                    <tr>
-                                        <th><span>Total</span></th>
-                                        <th class="text-right"><span class="grandtotal"></span>
-                                        </th>
-                                    </tr>
-                                    <tr>
-                                        <th><span>Discount(-)</span></th>
-                                        <th class="text-right">
-                                            <input type="number" step="any"
-                                                class="form-control discount input-checker" name="discount"
-                                                placeholder="Ex:5">
-                                            @error('discount')
-                                                <span class=" error text-red text-bold">{{ $message }}</span>
-                                            @enderror
-                                        </th>
-                                    </tr>
-                                    {{-- <tr>
-                                    <th><span>Vat</span></th>
-                                    <th class="text-right">
-                                        <input type="number" step="any" class="form-control vat input-checker"
-                                            name="vat" placeholder="Ex:5" readonly>
-                                        @error('vat')
-                                        <span class=" error text-red text-bold">{{ $message }}</span>
-                                        @enderror
-                                    </th>
-                                </tr> --}}
-                                    <tr>
-                                        <th><span>Net Total</span></th>
-                                        <th class="text-right"><span class="cart_net_total"></span>
-                                        </th>
-                                    </tr>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover" id="cart_output">
+                                        <tr>
+                                            <th><span>Total</span></th>
+                                            <th class="text-right"><span class="grandtotal"></span>
+                                            </th>
+                                        </tr>
+                                        <tr>
+                                            <th><span>Discount(-)</span></th>
+                                            <th class="text-right">
+                                                <input type="number" step="any"
+                                                    class="form-control discount input-checker" name="discount"
+                                                    placeholder="Ex:5">
+                                                @error('discount')
+                                                    <span class=" error text-red text-bold">{{ $message }}</span>
+                                                @enderror
+                                            </th>
+                                        </tr>
+                                        <tr>
+                                            <th><span>Net Total</span></th>
+                                            <th class="text-right"><span class="cart_net_total"></span>
+                                            </th>
+                                        </tr>
 
-                                    <tr class="d-none">
-                                        <th><span>Payment(-) *</span></th>
-                                        <th class="text-right">
-                                            <input type="number" step="any" id="paymentTypeCheck"
-                                                class="form-control  paid_amount input-checker" name="paid_amount"
-                                                placeholder="Ex:5">
-                                            <div class="payment_amount_error"></div>
-                                            @error('paid_amount')
-                                                <span class=" error text-red text-bold">{{ $message }}</span>
-                                            @enderror
-                                        </th>
-                                    </tr>
-                                    <tr id="duevalid">
-                                        <th><span>Total Due</span></th>
-                                        <th class="text-right"><span class="cart_due"></span>
-                                        </th>
-                                    </tr>
-                                </table>
+                                        <tr class="d-none">
+                                            <th><span>Payment(-) *</span></th>
+                                            <th class="text-right">
+                                                <input type="number" step="any" id="paymentTypeCheck"
+                                                    class="form-control  paid_amount input-checker" name="paid_amount"
+                                                    placeholder="Ex:5">
+                                                <div class="payment_amount_error"></div>
+                                                @error('paid_amount')
+                                                    <span class=" error text-red text-bold">{{ $message }}</span>
+                                                @enderror
+                                            </th>
+                                        </tr>
+                                        <tr id="duevalid">
+                                            <th><span>Total Due</span></th>
+                                            <th class="text-right"><span class="cart_due"></span>
+                                            </th>
+                                        </tr>
+                                    </table>
+                                </div>
                                 <!-- /.card -->
                             </div>
 
@@ -411,7 +416,44 @@
     <!-- /.col-->
 
     <script type="text/javascript">
+        // Added: 2026-09-01 - modal-এ দ্বিতীয়বার/একাধিকবার খুললে select2 dropdown সংকুচিত হয়ে যাওয়ার ফিক্স
+        function initPurchaseSelect2() {
+            $('.select2').not('#productID').not('.accounts').each(function() {
+                let $select = $(this);
+                if ($select.hasClass('select2-hidden-accessible')) {
+                    $select.select2('destroy');
+                }
+                let $modal = $select.closest('.modal');
+                let options = {
+                    width: '100%',
+                    dropdownAutoWidth: false
+                };
+                if ($modal.length) {
+                    options.dropdownParent = $modal;
+                }
+                $select.select2(options);
+            });
+        }
+
+        // পেজ Bootstrap modal-এর ভেতরে দ্বিতীয়/তৃতীয়বার লোড হলে select2 রি-ইনিট করা
+        $(document).on('shown.bs.modal', '.modal', function() {
+            let $modal = $(this);
+            $modal.find('.select2').each(function() {
+                let $select = $(this);
+                if ($select.hasClass('select2-hidden-accessible')) {
+                    $select.select2('destroy');
+                }
+                $select.select2({
+                    width: '100%',
+                    dropdownAutoWidth: false,
+                    dropdownParent: $modal
+                });
+            });
+        });
+
         $(document).ready(function() {
+            initPurchaseSelect2();
+
             // Supplier  Create 
             $('#addSupplierForm').on('submit', function(e) {
                 e.preventDefault();
@@ -833,9 +875,15 @@
                     cat_id: cat_id
                 },
                 success: function(data) {
-                    $('#productID').select2();
+                    if ($('#productID').hasClass('select2-hidden-accessible')) {
+                        $('#productID').select2('destroy');
+                    }
                     $('#productID option').remove();
                     $('#productID').append($(data));
+                    $('#productID').select2({
+                        width: '100%',
+                        dropdownAutoWidth: false
+                    });
                     $("#productID").trigger("select2:updated");
                 }
             });
@@ -889,7 +937,7 @@
                     success: function(data) {
                         let html = `
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-6 col-12">
                             <div class="form-group">
                                 <label>Account</label>
                                 <select name="chart_of_account_id" class="form-control select2 accounts">
@@ -921,7 +969,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-6 col-12">
                             <div class="form-group">
                                 <label>Balance</label>
                                 <input name="balance" type="text" class="form-control balance" placeholder="Ex:31424" readonly />
@@ -930,30 +978,33 @@
                     </div>
                     `;
                         $('.account-section').html(html);
-                        $('.accounts').select2();
+                        $('.accounts').select2({
+                            width: '100%',
+                            dropdownAutoWidth: false
+                        });
                     }
                 });
             } else if (type == "check") {
                 let html = `<div class="row">
-                <div class="col-md-3">
+                <div class="col-md-3 col-sm-6 col-12">
                     <div class="form-group">
                         <label>Account Number</label>
                         <input name="account_number" type="text" class="form-control accountnum" placeholder="Ex:1234234" />
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 col-sm-6 col-12">
                     <div class="form-group">
                         <label>Check Number</label>
                         <input name="check_number" type="text" class="form-control checknum" placeholder="Ex:31424" />
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 col-sm-6 col-12">
                     <div class="form-group">
                         <label>Bank Name</label>
                         <input name="bank" type="text" class="form-control banknum" placeholder="Ex:Bank Of Asia" />
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 col-sm-6 col-12">
                     <div class="form-group">
                         <label>Bank Branch Name</label>
                         <input name="bank_branch" type="text" class="form-control bankbranchnum" placeholder="Ex:Dhaka" />
@@ -1019,7 +1070,10 @@
 
                     $('#warehouse_source').val(response.source);
 
-                    $warehouseSelect.select2();
+                    $warehouseSelect.select2({
+                        width: '100%',
+                        dropdownAutoWidth: false
+                    });
                 },
                 error: function() {
                     alertMessage.error('Failed to load warehouses for this branch.');

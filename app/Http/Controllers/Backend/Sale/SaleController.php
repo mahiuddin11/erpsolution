@@ -254,6 +254,7 @@ class SaleController extends Controller
     //     return response($html);
     // }
 
+    //sale create 
     public function create()
     {
         $title = 'Add New sale';

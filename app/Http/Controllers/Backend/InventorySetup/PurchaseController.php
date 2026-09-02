@@ -25,6 +25,7 @@ use App\Models\Warehouse;
 use App\Services\InventorySetup\PurchaseService;
 use App\Transformers\PurchaseTransformer;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class PurchaseController extends Controller
@@ -105,12 +106,59 @@ class PurchaseController extends Controller
     //     return view('backend.pages.inventories.purchase.create', get_defined_vars());
     // }
 
+    // public function create()
+    // {
+
+    //     $title = 'Add New purchase';
+    //     $category_info = Category::with('parent')->where('status', 'Active')->get();
+    //     $supplier = Supplier::where('status', 'Active')->get();
+    //     $ledgers = ChartOfAccount::where('parent_id', 0)->get();
+
+    //     $user = auth()->user();
+    //     $branch = Branch::where('status', 'Active')->where("parent_id", 0)->get();
+
+    //     $usingNewWarehouseTable = false;
+    //     $wearhouses = Warehouse::where('status', 'Active')->get();
+
+    //     if ($wearhouses->isNotEmpty()) {
+    //         $usingNewWarehouseTable = true;
+
+    //         $wearhouses = $wearhouses->map(function ($w) {
+    //             return (object) [
+    //                 'id'         => $w->id,
+    //                 'warehouseCode' => $w->warehouseCode ?? '', // adjust field name if different
+    //                 'name'       => $w->name,
+    //             ];
+    //         });
+    //     } else {
+    //         $wearhouses = Branch::where("parent_id", "!=", 0)->get();
+    //     }
+
+
+    //     $purchaseLastData = Purchases::latest('id')->first();
+    //     $purchaseData = $purchaseLastData ? $purchaseLastData->id + 1 : 1;
+    //     $invoice_no = 'PV' . str_pad($purchaseData, 5, "0", STR_PAD_LEFT);
+
+    //     $accounts = ChartOfAccount::getaccount(4)->get();
+    //     $projects = Project::where('condition', 'One Going')->get();
+
+    //     return view('backend.pages.inventories.purchase.create', get_defined_vars());
+    // }
+
+    //purchase create 
     public function create()
     {
         $title = 'Add New purchase';
-        $category_info = Category::with('parent')->get()->where('status', 'Active');
-        $supplier = Supplier::get()->where('status', 'Active');
-        $ledgers = ChartOfAccount::where('parent_id', 0)->get();
+        $category_info = Category::with('parent')->where('status', 'Active')->get();
+        $supplier = Supplier::where('status', 'Active')->get();
+
+        $ledgers = ChartOfAccount::whereIn('accountable_type', [
+            \App\Models\Customer::class,
+            \App\Models\Supplier::class,
+        ])
+            ->where('status', 'Active')
+            ->with(['subAccount', 'parent'])
+            ->get();
 
         $user = auth()->user();
         $branch = Branch::where('status', 'Active')->where("parent_id", 0)->get();
@@ -124,7 +172,7 @@ class PurchaseController extends Controller
             $wearhouses = $wearhouses->map(function ($w) {
                 return (object) [
                     'id'         => $w->id,
-                    'warehouseCode' => $w->warehouseCode ?? '', // adjust field name if different
+                    'warehouseCode' => $w->warehouseCode ?? '',
                     'name'       => $w->name,
                 ];
             });
@@ -132,16 +180,35 @@ class PurchaseController extends Controller
             $wearhouses = Branch::where("parent_id", "!=", 0)->get();
         }
 
-
         $purchaseLastData = Purchases::latest('id')->first();
         $purchaseData = $purchaseLastData ? $purchaseLastData->id + 1 : 1;
         $invoice_no = 'PV' . str_pad($purchaseData, 5, "0", STR_PAD_LEFT);
 
-        $accounts = ChartOfAccount::getaccount(4)->get();
+        $accounts = ChartOfAccount::getaccount(4)
+            ->with([
+                'subAccount.subAccount.subAccount',
+            ])
+            ->get();
         $projects = Project::where('condition', 'One Going')->get();
 
         return view('backend.pages.inventories.purchase.create', get_defined_vars());
+
+        // DB::enableQueryLog();
+        // $html = view('backend.pages.inventories.purchase.create', get_defined_vars())->render();
+        // $queries = DB::getQueryLog();
+        // $totalTime = 0;
+        // foreach ($queries as $q) {
+        //     $totalTime += $q['time'];
+        // }
+        // \Log::info('PURCHASE CREATE PAGE - Total queries: ' . count($queries) . ', Total DB time: ' . $totalTime . 'ms');
+        // \Log::info(json_encode(array_slice($queries, 0, 30)));
+
+        // return  $html;
     }
+
+
+
+
 
 
     public function getWarehousesByBranch(Request $request)

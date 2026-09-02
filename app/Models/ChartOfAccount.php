@@ -109,6 +109,7 @@ class ChartOfAccount extends Model
 
     public static  function getaccount($id = null)
     {
+
         $id = getAccountByUniqueID($id)->id;
         $account_list =  Self::where('status', 'Active');
         if ($id) {
