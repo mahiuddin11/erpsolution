@@ -652,11 +652,11 @@ class PosDashboardApiController extends Controller
                 ->flip()
                 ->all();
         }
-        // <<< END FIX
+
 
         $purchasesFormatted = $purchases->map(function ($p) use ($purchaseLedgerMap, $purchaseSupplierNames, $purchasePaidInvoices) {
             $ledgerRow = $purchaseLedgerMap->get($p->invoice_no);
-            $partyName = 'Unknown Supplier';
+            $partyName = '-';
 
             if ($ledgerRow && $ledgerRow->supplier_id && isset($purchaseSupplierNames[$ledgerRow->supplier_id])) {
                 $partyName = $purchaseSupplierNames[$ledgerRow->supplier_id];
