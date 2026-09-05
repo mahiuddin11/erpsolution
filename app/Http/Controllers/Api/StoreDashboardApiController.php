@@ -83,7 +83,6 @@ class StoreDashboardApiController extends Controller
 
         $stockByProduct = $this->branchStockByProduct();
         $priceByProduct = $this->avgPriceByProduct();
-
         $totalSku = Product::where('status', 'Active')->count();
 
         $totalStockValue = 0;
@@ -120,21 +119,21 @@ class StoreDashboardApiController extends Controller
             $pendingPr = \App\Models\PurchaseRequisition::where('status', 'pending')->count();
         }
 
-        // ফিক্স: আগে এই দুটো কলামেই ভুলবশত $pendingPr বসানো ছিল
+
         $totalBranches   = $this->branchQuery()->where('status', 'Active')->count();
         $totalWarehouses = $this->warehouseQuery()->where('status', 'Active')->count();
 
         return response()->json([
             'visible'            => true,
             'total_sku'          => $totalSku,
-            'total_stock_value'  => round($totalStockValue, 2),
+            'total_stock_value'  => round($totalStockValue),
             'low_stock_count'    => $lowStockCount,
             'out_of_stock_count' => $outOfStockCount,
             'stock_in_today'     => $stockInToday,
             'stock_out_today'    => $stockOutToday,
             'branchs'            => $totalBranches,
             'warehouses'         => $totalWarehouses,
-            'pending_pr'         => $pendingPr, // ভবিষ্যতে দরকার হলে আলাদা KPI card এ ব্যবহার করা যাবে
+            'pending_pr'         => $pendingPr,
         ]);
     }
 
