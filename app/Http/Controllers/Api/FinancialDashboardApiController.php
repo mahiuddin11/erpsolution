@@ -4,12 +4,54 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\AccountTransaction;
+use App\Models\ChartOfAccount;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class FinancialDashboardApiController extends Controller
 {
+
+    private function resolveRange(string $range)
+    {
+        $now = Carbon::now();
+        switch ($range) {
+            case 'today':
+                $from = $now->copy()->startOfDay();
+                $to = $now->copy()->endOfDay();
+                $prevFrom = $now->copy()->subDay()->startOfDay();
+                $prevTo = $now->copy()->subDay()->endOfDay();
+                break;
+            case 'month':
+                $from = $now->copy()->startOfMonth();
+                $to = $now->copy()->endOfMonth();
+                $prevFrom = $now->copy()->subMonthNoOverflow()->startOfMonth();
+                $prevTo = $now->copy()->subMonthNoOverflow()->endOfMonth();
+                break;
+            case 'year':
+                $from = $now->copy()->startOfYear();
+                $to = $now->copy()->endOfYear();
+                $prevFrom = $now->copy()->subYear()->startOfYear();
+                $prevTo = $now->copy()->subYear()->endOfYear();
+                break;
+            case 'all':
+                $from = Carbon::create(2000, 1, 1)->startOfDay(); // TODO-CONFIRM: earliest txn date diye replace koro
+                $to = $now->copy()->endOfDay();
+                $prevFrom = null;
+                $prevTo = null;
+                break;
+            case '7d':
+            default:
+                $from = $now->copy()->subDays(6)->startOfDay();
+                $to = $now->copy()->endOfDay();
+                $prevFrom = $now->copy()->subDays(13)->startOfDay();
+                $prevTo = $now->copy()->subDays(7)->endOfDay();
+                break;
+        }
+        return compact('from', 'to', 'prevFrom', 'prevTo');
+    }
+
+
     private function accountGroups()
     {
         return [
@@ -26,9 +68,7 @@ class FinancialDashboardApiController extends Controller
         ];
     }
 
-    // netProfit($from, $to) -- incomestatement()-er calculation hubohu,
-    // shudhu function-e wrap kora holo jate KPI-r "this month" ar
-    // "last month" duibar-i call kora jay code duplicate na kore
+
     private function financialSummary($from, $to)
     {
         $g = $this->accountGroups();
@@ -68,23 +108,21 @@ class FinancialDashboardApiController extends Controller
         ];
     }
 
-    // ---------------------------------------------------------------
-    // Point 1: KPI Cards -- this month vs last month % change
-    // ---------------------------------------------------------------
-    public function kpis()
-    {
-        $thisMonthStart = Carbon::now()->startOfMonth()->format('Y-m-d');
-        $thisMonthEnd   = Carbon::now()->endOfMonth()->format('Y-m-d');
-        $lastMonthStart = Carbon::now()->subMonthNoOverflow()->startOfMonth()->format('Y-m-d');
-        $lastMonthEnd   = Carbon::now()->subMonthNoOverflow()->endOfMonth()->format('Y-m-d');
 
-        $thisMonth = $this->financialSummary($thisMonthStart, $thisMonthEnd);
-        $lastMonth = $this->financialSummary($lastMonthStart, $lastMonthEnd);
+    public function kpis(Request $request)
+    {
+        $range = $request->input('range', '7d');
+        ['from' => $from, 'to' => $to, 'prevFrom' => $prevFrom, 'prevTo' => $prevTo] = $this->resolveRange($range);
+        $current = $this->financialSummary($from->format('Y-m-d'), $to->format('Y-m-d'));
+        $previous = ($prevFrom && $prevTo)
+            ? $this->financialSummary($prevFrom->format('Y-m-d'), $prevTo->format('Y-m-d'))
+            : ['total_income' => 0, 'total_expenses' => 0, 'net_profit' => 0];
 
         $pctChange = function ($current, $previous) {
             if ($previous == 0) return $current > 0 ? 100 : 0;
             return round((($current - $previous) / abs($previous)) * 100, 1);
         };
+
 
         $arAccountIds = getOldAccount(0, 5)->pluck('id')->toArray();
         $ar = AccountTransaction::whereIn('account_id', $arAccountIds)
@@ -93,12 +131,12 @@ class FinancialDashboardApiController extends Controller
         $pendingPayments = round($ar->total_debit - $ar->total_credit, 2);
 
         return response()->json([
-            'total_income'       => $thisMonth['total_income'],
-            'income_change'      => $pctChange($thisMonth['total_income'], $lastMonth['total_income']),
-            'total_expenses'     => $thisMonth['total_expenses'],
-            'expenses_change'    => $pctChange($thisMonth['total_expenses'], $lastMonth['total_expenses']),
-            'net_profit'         => $thisMonth['net_profit'],
-            'net_profit_change'  => $pctChange($thisMonth['net_profit'], $lastMonth['net_profit']),
+            'total_income'       => $current['total_income'],
+            'income_change'      => $pctChange($current['total_income'], $previous['total_income']),
+            'total_expenses'     => $current['total_expenses'],
+            'expenses_change'    => $pctChange($current['total_expenses'], $previous['total_expenses']),
+            'net_profit'         => $current['net_profit'],
+            'net_profit_change'  => $pctChange($current['net_profit'], $previous['net_profit']),
             'pending_payments'   => $pendingPayments,
             'overdue_count'      => 0, // TODO-CONFIRM: invoice/overdue table na thakle 0
         ]);
@@ -108,12 +146,14 @@ class FinancialDashboardApiController extends Controller
     public function kpiDetails(Request $request)
     {
         $type = $request->input('type');
+        $range = $request->input('range', '7d');
         $perPage = (int) $request->input('per_page', 100);
         $all = $request->boolean('all');
         $g = $this->accountGroups();
 
-        $thisMonthStart = Carbon::now()->startOfMonth();
-        $thisMonthEnd   = Carbon::now()->endOfMonth();
+
+        ['from' => $rangeFrom, 'to' => $rangeTo] = $this->resolveRange($range);
+
 
         $from = null;
         $to = null;
@@ -121,15 +161,15 @@ class FinancialDashboardApiController extends Controller
         switch ($type) {
             case 'total_income':
                 $accountIds = $g['revenue_ids'];
-                $from = $thisMonthStart;
-                $to = $thisMonthEnd;
+                $from = $rangeFrom;
+                $to = $rangeTo;
                 $direction = 'income';
                 break;
 
             case 'total_expenses':
                 $accountIds = array_merge($g['cogs_ids'], $g['opex_ids']);
-                $from = $thisMonthStart;
-                $to = $thisMonthEnd;
+                $from = $rangeFrom;
+                $to = $rangeTo;
                 $direction = 'expense';
                 break;
 
@@ -141,12 +181,13 @@ class FinancialDashboardApiController extends Controller
                     $g['opex_ids'],
                     $g['non_op_income_ids']
                 );
-                $from = $thisMonthStart;
-                $to = $thisMonthEnd;
+                $from = $rangeFrom;
+                $to = $rangeTo;
                 $direction = 'mixed';
                 break;
 
             case 'pending_payments':
+                // AR-er current balance -- range apply hoy na, purnango list-i dekhano hoy
                 $accountIds = getOldAccount(0, 5)->pluck('id')->toArray(); // AR
                 $direction = 'ar';
                 break;
@@ -210,6 +251,192 @@ class FinancialDashboardApiController extends Controller
         ]);
     }
 
+    public function arApAging()
+    {
+        return response()->json([
+            'receivable' => $this->buildAgingReport(5, true),
+            'payable'    => $this->buildAgingReport(16, false),
+        ]);
+    }
+
+
+    private function buildAgingReport($parentId, $isAr)
+    {
+        $children = \App\Models\Accounts::where('parent_id', $parentId)
+            ->get(['id', 'account_name']);
+
+        $rows = [];
+
+        foreach ($children as $acc) {
+            $ids = getOldAccount(0, $acc->id)->pluck('id')->toArray();
+
+            $txns = AccountTransaction::whereIn('account_id', $ids)
+                ->select('debit', 'credit', 'created_at')
+                ->get();
+
+            if ($txns->isEmpty()) continue;
+
+            $buckets = ['current' => 0, 'd1_30' => 0, 'd31_60' => 0, 'd61_90' => 0, 'd91_plus' => 0];
+
+            foreach ($txns as $t) {
+                $amount = $isAr ? ($t->debit - $t->credit) : ($t->credit - $t->debit);
+                $days = Carbon::parse($t->created_at)->diffInDays(Carbon::now());
+
+                if ($days <= 0) {
+                    $buckets['current'] += $amount;
+                } elseif ($days <= 30) {
+                    $buckets['d1_30'] += $amount;
+                } elseif ($days <= 60) {
+                    $buckets['d31_60'] += $amount;
+                } elseif ($days <= 90) {
+                    $buckets['d61_90'] += $amount;
+                } else {
+                    $buckets['d91_plus'] += $amount;
+                }
+            }
+
+            $total = array_sum($buckets);
+
+            if (round($total, 2) == 0) continue; // fully settled -- table-e dekhanor dorkar nai
+
+            $rows[] = [
+                'name'     => $acc->account_name,
+                'current'  => round($buckets['current'], 2),
+                'd1_30'    => round($buckets['d1_30'], 2),
+                'd31_60'   => round($buckets['d31_60'], 2),
+                'd61_90'   => round($buckets['d61_90'], 2),
+                'd91_plus' => round($buckets['d91_plus'], 2),
+                'total'    => round($total, 2),
+            ];
+        }
+
+        usort($rows, fn($a, $b) => $b['total'] <=> $a['total']);
+
+        $grand = [
+            'current'  => round(array_sum(array_column($rows, 'current')), 2),
+            'd1_30'    => round(array_sum(array_column($rows, 'd1_30')), 2),
+            'd31_60'   => round(array_sum(array_column($rows, 'd31_60')), 2),
+            'd61_90'   => round(array_sum(array_column($rows, 'd61_90')), 2),
+            'd91_plus' => round(array_sum(array_column($rows, 'd91_plus')), 2),
+            'total'    => round(array_sum(array_column($rows, 'total')), 2),
+        ];
+
+        $top10 = collect($rows)->take(10)->map(fn($r) => [
+            'label'  => $r['name'],
+            'amount' => $r['total'],
+        ])->values();
+
+        return [
+            'kpis' => [
+                'unpaid_amount'   => $grand['total'],
+                'overdue_amount'  => round($grand['d1_30'] + $grand['d31_60'] + $grand['d61_90'] + $grand['d91_plus'], 2),
+                'overdue_30_plus' => round($grand['d31_60'] + $grand['d61_90'] + $grand['d91_plus'], 2),
+                'overdue_90_plus' => $grand['d91_plus'],
+            ],
+            'top10' => $top10,
+            'rows'  => $rows,
+            'grand' => $grand,
+        ];
+    }
+
+
+
+    public function bankCashBalance()
+    {
+        $cashAccounts = $this->buildBankCashRows(7, 'Cash in Hand');   // Cash in Hand children
+        $bankAccounts = $this->buildBankCashRows(8, 'Bank');   // Cash at Bank children
+
+        $allAccounts = $cashAccounts->concat($bankAccounts)->sortByDesc('balance')->values();
+
+        $totalCash  = round($cashAccounts->sum('balance'), 2);
+        $totalBank  = round($bankAccounts->sum('balance'), 2);
+        $grandTotal = round($totalCash + $totalBank, 2);
+
+
+        $allIds = array_merge(
+            getOldAccount(0, 7)->pluck('id')->toArray(),
+            getOldAccount(0, 8)->pluck('id')->toArray()
+        );
+
+        $todayTxns = AccountTransaction::whereIn('account_id', $allIds)
+            ->whereDate('created_at', Carbon::today())
+            ->selectRaw('COUNT(*) as cnt, COALESCE(SUM(debit),0)+COALESCE(SUM(credit),0) as amt')
+            ->first();
+
+        return response()->json([
+            'total_cash'                => $totalCash,
+            'total_bank'                => $totalBank,
+            'grand_total'               => $grandTotal,
+            'cash_accounts_count'       => $cashAccounts->count(),
+            'bank_accounts_count'       => $bankAccounts->count(),
+            'today_transactions_count'  => (int) $todayTxns->cnt,
+            'today_transactions_amount' => round($todayTxns->amt, 2),
+            'accounts'                  => $allAccounts,
+        ]);
+    }
+
+    private function buildBankCashRows($parentId, $type)
+    {
+        $children = ChartOfAccount::where('parent_id', $parentId)
+            ->get(['id', 'account_name', 'account_code', 'status', 'opening_balance', 'balance_type']);
+
+        if ($children->isEmpty()) {
+            $parentAcc = ChartOfAccount::find($parentId);
+            if ($parentAcc) {
+                $children = collect([$parentAcc]);
+            }
+        }
+
+        return $children->map(function ($acc) use ($type) {
+            $ids = getOldAccount(0, $acc->id)->pluck('id')->toArray();
+
+            $sum = AccountTransaction::whereIn('account_id', $ids)
+                ->selectRaw('COALESCE(SUM(debit),0) as total_debit, COALESCE(SUM(credit),0) as total_credit')
+                ->first();
+
+            $txnBalance = $sum->total_debit - $sum->total_credit;
+
+
+            $opening = $acc->balance_type === 'credit'
+                ? -1 * $acc->opening_balance
+                : $acc->opening_balance;
+
+            return [
+                'id'             => $acc->id,
+                'name'           => $acc->account_name,
+                'account_number' => $acc->account_code ?? '-',
+                'type'           => $type,
+                'status'         => $acc->status,
+                'balance'        => round($opening + $txnBalance, 2),
+            ];
+        });
+    }
+
+    // private function buildBankCashRows($parentId, $type)
+    // {
+    //     $children = ChartOfAccount::where('parent_id', $parentId)
+    //         ->get(['id', 'account_name', 'account_code', 'status']);
+
+    //     return $children->map(function ($acc) use ($type) {
+    //         $ids = getOldAccount(0, $acc->id)->pluck('id')->toArray();
+
+    //         $sum = AccountTransaction::whereIn('account_id', $ids)
+    //             ->selectRaw('COALESCE(SUM(debit),0) as total_debit, COALESCE(SUM(credit),0) as total_credit')
+    //             ->first();
+
+    //         return [
+    //             'id'             => $acc->id,
+    //             'name'           => $acc->account_name,
+    //             'account_number' => $acc->account_code ?? '-',
+    //             'type'           => $type,
+    //             'status'         => $acc->status,
+    //             'balance'        => round($sum->total_debit - $sum->total_credit, 2),
+    //         ];
+    //     });
+    // }
+
+
+    // Range filter apply hoy na -- eta nijer alada range-selector (This Year/Last Year/Last 6 Months) niye rakhe
     public function cashFlow(Request $request)
     {
         $range = $request->input('range', 'this_year');
@@ -265,13 +492,22 @@ class FinancialDashboardApiController extends Controller
         ]);
     }
 
-    // ---------------------------------------------------------------
-    // Point 3: Expense Breakdown -- Opex-er child account-wise (donut)
+
     // ---------------------------------------------------------------
     public function expenseBreakdown(Request $request)
     {
-        $from = $request->input('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
-        $to   = $request->input('to_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $range = $request->input('range');
+
+        if ($range) {
+
+            ['from' => $fromDate, 'to' => $toDate] = $this->resolveRange($range);
+            $from = $fromDate->format('Y-m-d');
+            $to   = $toDate->format('Y-m-d');
+        } else {
+            // range na thakle purono from_date/to_date behavior (backward-compatible)
+            $from = $request->input('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+            $to   = $request->input('to_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        }
 
         $opexChildren = \App\Models\Accounts::where('parent_id', 23)->get(['id', 'account_name']);
 
@@ -294,9 +530,7 @@ class FinancialDashboardApiController extends Controller
         return response()->json($data);
     }
 
-    // ---------------------------------------------------------------
-    // Point 4: Revenue Comparison -- this year vs last year, month-wise
-    // ---------------------------------------------------------------
+
     public function revenueComparison()
     {
         $g = $this->accountGroups();
@@ -328,12 +562,7 @@ class FinancialDashboardApiController extends Controller
         ]);
     }
 
-    // ---------------------------------------------------------------
-    // Point 5: Transactions tab -- income/expense voucher list
-    // TODO-CONFIRM: journal_vouchers/debit_vouchers/credit_vouchers
-    // real table structure na jana thakay AccountTransaction theke
-    // shorashori dekhano hocche, voucher_no field name check korte hobe
-    // ---------------------------------------------------------------
+
     public function transactions(Request $request)
     {
         $from   = $request->input('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
@@ -358,8 +587,12 @@ class FinancialDashboardApiController extends Controller
         }
 
         if ($search) {
-            $query->where('payment_invoice', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('invoice', 'like', "%{$search}%")
+                    ->orWhere('remark', 'like', "%{$search}%");
+            });
         }
+
 
         $data = $query->latest('created_at')->take(200)->get()->map(function ($t) use ($g) {
             $isIncome = in_array($t->account_id, $g['revenue_ids']);
@@ -373,7 +606,7 @@ class FinancialDashboardApiController extends Controller
                 'voucher'   => $t->invoice ?? '-',
                 'branch' => $t->branch?->name
                     ?? $t->project?->name
-                    ?? '-', // TODO-CONFIRM: branch info AccountTransaction e thakle field name din
+                    ?? '-',
                 'amount'    => $amount ?? '',
                 'date'      => $t->created_at->format('d M Y'),
             ];
@@ -382,8 +615,7 @@ class FinancialDashboardApiController extends Controller
         return response()->json($data);
     }
 
-    // Point 6: Invoices tab -- TODO: real invoice table na deya porjonto
-    // ei endpoint khali array return korbe
+
     public function invoices(Request $request)
     {
         return response()->json([]);

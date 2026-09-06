@@ -7,6 +7,108 @@
 <!-- Common Dashboard CSS (shared by all department dashboards) -->
 <link rel="stylesheet"
     href="{{ asset('css/dashboard-style.css') }}?v={{ filemtime(public_path('css/dashboard-style.css')) }}">
+@section('styles')
+    <style>
+        /* ---- Bank/Cash Balance panel: stat card underline + account row icon + type badge ---- */
+        .bc-stat-card {
+            cursor: default;
+        }
+
+        .bc-stat-card:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .bc-stat-sub {
+            font-size: .78rem;
+            color: var(--gray-500, #6b7280);
+            margin-top: 4px;
+        }
+
+        .bc-stat-bar {
+            height: 3px;
+            width: 32px;
+            border-radius: 2px;
+            margin-top: 8px;
+        }
+
+        .bc-acc-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            margin-right: 8px;
+            font-size: .8rem;
+        }
+
+        .bc-type-badge {
+            display: inline-block;
+            background: var(--emerald-100, #d1fae5);
+            color: var(--emerald-700, #047857);
+            font-size: .72rem;
+            font-weight: 700;
+            padding: 2px 10px;
+            border-radius: 999px;
+        }
+
+        /* ---- Aging KPI cards: icon circle + caption ---- */
+        .aging-kpi-card {
+            cursor: default;
+        }
+
+        .aging-kpi-card:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .aging-kpi-icon-wrap {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .aging-caption {
+            font-size: .75rem;
+            color: var(--gray-500, #6b7280);
+            margin-top: -8px;
+            margin-bottom: 4px;
+        }
+
+        /* ---- Aging table: dark header, scoped only to aging-table so KPI modal table untouched ---- */
+        .aging-table thead tr {
+            background: #1e293b;
+        }
+
+        .aging-table thead th {
+            color: #fff;
+            font-weight: 600;
+            border: none;
+            padding: 10px 12px;
+        }
+
+        .aging-table tbody td {
+            padding: 8px 12px;
+        }
+
+        .aging-table tfoot td {
+            border-top: 2px solid #e5e7eb;
+            padding: 10px 12px;
+        }
+
+        .fin-panel-subtitle {
+            font-size: .78rem;
+            font-weight: 400;
+            color: var(--gray-500, #9ca3af);
+            margin-left: 4px;
+        }
+    </style>
+@endsection
 @section('navbar-content')
     <div class="content-header">
         <div class="container-fluid">
@@ -28,20 +130,26 @@
 @section('admin-content')
     <div class="dashboard-wrap fin-wrap">
 
-        {{-- ============ Tabs + Export ============ --}}
         <div class="fin-tabs-row">
             <div class="fin-tabs" id="finTabs">
                 <button type="button" class="fin-tab active" data-tab="overview">Overview</button>
                 <button type="button" class="fin-tab" data-tab="transactions">Transactions</button>
                 <button type="button" class="fin-tab" data-tab="invoices">Invoices</button>
             </div>
-            <button type="button" class="fin-export-btn" id="btnExport">
-                <i class="bi bi-download"></i> Export
-            </button>
+            <div class="fin-tabs" id="finRangeFilter">
+                <button type="button" class="fin-range-btn" data-range="today">Today</button>
+                <button type="button" class="fin-range-btn active" data-range="7d">7 Days</button>
+                <button type="button" class="fin-range-btn" data-range="month">Month</button>
+                <button type="button" class="fin-range-btn" data-range="year">Year</button>
+                <button type="button" class="fin-range-btn" data-range="all">All Time</button>
+            </div>
         </div>
+
 
         {{-- ============ TAB: Overview ============ --}}
         <div class="fin-tab-content" id="tabOverview">
+
+
 
             {{-- ============ Point 1: KPI Cards (clickable -> drill-down modal) ============ --}}
             <div class="row g-3 mb-3" id="finKpis"></div>
@@ -101,12 +209,105 @@
                 </div>
             </div>
 
+            {{-- ============ Bank / Cash Balance ============ --}}
+            <div class="row g-3 mb-3 bank-cash-blance">
+                <div class="col-12">
+                    <div class="panel fin-panel">
+                        <div class="panel-header fin-panel-header">
+                            <span class="fin-panel-title">Bank &amp; Cash Balance</span>
+                        </div>
+                        <div class="panel-body" id="bankCashBody">
+                            <div class="text-center text-muted py-3">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ============ AR Aging ============ --}}
+            <div class="row g-3 mb-3" id="arAgingKpis"></div>
+            <div class="row g-3 mb-3">
+                <div class="col-lg-6">
+                    <div class="panel fin-panel">
+                        <div class="panel-header fin-panel-header">
+                            <span class="fin-panel-title">Unpaid Invoices Amount by Customer (Top 10) <span
+                                    class="fin-panel-subtitle">in home currency</span></span>
+                        </div>
+                        <div class="panel-body">
+                            <div style="height:280px"><canvas id="arBarChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="panel fin-panel">
+                        <div class="panel-header fin-panel-header">
+                            <span class="fin-panel-title">Distribution (Top 10)</span>
+                        </div>
+                        <div class="panel-body">
+                            <div style="height:280px"><canvas id="arDonutChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row g-3 mb-3">
+                <div class="col-12">
+                    <div class="panel fin-panel">
+                        <div class="panel-header fin-panel-header">
+                            <span class="fin-panel-title">Accounts Receivable Aging -- Summary</span>
+                        </div>
+                        <div class="panel-body" id="arAgingBody">
+                            <div class="text-center text-muted py-3">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ============ AP Aging ============ --}}
+            <div class="row g-3 mb-3" id="apAgingKpis"></div>
+            <div class="row g-3 mb-3">
+                <div class="col-lg-6">
+                    <div class="panel fin-panel">
+                        <div class="panel-header fin-panel-header">
+                            <span class="fin-panel-title">Unpaid Bills Amount by Supplier (Top 10) <span
+                                    class="fin-panel-subtitle">in home currency</span></span>
+                        </div>
+                        <div class="panel-body">
+                            <div style="height:280px"><canvas id="apBarChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="panel fin-panel">
+                        <div class="panel-header fin-panel-header">
+                            <span class="fin-panel-title">Distribution (Top 10)</span>
+                        </div>
+                        <div class="panel-body">
+                            <div style="height:280px"><canvas id="apDonutChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row g-3 mb-3">
+                <div class="col-12">
+                    <div class="panel fin-panel">
+                        <div class="panel-header fin-panel-header">
+                            <span class="fin-panel-title">Accounts Payable Aging -- Summary</span>
+                        </div>
+                        <div class="panel-body" id="apAgingBody">
+                            <div class="text-center text-muted py-3">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
         </div>
+
+
         {{-- ============ /TAB: Overview ============ --}}
 
         {{-- ============ TAB: Transactions ============ --}}
-        <div class="fin-tab-content" id="tabTransactions" style="display:none">
-            <div class="panel fin-panel">
+        <div class="fin-tab-content mb-3" id="tabTransactions" style="display:none">
+            <div class="panel fin-panel ">
                 <div class="panel-header fin-panel-header">
                     <span class="fin-panel-title">All Transactions</span>
                 </div>
@@ -202,8 +403,8 @@
 
     <style>
         /* ==========================================================================
-                                                                                                                                                                                                                                                                                                                                                                                                                           Financial Dashboard specific styles.
-                                                                                                                                                                                                                                                                                                                                                                                                                           ========================================================================== */
+                                                                                                                           Financial Dashboard specific styles.
+                                                                                                                           ========================================================================== */
         .fin-wrap {
             --fin-green: #10b981;
             --fin-green-dark: #059669;
@@ -250,6 +451,29 @@
             background: var(--emerald-100);
             color: var(--emerald-700);
         }
+
+        /* >>> NEW: Time range filter buttons (reuses .fin-tabs pill container) */
+        .fin-range-btn {
+            border: none;
+            background: transparent;
+            padding: 6px 16px;
+            border-radius: 999px;
+            font-size: .8rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            transition: .15s;
+        }
+
+        .fin-range-btn:hover {
+            color: var(--gray-900);
+        }
+
+        .fin-range-btn.active {
+            background: var(--emerald-100);
+            color: var(--emerald-700);
+        }
+
+        /* <<< END NEW */
 
         .fin-export-btn {
             display: inline-flex;
@@ -380,10 +604,6 @@
             font-size: .8rem;
             font-weight: 600;
         }
-
-
-
-
 
         /* ---- Concentric Expense Rings ---- */
         .concentric-wrap {
@@ -712,9 +932,12 @@
         }
 
         /* Past month -- permanently colored, hover lagbe na */
-        .rev- -col.is-past .rev-bar-ghost {
+        /* >>> FIX: broken selector ".rev- -col" ke ".rev-bar-col" e thik kora holo (age eta dead rule chhilo) */
+        .rev-bar-col.is-past .rev-bar-ghost {
             opacity: 0;
         }
+
+        /* <<< END FIX */
 
         .rev-bar-col.is-past .rev-bar-split {
             display: flex;
@@ -741,6 +964,17 @@
         }
 
         const API_BASE = '/api/financial-dashboard';
+
+        // >>> NEW: Global time range state for Financial Overview (Today/7 Days/Month/Year/All Time)
+        const FIN_RANGE_LABELS = {
+            today: 'Today',
+            '7d': 'Last 7 Days',
+            month: 'This Month',
+            year: 'This Year',
+            all: 'All Time'
+        };
+        let finRange = '7d'; // default -- 7 Days active thakbe
+        // <<< END NEW
 
         // Charts/lists ekbar render howar por abar rebuild na kore, shudhu
         // panel show/hide kora hoy -- performance o smooth switching er jonno
@@ -769,8 +1003,10 @@
                 overviewChartsRendered = true;
             } else if (tabKey === 'overview') {
                 cashFlowChartInstance && cashFlowChartInstance.resize();
-                donutChartInstance && donutChartInstance.resize();
                 revenueChartInstance && revenueChartInstance.resize();
+                // >>> FIX: undeclared 'donutChartInstance' reference remove kora holo -- eta
+                // kono jaygay declare hoyni (expense breakdown SVG-based, Chart.js instance na),
+                // tai eta call korle ReferenceError hoto tab switch korar somoy
             }
 
             if (tabKey === 'transactions' && !transactionsRendered) {
@@ -790,9 +1026,18 @@
             });
         });
 
-        document.getElementById('btnExport').addEventListener('click', function() {
-            alert('Export coming soon');
+
+        // >>> NEW: Range filter click -- KPI + Expense Breakdown re-fetch hobe
+        document.querySelectorAll('.fin-range-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.fin-range-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                finRange = this.dataset.range;
+                loadKpis();
+                loadExpenseBreakdown();
+            });
         });
+        // <<< END NEW
 
         /* ---------------- Point 1: KPI Cards (clickable) ---------------- */
         function kpiCard({
@@ -821,9 +1066,11 @@
         }
 
         function renderKpis(kpi) {
+            const rangeLabel = FIN_RANGE_LABELS[finRange] || 'Last 7 Days'; // >>> NEW: dynamic label per range
+
             document.getElementById('finKpis').innerHTML = [
                 kpiCard({
-                    label: 'Total Income (This Month)',
+                    label: `Total Income (${rangeLabel})`, // >>> FIX: was hardcoded "(This Month)"
                     value: '৳' + Number(kpi.total_income).toLocaleString(),
                     trend: (kpi.income_change >= 0 ? '+' : '') + kpi.income_change + '%',
                     trendDir: kpi.income_change >= 0 ? 'up' : 'down',
@@ -833,7 +1080,7 @@
                     type: 'total_income'
                 }),
                 kpiCard({
-                    label: 'Total Expenses (This Month)',
+                    label: `Total Expenses (${rangeLabel})`, // >>> FIX: was hardcoded "(This Month)"
                     value: '৳' + Number(kpi.total_expenses).toLocaleString(),
                     trend: (kpi.expenses_change >= 0 ? '+' : '') + kpi.expenses_change + '%',
                     trendDir: kpi.expenses_change >= 0 ? 'down' : 'up',
@@ -843,7 +1090,7 @@
                     type: 'total_expenses'
                 }),
                 kpiCard({
-                    label: 'Net Profit (This Month)',
+                    label: `Net Profit (${rangeLabel})`, // >>> FIX: was hardcoded "(This Month)"
                     value: '৳' + Number(kpi.net_profit).toLocaleString(),
                     trend: (kpi.net_profit_change >= 0 ? '+' : '') + kpi.net_profit_change + '%',
                     trendDir: kpi.net_profit_change >= 0 ? 'up' : 'down',
@@ -853,7 +1100,7 @@
                     type: 'net_profit'
                 }),
                 kpiCard({
-                    label: 'Pending Payments',
+                    label: 'Pending Payments', // range apply hoy na -- eta AR-er current balance, period-based na
                     value: '৳' + Number(kpi.pending_payments).toLocaleString(),
                     trend: kpi.overdue_count + ' Overdue',
                     trendDir: 'neutral',
@@ -867,10 +1114,19 @@
             bindKpiClicks();
         }
 
-        fetch(`${API_BASE}/kpis`).then(r => r.json()).then(renderKpis).catch(() => {
-            document.getElementById('finKpis').innerHTML =
-                `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load KPI data</p></div>`;
-        });
+        // >>> FIX: inline top-level fetch-ke function-e wrap kora holo jate range
+        // change korle abar call kora jay, ar range query param pass kora hocche
+        function loadKpis() {
+            fetch(`${API_BASE}/kpis?range=${finRange}`)
+                .then(r => r.json())
+                .then(renderKpis)
+                .catch(() => {
+                    document.getElementById('finKpis').innerHTML =
+                        `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load KPI data</p></div>`;
+                });
+        }
+        loadKpis();
+        // <<< END FIX
 
         /* ---------------- KPI Detail Modal -- pagination + Print/Excel (Current Page / Full Data) ---------------- */
         const kpiModalState = {
@@ -905,7 +1161,8 @@
             document.getElementById('kpiDetailModalBody').innerHTML =
                 `<div class="text-center text-muted py-3">Loading...</div>`;
 
-            fetch(`${API_BASE}/kpi-details?type=${kpiModalState.type}&page=${page}&per_page=100`)
+            // >>> FIX: range param jog kora holo jate modal-e o shothik period-er data ashe
+            fetch(`${API_BASE}/kpi-details?type=${kpiModalState.type}&range=${finRange}&page=${page}&per_page=100`)
                 .then(r => r.json())
                 .then(res => {
                     kpiModalState.page = res.current_page;
@@ -945,12 +1202,12 @@
                     </thead>
                     <tbody>
                         ${rows.map(r => `
-                                                                                                                                                                                                                                                                                                                                                                                                                                            <tr>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                <td>${r.voucher ?? '-'}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                <td>${r.title}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                <td class="text-right">${r.date}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                <td class="text-right">৳${Number(r.amount).toLocaleString()}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                            </tr>`).join('')}
+                                                                                                                                            <tr>
+                                                                                                                                                <td>${r.voucher ?? '-'}</td>
+                                                                                                                                                <td>${r.title}</td>
+                                                                                                                                                <td class="text-right">${r.date}</td>
+                                                                                                                                                <td class="text-right">৳${Number(r.amount).toLocaleString()}</td>
+                                                                                                                                            </tr>`).join('')}
                     </tbody>
                 </table>`;
         }
@@ -990,7 +1247,9 @@
             document.getElementById('kpiDetailModalBody').insertAdjacentHTML('afterbegin',
                 `<div class="text-muted small mb-2" id="kpiExportingNote">Preparing full data export...</div>`);
 
-            fetch(`${API_BASE}/kpi-details?type=${kpiModalState.type}&all=1`)
+            // >>> FIX: range param jog kora holo -- 'Full Data' export-o current filter-er
+            // range mene cholbe, na hole 'This Month' full history export hoye jeto
+            fetch(`${API_BASE}/kpi-details?type=${kpiModalState.type}&range=${finRange}&all=1`)
                 .then(r => r.json())
                 .then(res => {
                     document.getElementById('kpiExportingNote')?.remove();
@@ -1024,7 +1283,8 @@
                 return;
             }
 
-            fetch(`${API_BASE}/kpi-details?type=${kpiModalState.type}&all=1`)
+            // >>> FIX: range param jog kora holo, same reason as exportKpiExcel()
+            fetch(`${API_BASE}/kpi-details?type=${kpiModalState.type}&range=${finRange}&all=1`)
                 .then(r => r.json())
                 .then(res => openKpiPrintWindow(res.data))
                 .catch(() => alert('Failed to prepare full data print'));
@@ -1051,19 +1311,21 @@
                     <div class="meta">${rows.length.toLocaleString()} record${rows.length > 1 ? 's' : ''} -- generated ${new Date().toLocaleDateString()}</div>
                     <table>
                         <thead>
-                            <th>Voucher</th>
-                            <tr><th>Description</th>
-                                <th>Date</th></tr>
-                            <th class="amount">Amount</th>
+                            <tr>
+                                <th>Voucher</th>
+                                <th>Description</th>
+                                <th>Date</th>
+                                <th class="amount">Amount</th>
+                            </tr>
                         </thead>
                         <tbody>
                             ${rows.map(r => `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                <tr>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                    <td>${r.voucher ?? '-'}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                    <td>${r.title}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                    <td>${r.date}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                    <td class="amount">৳${Number(r.amount).toLocaleString()}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                </tr>`).join('')}
+                                                                                                                                                <tr>
+                                                                                                                                                    <td>${r.voucher ?? '-'}</td>
+                                                                                                                                                    <td>${r.title}</td>
+                                                                                                                                                    <td>${r.date}</td>
+                                                                                                                                                    <td class="amount">৳${Number(r.amount).toLocaleString()}</td>
+                                                                                                                                                </tr>`).join('')}
                         </tbody>
                     </table>
                 </body>
@@ -1189,7 +1451,7 @@
 
 
 
-        /* ---------------- Expense Breakdown (concentric rings + curved labels) ---------------- */
+
         /* ---------------- Expense Breakdown (concentric rings + in-band text + numbered badges) ---------------- */
         function polarToCartesian(cx, cy, r, angleDeg) {
             const a = (angleDeg - 90) * Math.PI / 180;
@@ -1317,6 +1579,27 @@
                 legendBox.style.display = 'none';
             }
         }
+
+        // >>> NEW: extracted into its own function so the range filter can re-fetch independently
+        // (age eta loadOverviewCharts()-er bhitore inline fetch hisebe chhilo)
+        function loadExpenseBreakdown() {
+            fetch(`${API_BASE}/expense-breakdown?range=${finRange}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.length) {
+                        document.getElementById('concentricChart').closest('.panel-body').innerHTML =
+                            `<div class="empty-state"><i class="bi bi-pie-chart"></i><p>No expense data found</p></div>`;
+                        return;
+                    }
+                    renderExpenseConcentric(data);
+                })
+                .catch(() => {
+                    document.getElementById('concentricChart').closest('.panel-body').innerHTML =
+                        `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load expense data</p></div>`;
+                });
+        }
+        // <<< END NEW
+
         /* ---------------- Revenue Comparison (grouped bar chart) ---------------- */
         let revenueChartInstance = null;
 
@@ -1356,27 +1639,27 @@
                 const isPast = i <= currentMonthIdx;
 
                 return `
-        <div class="rev-bar-col ${isPast ? 'is-past' : ''}" data-idx="${i}">
-            <div class="rev-tooltip">
-                <div class="rev-tooltip-title">${month}</div>
-                <div class="rev-tooltip-row">
-                    <span class="rev-tooltip-dot" style="background:#059669"></span>
-                    This Year : <b>৳${curVal.toLocaleString()}</b>
-                </div>
-                <div class="rev-tooltip-row">
-                    <span class="rev-tooltip-dot" style="background:#a7d9c5"></span>
-                    Last Year : <b>৳${lastVal.toLocaleString()}</b>
-                </div>
-            </div>
-            <div class="rev-bar-track">
-                <div class="rev-bar-ghost" style="height:${totalPct}%"></div>
-                <div class="rev-bar-split" style="height:${totalPct}%">
-                    <div class="rev-bar-seg-current" style="height:${curSegHeight}%"></div>
-                    <div class="rev-bar-seg-last" style="height:${lastSegHeight}%"></div>
-                </div>
-            </div>
-            <div class="rev-bar-month">${month}</div>
-        </div>`;
+                          <div class="rev-bar-col ${isPast ? 'is-past' : ''}" data-idx="${i}">
+                              <div class="rev-tooltip">
+                                  <div class="rev-tooltip-title">${month}</div>
+                                  <div class="rev-tooltip-row">
+                                      <span class="rev-tooltip-dot" style="background:#059669"></span>
+                                      This Year : <b>৳${curVal.toLocaleString()}</b>
+                                  </div>
+                                  <div class="rev-tooltip-row">
+                                      <span class="rev-tooltip-dot" style="background:#a7d9c5"></span>
+                                      Last Year : <b>৳${lastVal.toLocaleString()}</b>
+                                  </div>
+                              </div>
+                              <div class="rev-bar-track">
+                                  <div class="rev-bar-ghost" style="height:${totalPct}%"></div>
+                                  <div class="rev-bar-split" style="height:${totalPct}%">
+                                      <div class="rev-bar-seg-current" style="height:${curSegHeight}%"></div>
+                                      <div class="rev-bar-seg-last" style="height:${lastSegHeight}%"></div>
+                                  </div>
+                              </div>
+                              <div class="rev-bar-month">${month}</div>
+                          </div>`;
             }).join('');
 
             document.getElementById('revBarsArea').innerHTML = barsHtml;
@@ -1387,6 +1670,411 @@
                 col.addEventListener('mouseleave', () => col.classList.remove('active'));
             });
         }
+
+        /* ---------------- AR / AP Aging (redesigned) ---------------- */
+        const agingState = {
+            receivable: {
+                data: null,
+                page: 1
+            },
+            payable: {
+                data: null,
+                page: 1
+            }
+        };
+        const AGING_PER_PAGE = 10;
+        let arBarInst = null,
+            arDonutInst = null,
+            apBarInst = null,
+            apDonutInst = null;
+
+        function agingKpiCard(label, value, icon, iconBg, iconColor) {
+            return `
+        <div class="col-6 col-lg-3">
+            <div class="fin-kpi-card aging-kpi-card" style="cursor:default">
+                <div class="aging-kpi-icon-wrap" style="background:${iconBg};color:${iconColor}">
+                    <i class="bi ${icon}"></i>
+                </div>
+                <div class="fin-kpi-label mt-2">${label}</div>
+                <div class="fin-kpi-value" style="font-size:20px;white-space:normal;word-break:break-word">৳${Number(value).toLocaleString()}</div>
+            </div>
+        </div>`;
+        }
+
+        function renderAgingKpis(kpiContainerId, kpis, prefix) {
+            document.getElementById(kpiContainerId).innerHTML = [
+                agingKpiCard(`Unpaid ${prefix} Amount`, kpis.unpaid_amount, 'bi-receipt', '#eff6ff', '#2563eb'),
+                agingKpiCard('Overdue Amount', kpis.overdue_amount, 'bi-clock-history', '#fef2f2', '#dc2626'),
+                agingKpiCard('Overdue 30+ Days', kpis.overdue_30_plus, 'bi-calendar-x', '#fff7ed', '#ea580c'),
+                agingKpiCard('Overdue 90+ Days', kpis.overdue_90_plus, 'bi-exclamation-octagon', '#fdf2f8', '#be185d'),
+            ].join('') + `<div class="col-12"><div class="aging-caption">in home currency</div></div>`;
+        }
+
+        function renderAgingCharts(barCanvasId, donutCanvasId, top10, instRefSetter) {
+            const labels = top10.map(t => t.label);
+            const values = top10.map(t => Math.abs(t.amount));
+            // Target design-er moto blue-gradient donut palette (dark -> light)
+            const colors = ['#1e3a5f', '#2c5282', '#2b6cb0', '#3182ce', '#4299e1', '#63b3ed', '#90cdf4', '#a0d3ec',
+                '#bee3f8', '#e2e8f0'
+            ];
+
+            const barCtx = document.getElementById(barCanvasId).getContext('2d');
+            const barChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Amount',
+                        data: values,
+                        backgroundColor: '#f2795f',
+                        borderRadius: 3,
+                        barPercentage: 0.55,
+                        categoryPercentage: 0.7
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    legend: {
+                        display: false
+                    },
+                    scales: {
+                        x: {
+                            position: 'top',
+                            grid: {
+                                color: '#eef0f2',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#9ca3af',
+                                font: {
+                                    size: 10
+                                },
+                                callback: v => (v >= 1000 ? (v / 1000) + 'K' : v)
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false,
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#4b5563',
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const donutCtx = document.getElementById(donutCanvasId).getContext('2d');
+            const donutChart = new Chart(donutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Amount',
+                        data: values,
+                        backgroundColor: colors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '55%',
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'right',
+                            labels: {
+                                boxWidth: 10,
+                                font: {
+                                    size: 10
+                                },
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        }
+                    }
+                }
+            });
+
+            instRefSetter(barChart, donutChart);
+        }
+
+        function renderAgingTable(containerId, type) {
+            const state = agingState[type];
+            const data = state.data;
+            const total = data.rows.length;
+            const lastPage = Math.max(1, Math.ceil(total / AGING_PER_PAGE));
+            if (state.page > lastPage) state.page = lastPage;
+            const start = (state.page - 1) * AGING_PER_PAGE;
+            const pageRows = data.rows.slice(start, start + AGING_PER_PAGE);
+
+            let html = `
+        <div class="table-responsive">
+            <table class="table table-sm kpi-detail-table aging-table">
+                <thead>
+                    <tr>
+                        <th>${type === 'receivable' ? 'Customer' : 'Supplier'}</th>
+                        <th class="text-right">Current</th>
+                        <th class="text-right">1-30</th>
+                        <th class="text-right">31-60</th>
+                        <th class="text-right">61-90</th>
+                        <th class="text-right">91 and over</th>
+                        <th class="text-right">Amount Due</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${pageRows.map(r => `
+                                                                        <tr>
+                                                                            <td>${r.name}</td>
+                                                                            <td class="text-right">${Number(r.current).toLocaleString()}</td>
+                                                                            <td class="text-right">${Number(r.d1_30).toLocaleString()}</td>
+                                                                            <td class="text-right">${Number(r.d31_60).toLocaleString()}</td>
+                                                                            <td class="text-right">${Number(r.d61_90).toLocaleString()}</td>
+                                                                            <td class="text-right">${Number(r.d91_plus).toLocaleString()}</td>
+                                                                            <td class="text-right" style="font-weight:700">${Number(r.total).toLocaleString()}</td>
+                                                                        </tr>`).join('')}
+                </tbody>
+                <tfoot>
+                    <tr style="font-weight:700;background:#f9fafb">
+                        <td>Grand Total</td>
+                        <td class="text-right">${Number(data.grand.current).toLocaleString()}</td>
+                        <td class="text-right">${Number(data.grand.d1_30).toLocaleString()}</td>
+                        <td class="text-right">${Number(data.grand.d31_60).toLocaleString()}</td>
+                        <td class="text-right">${Number(data.grand.d61_90).toLocaleString()}</td>
+                        <td class="text-right">${Number(data.grand.d91_plus).toLocaleString()}</td>
+                        <td class="text-right">${Number(data.grand.total).toLocaleString()}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <span class="text-muted small">${total ? start + 1 : 0}-${Math.min(start + AGING_PER_PAGE, total)} of ${total}</span>
+            <div class="kpi-modal-pagination">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-agtype="${type}" data-agaction="prev" ${state.page <= 1 ? 'disabled' : ''}><i class="bi bi-chevron-left"></i></button>
+                <span class="mx-2">Page ${state.page} / ${lastPage}</span>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-agtype="${type}" data-agaction="next" ${state.page >= lastPage ? 'disabled' : ''}><i class="bi bi-chevron-right"></i></button>
+            </div>
+        </div>`;
+
+            if (!total) {
+                html = `<div class="empty-state"><i class="bi bi-inbox"></i><p>No outstanding balance</p></div>`;
+            }
+
+            document.getElementById(containerId).innerHTML = html;
+
+            document.querySelectorAll(`[data-agtype="${type}"]`).forEach(btn => {
+                btn.addEventListener('click', function() {
+                    state.page += this.dataset.agaction === 'next' ? 1 : -1;
+                    renderAgingTable(containerId, type);
+                });
+            });
+        }
+
+        function loadArApAging() {
+            fetch(`${API_BASE}/ar-ap-aging`)
+                .then(r => r.json())
+                .then(res => {
+                    agingState.receivable.data = res.receivable;
+                    agingState.payable.data = res.payable;
+
+                    renderAgingKpis('arAgingKpis', res.receivable.kpis, 'Invoices');
+                    renderAgingKpis('apAgingKpis', res.payable.kpis, 'Bills');
+
+                    if (arBarInst) arBarInst.destroy();
+                    if (arDonutInst) arDonutInst.destroy();
+                    renderAgingCharts('arBarChart', 'arDonutChart', res.receivable.top10, (b, d) => {
+                        arBarInst = b;
+                        arDonutInst = d;
+                    });
+
+                    if (apBarInst) apBarInst.destroy();
+                    if (apDonutInst) apDonutInst.destroy();
+                    renderAgingCharts('apBarChart', 'apDonutChart', res.payable.top10, (b, d) => {
+                        apBarInst = b;
+                        apDonutInst = d;
+                    });
+
+                    renderAgingTable('arAgingBody', 'receivable');
+                    renderAgingTable('apAgingBody', 'payable');
+                })
+                .catch(() => {
+                    document.getElementById('arAgingBody').innerHTML =
+                        `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load AR aging</p></div>`;
+                    document.getElementById('apAgingBody').innerHTML =
+                        `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load AP aging</p></div>`;
+                });
+        }
+
+
+        /* ---------------- Bank / Cash Balance ---------------- */
+        let bcAccountsData = [];
+        let bcCurrentPage = 1;
+        const BC_PER_PAGE = 8;
+
+        function bcStatCard(icon, iconBg, iconColor, label, value, sub) {
+            return `
+        <div class="col-6 col-lg-3">
+            <div class="fin-kpi-card bc-stat-card">
+                <div class="fin-kpi-top">
+                    <div class="fin-kpi-label">${label}</div>
+                    <div class="fin-kpi-icon" style="background:${iconBg};color:${iconColor}"><i class="bi ${icon}"></i></div>
+                </div>
+                <div class="fin-kpi-value" style="color:${iconColor};white-space:normal;word-break:break-word">৳${Number(value).toLocaleString()}</div>
+                <div class="bc-stat-sub">${sub}</div>
+                <div class="bc-stat-bar" style="background:${iconColor}"></div>
+            </div>
+        </div>`;
+        }
+
+        function renderBankCashPanel(data) {
+            bcAccountsData = data.accounts;
+            bcCurrentPage = 1;
+
+            let html = `<div class="row g-3 mb-3">`;
+            html += bcStatCard('bi-bank', '#eff6ff', '#2563eb', 'Total Bank Balance', data.total_bank,
+                `${data.bank_accounts_count} Accounts`);
+            html += bcStatCard('bi-cash-coin', '#f0fdf4', '#16a34a', 'Total Cash Balance', data.total_cash,
+                `${data.cash_accounts_count} Accounts`);
+            html += bcStatCard('bi-pie-chart-fill', '#f5f3ff', '#7c3aed', 'Total Balance', data.grand_total,
+                `${data.bank_accounts_count + data.cash_accounts_count} Accounts`);
+            html += bcStatCard('bi-stack', '#fff7ed', '#ea580c', "Today's Transactions", data.today_transactions_amount,
+                `${data.today_transactions_count} Transactions`);
+            html += `</div>`;
+
+            html += `
+        <div class="txn-filter-bar">
+            <input type="text" class="form-control form-control-sm" id="bcSearch" placeholder="Search account name or number...">
+            <select class="form-control form-control-sm" id="bcTypeFilter" style="max-width:140px">
+                <option value="">All Types</option>
+                <option value="Bank">Bank</option>
+                <option value="Cash">Cash</option>
+            </select>
+            <select class="form-control form-control-sm" id="bcStatusFilter" style="max-width:140px">
+                <option value="">All Status</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+            </select>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm kpi-detail-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Account Name</th>
+                        <th>Account Number</th>
+                        <th>Type</th>
+                        <th class="text-right">Current Balance</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="bcAccountBody"></tbody>
+            </table>
+        </div>
+        <div id="bcPagination" class="d-flex justify-content-between align-items-center mt-2"></div>`;
+
+            document.getElementById('bankCashBody').innerHTML = html;
+
+            document.getElementById('bcSearch').addEventListener('input', () => {
+                bcCurrentPage = 1;
+                renderBankCashTable();
+            });
+            document.getElementById('bcTypeFilter').addEventListener('change', () => {
+                bcCurrentPage = 1;
+                renderBankCashTable();
+            });
+            document.getElementById('bcStatusFilter').addEventListener('change', () => {
+                bcCurrentPage = 1;
+                renderBankCashTable();
+            });
+
+            renderBankCashTable();
+        }
+
+        function renderBankCashTable() {
+            const search = document.getElementById('bcSearch').value.toLowerCase();
+            const typeFilter = document.getElementById('bcTypeFilter').value;
+            const statusFilter = document.getElementById('bcStatusFilter').value;
+
+            const filtered = bcAccountsData.filter(a => {
+                const matchesSearch = !search ||
+                    a.name.toLowerCase().includes(search) ||
+                    (a.account_number || '').toLowerCase().includes(search);
+                const matchesType = !typeFilter || a.type === typeFilter;
+                const matchesStatus = !statusFilter || a.status === statusFilter;
+                return matchesSearch && matchesType && matchesStatus;
+            });
+
+            const total = filtered.length;
+            const lastPage = Math.max(1, Math.ceil(total / BC_PER_PAGE));
+            if (bcCurrentPage > lastPage) bcCurrentPage = lastPage;
+            const start = (bcCurrentPage - 1) * BC_PER_PAGE;
+            const pageRows = filtered.slice(start, start + BC_PER_PAGE);
+
+            const tbody = document.getElementById('bcAccountBody');
+            tbody.innerHTML = pageRows.length ? pageRows.map((a, i) => {
+                    const isBank = a.type === 'Bank';
+                    const icon = isBank ? 'bi-bank' : 'bi-cash-stack';
+                    const iconColor = isBank ? '#2563eb' : '#16a34a';
+                    const iconBg = isBank ? '#eff6ff' : '#f0fdf4';
+                    const balColor = a.balance < 0 ? '#dc2626' : '#16a34a';
+                    const statusCls = a.status === 'Active' ? 'status-paid' : 'status-overdue';
+
+                    return `
+            <tr>
+                <td>${start + i + 1}</td>
+                <td>
+                    <span class="bc-acc-icon" style="background:${iconBg};color:${iconColor}"><i class="bi ${icon}"></i></span>
+                    ${a.name}
+                </td>
+                <td>${a.account_number || '-'}</td>
+                <td><span class="bc-type-badge">${a.type}</span></td>
+                <td class="text-right" style="color:${balColor};font-weight:700">৳${Number(a.balance).toLocaleString()}</td>
+                <td><span class="status-badge ${statusCls}">${a.status}</span></td>
+            </tr>`;
+                }).join('') :
+                `<tr><td colspan="6"><div class="empty-state"><i class="bi bi-inbox"></i><p>No accounts found</p></div></td></tr>`;
+
+            document.getElementById('bcPagination').innerHTML = `
+        <span class="text-muted small">Showing ${total ? start + 1 : 0} to ${Math.min(start + BC_PER_PAGE, total)} of ${total} entries</span>
+        <div class="kpi-modal-pagination">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="bcPrevPage" ${bcCurrentPage <= 1 ? 'disabled' : ''}><i class="bi bi-chevron-left"></i></button>
+            <span class="mx-2">Page ${bcCurrentPage} / ${lastPage}</span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="bcNextPage" ${bcCurrentPage >= lastPage ? 'disabled' : ''}><i class="bi bi-chevron-right"></i></button>
+        </div>`;
+
+            document.getElementById('bcPrevPage')?.addEventListener('click', () => {
+                bcCurrentPage--;
+                renderBankCashTable();
+            });
+            document.getElementById('bcNextPage')?.addEventListener('click', () => {
+                bcCurrentPage++;
+                renderBankCashTable();
+            });
+        }
+
+        function loadBankCashBalance() {
+            fetch(`${API_BASE}/bank-cash-balance`)
+                .then(r => r.json())
+                .then(renderBankCashPanel)
+                .catch(() => {
+                    document.getElementById('bankCashBody').innerHTML =
+                        `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load bank/cash data</p></div>`;
+                });
+        }
+
+
 
         function loadOverviewCharts(range = 'this_year') {
             renderCashFlowLegend();
@@ -1403,24 +2091,18 @@
                 .then(r => r.json())
                 .then(renderRevenueChart)
                 .catch(() => {
-                    document.getElementById('revenueChart').closest('.panel-body').innerHTML =
+                    // >>> FIX: getElementById('revenueChart') element ekhane exist kore na
+                    // (actual container 'revBarsArea'/'revChartWrap'), tai age eta null.closest()
+                    // diye নিজেই আরেকটা error chhurto fetch fail korle
+                    document.getElementById('revChartWrap').innerHTML =
                         `<div class="empty-state"><i class="bi bi-bar-chart"></i><p>Failed to load revenue data</p></div>`;
+                    // <<< END FIX
                 });
 
-            fetch(`${API_BASE}/expense-breakdown`)
-                .then(r => r.json())
-                .then(data => {
-                    if (!data.length) {
-                        document.getElementById('concentricChart').closest('.panel-body').innerHTML =
-                            `<div class="empty-state"><i class="bi bi-pie-chart"></i><p>No expense data found</p></div>`;
-                        return;
-                    }
-                    renderExpenseConcentric(data);
-                })
-                .catch(() => {
-                    document.getElementById('concentricChart').closest('.panel-body').innerHTML =
-                        `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load expense data</p></div>`;
-                });
+            loadExpenseBreakdown(); // >>> FIX: extracted function call (age inline fetch chhilo)
+
+            loadArApAging();
+            loadBankCashBalance();
         }
 
         document.getElementById('cfRange').addEventListener('change', function() {
