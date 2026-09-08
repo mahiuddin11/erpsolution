@@ -1,0 +1,537 @@
+[gass@water technology] > /system clock print
+                  time: 11:13:33  
+                  date: 2026-09-08
+  time-zone-autodetect: yes       
+        time-zone-name: Asia/Dhaka
+            gmt-offset: +06:00    
+            dst-active: no        
+[gass@water technology] > /ip firewall filter print where comment="SocialBlock"
+Flags: X - disabled, I - invalid; D - dynamic 
+ 0    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*facebook* 
+
+ 1    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*fbcdn* 
+
+ 2    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*youtube* 
+
+ 3    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*googlevideo* 
+
+ 4    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*ytimg* 
+
+ 5    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*ggpht* 
+
+ 6    ;;; SocialBlock
+      chain=forward action=drop protocol=udp dst-port=443 
+11:14:12 echo: system,error,critical login failure for user admin from 83.228.97.22 via api
+11:14:18 echo: system,error,critical login failure for user admin from 2.57.121.25 via ssh
+11:14:18 echo: system,error,critical login failure for user admin from 2.57.121.25 via ssh
+11:14:18 echo: system,error,critical login failure for user admin from 2.57.121.25 via ssh
+[gass@water technology] > /system scheduler print
+Columns: NAME, START-DATE, START-TIME, INTERVAL, ON-EVENT, RUN-COUNT
+# NAME               START-DATE  START-TIME  INTERVAL  ON-EVENT   RUN-COUNT
+0 Sched-8am-block    2026-09-08  08:00:00    1d        block-on           0
+1 Sched-130pm-allow  2026-09-08  13:30:00    1d        block-off          0
+2 Sched-230pm-block  2026-09-08  14:30:00    1d        block-on           0
+3 Sched-8pm-allow    2026-09-08  20:00:00    1d        block-off          0
+11:14:49 echo: system,error,critical login failure for user admin from 83.228.97.22 via api
+[gass@water technology] > /system script print
+Flags: I - invalid 
+ 0   name="block-on" owner="gass" 
+     policy=ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon 
+     dont-require-permissions=no run-count=0 
+     source=:foreach i in=[/ip firewall filter find where comment="SocialBlock"] do={/ip 
+       firewall filter set $i disabled=no} 
+
+ 1   name="block-off" owner="gass" 
+     policy=ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon 
+     dont-require-permissions=no run-count=0 
+     source=:foreach i in=[/ip firewall filter find where comment="SocialBlock"] do={/ip 
+       firewall filter set $i disabled=yes} 
+[gass@water technology] > 
+
+
+
+[gass@water technology] > /ip firewall filter print stats where comment="SocialBlock"
+Columns: CHAIN, ACTION, BYTES, PACKETS
+# CHAIN    ACTION       BYTES  PACKETS
+;;; SocialBlock
+0 forward  drop     5 347 262   18 552
+;;; SocialBlock
+1 forward  drop       170 974      354
+;;; SocialBlock
+2 forward  drop        23 951       43
+;;; SocialBlock
+3 forward  drop        18 208       32
+;;; SocialBlock
+4 forward  drop             0        0
+;;; SocialBlock
+5 forward  drop             0        0
+;;; SocialBlock
+6 forward  drop    41 951 559   35 735
+11:21:26 echo: system,error,critical login failure for user admin from 83.228.97.22 via api
+[gass@water technology] > /ip firewall filter print stats where comment="SocialBlock"
+Columns: CHAIN, ACTION, BYTES, PACKETS
+# CHAIN    ACTION       BYTES  PACKETS
+;;; SocialBlock
+0 forward  drop     5 435 567   18 853
+;;; SocialBlock
+1 forward  drop       170 974      354
+;;; SocialBlock
+2 forward  drop        23 951       43
+;;; SocialBlock
+3 forward  drop        18 208       32
+;;; SocialBlock
+4 forward  drop             0        0
+;;; SocialBlock
+5 forward  drop             0        0
+;;; SocialBlock
+6 forward  drop    43 263 370   36 858
+[gass@water technology] 
+
+
+[gass@water technology] > /ip firewall filter remove [find where comment="SocialBlock" and proto
+col=udp and dst-port=443]
+[gass@water technology] > 
+
+
+[gass@water technology] > /ip firewall filter print where comment="SocialBlock"
+Flags: X - disabled, I - invalid; D - dynamic 
+ 0    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*facebook* 
+
+ 1    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*fbcdn* 
+
+ 2    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*youtube* 
+
+ 3    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*googlevideo* 
+
+ 4    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*ytimg* 
+
+ 5    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*ggpht* 
+
+ 6    ;;; SocialBlock
+      chain=forward action=drop protocol=udp dst-port=443 
+[gass@water technology] > 
+
+
+
+[gass@water technology] > /ip firewall filter remove 6
+11:31:18 echo: system,error,critical login failure for user admin from 83.228.97.22 via api
+[gass@water technology] > /ip firewall filter print where comment="SocialBlock"
+Flags: X - disabled, I - invalid; D - dynamic 
+ 0    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*facebook* 
+
+ 1    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*fbcdn* 
+
+ 2    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*youtube* 
+
+ 3    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*googlevideo* 
+
+ 4    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*ytimg* 
+
+ 5    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*ggpht* 
+[gass@water technology] > 
+
+
+
+[gass@water technology] > /ip dns set allow-remote-requests=yes
+[gass@water technology] > 
+[gass@water technology] > /ip dns static add type=FWD forward-to=8.8.8.8 regexp=".*facebook.com"
+ address-list=SocialBlockIP
+[gass@water technology] > 
+[gass@water technology] > /ip dns static add type=FWD forward-to=8.8.8.8 regexp=".*fbcdn.net" ad
+dress-list=SocialBlockIP
+[gass@water technology] > 
+[gass@water technology] > /ip dns static add type=FWD forward-to=8.8.8.8 regexp=".*youtube.com" 
+address-list=SocialBlockIP
+[gass@water technology] > 
+[gass@water technology] > /ip dns static add type=FWD forward-to=8.8.8.8 regexp=".*googlevideo.c
+om" address-list=SocialBlockIP
+[gass@water technology] > 
+[gass@water technology] > /ip dns static add type=FWD forward-to=8.8.8.8 regexp=".*ytimg.com" ad
+dress-list=SocialBlockIP
+[gass@water technology] > 
+[gass@water technology] > /ip dns static add type=FWD forward-to=8.8.8.8 regexp=".*ggpht.com" ad
+dress-list=SocialBlockIP
+[gass@water technology] > /ip dhcp-server network print
+Columns: ADDRESS, GATEWAY, DNS-SERVER
+# ADDRESS         GATEWAY      DNS-SERVER
+0 192.168.0.0/24  192.168.0.1  8.8.8.8   
+                               1.1.1.1   
+[gass@water technology] > 
+
+
+
+11:41:08 echo: system,error,critical login failure for user admin from 196.203.208.136 via ssh
+[gass@water technology] > /ip dhcp-server network set 0 dns-server=192.168.0.1
+11:41:09 echo: system,error,critical login failure for user wallet from 196.203.208.136 via ssh
+11:41:11 echo: system,error,critical login failure for user admin from 196.203.208.136 via ssh
+11:41:11 echo: system,error,critical login failure for user admin from 83.228.97.22 via api
+11:41:12 echo: system,error,critical login failure for user cloud from 196.203.208.136 via ssh
+11:41:13 echo: system,error,critical login failure for user crypto from 196.203.208.136 via ssh
+11:41:14 echo: system,error,critical login failure for user ubuntu from 196.203.208.136 via ssh
+11:41:15 echo: system,error,critical login failure for user cloud from 196.203.208.136 via ssh
+[gass@water technology] > /ip firewall nat add chain=dstnat protocol=udp dst-port=53 action=redirect to-ports=
+53 comment="Force-DNS"
+[gass@water technology] > 
+[gass@water technology] > /ip firewall nat add chain=dstnat protocol=tcp dst-port=53 action=redirect to-ports=
+11:41:16 echo: system,error,critical login failure for user crypto from 196.203.208.136 via ssh
+[gass@water technology] > /ip firewall nat add chain=dstnat protocol=tcp dst-port=53 action=redirect to-ports=
+11:41:18 echo: system,error,critical login failure for user root from 196.203.208.136 via ssh
+[gass@water technology] > /ip firewall nat add chain=dstnat protocol=tcp dst-port=53 action=redirect to-ports=
+53 comment="Force-DNS"
+11:41:19 echo: system,error,critical login failure for user ubuntu from 196.203.208.136 via ssh
+11:41:20 echo: system,error,critical login failure for user deploy from 196.203.208.136 via ssh
+11:41:21 echo: system,error,critical login failure for user crypto from 196.203.208.136 via ssh
+11:41:22 echo: system,error,critical login failure for user root from 196.203.208.136 via ssh
+11:41:23 echo: system,error,critical login failure for user cerberus from 196.203.208.136 via ssh
+11:41:24 echo: system,error,c
+
+
+
+[gass@water technology] > /ip firewall filter add chain=forward dst-address-list=SocialBlockIP protocol=tcp ds
+t-port=443 action=drop comment="SocialBlock"
+[gass@water technology] > 
+[gass@water technology] > /ip firewall filter add chain=forward dst-address-list=SocialBlockIP protocol=udp ds
+11:42:00 echo: system,error,critical login failure for user sql from 196.203.208.136 via ssh
+[gass@water technology] > /ip firewall filter add chain=forward dst-address-list=SocialBlockIP protocol=udp ds
+t-port=443 action=drop comment="SocialBlock"
+11:42:01 echo: system,error,critical login failure for user wallet from 196.203.208.136 via ssh
+11:42:02 echo: system,error,critical login failure for user deploy from 196.203.208.136 via ssh
+11:42:03 echo: system,error,critical login failure for user panel from 196.203.208.136 via ssh
+11:42:05 echo: system,error,critical login failure for user ubuntu from 196.203.208.136 via ssh
+11:42:06 echo: system,error,c
+
+
+[gass@water technology] > /ip firewall address-list print where list=SocialBlockIP
+Flags: D - DYNAMIC
+Columns: LIST, ADDRESS, CREATION-TIME
+ #   LIST           ADDRESS          CREATION-TIME      
+;;; created for star.c10r.facebook.com.
+ 0 D SocialBlockIP  57.144.140.141   2026-09-08 11:35:07
+;;; created for scontent.fdac24-2.fna.fbcdn.net.
+ 1 D SocialBlockIP  103.242.216.212  2026-09-08 11:35:26
+;;; created for scontent.fdac24-1.fna.fbcdn.net.
+ 2 D SocialBlockIP  43.245.142.146   2026-09-08 11:35:26
+;;; created for scontent.fdac24-5.fna.fbcdn.net.
+ 3 D SocialBlockIP  103.165.159.18   2026-09-08 11:35:47
+;;; created for scontent.fdac198-1.fna.fbcdn.net.
+ 4 D SocialBlockIP  103.242.216.22   2026-09-08 11:35:47
+;;; created for scontent.fdac198-2.fna.fbcdn.net.
+ 5 D SocialBlockIP  103.242.218.149  2026-09-08 11:35:47
+;;; created for scontent.xx.fbcdn.net.
+ 6 D SocialBlockIP  57.144.86.128    2026-09-08 11:35:52
+;;; created for instagram.fdac24-1.fna.fbcdn.net.
+ 7 D SocialBlockIP  43.245.142.163   2026-09-08 11:36:43
+;;; created for www.youtube.com.
+ 8 D SocialBlockIP  142.251.155.4    2026-09-08 11:36:46
+;;; created for www.youtube.com.
+ 9 D SocialBlockIP  142.251.157.4    2026-09-08 11:36:46
+;;; created for www.youtube.com.
+10 D SocialBlockIP  142.251.154.4    2026-09-08 11:36:46
+;;; created for www.youtube.com.
+11 D SocialBlockIP  142.251.152.4    2026-09-08 11:36:46
+;;; created for www.youtube.com.
+12 D SocialBlockIP  142.251.156.4    2026-09-08 11:36:46
+;;; created for www.youtube.com.
+-- [Q quit|D dump|down]
+
+
+
+[gass@water technology] > /ip firewall filter print where comment="SocialBlock"
+Flags: X - disabled, I - invalid; D - dynamic 
+ 0    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*facebook* 
+
+ 1    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*fbcdn* 
+
+ 2    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*youtube* 
+
+ 3    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*googlevideo* 
+
+ 4    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*ytimg* 
+
+ 5    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-port=443 tls-host=*ggpht* 
+
+ 6    ;;; SocialBlock
+      chain=forward action=drop protocol=tcp dst-address-list=SocialBlockIP dst-port=443 
+
+ 7    ;;; SocialBlock
+      chain=forward action=drop protocol=udp dst-address-list=SocialBlockIP dst-port=443 
+11:44:42 echo: system,error,critical login failure for user pm2 from 196.203.208.136 via ssh
+11:44:43 echo: system,error,critical login failure for user crypto from 196.203.208.136 via ssh
+11:44:44 echo: system,error,critical login failure for user cerberus from 196.203.208.136 via ssh
+11:44:46 echo: system,erro
+
+
+[gass@water technology] > /system scheduler print
+Columns: NAME, START-DATE, START-TIME, INTERVAL, ON-EVENT, RUN-COUNT
+# NAME             START-DATE  START-TIME  INTERVAL  ON-EVENT   RUN-COUNT
+0 Sched-8am-block  2026-09-08  08:00:00    1d        block-on           0
+1 Sched-8pm-allow  2026-09-08  20:00:00    1d        block-off          0
+
+
+
+[gass@water technology] > /ip firewall filter add chain=input src-address=196.203.208.136 action=drop comment=
+"Block-Attacker" place-before=0
+[gass@water technology] > 
+[gass@water technology] > /ip firewall filter add chain=input src-address=83.228.97.22 action=drop comment="Bl
+11:57:33 echo: system,error,critical login failure for user deploy from 196.203.208.136 via ssh
+[gass@water technology] > /ip firewall filter add chain=input src-address=83.228.97.22 action=drop comment="Bl
+ock-Attacker" place-before=0
+11:57:46 echo: system,error,critical login failure for user admin from 130.49.215.225 via rest-api
+11:57:46 echo: system,error,critical login failure for user admin from 130.49.215.225 via rest-api
+11:57:46 echo: system,error,critical login failure for user admin from 130.49.215.225 via rest-api
+11:57:47 echo: system,error,critical login failure for user admin from 130.49.215.205 via rest-api
+11:57:47 echo: system,error,critical login failure for user admin from 130.49.215.205 via rest-api
+[gass@water technology] > 
+
+
+
+2026-09-08 11:57:46 system,error,critical login failure for user admin from 130.49.215.225 via rest-api
+2026-09-08 11:57:46 system,error,critical login failure for user admin from 130.49.215.225 via rest-api
+2026-09-08 11:57:47 system,error,critical login failure for user admin from 130.49.215.205 via rest-api
+2026-09-08 11:57:47 system,error,critical login failure for user admin from 130.49.215.205 via rest-api
+2026-09-08 11:58:58 system,error,critical login failure for user admin from 185.242.246.170 via rest-api
+2026-09-08 11:59:07 system,error,critical login failure for user admin from 130.49.215.224 via rest-api
+2026-09-08 11:59:23 system,error,critical login failure for user admin from 87.251.64.227 via rest-api
+2026-09-08 11:59:23 system,error,critical login failure for user admin from 87.251.64.227 via rest-api
+12:00:46 echo: system,error,critical login failure for user admin from 185.242.246.205 via rest-api
+12:00:46 echo: system,error,critical login failure for user admin from 185.242.246.205 via rest-api
+12:00:46 echo: system,error,critical login failure for user admin from 185.242.246.205 via rest-api
+12:01:08 echo: system,error,critical login failure for user admin from 80.66.83.202 via rest-api
+12:01:08 echo: system,error,critical login failure for user admin from 80.66.83.202 via rest-api
+12:01:32 echo: system,error,critical login failure for user admin from 82.79.49.145 via api
+[gass@water technology] > /interface print
+Flags: R - RUNNING; S - SLAVE
+Columns: NAME, TYPE, ACTUAL-MTU, L2MTU, MAX-L2MTU, MAC-ADDRESS
+ #    NAME         TYPE      ACTUAL-MTU  L2MTU  MAX-L2MTU  MAC-ADDRESS      
+;;; wan
+ 0 R  ether1/WAN   ether           1500   1598       8156  DC:2C:6E:70:41:23
+ 1  S ether2       ether           1500   1598       8156  DC:2C:6E:70:41:24
+ 2  S ether3       ether           1500   1598       8156  DC:2C:6E:70:41:25
+;;; Giga switch
+ 3 RS ether4       ether           1500   1598       8156  DC:2C:6E:70:41:26
+;;; Giga switch
+ 4 RS ether5       ether           1500   1598       8156  DC:2C:6E:70:41:27
+ 5 RS ether6       ether           1500   1598       8156  DC:2C:6E:70:41:29
+;;; Deco router
+ 6  S ether7_Deco  ether           1500   1598       8156  DC:2C:6E:70:41:2A
+ 7  S ether8       ether           1500   1598       8156  DC:2C:6E:70:41:2B
+ 8  S ether9       ether           1500   1598       8156  DC:2C:6E:70:41:2C
+ 9  S ether10      ether           1500   1598       8156  DC:2C:6E:70:41:2D
+10    sfp1         ether           1500   1600       8158  DC:2C:6E:70:41:28
+11 R  LAN          bridge          1500   1598             DC:2C:6E:70:41:24
+12 R  lo           loopback       65536                    00:00:00:00:00:00
+13 R  tech         wg              1420                                     
+[gass@water technology] > /ip service print
+Flags: D - DYNAMIC; c - CONNECTION
+Columns: NAME, PORT, PROTO, CERTIFICATE, VRF, MAX-SESSIONS, LOCAL, REMOTE
+ #    NAME             PORT  PROTO  CERTIFICATE  VRF   MA  LOCAL           REMOTE               
+ 0    ftp                21  tcp                 main  20                                       
+ 1 Dc ftp                21  tcp                           163.227.115.56  8.211.46.83:55184    
+ 2 Dc ftp                21  tcp                           163.227.115.56  8.216.14.239:42674   
+ 3 Dc ftp                21  tcp                           163.227.115.56  97.107.131.17:47404  
+ 4 Dc ftp                21  tcp                           163.227.115.56  160.119.76.48:39856  
+ 5 Dc ftp                21  tcp                           163.227.115.56  165.154.162.191:53354
+ 6    ssh                22  tcp                 main  20                                       
+ 7    telnet             23  tcp                 main  20                                       
+ 8 Dc telnet             23  tcp                           163.227.115.56  23.120.212.151:59109 
+ 9 Dc telnet             23  tcp                           163.227.115.56  45.163.0.101:31268   
+10 Dc telnet             23  tcp                           163.227.115.56  69.12.83.216:24698   
+11 Dc telnet             23  tcp                           163.227.115.56  72.49.134.26:57166   
+12 Dc telnet             23  tcp                           163.227.115.56  72.65.55.113:55704   
+13 Dc telnet             23  tcp                           163.227.115.56  93.109.36.83:59368   
+14 Dc telnet             23  tcp                           163.227.115.56  103.156.221.253:58364
+15 Dc telnet             23  tcp                           163.227.115.56  103.251.138.214:45034
+16 Dc telnet             23  tcp                           163.227.115.56  110.249.126.105:7919 
+17 Dc telnet             23  tcp                           163.227.115.56  122.116.107.89:49698 
+18 Dc telnet             23  tcp                           163.227.115.56  123.17.247.137:53638 
+19 Dc telnet             23  tcp                           163.227.115.56  149.19.164.131:41060 
+20 Dc telnet             23  tcp                           163.227.115.56  181.91.86.101:26513  
+21 Dc telnet             23  tcp                           163.227.115.56  183.77.225.79:53792  
+22 Dc telnet             23  tcp                           163.227.115.56  189.219.64.183:44548 
+23 Dc telnet             23  tcp                           163.227.115.56  202.78.233.106:33010 
+24 Dc telnet             23  tcp                           163.227.115.56  205.173.32.100:41236 
+25 Dc telnet             23  tcp                           163.227.115.56  211.103.49.162:51100 
+26 Dc telnet             23  tcp                           163.227.115.56  211.103.49.162:56751 
+27 Dc telnet             23  tcp                           163.227.115.56  216.180.246.167:21611
+28 D  resolver           53  tcp                                                                
+29 D  resolver           53  udp                                                                
+30 D  dhcp               67  udp                                                                
+31 D  dhcpclient         68  udp                                                                
+32    www                80  tcp                 main  20                                       
+33    www-ssl           443  tcp    none         main  20                                       
+34 D  ppp              1723  tcp                                                                
+35 D  btest            2000  tcp                                                                
+36 D  route_BFD        3784  udp                                                                
+37 D  route_BFD        4784  udp                                                                
+38    winbox           8088  tcp                 main  20                                       
+39 Dc winbox           8088  tcp                           163.227.115.56  192.168.0.104:64270  
+40    api              8728  tcp                 main  20                                       
+41    api-ssl          8729  tcp    none         main  20                                       
+42 D  wireguard-tech  51820  udp                                                                
+
+[gass@water technology] > 
+
+
+
+[gass@water technology] > /ip service print
+Flags: D - DYNAMIC; c - CONNECTION
+Columns: NAME, PORT, PROTO, CERTIFICATE, VRF, MAX-SESSIONS, LOCAL, REMOTE
+ #    NAME             PORT  PROTO  CERTIFICATE  VRF   MA  LOCAL           REMOTE               
+ 0    ftp                21  tcp                 main  20                                       
+ 1 Dc ftp                21  tcp                           163.227.115.56  8.211.46.83:55184    
+ 2 Dc ftp                21  tcp                           163.227.115.56  8.216.14.239:42674   
+ 3 Dc ftp                21  tcp                           163.227.115.56  97.107.131.17:47404  
+ 4 Dc ftp                21  tcp                           163.227.115.56  160.119.76.48:39856  
+ 5 Dc ftp                21  tcp                           163.227.115.56  165.154.162.191:53354
+ 6    ssh                22  tcp                 main  20                                       
+ 7 Dc ssh                22  tcp                           163.227.115.56  81.177.33.120:56948  
+ 8    telnet             23  tcp                 main  20                                       
+ 9 Dc telnet             23  tcp                           163.227.115.56  23.120.212.151:59109 
+10 Dc telnet             23  tcp                           163.227.115.56  45.163.0.101:31268   
+11 Dc telnet             23  tcp                           163.227.115.56  69.12.83.216:24698   
+12 Dc telnet             23  tcp                           163.227.115.56  72.49.134.26:57166   
+13 Dc telnet             23  tcp                           163.227.115.56  72.65.55.113:55704   
+14 Dc telnet             23  tcp                           163.227.115.56  93.109.36.83:59368   
+15 Dc telnet             23  tcp                           163.227.115.56  103.156.221.253:58364
+16 Dc telnet             23  tcp                           163.227.115.56  103.251.138.214:45034
+17 Dc telnet             23  tcp                           163.227.115.56  110.249.126.105:7919 
+18 Dc telnet             23  tcp                           163.227.115.56  122.116.107.89:49698 
+19 Dc telnet             23  tcp                           163.227.115.56  123.17.247.137:53638 
+20 Dc telnet             23  tcp                           163.227.115.56  149.19.164.131:41060 
+21 Dc telnet             23  tcp                           163.227.115.56  181.91.86.101:26513  
+22 Dc telnet             23  tcp                           163.227.115.56  183.77.225.79:53792  
+23 Dc telnet             23  tcp                           163.227.115.56  189.219.64.183:44548 
+24 Dc telnet             23  tcp                           163.227.115.56  202.78.233.106:33010 
+25 Dc telnet             23  tcp                           163.227.115.56  205.173.32.100:41236 
+26 Dc telnet             23  tcp                           163.227.115.56  211.103.49.162:51100 
+-- [Q quit|D dump|down]
+
+
+
+[gass@water technology] > /ip firewall nat print
+Flags: X - disabled, I - invalid; D - dynamic 
+ 0    chain=srcnat action=masquerade log=no log-prefix="" 
+
+ 1    chain=dstnat action=dst-nat to-addresses=192.168.0.78 to-ports=1122 protocol=tcp 
+      dst-address=163.227.115.56 dst-port=1122 log=no log-prefix="" 
+
+ 2 X  chain=dstnat action=dst-nat to-addresses=192.168.0.102 to-ports=1122 protocol=tcp 
+      dst-address=163.227.115.56 dst-port=1122 log=no log-prefix="" 
+
+ 3    chain=dstnat action=dst-nat to-addresses=192.168.0.78 to-ports=443 protocol=tcp 
+      dst-address=163.227.115.56 dst-port=443 log=no log-prefix="" 
+
+ 4    chain=dstnat action=dst-nat to-addresses=192.168.0.78 to-ports=27163 protocol=tcp 
+      dst-address=163.227.115.56 dst-port=27163 log=no log-prefix="" 
+
+ 5    chain=dstnat action=dst-nat to-addresses=192.168.0.102 to-ports=4370 protocol=tcp 
+      dst-address=163.227.115.56 dst-port=4370 log=no log-prefix="" 
+
+ 6 X  chain=dstnat action=dst-nat to-addresses=192.168.0.78 to-ports=7080 protocol=tcp 
+      dst-address=103.137.229.27 dst-port=7080 log=no log-prefix="" 
+
+ 7 X  chain=dstnat action=dst-nat to-addresses=192.168.0.102 to-ports=4370 protocol=tcp 
+      dst-address=27.147.163.84 dst-port=4370 log=no log-prefix="" 
+
+ 8    chain=srcnat action=masquerade src-address=10.10.10.0/24 out-interface=ether1/WAN log=no log-prefix=""
+
+ 9    ;;; vpn
+      chain=srcnat action=masquerade out-interface=ether1/WAN log=no log-prefix="" 
+
+10    ;;; Force-DNS
+-- [Q quit|D dump|down]
+
+
+[gass@water technology] > /ip service disable ftp,telnet
+12:11:09 echo: system,error,critical login failure for user blockchain from 81.177.33.120 via ssh
+12:11:10 echo: system,error,critical login failure for user mysql from 81.177.33.120 via ssh
+[gass@water technology] > /ip firewall filter add chain=input in-interface="ether1/WAN" protocol=tcp dst-port=
+12:11:12 echo: system,error,critical login failure for user server from 81.177.33.120 via ssh
+[gass@water technology] > /ip firewall filter add chain=input in-interface="ether1/WAN" protocol=tcp dst-port=
+12:11:14 echo: system,error,critical login failure for user crypto from 81.177.33.120 via ssh
+[gass@water technology] > /ip firewall filter add chain=input in-interface="ether1/WAN" protocol=tcp dst-port=
+21,22,23,80,443,8088,8728,8729 action=drop comment="Block-WAN-Management" place-before=0
+[gass@water technology] > 
+
+
+[gass@water technology] > /ip firewall filter print where comment="Block-WAN-Management"
+Flags: X - disabled, I - invalid; D - dynamic 
+15    ;;; Block-WAN-Management
+      chain=input action=drop protocol=tcp in-interface=ether1/WAN dst-port=21,22,23,80,443,8088,8728,8729 
+[gass@water technology] > 
+
+
+
+2026-09-08 12:10:01 system,error,critical login failure for user root from 81.177.33.120 via ssh 
+2026-09-08 12:10:02 system,error,critical login failure for user wallet from 81.177.33.120 via ssh 
+2026-09-08 12:10:04 system,error,critical login failure for user docker from 81.177.33.120 via ssh 
+2026-09-08 12:10:06 system,error,critical login failure for user ubuntu from 81.177.33.120 via ssh 
+2026-09-08 12:10:08 system,error,critical login failure for user ubersmith from 81.177.33.120 via ssh 
+2026-09-08 12:10:09 system,error,critical login failure for user ubersmith from 81.177.33.120 via ssh 
+2026-09-08 12:10:12 system,error,critical login failure for user root from 81.177.33.120 via ssh 
+2026-09-08 12:10:14 system,error,critical login failure for user docker from 81.177.33.120 via ssh 
+2026-09-08 12:10:16 system,error,critical login failure for user wallet from 81.177.33.120 via ssh 
+2026-09-08 12:10:17 system,error,critical login failure for user mysql from 81.177.33.120 via ssh 
+2026-09-08 12:10:18 system,error,critical login failure for user root from 81.177.33.120 via ssh 
+2026-09-08 12:10:20 system,error,critical login failure for user node from 81.177.33.120 via ssh 
+2026-09-08 12:10:22 system,error,critical login failure for user ubuntu from 81.177.33.120 via ssh 
+2026-09-08 12:10:24 system,error,critical login failure for user wallet from 81.177.33.120 via ssh 
+2026-09-08 12:10:25 system,error,critical login failure for user metaverse from 81.177.33.120 via ssh 
+2026-09-08 12:10:27 system,error,critical login failure for user crypto from 81.177.33.120 via ssh 
+2026-09-08 12:10:28 system,error,critical login failure for user server from 81.177.33.120 via ssh 
+2026-09-08 12:10:30 system,error,critical login failure for user root from 81.177.33.120 via ssh 
+2026-09-08 12:10:31 system,error,critical login failure for user ubuntu from 81.177.33.120 via ssh 
+ 2026-09-08 12:10:33 system,error,critical login failure for user cloud from 81.177.33.120 via ssh
+ 2026-09-08 12:10:34 system,error,critical login failure for user wallet from 81.177.33.120 via ssh
+ 2026-09-08 12:10:36 system,error,critical login failure for user wallet from 81.177.33.120 via ssh
+ 2026-09-08 12:10:37 system,error,critical login failure for user root from 81.177.33.120 via ssh
+ 2026-09-08 12:10:39 system,error,critical login failure for user ubuntu from 81.177.33.120 via ssh
+ 2026-09-08 12:10:40 system,error,critical login failure for user docker from 81.177.33.120 via ssh
+ 2026-09-08 12:10:43 system,error,critical login failure for user centos from 81.177.33.120 via ssh
+ 2026-09-08 12:10:45 system,error,critical login failure for user blockchain from 81.177.33.120 via ssh
+ 2026-09-08 12:10:47 system,error,critical login failure for user panel from 81.177.33.120 via ssh
+ 2026-09-08 12:10:50 system,error,critical login failure for user crypto from 81.177.33.120 via ssh
+ 2026-09-08 12:10:53 system,error,critical login failure for user ubuntu from 81.177.33.120 via ssh
+ 2026-09-08 12:10:54 system,error,critical login failure for user wallet from 81.177.33.120 via ssh
+ 2026-09-08 12:10:56 system,error,critical login failure for user panel from 81.177.33.120 via ssh
+ 2026-09-08 12:10:58 system,error,critical login failure for user wallet from 81.177.33.120 via ssh
+ 2026-09-08 12:10:59 system,error,critical login failure for user admin from 81.177.33.120 via ssh
+ 2026-09-08 12:11:09 system,error,critical login failure for user blockchain from 81.177.33.120 via ssh
+ 2026-09-08 12:11:10 system,error,critical login failure for user mysql from 81.177.33.120 via ssh
+ 2026-09-08 12:11:12 system,error,critical login failure for user server from 81.177.33.120 via ssh
+ 2026-09-08 12:11:14 system,error,critical login failure for user crypto from 81.177.33.120 via ssh
+
+[gass@water technology] > 
+
+
+
+[gass@water technology] > /ip firewall filter print stats where comment="Block-WAN-Management"
+Columns: CHAIN, ACTION, BYTES, PACKETS
+ # CHAIN  ACTION   BYTES  PACKETS
+;;; Block-WAN-Management
+15 input  drop    28 224      470
+[gass@water technology] > 

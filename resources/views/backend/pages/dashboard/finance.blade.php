@@ -403,8 +403,8 @@
 
     <style>
         /* ==========================================================================
-                                                                                                                           Financial Dashboard specific styles.
-                                                                                                                           ========================================================================== */
+                                                                                                                                   Financial Dashboard specific styles.
+                                                                                                                                   ========================================================================== */
         .fin-wrap {
             --fin-green: #10b981;
             --fin-green-dark: #059669;
@@ -1202,12 +1202,12 @@
                     </thead>
                     <tbody>
                         ${rows.map(r => `
-                                                                                                                                            <tr>
-                                                                                                                                                <td>${r.voucher ?? '-'}</td>
-                                                                                                                                                <td>${r.title}</td>
-                                                                                                                                                <td class="text-right">${r.date}</td>
-                                                                                                                                                <td class="text-right">৳${Number(r.amount).toLocaleString()}</td>
-                                                                                                                                            </tr>`).join('')}
+                                                                                                                                                    <tr>
+                                                                                                                                                        <td>${r.voucher ?? '-'}</td>
+                                                                                                                                                        <td>${r.title}</td>
+                                                                                                                                                        <td class="text-right">${r.date}</td>
+                                                                                                                                                        <td class="text-right">৳${Number(r.amount).toLocaleString()}</td>
+                                                                                                                                                    </tr>`).join('')}
                     </tbody>
                 </table>`;
         }
@@ -1320,12 +1320,12 @@
                         </thead>
                         <tbody>
                             ${rows.map(r => `
-                                                                                                                                                <tr>
-                                                                                                                                                    <td>${r.voucher ?? '-'}</td>
-                                                                                                                                                    <td>${r.title}</td>
-                                                                                                                                                    <td>${r.date}</td>
-                                                                                                                                                    <td class="amount">৳${Number(r.amount).toLocaleString()}</td>
-                                                                                                                                                </tr>`).join('')}
+                                                                                                                                                        <tr>
+                                                                                                                                                            <td>${r.voucher ?? '-'}</td>
+                                                                                                                                                            <td>${r.title}</td>
+                                                                                                                                                            <td>${r.date}</td>
+                                                                                                                                                            <td class="amount">৳${Number(r.amount).toLocaleString()}</td>
+                                                                                                                                                        </tr>`).join('')}
                         </tbody>
                     </table>
                 </body>
@@ -1836,15 +1836,15 @@
                 </thead>
                 <tbody>
                     ${pageRows.map(r => `
-                                                                        <tr>
-                                                                            <td>${r.name}</td>
-                                                                            <td class="text-right">${Number(r.current).toLocaleString()}</td>
-                                                                            <td class="text-right">${Number(r.d1_30).toLocaleString()}</td>
-                                                                            <td class="text-right">${Number(r.d31_60).toLocaleString()}</td>
-                                                                            <td class="text-right">${Number(r.d61_90).toLocaleString()}</td>
-                                                                            <td class="text-right">${Number(r.d91_plus).toLocaleString()}</td>
-                                                                            <td class="text-right" style="font-weight:700">${Number(r.total).toLocaleString()}</td>
-                                                                        </tr>`).join('')}
+                                                                                <tr>
+                                                                                    <td>${r.name}</td>
+                                                                                    <td class="text-right">${Number(r.current).toLocaleString()}</td>
+                                                                                    <td class="text-right">${Number(r.d1_30).toLocaleString()}</td>
+                                                                                    <td class="text-right">${Number(r.d31_60).toLocaleString()}</td>
+                                                                                    <td class="text-right">${Number(r.d61_90).toLocaleString()}</td>
+                                                                                    <td class="text-right">${Number(r.d91_plus).toLocaleString()}</td>
+                                                                                    <td class="text-right" style="font-weight:700">${Number(r.total).toLocaleString()}</td>
+                                                                                </tr>`).join('')}
                 </tbody>
                 <tfoot>
                     <tr style="font-weight:700;background:#f9fafb">

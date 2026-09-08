@@ -150,8 +150,7 @@ class HrmDashboardApiController extends Controller
             ->map(fn($d) => $d instanceof Carbon ? $d->format('Y-m-d') : (string) $d)
             ->flip();
 
-        // Absent calculation: month-start theke aj porjonto protita dine loop kore
-        // dekha hocche -- Friday, holiday, leave, ba present thakle "absent" na
+
         $absentCount = 0;
         $cursor = $monthStart->copy();
         while ($cursor <= $today) {
@@ -178,14 +177,6 @@ class HrmDashboardApiController extends Controller
         ]);
     }
 
-    // ---------------------------------------------------------------
-    // Point 1 (NEW): KPI click korle modal e drill-down list
-    // ?type= total_employees | present_today | absent_today | on_leave |
-    //        new_employee_this_month | left_employee_this_month |
-    //        total_branches | total_departments
-    // Keno generic {title, subtitle} shape: Blade e ekta shared table
-    // renderer diye shob type render kora jabe, alada UI lagbe na
-    // ---------------------------------------------------------------
     public function kpiDetails(Request $request)
     {
         $type       = $request->input('type');
