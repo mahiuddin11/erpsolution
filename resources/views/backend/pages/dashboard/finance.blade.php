@@ -9,7 +9,6 @@
     href="{{ asset('css/dashboard-style.css') }}?v={{ filemtime(public_path('css/dashboard-style.css')) }}">
 @section('styles')
     <style>
-        /* ---- Bank/Cash Balance panel: stat card underline + account row icon + type badge ---- */
         .bc-stat-card {
             cursor: default;
         }
@@ -53,7 +52,6 @@
             border-radius: 999px;
         }
 
-        /* ---- Aging KPI cards: icon circle + caption ---- */
         .aging-kpi-card {
             cursor: default;
         }
@@ -80,7 +78,6 @@
             margin-bottom: 4px;
         }
 
-        /* ---- Aging table: dark header, scoped only to aging-table so KPI modal table untouched ---- */
         .aging-table thead tr {
             background: #1e293b;
         }
@@ -106,6 +103,26 @@
             font-weight: 400;
             color: var(--gray-500, #9ca3af);
             margin-left: 4px;
+        }
+
+        /* add new: AR/AP Aging Summary search input + section header with range filter */
+        .aging-search-input {
+            max-width: 220px;
+        }
+
+        .aging-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .aging-section-title {
+            font-weight: 700;
+            font-size: 1.05rem;
+            margin: 0;
         }
     </style>
 @endsection
@@ -145,13 +162,10 @@
             </div>
         </div>
 
-
         {{-- ============ TAB: Overview ============ --}}
         <div class="fin-tab-content" id="tabOverview">
 
-
-
-            {{-- ============ Point 1: KPI Cards (clickable -> drill-down modal) ============ --}}
+            {{-- ============ KPI Cards ============ --}}
             <div class="row g-3 mb-3" id="finKpis"></div>
 
             {{-- ============ Cash Flow Analysis + Expense Breakdown ============ --}}
@@ -224,6 +238,16 @@
             </div>
 
             {{-- ============ AR Aging ============ --}}
+            {{-- add new: section header with range filter (7d/30d/90d/year) --}}
+            <div class="aging-section-header">
+                <h5 class="aging-section-title">Accounts Receivable Aging</h5>
+                <div class="fin-tabs" id="arAgingRangeFilter">
+                    <button type="button" class="fin-range-btn" data-arrange="7d">7 Days</button>
+                    <button type="button" class="fin-range-btn" data-arrange="30d">30 Days</button>
+                    <button type="button" class="fin-range-btn" data-arrange="90d">90+ Days</button>
+                    <button type="button" class="fin-range-btn active" data-arrange="year">1 Year</button>
+                </div>
+            </div>
             <div class="row g-3 mb-3" id="arAgingKpis"></div>
             <div class="row g-3 mb-3">
                 <div class="col-lg-6">
@@ -253,6 +277,9 @@
                     <div class="panel fin-panel">
                         <div class="panel-header fin-panel-header">
                             <span class="fin-panel-title">Accounts Receivable Aging -- Summary</span>
+                            {{-- add new: customer name search --}}
+                            <input type="text" class="form-control form-control-sm aging-search-input"
+                                id="arAgingSearch" placeholder="Search customer...">
                         </div>
                         <div class="panel-body" id="arAgingBody">
                             <div class="text-center text-muted py-3">Loading...</div>
@@ -262,6 +289,16 @@
             </div>
 
             {{-- ============ AP Aging ============ --}}
+            {{-- add new: section header with range filter (7d/30d/90d/year) --}}
+            <div class="aging-section-header">
+                <h5 class="aging-section-title">Accounts Payable Aging</h5>
+                <div class="fin-tabs" id="apAgingRangeFilter">
+                    <button type="button" class="fin-range-btn" data-arrange="7d">7 Days</button>
+                    <button type="button" class="fin-range-btn" data-arrange="30d">30 Days</button>
+                    <button type="button" class="fin-range-btn" data-arrange="90d">90+ Days</button>
+                    <button type="button" class="fin-range-btn active" data-arrange="year">1 Year</button>
+                </div>
+            </div>
             <div class="row g-3 mb-3" id="apAgingKpis"></div>
             <div class="row g-3 mb-3">
                 <div class="col-lg-6">
@@ -291,6 +328,9 @@
                     <div class="panel fin-panel">
                         <div class="panel-header fin-panel-header">
                             <span class="fin-panel-title">Accounts Payable Aging -- Summary</span>
+                            {{-- add new: supplier name search --}}
+                            <input type="text" class="form-control form-control-sm aging-search-input"
+                                id="apAgingSearch" placeholder="Search supplier...">
                         </div>
                         <div class="panel-body" id="apAgingBody">
                             <div class="text-center text-muted py-3">Loading...</div>
@@ -299,10 +339,7 @@
                 </div>
             </div>
 
-
         </div>
-
-
         {{-- ============ /TAB: Overview ============ --}}
 
         {{-- ============ TAB: Transactions ============ --}}
@@ -359,14 +396,13 @@
 
     </div>
 
-    {{-- ============ KPI Detail Modal -- KPI card click e open hoy ============ --}}
+    {{-- ============ KPI Detail Modal ============ --}}
     <div class="modal fade" id="kpiDetailModal" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
             <div class="modal-content">
                 <div class="modal-header d-flex  ">
                     <h5 class="modal-title" id="kpiDetailModalTitle">Details</h5>
                     <div class="d-flex gap-2">
-
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
                                 id="btnKpiExcelDropdown" data-toggle="dropdown">
@@ -395,16 +431,12 @@
                 </div>
                 <div class="modal-footer kpi-modal-footer" id="kpiDetailModalFooter" style="display:none">
                     <div class="kpi-modal-pagination" id="kpiModalPagination"></div>
-
                 </div>
             </div>
         </div>
     </div>
 
     <style>
-        /* ==========================================================================
-                                                                                                                                   Financial Dashboard specific styles.
-                                                                                                                                   ========================================================================== */
         .fin-wrap {
             --fin-green: #10b981;
             --fin-green-dark: #059669;
@@ -413,7 +445,6 @@
             --fin-purple: #7c3aed;
         }
 
-        /* ---- Tabs row ---- */
         .fin-tabs-row {
             display: flex;
             align-items: center;
@@ -452,7 +483,6 @@
             color: var(--emerald-700);
         }
 
-        /* >>> NEW: Time range filter buttons (reuses .fin-tabs pill container) */
         .fin-range-btn {
             border: none;
             background: transparent;
@@ -473,28 +503,6 @@
             color: var(--emerald-700);
         }
 
-        /* <<< END NEW */
-
-        .fin-export-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: #fff;
-            border: 1px solid var(--gray-200);
-            border-radius: 10px;
-            padding: 8px 16px;
-            font-size: .85rem;
-            font-weight: 600;
-            color: var(--gray-700);
-            transition: .15s;
-        }
-
-        .fin-export-btn:hover {
-            background: var(--gray-50);
-            border-color: var(--gray-500);
-        }
-
-        /* ---- KPI cards (flat white, image-style, now clickable) ---- */
         .fin-kpi-card {
             background: #fff;
             border: 1px solid var(--gray-200);
@@ -562,7 +570,6 @@
             color: var(--fin-red);
         }
 
-        /* ---- Panel header (title + legend + dropdown in one row) ---- */
         .fin-panel-header {
             display: flex;
             align-items: center;
@@ -605,13 +612,11 @@
             font-weight: 600;
         }
 
-        /* ---- Concentric Expense Rings ---- */
         .concentric-wrap {
             position: relative;
             width: 100%;
             max-width: 260px;
             margin: 10px auto -6px;
-
         }
 
         .concentric-svg {
@@ -632,7 +637,6 @@
             font-size: 10px;
             font-weight: 700;
             fill: var(--gray-700, #374151);
-            /* dark, readable -- ar arc rong er sathe mixe jabe na */
             letter-spacing: .2px;
         }
 
@@ -642,7 +646,6 @@
             font-size: 9.5px;
             font-weight: 700;
             fill: #ffffff;
-
             letter-spacing: .3px;
         }
 
@@ -669,15 +672,11 @@
             margin-bottom: 4px;
         }
 
-        /* Responsive -- choto screen e font aro chotoo hobe */
         @media (max-width: 480px) {
             .concentric-label {
                 font-size: 8.5px;
             }
-        }
 
-
-        @media (max-width: 480px) {
             .fin-tabs-row {
                 flex-direction: column;
                 align-items: stretch;
@@ -686,13 +685,8 @@
             .concentric-inband-label {
                 font-size: 8px;
             }
-
-            .fin-export-btn {
-                justify-content: center;
-            }
         }
 
-        /* ---- Tab content fade-in ---- */
         .fin-tab-content {
             animation: finTabFade .2s ease;
         }
@@ -709,7 +703,6 @@
             }
         }
 
-        /* ---- Invoice status badge ---- */
         .status-paid {
             background: #dcfce7;
             color: #166534;
@@ -720,7 +713,6 @@
             color: #991b1b;
         }
 
-        /* ---- KPI Detail Modal ---- */
         .kpi-detail-table th,
         .kpi-detail-table td {
             font-size: .82rem;
@@ -739,7 +731,6 @@
             font-size: .8rem;
         }
 
-        /* ---- Revenue Comparison (custom bar chart) ---- */
         .rev-chart-wrap {
             position: relative;
             display: flex;
@@ -774,11 +765,7 @@
             content: '';
             position: absolute;
             inset: 0 0 28px 0;
-            background-image: repeating-linear-gradient(to top,
-                    var(--gray-200, #e5e7eb) 0,
-                    var(--gray-200, #e5e7eb) 1px,
-                    transparent 1px,
-                    transparent 25%);
+            background-image: repeating-linear-gradient(to top, var(--gray-200, #e5e7eb) 0, var(--gray-200, #e5e7eb) 1px, transparent 1px, transparent 25%);
             pointer-events: none;
             opacity: .6;
         }
@@ -856,7 +843,6 @@
             font-weight: 700;
         }
 
-        /* ---- Tooltip card ---- */
         .rev-tooltip {
             position: absolute;
             bottom: calc(100% + 8px);
@@ -931,13 +917,9 @@
             }
         }
 
-        /* Past month -- permanently colored, hover lagbe na */
-        /* >>> FIX: broken selector ".rev- -col" ke ".rev-bar-col" e thik kora holo (age eta dead rule chhilo) */
         .rev-bar-col.is-past .rev-bar-ghost {
             opacity: 0;
         }
-
-        /* <<< END FIX */
 
         .rev-bar-col.is-past .rev-bar-split {
             display: flex;
@@ -948,7 +930,6 @@
             font-weight: 700;
         }
 
-        /* Past month-e tooltip default e hidden thakbe, shudhu hover korle dekhabe (chaile) */
         .rev-bar-col.is-past .rev-tooltip {
             display: none;
         }
@@ -965,7 +946,6 @@
 
         const API_BASE = '/api/financial-dashboard';
 
-        // >>> NEW: Global time range state for Financial Overview (Today/7 Days/Month/Year/All Time)
         const FIN_RANGE_LABELS = {
             today: 'Today',
             '7d': 'Last 7 Days',
@@ -973,16 +953,12 @@
             year: 'This Year',
             all: 'All Time'
         };
-        let finRange = '7d'; // default -- 7 Days active thakbe
-        // <<< END NEW
+        let finRange = '7d';
 
-        // Charts/lists ekbar render howar por abar rebuild na kore, shudhu
-        // panel show/hide kora hoy -- performance o smooth switching er jonno
         let overviewChartsRendered = false;
         let transactionsRendered = false;
         let invoicesRendered = false;
 
-        /* ---------------- Tabs -- switches which panel is visible ---------------- */
         const tabPanels = {
             overview: document.getElementById('tabOverview'),
             transactions: document.getElementById('tabTransactions'),
@@ -993,27 +969,20 @@
             document.querySelectorAll('.fin-tab').forEach(b => {
                 b.classList.toggle('active', b.dataset.tab === tabKey);
             });
-
             Object.keys(tabPanels).forEach(key => {
                 tabPanels[key].style.display = key === tabKey ? '' : 'none';
             });
-
             if (tabKey === 'overview' && !overviewChartsRendered) {
                 loadOverviewCharts();
                 overviewChartsRendered = true;
             } else if (tabKey === 'overview') {
                 cashFlowChartInstance && cashFlowChartInstance.resize();
                 revenueChartInstance && revenueChartInstance.resize();
-                // >>> FIX: undeclared 'donutChartInstance' reference remove kora holo -- eta
-                // kono jaygay declare hoyni (expense breakdown SVG-based, Chart.js instance na),
-                // tai eta call korle ReferenceError hoto tab switch korar somoy
             }
-
             if (tabKey === 'transactions' && !transactionsRendered) {
                 loadTransactions();
                 transactionsRendered = true;
             }
-
             if (tabKey === 'invoices' && !invoicesRendered) {
                 loadInvoices();
                 invoicesRendered = true;
@@ -1026,20 +995,18 @@
             });
         });
 
-
-        // >>> NEW: Range filter click -- KPI + Expense Breakdown re-fetch hobe
-        document.querySelectorAll('.fin-range-btn').forEach(btn => {
+        document.querySelectorAll('#finRangeFilter .fin-range-btn').forEach(btn => {
             btn.addEventListener('click', function() {
-                document.querySelectorAll('.fin-range-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('#finRangeFilter .fin-range-btn').forEach(b => b.classList.remove(
+                    'active'));
                 this.classList.add('active');
                 finRange = this.dataset.range;
                 loadKpis();
                 loadExpenseBreakdown();
             });
         });
-        // <<< END NEW
 
-        /* ---------------- Point 1: KPI Cards (clickable) ---------------- */
+        /* ---------------- KPI Cards ---------------- */
         function kpiCard({
             label,
             value,
@@ -1066,11 +1033,10 @@
         }
 
         function renderKpis(kpi) {
-            const rangeLabel = FIN_RANGE_LABELS[finRange] || 'Last 7 Days'; // >>> NEW: dynamic label per range
-
+            const rangeLabel = FIN_RANGE_LABELS[finRange] || 'Last 7 Days';
             document.getElementById('finKpis').innerHTML = [
                 kpiCard({
-                    label: `Total Income (${rangeLabel})`, // >>> FIX: was hardcoded "(This Month)"
+                    label: `Total Income (${rangeLabel})`,
                     value: '৳' + Number(kpi.total_income).toLocaleString(),
                     trend: (kpi.income_change >= 0 ? '+' : '') + kpi.income_change + '%',
                     trendDir: kpi.income_change >= 0 ? 'up' : 'down',
@@ -1080,7 +1046,7 @@
                     type: 'total_income'
                 }),
                 kpiCard({
-                    label: `Total Expenses (${rangeLabel})`, // >>> FIX: was hardcoded "(This Month)"
+                    label: `Total Expenses (${rangeLabel})`,
                     value: '৳' + Number(kpi.total_expenses).toLocaleString(),
                     trend: (kpi.expenses_change >= 0 ? '+' : '') + kpi.expenses_change + '%',
                     trendDir: kpi.expenses_change >= 0 ? 'down' : 'up',
@@ -1090,7 +1056,7 @@
                     type: 'total_expenses'
                 }),
                 kpiCard({
-                    label: `Net Profit (${rangeLabel})`, // >>> FIX: was hardcoded "(This Month)"
+                    label: `Net Profit (${rangeLabel})`,
                     value: '৳' + Number(kpi.net_profit).toLocaleString(),
                     trend: (kpi.net_profit_change >= 0 ? '+' : '') + kpi.net_profit_change + '%',
                     trendDir: kpi.net_profit_change >= 0 ? 'up' : 'down',
@@ -1100,7 +1066,7 @@
                     type: 'net_profit'
                 }),
                 kpiCard({
-                    label: 'Pending Payments', // range apply hoy na -- eta AR-er current balance, period-based na
+                    label: 'Pending Payments',
                     value: '৳' + Number(kpi.pending_payments).toLocaleString(),
                     trend: kpi.overdue_count + ' Overdue',
                     trendDir: 'neutral',
@@ -1110,12 +1076,9 @@
                     type: 'pending_payments'
                 }),
             ].join('');
-
             bindKpiClicks();
         }
 
-        // >>> FIX: inline top-level fetch-ke function-e wrap kora holo jate range
-        // change korle abar call kora jay, ar range query param pass kora hocche
         function loadKpis() {
             fetch(`${API_BASE}/kpis?range=${finRange}`)
                 .then(r => r.json())
@@ -1126,9 +1089,8 @@
                 });
         }
         loadKpis();
-        // <<< END FIX
 
-        /* ---------------- KPI Detail Modal -- pagination + Print/Excel (Current Page / Full Data) ---------------- */
+        /* ---------------- KPI Detail Modal ---------------- */
         const kpiModalState = {
             type: null,
             title: '',
@@ -1160,8 +1122,6 @@
         function loadKpiDetails(page) {
             document.getElementById('kpiDetailModalBody').innerHTML =
                 `<div class="text-center text-muted py-3">Loading...</div>`;
-
-            // >>> FIX: range param jog kora holo jate modal-e o shothik period-er data ashe
             fetch(`${API_BASE}/kpi-details?type=${kpiModalState.type}&range=${finRange}&page=${page}&per_page=100`)
                 .then(r => r.json())
                 .then(res => {
@@ -1169,7 +1129,6 @@
                     kpiModalState.lastPage = res.last_page;
                     kpiModalState.total = res.total;
                     kpiModalState.currentRows = res.data;
-
                     renderKpiDetailTable(res.data, res.total);
                     renderKpiPagination();
                     document.getElementById('kpiDetailModalFooter').style.display = 'flex';
@@ -1183,43 +1142,34 @@
 
         function renderKpiDetailTable(rows, total) {
             const body = document.getElementById('kpiDetailModalBody');
-
             if (!rows.length) {
                 body.innerHTML = `<div class="empty-state"><i class="bi bi-inbox"></i><p>No records found</p></div>`;
                 return;
             }
-
             body.innerHTML = `
                 <div class="text-muted small mb-2">${total.toLocaleString()} total record${total > 1 ? 's' : ''}</div>
                 <table class="table table-sm kpi-detail-table">
                     <thead>
-                        <tr>
-                            <th>Voucher</th>
-                            <th>Description</th>
-                            <th class="text-right">Date</th>
-                            <th class="text-right">Amount</th>
-                        </tr>
+                        <tr><th>Voucher</th><th>Description</th><th class="text-right">Date</th><th class="text-right">Amount</th></tr>
                     </thead>
                     <tbody>
                         ${rows.map(r => `
-                                                                                                                                                    <tr>
-                                                                                                                                                        <td>${r.voucher ?? '-'}</td>
-                                                                                                                                                        <td>${r.title}</td>
-                                                                                                                                                        <td class="text-right">${r.date}</td>
-                                                                                                                                                        <td class="text-right">৳${Number(r.amount).toLocaleString()}</td>
-                                                                                                                                                    </tr>`).join('')}
+                                <tr>
+                                    <td>${r.voucher ?? '-'}</td>
+                                    <td>${r.title}</td>
+                                    <td class="text-right">${r.date}</td>
+                                    <td class="text-right">৳${Number(r.amount).toLocaleString()}</td>
+                                </tr>`).join('')}
                     </tbody>
                 </table>`;
         }
 
         function renderKpiPagination() {
             const box = document.getElementById('kpiModalPagination');
-
             if (kpiModalState.lastPage <= 1) {
                 box.innerHTML = '';
                 return;
             }
-
             box.innerHTML = `
                 <button type="button" class="btn btn-sm btn-outline-secondary" id="kpiPrevPage" ${kpiModalState.page <= 1 ? 'disabled' : ''}>
                     <i class="bi bi-chevron-left"></i>
@@ -1228,7 +1178,6 @@
                 <button type="button" class="btn btn-sm btn-outline-secondary" id="kpiNextPage" ${kpiModalState.page >= kpiModalState.lastPage ? 'disabled' : ''}>
                     <i class="bi bi-chevron-right"></i>
                 </button>`;
-
             document.getElementById('kpiPrevPage')?.addEventListener('click', () => {
                 if (kpiModalState.page > 1) loadKpiDetails(kpiModalState.page - 1);
             });
@@ -1237,18 +1186,13 @@
             });
         }
 
-
         function exportKpiExcel(scope) {
             if (scope === 'current') {
                 downloadKpiCsv(kpiModalState.currentRows);
                 return;
             }
-
             document.getElementById('kpiDetailModalBody').insertAdjacentHTML('afterbegin',
                 `<div class="text-muted small mb-2" id="kpiExportingNote">Preparing full data export...</div>`);
-
-            // >>> FIX: range param jog kora holo -- 'Full Data' export-o current filter-er
-            // range mene cholbe, na hole 'This Month' full history export hoye jeto
             fetch(`${API_BASE}/kpi-details?type=${kpiModalState.type}&range=${finRange}&all=1`)
                 .then(r => r.json())
                 .then(res => {
@@ -1266,7 +1210,6 @@
             rows.forEach(r => {
                 csv += `"${(r.title ?? '').replace(/"/g, '""')}","${r.voucher ?? ''}",${r.amount},"${r.date}"\n`;
             });
-
             const blob = new Blob([csv], {
                 type: 'text/csv;charset=utf-8;'
             });
@@ -1282,8 +1225,6 @@
                 openKpiPrintWindow(kpiModalState.currentRows);
                 return;
             }
-
-            // >>> FIX: range param jog kora holo, same reason as exportKpiExcel()
             fetch(`${API_BASE}/kpi-details?type=${kpiModalState.type}&range=${finRange}&all=1`)
                 .then(r => r.json())
                 .then(res => openKpiPrintWindow(res.data))
@@ -1293,44 +1234,32 @@
         function openKpiPrintWindow(rows) {
             const win = window.open('', '_blank');
             const html = `
-                <html>
-                <head>
-                    <title>${kpiModalState.title}</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 24px; color: #111827; }
-                        h3 { margin-bottom: 4px; }
-                        .meta { color: #6b7280; font-size: 13px; margin-bottom: 16px; }
-                        table { width: 100%; border-collapse: collapse; }
-                        th, td { border: 1px solid #e5e7eb; padding: 6px 10px; font-size: 13px; text-align: left; }
-                        th { background: #f3f4f6; }
-                        td.amount, th.amount { text-align: right; }
-                    </style>
-                </head>
+                <html><head><title>${kpiModalState.title}</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 24px; color: #111827; }
+                    h3 { margin-bottom: 4px; }
+                    .meta { color: #6b7280; font-size: 13px; margin-bottom: 16px; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th, td { border: 1px solid #e5e7eb; padding: 6px 10px; font-size: 13px; text-align: left; }
+                    th { background: #f3f4f6; }
+                    td.amount, th.amount { text-align: right; }
+                </style></head>
                 <body>
                     <h3>${kpiModalState.title}</h3>
                     <div class="meta">${rows.length.toLocaleString()} record${rows.length > 1 ? 's' : ''} -- generated ${new Date().toLocaleDateString()}</div>
                     <table>
-                        <thead>
-                            <tr>
-                                <th>Voucher</th>
-                                <th>Description</th>
-                                <th>Date</th>
-                                <th class="amount">Amount</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>Voucher</th><th>Description</th><th>Date</th><th class="amount">Amount</th></tr></thead>
                         <tbody>
                             ${rows.map(r => `
-                                                                                                                                                        <tr>
-                                                                                                                                                            <td>${r.voucher ?? '-'}</td>
-                                                                                                                                                            <td>${r.title}</td>
-                                                                                                                                                            <td>${r.date}</td>
-                                                                                                                                                            <td class="amount">৳${Number(r.amount).toLocaleString()}</td>
-                                                                                                                                                        </tr>`).join('')}
+                                    <tr>
+                                        <td>${r.voucher ?? '-'}</td>
+                                        <td>${r.title}</td>
+                                        <td>${r.date}</td>
+                                        <td class="amount">৳${Number(r.amount).toLocaleString()}</td>
+                                    </tr>`).join('')}
                         </tbody>
                     </table>
-                </body>
-                </html>`;
-
+                </body></html>`;
             win.document.write(html);
             win.document.close();
             win.focus();
@@ -1343,7 +1272,6 @@
                 exportKpiExcel(this.dataset.scope);
             });
         });
-
         document.querySelectorAll('#kpiPrintMenu .dropdown-item').forEach(item => {
             item.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -1351,7 +1279,7 @@
             });
         });
 
-        /* ---------------- Cash Flow Analysis (line chart) ---------------- */
+        /* ---------------- Cash Flow Analysis ---------------- */
         function renderCashFlowLegend() {
             document.getElementById('cfLegend').innerHTML = `
     <span><span class="dot" style="background:#10b981"></span> Income</span>
@@ -1364,7 +1292,6 @@
         function renderCashFlowChart(data) {
             const ctx = document.getElementById('cashFlowChart').getContext('2d');
             if (cashFlowChartInstance) cashFlowChartInstance.destroy();
-
             cashFlowChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -1449,10 +1376,7 @@
             });
         }
 
-
-
-
-        /* ---------------- Expense Breakdown (concentric rings + in-band text + numbered badges) ---------------- */
+        /* ---------------- Expense Breakdown ---------------- */
         function polarToCartesian(cx, cy, r, angleDeg) {
             const a = (angleDeg - 90) * Math.PI / 180;
             return {
@@ -1468,20 +1392,17 @@
             return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 1 ${end.x} ${end.y}`;
         }
 
-        // pct (0-100) onujayi color felano -- kom expense = sobuj, beshi expense = lal
         function expenseColorScale(pct) {
             const clampedPct = Math.max(0, Math.min(100, pct));
             const hue = 48 - (clampedPct / 100) * 48;
             const lightness = 62 - (clampedPct / 100) * 20;
             const saturation = 88;
-
             return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
         }
 
         function renderExpenseConcentric(rawData) {
             const MAX_RINGS = 5;
             let data = [...rawData].sort((a, b) => b.amount - a.amount);
-
             if (data.length > MAX_RINGS) {
                 const top = data.slice(0, MAX_RINGS - 1);
                 const othersAmount = data.slice(MAX_RINGS - 1).reduce((s, d) => s + Number(d.amount), 0);
@@ -1491,57 +1412,39 @@
                     color: '#9ca3af'
                 }];
             }
-
             const total = rawData.reduce((s, d) => s + Number(d.amount), 0);
             document.getElementById('donutCenterValue').textContent = '৳' + total.toLocaleString();
-
-            // Prottek category-r percentage age theke calculate kore rakha holo -- color scale-e lagbe
             const maxPct = total > 0 ? Math.max(...data.map(d => (d.amount / total) * 100)) : 0;
-
-            const size = 300;
-            const cx = size / 2;
-            const cy = size / 2 - 4;
-            const startAngle = -128;
-            const endAngle = 128;
-            const outerR = 122;
-            const ringGap = 26;
-            const strokeW = 16;
-            const MIN_RADIUS_FOR_TEXT = 42;
-
-            let defsHtml = '';
-            let arcsHtml = '';
-            let labelsHtml = '';
-            let badgesHtml = '';
-            let sideLabels = [];
+            const size = 300,
+                cx = size / 2,
+                cy = size / 2 - 4,
+                startAngle = -128,
+                endAngle = 128;
+            const outerR = 122,
+                ringGap = 26,
+                strokeW = 16,
+                MIN_RADIUS_FOR_TEXT = 42;
+            let defsHtml = '',
+                arcsHtml = '',
+                labelsHtml = '',
+                badgesHtml = '',
+                sideLabels = [];
 
             data.forEach((d, i) => {
                 const r = outerR - (i * ringGap);
                 const pct = total > 0 ? Math.round((d.amount / total) * 100) : 0;
-
-                // Rong ekhon d.color theke na, expense magnitude (pct) theke ashche
-                // maxPct diye normalize kora holo jate sob-cheye beshi expense-i pure lal hoy,
-                // baki gula relative kome sobuj-er dike jabe
                 const relativePct = maxPct > 0 ? (pct / maxPct) * 100 : 0;
                 const ringColor = expenseColorScale(relativePct);
-
                 const pathId = `arcPath${i}`;
                 const pathD = describeArc(cx, cy, r, startAngle, endAngle);
-
                 defsHtml += `<path id="${pathId}" d="${pathD}" fill="none" />`;
-
-                arcsHtml += `<path d="${pathD}"
-            fill="none" stroke="${ringColor}" stroke-width="${strokeW}"
-            stroke-linecap="round" class="concentric-arc"
-            style="animation-delay:${i * 0.12}s" />`;
-
+                arcsHtml +=
+                    `<path d="${pathD}" fill="none" stroke="${ringColor}" stroke-width="${strokeW}" stroke-linecap="round" class="concentric-arc" style="animation-delay:${i * 0.12}s" />`;
                 if (r >= MIN_RADIUS_FOR_TEXT) {
                     const labelText = `${d.label} · ${pct}%`;
-                    labelsHtml += `<text class="concentric-inband-label" dy="4"
-                    style="animation-delay:${i * 0.12 + 0.15}s">
-                <textPath href="#${pathId}" xlink:href="#${pathId}" startOffset="50%" text-anchor="middle">
-                    ${labelText}
-                </textPath>
-            </text>`;
+                    labelsHtml += `<text class="concentric-inband-label" dy="4" style="animation-delay:${i * 0.12 + 0.15}s">
+                        <textPath href="#${pathId}" xlink:href="#${pathId}" startOffset="50%" text-anchor="middle">${labelText}</textPath>
+                    </text>`;
                 } else {
                     sideLabels.push({
                         ...d,
@@ -1549,21 +1452,16 @@
                         color: ringColor
                     });
                 }
-
                 const badgePos = polarToCartesian(cx, cy, r, startAngle);
                 badgesHtml += `<g class="concentric-badge" style="animation-delay:${i * 0.12 + 0.2}s">
-            <circle cx="${badgePos.x}" cy="${badgePos.y}" r="13" fill="#fff" stroke="${ringColor}" stroke-width="2.5"/>
-            <text x="${badgePos.x}" y="${badgePos.y + 4.5}" text-anchor="middle"
-                font-size="11" font-weight="800" fill="${ringColor}">${String(i + 1).padStart(2, '0')}</text>
-        </g>`;
+                    <circle cx="${badgePos.x}" cy="${badgePos.y}" r="13" fill="#fff" stroke="${ringColor}" stroke-width="2.5"/>
+                    <text x="${badgePos.x}" y="${badgePos.y + 4.5}" text-anchor="middle" font-size="11" font-weight="800" fill="${ringColor}">${String(i + 1).padStart(2, '0')}</text>
+                </g>`;
             });
 
             document.getElementById('concentricChart').innerHTML = `
         <svg viewBox="0 0 ${size} ${size}" class="concentric-svg" xmlns="http://www.w3.org/2000/svg">
-            <defs>${defsHtml}</defs>
-            ${arcsHtml}
-            ${labelsHtml}
-            ${badgesHtml}
+            <defs>${defsHtml}</defs>${arcsHtml}${labelsHtml}${badgesHtml}
         </svg>`;
 
             const legendBox = document.getElementById('expenseInnerLegend');
@@ -1580,8 +1478,6 @@
             }
         }
 
-        // >>> NEW: extracted into its own function so the range filter can re-fetch independently
-        // (age eta loadOverviewCharts()-er bhitore inline fetch hisebe chhilo)
         function loadExpenseBreakdown() {
             fetch(`${API_BASE}/expense-breakdown?range=${finRange}`)
                 .then(r => r.json())
@@ -1598,9 +1494,8 @@
                         `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load expense data</p></div>`;
                 });
         }
-        // <<< END NEW
 
-        /* ---------------- Revenue Comparison (grouped bar chart) ---------------- */
+        /* ---------------- Revenue Comparison ---------------- */
         let revenueChartInstance = null;
 
         function renderRevenueLegend() {
@@ -1613,10 +1508,7 @@
             const thisYearVals = data.this_year.map(Number);
             const lastYearVals = data.last_year.map(Number);
             const maxVal = Math.max(...thisYearVals, ...lastYearVals, 1);
-
-            // Bortoman mash (0-indexed) -- ei mash porjonto shob "past", tar por gula "future"
             const currentMonthIdx = new Date().getMonth();
-
             const steps = 4;
             const yAxisHtml = Array.from({
                 length: steps + 1
@@ -1634,8 +1526,6 @@
                 const totalPct = Math.max(curPct, lastPct);
                 const curSegHeight = totalPct > 0 ? (curPct / totalPct) * 100 : 0;
                 const lastSegHeight = totalPct > 0 ? (lastPct / totalPct) * 100 : 0;
-
-                // i <= currentMonthIdx mane eita already-past mash -- shada-i (permanently) color dekhabe
                 const isPast = i <= currentMonthIdx;
 
                 return `
@@ -1664,25 +1554,27 @@
 
             document.getElementById('revBarsArea').innerHTML = barsHtml;
 
-            // Future mash-e hover korle-o color dekhabe (tooltip soho), past mash-e already color-i ache
             document.querySelectorAll('.rev-bar-col').forEach(col => {
                 col.addEventListener('mouseenter', () => col.classList.add('active'));
                 col.addEventListener('mouseleave', () => col.classList.remove('active'));
             });
         }
 
-        /* ---------------- AR / AP Aging (redesigned) ---------------- */
+        /* ---------------- AR / AP Aging ---------------- */
+        // add new: agingState-e search field add kora holo (client-side filter-er jonno)
         const agingState = {
             receivable: {
                 data: null,
-                page: 1
+                search: ''
             },
             payable: {
                 data: null,
-                page: 1
+                search: ''
             }
         };
-        const AGING_PER_PAGE = 10;
+        // add new: প্রতিটা section-er নিজস্ব range state
+        let arAgingRange = 'year',
+            apAgingRange = 'year';
         let arBarInst = null,
             arDonutInst = null,
             apBarInst = null,
@@ -1713,7 +1605,6 @@
         function renderAgingCharts(barCanvasId, donutCanvasId, top10, instRefSetter) {
             const labels = top10.map(t => t.label);
             const values = top10.map(t => Math.abs(t.amount));
-            // Target design-er moto blue-gradient donut palette (dark -> light)
             const colors = ['#1e3a5f', '#2c5282', '#2b6cb0', '#3182ce', '#4299e1', '#63b3ed', '#90cdf4', '#a0d3ec',
                 '#bee3f8', '#e2e8f0'
             ];
@@ -1811,112 +1702,157 @@
             instRefSetter(barChart, donutChart);
         }
 
+        // change: pagination logic sorano holo -- ekhon shudhu search-diye filter kore
+        // shob matching row ekbari dekhabe (table-responsive scroll diye)
         function renderAgingTable(containerId, type) {
             const state = agingState[type];
             const data = state.data;
-            const total = data.rows.length;
-            const lastPage = Math.max(1, Math.ceil(total / AGING_PER_PAGE));
-            if (state.page > lastPage) state.page = lastPage;
-            const start = (state.page - 1) * AGING_PER_PAGE;
-            const pageRows = data.rows.slice(start, start + AGING_PER_PAGE);
+            const searchTerm = (state.search || '').toLowerCase().trim();
 
-            let html = `
-        <div class="table-responsive">
-            <table class="table table-sm kpi-detail-table aging-table">
-                <thead>
-                    <tr>
-                        <th>${type === 'receivable' ? 'Customer' : 'Supplier'}</th>
-                        <th class="text-right">Current</th>
-                        <th class="text-right">1-30</th>
-                        <th class="text-right">31-60</th>
-                        <th class="text-right">61-90</th>
-                        <th class="text-right">91 and over</th>
-                        <th class="text-right">Amount Due</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${pageRows.map(r => `
-                                                                                <tr>
-                                                                                    <td>${r.name}</td>
-                                                                                    <td class="text-right">${Number(r.current).toLocaleString()}</td>
-                                                                                    <td class="text-right">${Number(r.d1_30).toLocaleString()}</td>
-                                                                                    <td class="text-right">${Number(r.d31_60).toLocaleString()}</td>
-                                                                                    <td class="text-right">${Number(r.d61_90).toLocaleString()}</td>
-                                                                                    <td class="text-right">${Number(r.d91_plus).toLocaleString()}</td>
-                                                                                    <td class="text-right" style="font-weight:700">${Number(r.total).toLocaleString()}</td>
-                                                                                </tr>`).join('')}
-                </tbody>
-                <tfoot>
-                    <tr style="font-weight:700;background:#f9fafb">
-                        <td>Grand Total</td>
-                        <td class="text-right">${Number(data.grand.current).toLocaleString()}</td>
-                        <td class="text-right">${Number(data.grand.d1_30).toLocaleString()}</td>
-                        <td class="text-right">${Number(data.grand.d31_60).toLocaleString()}</td>
-                        <td class="text-right">${Number(data.grand.d61_90).toLocaleString()}</td>
-                        <td class="text-right">${Number(data.grand.d91_plus).toLocaleString()}</td>
-                        <td class="text-right">${Number(data.grand.total).toLocaleString()}</td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-        <div class="d-flex justify-content-between align-items-center mt-2">
-            <span class="text-muted small">${total ? start + 1 : 0}-${Math.min(start + AGING_PER_PAGE, total)} of ${total}</span>
-            <div class="kpi-modal-pagination">
-                <button type="button" class="btn btn-sm btn-outline-secondary" data-agtype="${type}" data-agaction="prev" ${state.page <= 1 ? 'disabled' : ''}><i class="bi bi-chevron-left"></i></button>
-                <span class="mx-2">Page ${state.page} / ${lastPage}</span>
-                <button type="button" class="btn btn-sm btn-outline-secondary" data-agtype="${type}" data-agaction="next" ${state.page >= lastPage ? 'disabled' : ''}><i class="bi bi-chevron-right"></i></button>
+            // add new: customer/supplier name diye client-side filter
+            const filteredRows = searchTerm ?
+                data.rows.filter(r => r.name.toLowerCase().includes(searchTerm)) :
+                data.rows;
+
+            // add new: grand total filtered rows theke live-calculate, jate search
+            // korle footer-o thik matching total dekhay
+            const grand = {
+                current: filteredRows.reduce((s, r) => s + r.current, 0),
+                d1_30: filteredRows.reduce((s, r) => s + r.d1_30, 0),
+                d31_60: filteredRows.reduce((s, r) => s + r.d31_60, 0),
+                d61_90: filteredRows.reduce((s, r) => s + r.d61_90, 0),
+                d91_plus: filteredRows.reduce((s, r) => s + r.d91_plus, 0),
+                total: filteredRows.reduce((s, r) => s + r.total, 0),
+            };
+
+            let html;
+            if (!filteredRows.length) {
+                html = `<div class="empty-state"><i class="bi bi-inbox"></i><p>No matching records</p></div>`;
+            } else {
+                html =
+                    `
+            <div class="table-responsive" style="max-height:420px;overflow-y:auto">
+                <table class="table table-sm kpi-detail-table aging-table">
+                    <thead>
+                        <tr>
+                            <th>${type === 'receivable' ? 'Customer' : 'Supplier'}</th>
+                            <th class="text-right">Current</th>
+                            <th class="text-right">1-30</th>
+                            <th class="text-right">31-60</th>
+                            <th class="text-right">61-90</th>
+                            <th class="text-right">91 and over</th>
+                            <th class="text-right">Amount Due</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filteredRows.map(r => `
+                                <tr>
+                                    <td>${r.name}</td>
+                                    <td class="text-right">${Number(r.current).toLocaleString()}</td>
+                                    <td class="text-right">${Number(r.d1_30).toLocaleString()}</td>
+                                    <td class="text-right">${Number(r.d31_60).toLocaleString()}</td>
+                                    <td class="text-right">${Number(r.d61_90).toLocaleString()}</td>
+                                    <td class="text-right">${Number(r.d91_plus).toLocaleString()}</td>
+                                    <td class="text-right" style="font-weight:700">${Number(r.total).toLocaleString()}</td>
+                                </tr>`).join('')}
+                    </tbody>
+                    <tfoot>
+                        <tr style="font-weight:700;background:#f9fafb">
+                            <td>Grand Total</td>
+                            <td class="text-right">${Number(grand.current).toLocaleString()}</td>
+                            <td class="text-right">${Number(grand.d1_30).toLocaleString()}</td>
+                            <td class="text-right">${Number(grand.d31_60).toLocaleString()}</td>
+                            <td class="text-right">${Number(grand.d61_90).toLocaleString()}</td>
+                            <td class="text-right">${Number(grand.d91_plus).toLocaleString()}</td>
+                            <td class="text-right">${Number(grand.total).toLocaleString()}</td>
+                        </tr>
+                    </tfoot>
+                </table>
             </div>
-        </div>`;
-
-            if (!total) {
-                html = `<div class="empty-state"><i class="bi bi-inbox"></i><p>No outstanding balance</p></div>`;
+            <div class="text-muted small text-center mt-1">${filteredRows.length} record${filteredRows.length > 1 ? 's' : ''}</div>`;
             }
 
             document.getElementById(containerId).innerHTML = html;
-
-            document.querySelectorAll(`[data-agtype="${type}"]`).forEach(btn => {
-                btn.addEventListener('click', function() {
-                    state.page += this.dataset.agaction === 'next' ? 1 : -1;
-                    renderAgingTable(containerId, type);
-                });
-            });
         }
 
-        function loadArApAging() {
-            fetch(`${API_BASE}/ar-ap-aging`)
+        // add new: search input listener -- customer/supplier name diye filter
+        document.getElementById('arAgingSearch').addEventListener('input', function() {
+            agingState.receivable.search = this.value;
+            renderAgingTable('arAgingBody', 'receivable');
+        });
+        document.getElementById('apAgingSearch').addEventListener('input', function() {
+            agingState.payable.search = this.value;
+            renderAgingTable('apAgingBody', 'payable');
+        });
+
+        // change: range parameter add kora holo, ar function-e range pass kora hocche
+        function loadArAging(range) {
+            fetch(`${API_BASE}/ar-ap-aging?range=${range}`)
                 .then(r => r.json())
                 .then(res => {
                     agingState.receivable.data = res.receivable;
-                    agingState.payable.data = res.payable;
-
                     renderAgingKpis('arAgingKpis', res.receivable.kpis, 'Invoices');
-                    renderAgingKpis('apAgingKpis', res.payable.kpis, 'Bills');
-
                     if (arBarInst) arBarInst.destroy();
                     if (arDonutInst) arDonutInst.destroy();
                     renderAgingCharts('arBarChart', 'arDonutChart', res.receivable.top10, (b, d) => {
                         arBarInst = b;
                         arDonutInst = d;
                     });
+                    renderAgingTable('arAgingBody', 'receivable');
+                })
+                .catch(() => {
+                    document.getElementById('arAgingBody').innerHTML =
+                        `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load AR aging</p></div>`;
+                });
+        }
 
+        // add new: AP aging-er jonno alada loader (age eta ekta combined loadArApAging()-e chhilo)
+        function loadApAging(range) {
+            fetch(`${API_BASE}/ar-ap-aging?range=${range}`)
+                .then(r => r.json())
+                .then(res => {
+                    agingState.payable.data = res.payable;
+                    renderAgingKpis('apAgingKpis', res.payable.kpis, 'Bills');
                     if (apBarInst) apBarInst.destroy();
                     if (apDonutInst) apDonutInst.destroy();
                     renderAgingCharts('apBarChart', 'apDonutChart', res.payable.top10, (b, d) => {
                         apBarInst = b;
                         apDonutInst = d;
                     });
-
-                    renderAgingTable('arAgingBody', 'receivable');
                     renderAgingTable('apAgingBody', 'payable');
                 })
                 .catch(() => {
-                    document.getElementById('arAgingBody').innerHTML =
-                        `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load AR aging</p></div>`;
                     document.getElementById('apAgingBody').innerHTML =
                         `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load AP aging</p></div>`;
                 });
         }
 
+        // change: age ekta call-e AR+AP dutoi loading hoto, ekhon dutoi nijer nijer range diye chole
+        function loadArApAging() {
+            loadArAging(arAgingRange);
+            loadApAging(apAgingRange);
+        }
+
+        // add new: AR Aging section-er range filter click handler
+        document.querySelectorAll('#arAgingRangeFilter .fin-range-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#arAgingRangeFilter .fin-range-btn').forEach(b => b.classList
+                    .remove('active'));
+                this.classList.add('active');
+                arAgingRange = this.dataset.arrange;
+                loadArAging(arAgingRange);
+            });
+        });
+        // add new: AP Aging section-er range filter click handler
+        document.querySelectorAll('#apAgingRangeFilter .fin-range-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#apAgingRangeFilter .fin-range-btn').forEach(b => b.classList
+                    .remove('active'));
+                this.classList.add('active');
+                apAgingRange = this.dataset.arrange;
+                loadApAging(apAgingRange);
+            });
+        });
 
         /* ---------------- Bank / Cash Balance ---------------- */
         let bcAccountsData = [];
@@ -2074,8 +2010,6 @@
                 });
         }
 
-
-
         function loadOverviewCharts(range = 'this_year') {
             renderCashFlowLegend();
             fetch(`${API_BASE}/cash-flow?range=${range}`)
@@ -2091,16 +2025,11 @@
                 .then(r => r.json())
                 .then(renderRevenueChart)
                 .catch(() => {
-                    // >>> FIX: getElementById('revenueChart') element ekhane exist kore na
-                    // (actual container 'revBarsArea'/'revChartWrap'), tai age eta null.closest()
-                    // diye নিজেই আরেকটা error chhurto fetch fail korle
                     document.getElementById('revChartWrap').innerHTML =
                         `<div class="empty-state"><i class="bi bi-bar-chart"></i><p>Failed to load revenue data</p></div>`;
-                    // <<< END FIX
                 });
 
-            loadExpenseBreakdown(); // >>> FIX: extracted function call (age inline fetch chhilo)
-
+            loadExpenseBreakdown();
             loadArApAging();
             loadBankCashBalance();
         }
@@ -2160,10 +2089,7 @@
                 type,
                 search
             }).toString();
-
-            document.getElementById('txnList').innerHTML =
-                `<div class="text-center text-muted py-3">Loading...</div>`;
-
+            document.getElementById('txnList').innerHTML = `<div class="text-center text-muted py-3">Loading...</div>`;
             fetch(`${API_BASE}/transactions?${params}`)
                 .then(r => r.json())
                 .then(renderTransactions)
@@ -2213,10 +2139,7 @@
                 status,
                 search
             }).toString();
-
-            document.getElementById('invoiceList').innerHTML =
-                `<div class="text-center text-muted py-3">Loading...</div>`;
-
+            document.getElementById('invoiceList').innerHTML = `<div class="text-center text-muted py-3">Loading...</div>`;
             fetch(`${API_BASE}/invoices?${params}`)
                 .then(r => r.json())
                 .then(renderInvoices)
@@ -2233,6 +2156,6 @@
         document.getElementById('invStatusFilter').addEventListener('change', loadInvoices);
 
         /* ---------------- Init ---------------- */
-        activateTab('overview'); // Overview tab-e KPI/charts render + default active kore dey
+        activateTab('overview');
     </script>
 @endsection
