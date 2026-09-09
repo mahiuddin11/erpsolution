@@ -246,6 +246,7 @@ $parent_menu = array(
         'icon' => 'fa fa-shopping-cart',
         'parent_id' => 0,
         'submenu' => (object) array(
+
             (object) array(
                 'label' => 'Direct Purchase',
                 'route' => null,
@@ -254,6 +255,21 @@ $parent_menu = array(
                 'parent_id' => null,
                 'childMenu' => (object) array(
                     (object) array('label' => 'All Purchase', 'route' => 'inventorySetup.purchase.index', 'icon' => 'fa fa-dashboard', 'navigate_status' => 1),
+                    (object) array('label' => 'Add New Purchase', 'route' => 'inventorySetup.purchase.create', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
+                    (object) array('label' => 'Edit Purchase', 'route' => 'inventorySetup.purchase.edit', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
+                    (object) array('label' => 'Show Purchase', 'route' => 'inventorySetup.purchase.show', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
+                    (object) array('label' => 'Destroy Purchase', 'route' => 'inventorySetup.purchase.destroy', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
+                )
+            ),
+
+            (object) array(
+                'label' => 'Purchase Return',
+                'route' => null,
+                'uniqueName' => "DirectReturn",
+                'icon' => 'fa fa-th-large',
+                'parent_id' => null,
+                'childMenu' => (object) array(
+                    (object) array('label' => 'All Purchase Return', 'route' => 'inventorySetup.purchase.return', 'icon' => 'fa fa-reply', 'navigate_status' => 1),
                     (object) array('label' => 'Add New Purchase', 'route' => 'inventorySetup.purchase.create', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
                     (object) array('label' => 'Edit Purchase', 'route' => 'inventorySetup.purchase.edit', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
                     (object) array('label' => 'Show Purchase', 'route' => 'inventorySetup.purchase.show', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
@@ -337,6 +353,18 @@ $parent_menu = array(
                 'parent_id' => null,
                 'childMenu' => (object) array(
                     (object) array('label' => 'Add New Sale', 'route' => 'sale.sale.create', 'icon' => 'fa fa-dashboard', 'navigate_status' => 1),
+
+                )
+            ),
+            (object) array(
+                'label' => 'Sale Return ',
+                'route' => null,
+                'uniqueName' => "salereturn",
+                'icon' => 'fa fa-th-large',
+                'parent_id' => null,
+                'childMenu' => (object) array(
+                    (object) array('label' => 'Sale Return', 'route' => 'sale.sale.return', 'icon' => 'fa fa-reply', 'navigate_status' => 1),
+                    (object) array('label' => 'Add Return ', 'route' => 'sale.sale.return.create', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
 
                 )
             ),

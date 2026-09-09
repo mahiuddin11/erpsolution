@@ -7,6 +7,7 @@ use App\Http\Controllers\Backend\InventorySetup\ProductOpeningStockController;
 use App\Http\Controllers\Backend\InventorySetup\PurchaseController;
 use App\Http\Controllers\Backend\InventorySetup\PurchaseOrderController;
 use App\Http\Controllers\Backend\InventorySetup\PurchaseRequisitionController;
+use App\Http\Controllers\Backend\InventorySetup\PurchaseReturnController;
 use App\Http\Controllers\Backend\InventorySetup\StockAjdustmentController;
 use App\Http\Controllers\Backend\InventorySetup\StockReportController;
 use App\Http\Controllers\Backend\InventorySetup\StockTransferController;
@@ -273,6 +274,11 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/accounts', [PurchaseController::class, 'getAccounts'])->name('inventorySetup.purchase.accounts');
         Route::post('/inventory-purchase-invoisupplierCreate', [PurchaseController::class, 'supplierCreate'])->name('inventorySetup.purchase.supplierCreate');
         //purchase crud operation end
+
+        //purchase return start 
+        Route::get('/inventory-purchase-return', [PurchaseReturnController::class, 'index'])->name('inventorySetup.purchase.return');
+        //purchase return end
+
 
         //stock adjustment crud operation start
         Route::get('/inventory-stockAdjustment-list', [StockAjdustmentController::class, 'index'])->name('inventorySetup.stockAdjustment.index');

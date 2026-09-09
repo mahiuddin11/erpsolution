@@ -65,6 +65,8 @@ class SaleController extends Controller
         return view('backend.pages.sale.index', get_defined_vars());
     }
 
+
+
     public function dataProcessingSale(Request $request)
     {
         $json_data = $this->systemService->getList($request);
@@ -255,6 +257,8 @@ class SaleController extends Controller
     // }
 
     //sale create 
+
+
     public function create()
     {
         $title = 'Add New sale';

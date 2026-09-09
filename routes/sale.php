@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Backend\Sale\SaleController;
+use App\Http\Controllers\Backend\Sale\SaleReturnController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -15,6 +16,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::post('/sale-sale-store', [SaleController::class, 'store'])->name('sale.sale.store');
         Route::get('/sale-sale-edit/{id}', [SaleController::class, 'edit'])->name('sale.sale.edit');
         Route::get('/sale-sale-show/{id}', [SaleController::class, 'show'])->name('sale.sale.show');
+
         Route::get('/sale-sale-challan/{id}', [SaleController::class, 'challan'])->name('sale.sale.challan');
         Route::post('/sale-sale-update/{id}', [SaleController::class, 'update'])->name('sale.sale.update');
         Route::get('/sale-sale-delete/{id}', [SaleController::class, 'destroy'])->name('sale.sale.destroy');
@@ -22,8 +24,13 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/getProductListForSale', [SaleController::class, 'getProductListForSale'])->name('sale.sale.getProductListForSale');
         Route::get('/unitPiceForSale', [SaleController::class, 'unitPiceForSale'])->name('sale.sale.unitPiceForSale');
         Route::post('/sale-sale-quiceAddCustomer', [SaleController::class, 'quiceAddCustomer'])->name('sale.sale.quiceAddCustomer');
-
         //Sale crud operation end
+        //sale return start
+        Route::get('/sale-return', [SaleReturnController::class, 'index'])->name('sale.sale.return');
+        Route::get('/sale-return-create', [SaleReturnController::class, 'create'])->name('sale.sale.return.create');
+        //sale return end
+
+
         Route::get('/getCustomerBalance', 'SaleController@getCustomerBalance')->name('sale.sale.getCustomerBalance');
         Route::get('/getProductStock', 'SaleController@getProductStock')->name('sale.sale.getProductStock');
         Route::get('/saleunitPrice', 'SaleController@unitPrice')->name('sale.sale.saleunitPrice');

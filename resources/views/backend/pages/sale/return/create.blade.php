@@ -1,6 +1,6 @@
 @extends('backend.layouts.master')
 @section('title')
-    inventory - {{ $title }}
+    {{ $title }}
 @endsection
 
 @section('styles')
@@ -68,15 +68,15 @@
             <div class="row mb-2">
                 <div class="col-sm-6">
                     <h1 class="m-0">
-                        Sale </h1>
+                        Return </h1>
                 </div><!-- /.col -->
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('home') }}">Dashboard</a></li>
                         @if (helper::roleAccess('sale.sale.index'))
-                            <li class="breadcrumb-item"><a href="{{ route('sale.sale.index') }}">Sale</a></li>
+                            <li class="breadcrumb-item"><a href="{{ route('sale.sale.index') }}">Return</a></li>
                         @endif
-                        <li class="breadcrumb-item active"><span>Sale List</span></li>
+                        <li class="breadcrumb-item active"><span>Sale Return</span></li>
                     </ol>
                 </div><!-- /.col -->
             </div><!-- /.row -->
@@ -89,7 +89,7 @@
         <div class="col-md-12">
             <div class="card card-default">
                 <div class="card-header">
-                    <h3 class="card-title">New Sale Create</h3>
+                    <h3 class="card-title">New Sale Return Create</h3>
                 </div>
                 <div class="card-body">
                     <form class="needs-validation" method="POST" action="{{ route('sale.sale.store') }}" novalidate>
