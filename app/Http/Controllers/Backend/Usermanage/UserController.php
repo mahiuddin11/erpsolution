@@ -70,11 +70,12 @@ class UserController extends Controller
         $title = 'Add New users';
         $userRoll = $this->userRoleService->getAllRole();
         $branchs = Branch::where('status', 'Active')->get();
-        $employess = Employee::get();
+        $employess = Employee::where('employee_status', 'present')->get();
         return view('backend.pages.usermanage.users.create', get_defined_vars());
     }
 
     /**
+     * 3
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */

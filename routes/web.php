@@ -34,6 +34,7 @@ use App\Http\Controllers\Backend\Dashboard\ProjectDashboardController;
 use App\Http\Controllers\Backend\Dashboard\ManagementDashboardController;
 use App\Http\Controllers\Backend\Dashboard\PosDashboardController;
 use App\Http\Controllers\Backend\Settings\SmsSettingController;
+use App\Http\Controllers\Backend\Usermanage\UserController;
 
 //use App\Http\Controllers\AttendanceController;
 
@@ -722,15 +723,15 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //admin role operation end
 
         //user role operation start
-        Route::get('/usermanage-user-list', 'UserController@index')->name('usermanage.user.index');
-        Route::get('/dataProcessingUser', 'UserController@dataProcessinguser')->name('usermanage.user.dataProcessingUser');
-        Route::get('/usermanage-user-create', 'UserController@create')->name('usermanage.user.create');
-        Route::post('/usermanage-user-store', 'UserController@store')->name('usermanage.user.store');
-        Route::get('/usermanage-user-edit/{id}', 'UserController@edit')->name('usermanage.user.edit');
-        Route::get('/usermanage-user-show/{id}', 'UserController@show')->name('usermanage.user.show');
-        Route::post('/usermanage-user-update/{id}', 'UserController@update')->name('usermanage.user.update');
-        Route::get('/usermanage-user-delete/{id}', 'UserController@destroy')->name('usermanage.user.destroy');
-        Route::get('/usermanage-user-status/{id}/{status}', 'UserController@statusUpdate')->name('usermanage.user.status');
+        Route::get('/usermanage-user-list', [UserController::class, 'index'])->name('usermanage.user.index');
+        Route::get('/dataProcessingUser', [UserController::class, 'dataProcessinguser'])->name('usermanage.user.dataProcessingUser');
+        Route::get('/usermanage-user-create', [UserController::class, 'create'])->name('usermanage.user.create');
+        Route::post('/usermanage-user-store', [UserController::class, 'store'])->name('usermanage.user.store');
+        Route::get('/usermanage-user-edit/{id}', [UserController::class, 'edit'])->name('usermanage.user.edit');
+        Route::get('/usermanage-user-show/{id}', [UserController::class, 'show'])->name('usermanage.user.show');
+        Route::post('/usermanage-user-update/{id}', [UserController::class, 'update'])->name('usermanage.user.update');
+        Route::get('/usermanage-user-delete/{id}', [UserController::class, 'destroy'])->name('usermanage.user.destroy');
+        Route::get('/usermanage-user-status/{id}/{status}', [UserController::class, 'statusUpdate'])->name('usermanage.user.status');
         //user role operation end
     });
 

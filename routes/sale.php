@@ -25,6 +25,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/unitPiceForSale', [SaleController::class, 'unitPiceForSale'])->name('sale.sale.unitPiceForSale');
         Route::post('/sale-sale-quiceAddCustomer', [SaleController::class, 'quiceAddCustomer'])->name('sale.sale.quiceAddCustomer');
         //Sale crud operation end
+
         //sale return start
         Route::get('/sale-return', [SaleReturnController::class, 'index'])->name('sale.sale.return');
         Route::get('/sale-return-create', [SaleReturnController::class, 'create'])->name('sale.sale.return.create');

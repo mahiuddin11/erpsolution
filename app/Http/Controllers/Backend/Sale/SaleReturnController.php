@@ -23,6 +23,13 @@ class SaleReturnController extends Controller
         return view('backend.pages.sale.return.return', get_defined_vars());
     }
 
+
+    // public function dataProcessingSale(Request $request)
+    // {
+    //     $json_data = $this->systemService->getList($request);
+    //     return json_encode($this->systemTransformer->dataTable($json_data));
+    // }
+
     public function create()
     {
         $title = 'Add New sale';
