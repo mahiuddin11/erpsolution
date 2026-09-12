@@ -28,13 +28,18 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
 
         //sale return start
         Route::get('/sale-return', [SaleReturnController::class, 'index'])->name('sale.sale.return');
+        Route::get('/dataProcessingSaleReturn', [SaleReturnController::class, 'dataProcessingSaleReturn'])->name('sale.return.dataProcessingSaleReturn');
         Route::get('/sale-return-create', [SaleReturnController::class, 'create'])->name('sale.sale.return.create');
+        Route::post('/sale-return-store', [SaleReturnController::class, 'store'])->name('sale.return.store');
+        Route::get('/sale-return-searchInvoices', [SaleReturnController::class, 'searchInvoices'])->name('sale.return.searchInvoices');
+        Route::get('/sale-return-getInvoiceDetails', [SaleReturnController::class, 'getInvoiceDetails'])->name('sale.return.getInvoiceDetails');
         //sale return end
 
 
         Route::get('/getCustomerBalance', 'SaleController@getCustomerBalance')->name('sale.sale.getCustomerBalance');
         Route::get('/getProductStock', 'SaleController@getProductStock')->name('sale.sale.getProductStock');
         Route::get('/saleunitPrice', 'SaleController@unitPrice')->name('sale.sale.saleunitPrice');
+
 
         // delivery chalan start
         Route::get('/sale-challan-list', 'DeliveryChalanController@index')->name('sale.challan.index');

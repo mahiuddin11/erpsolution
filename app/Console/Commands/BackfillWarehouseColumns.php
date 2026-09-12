@@ -18,18 +18,18 @@ class BackfillWarehouseColumns extends Command
         . '(the real branch).';
 
     protected array $tables = [
-        'stocks',
-        'stock_summaries',
-        'purchases',
-        'purchases_details',
+        // 'stocks',
+        // 'stock_summaries',
+        // 'purchases',
+        // 'purchases_details',
         'sales',
         'sales__details',
-        'account_transactions',
-        'dabit_vouchers',
-        'dabit_voucher_details',
-        'projects',
-        'project_transfers',
-        'project_transfer_details',
+        // 'account_transactions',
+        // 'dabit_vouchers',
+        // 'dabit_voucher_details',
+        // 'projects',
+        // 'project_transfers',
+        // 'project_transfer_details',
 
     ];
 

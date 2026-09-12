@@ -2904,16 +2904,22 @@ class ReportController extends Controller
         return view('backend.pages.reports.ledger', get_defined_vars());
     }
 
+
+
+
     public function groupledgerList(Request $request)
     {
         $title = 'Group Ledger';
         $companyInfo = Company::latest('id')->first();
 
-        $mainGroups = ChartOfAccount::whereNull('parent_id')
-            ->orWhere('parent_id', 0)
+
+        $mainGroups = ChartOfAccount::where(function ($q) {
+            $q->whereNull('parent_id')->orWhere('parent_id', 0);
+        })
             ->where('status', 1)
             ->orderBy('account_name')
             ->get();
+
 
         $account    = null;
         $subLedgers = collect();
@@ -2926,20 +2932,22 @@ class ReportController extends Controller
 
             $account = ChartOfAccount::find($request->account_id);
 
-            // Selected group এর direct children আনো
+
             $children = ChartOfAccount::where('parent_id', $request->account_id)
                 ->where('status', 1)
                 ->orderBy('account_name')
                 ->get();
 
-            // প্রতিটা child এর balance calculate করো
+
             $subLedgers = $children->map(function ($child) use ($startDate, $endDate) {
 
-                // এই child এর নিচে সব nested account IDs
                 $childIds   = ChartOfAccount::getTypeOfAccount([$child->id]);
                 $childIds[] = $child->id;
 
-                // Opening Balance — start_date এর আগের transactions
+
+                $childIds = array_diff($childIds, [25]);
+
+
                 $openingDebit  = AccountTransaction::whereIn('account_id', $childIds)
                     ->where('created_at', '<', $startDate)
                     ->sum('debit');
@@ -2948,9 +2956,14 @@ class ReportController extends Controller
                     ->where('created_at', '<', $startDate)
                     ->sum('credit');
 
-                $child->opening_balance = $openingDebit - $openingCredit;
 
-                // Period Debit & Credit
+                if ($child->balance_type === 'debit') {
+                    $child->opening_balance = $child->opening_balance + $openingDebit - $openingCredit;
+                } else {
+                    $child->opening_balance = $child->opening_balance + $openingCredit - $openingDebit;
+                }
+
+
                 $child->period_debit = AccountTransaction::whereIn('account_id', $childIds)
                     ->whereBetween('created_at', [$startDate, $endDate . ' 23:59:59'])
                     ->sum('debit');
@@ -2959,10 +2972,17 @@ class ReportController extends Controller
                     ->whereBetween('created_at', [$startDate, $endDate . ' 23:59:59'])
                     ->sum('credit');
 
-                // Closing Balance
-                $child->closing_balance = $child->opening_balance
-                    + $child->period_debit
-                    - $child->period_credit;
+
+                if ($child->balance_type === 'debit') {
+                    $child->closing_balance = $child->opening_balance
+                        + $child->period_debit
+                        - $child->period_credit;
+                } else {
+                    $child->closing_balance = $child->opening_balance
+                        + $child->period_credit
+                        - $child->period_debit;
+                }
+
 
                 return $child;
             });
@@ -2973,6 +2993,8 @@ class ReportController extends Controller
 
         return view('backend.pages.reports.legergrouplist', get_defined_vars());
     }
+
+
 
     public function groupLedgerData(Request $request)
     {
@@ -2989,6 +3011,10 @@ class ReportController extends Controller
             $childIds   = ChartOfAccount::getTypeOfAccount([$child->id]);
             $childIds[] = $child->id;
 
+
+            $childIds = array_diff($childIds, [25]);
+
+
             $openingDebit  = AccountTransaction::whereIn('account_id', $childIds)
                 ->where('created_at', '<', $startDate)
                 ->sum('debit');
@@ -2997,7 +3023,14 @@ class ReportController extends Controller
                 ->where('created_at', '<', $startDate)
                 ->sum('credit');
 
-            $child->opening_balance = $openingDebit - $openingCredit;
+
+
+            if ($child->balance_type === 'debit') {
+                $child->opening_balance = $child->opening_balance + $openingDebit - $openingCredit;
+            } else {
+                $child->opening_balance = $child->opening_balance + $openingCredit - $openingDebit;
+            }
+
 
             $child->period_debit = AccountTransaction::whereIn('account_id', $childIds)
                 ->whereBetween('created_at', [$startDate, $endDate . ' 23:59:59'])
@@ -3007,7 +3040,14 @@ class ReportController extends Controller
                 ->whereBetween('created_at', [$startDate, $endDate . ' 23:59:59'])
                 ->sum('credit');
 
-            $child->closing_balance = $child->opening_balance + $child->period_debit - $child->period_credit;
+
+            if ($child->balance_type === 'debit') {
+                $child->closing_balance = $child->opening_balance + $child->period_debit - $child->period_credit;
+            } else {
+                $child->closing_balance = $child->opening_balance + $child->period_credit - $child->period_debit;
+            }
+
+
             return $child;
         });
 
@@ -3021,6 +3061,7 @@ class ReportController extends Controller
         ]);
     }
 
+
     public function getSubGroups(Request $request)
     {
 
@@ -3033,40 +3074,40 @@ class ReportController extends Controller
 
 
 
+
     public function groupledger(Request $request)
     {
         $title = 'Group Ledger Report';
 
         $companyInfo = Company::latest('id')->first();
 
-        // Get all accounts (you can filter by parent_id if needed)
-        $accounts = ChartOfAccount::get();
+
+        $accounts = ChartOfAccount::where('id', '!=', 25)->get();
+
 
         $groupLedgerData = [];
         $totalDebitBalance = 0;
         $totalCreditBalance = 0;
 
         foreach ($accounts as $account) {
-            // Use the EXACT same calculation as your original ledger function
 
-            // Calculate opening balance (from beginning of time)
             $debitSumBeforeToday = AccountTransaction::where('account_id', $account->id)->sum('debit');
             $creditSumBeforeToday = AccountTransaction::where('account_id', $account->id)->sum('credit');
 
-            // Calculate opening balance based on account balance type (same as original)
+
             if ($account->balance_type === 'debit') {
                 $openingBalance = $account->opening_balance + $debitSumBeforeToday - $creditSumBeforeToday;
             } else {
                 $openingBalance = $account->opening_balance + $creditSumBeforeToday - $debitSumBeforeToday;
             }
 
-            // Get ALL transactions for this account (same as original ledger logic)
+
             $transactions = AccountTransaction::where('account_id', $account->id)
                 ->orderBy('created_at')
                 ->get();
 
-            // Calculate running balance exactly like in your original ledger
-            $runningBalance = $account->opening_balance; // Start with opening balance
+
+            $runningBalance = $account->opening_balance;
             $totalDebit = 0;
             $totalCredit = 0;
 
@@ -3077,7 +3118,7 @@ class ReportController extends Controller
                 $totalDebit += $debit;
                 $totalCredit += $credit;
 
-                // Use EXACT same running balance calculation as original ledger
+
                 if ($account->balance_type == "debit") {
                     $runningBalance += $debit - $credit;
                 } else {
@@ -3085,10 +3126,10 @@ class ReportController extends Controller
                 }
             }
 
-            // Final closing balance is the runningBalance (same as original ledger)
+
             $closingBalance = $runningBalance;
 
-            // Only include accounts with non-zero closing balances or that have had transactions
+
             if ($closingBalance != 0 || $totalDebit > 0 || $totalCredit > 0) {
                 $groupLedgerData[] = [
                     'account_code' => $account->account_code,
@@ -3100,28 +3141,29 @@ class ReportController extends Controller
                     'total_credit' => $totalCredit,
                 ];
 
-                // Add to totals based on balance type and positive balances only
+
                 if ($account->balance_type === 'debit' && $closingBalance > 0) {
                     $totalDebitBalance += $closingBalance;
                 } elseif ($account->balance_type === 'credit' && $closingBalance > 0) {
                     $totalCreditBalance += $closingBalance;
                 } elseif ($account->balance_type === 'debit' && $closingBalance < 0) {
-                    // Negative debit balance acts like credit
+
                     $totalCreditBalance += abs($closingBalance);
                 } elseif ($account->balance_type === 'credit' && $closingBalance < 0) {
-                    // Negative credit balance acts like debit
+
                     $totalDebitBalance += abs($closingBalance);
                 }
             }
         }
 
-        // Sort by account code or name
+
         usort($groupLedgerData, function ($a, $b) {
             return strcmp($a['account_code'], $b['account_code']);
         });
 
         return view('backend.pages.reports.groupledger', get_defined_vars());
     }
+
     public function accountledger(Request $request)
     {
         $title = 'Ledger Report';

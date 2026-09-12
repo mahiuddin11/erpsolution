@@ -41,4 +41,14 @@ class Sale extends Model
     {
         return $this->belongsTo(Employee::class, 'sales_person_id');
     }
+
+    public function Warehouse()
+    {
+        return $this->belongsTo(Warehouse::class, 'warehouse_id');
+    }
+
+    public function ledger()
+    {
+        return $this->belongsTo(ChartOfAccount::class, 'ledger_id', 'id');
+    }
 }

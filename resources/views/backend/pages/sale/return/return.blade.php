@@ -111,5 +111,5 @@
     </div>
 @endsection
 @section('scripts')
-    @include('backend.pages.sale.script')
+    @include('backend.pages.sale.return.script')
 @endsection

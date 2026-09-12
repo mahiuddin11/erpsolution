@@ -2,13 +2,9 @@
 
 namespace App\Transformers;
 
-
-class SalesTransformer
+class SaleReturnTransformer
 {
-    /**
-     * @param $e
-     * @return array
-     */
+    //code..
     public function validationError($e)
     {
         $errMsg = '';

@@ -12,4 +12,15 @@ class SalesReturnService
     {
         $this->SalesReturnRepositories = $SalesReturnRepositories;
     }
+
+    public function getList($request)
+    {
+        // dd('Sales Service', $request->all());
+        return $this->SalesReturnRepositories->getList($request);
+    }
+
+    public function store($request)
+    {
+        return $this->SalesReturnRepositories->store($request);
+    }
 }

@@ -2,17 +2,15 @@
     let table = $('#systemDatatable').DataTable({
         "processing": true,
         "serverSide": true,
-
-
-
         "ajax": {
-            "url": "{{ route('sale.sale.dataProcessingSale') }}",
+            "url": "{{ route('sale.return.dataProcessingSaleReturn') }}",
             "dataType": "json",
             "type": "GET",
             "data": {
                 "_token": "<?= csrf_token() ?>"
             }
         },
+
         "columns": [{
                 "data": "id",
                 "orderable": true
@@ -45,9 +43,6 @@
                 "data": "qty",
                 "orderable": true
             },
-
-
-
             {
                 "data": "sub_total",
                 "orderable": true
@@ -65,24 +60,18 @@
                 "orderable": true
             },
             {
-                "data": "grand_total",
+                "data": "status",
                 "orderable": true
             },
-
-
-            // {
-            //     "data": "sale_type",
-            //     "orderable": true
-            // },
-
-
             {
                 "data": "action",
-                "class": 'text-nowrap',
+                "class": "text-nowrap",
                 "searchable": false,
                 "orderable": false
-            },
+            }
         ],
+
+
         "fnDrawCallback": function() {
             $("[name='my-checkbox']").bootstrapSwitch({
                 size: "small",

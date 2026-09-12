@@ -2,24 +2,19 @@
 @section('title')
     {{ $title }}
 @endsection
-
 @section('styles')
     <style>
-        .bootstrap-switch-large {
-            width: 200px;
-        }
-
         .sale-item-table-wrapper {
             width: 100%;
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
         }
 
-        #show_item {
-            min-width: 900px;
+        #return_item_table {
+            min-width: 950px;
         }
 
-        textarea[name="narration"] {
+        textarea[name="remarks"] {
             width: 100% !important;
             max-width: 100%;
         }
@@ -41,6 +36,12 @@
             height: 36px !important;
         }
 
+        .qty-exceed-error {
+            color: red;
+            font-size: 11px;
+            display: none;
+        }
+
         @media (max-width: 767px) {
             .form-row>[class*="col-"] {
                 margin-bottom: 10px;
@@ -50,181 +51,120 @@
                 padding: 10px;
             }
 
-            .btn-group-toggle {
-                display: flex;
-                flex-wrap: wrap;
-            }
-
-            #show_item {
-                min-width: 800px;
+            #return_item_table {
+                min-width: 850px;
             }
         }
     </style>
 @endsection
-
 @section('navbar-content')
     <div class="content-header">
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1 class="m-0">
-                        Return </h1>
-                </div><!-- /.col -->
+                    <h1 class="m-0">Sale Return</h1>
+                </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('home') }}">Dashboard</a></li>
-                        @if (helper::roleAccess('sale.sale.index'))
-                            <li class="breadcrumb-item"><a href="{{ route('sale.sale.index') }}">Return</a></li>
+                        @if (helper::roleAccess('sale.return.index'))
+                            <li class="breadcrumb-item"><a href="{{ route('sale.sale.return.index') }}">Sale Return</a></li>
                         @endif
-                        <li class="breadcrumb-item active"><span>Sale Return</span></li>
+                        <li class="breadcrumb-item active"><span>Create</span></li>
                     </ol>
-                </div><!-- /.col -->
-            </div><!-- /.row -->
-        </div><!-- /.container-fluid -->
+                </div>
+            </div>
+        </div>
     </div>
 @endsection
-
 @section('admin-content')
     <div class="row">
         <div class="col-md-12">
             <div class="card card-default">
                 <div class="card-header">
-                    <h3 class="card-title">New Sale Return Create</h3>
+                    <h3 class="card-title">New Sale Return</h3>
                 </div>
                 <div class="card-body">
-                    <form class="needs-validation" method="POST" action="{{ route('sale.sale.store') }}" novalidate>
+                    <form class="needs-validation" method="POST" action="{{ route('sale.return.store') }}" novalidate
+                        id="saleReturnForm">
                         @csrf
+
+
                         <div class="form-row">
                             <div class="col-md-2 col-sm-6 col-12 mb-3">
-                                <label for="validationCustom01">Invoice Number :</label>
-                                <input class="bg-green form-control" readonly=""
-                                    style="padding: 5px; font-weight : bold; width: 100%" value="{{ $invoice_no }} "
-                                    for="validationCustom01">
-                                <input type="hidden" name="invoice_no" class="form-control" id=""
-                                    value="{{ $invoice_no }}">
+                                <label>Return No :</label>
+                                <input class="bg-green form-control" readonly style="padding: 5px; font-weight: bold;"
+                                    value="{{ $return_no }}">
+                                <input type="hidden" name="return_no" value="{{ $return_no }}">
                             </div>
-                            <div class="col-md-2 col-sm-6 col-12 mb-3">
-                                <label for="validationCustom01">Po Number :</label>
-                                <input type="text" name="po_invoice" class="form-control">
-                            </div>
-                            <div class="col-md-2 col-sm-6 col-12 mb-3">
-                                <label>Po Date:</label>
-                                <div class="input-group date" id="reservationdate1" data-target-input="nearest">
-                                    <input type="text" name="po_date" data-toggle="datetimepicker"
-                                        value="{{ date('YYYY-mm-dd') }}" class="form-control datetimepicker-input"
-                                        data-target="#reservationdate1" />
-                                    <div class="input-group-append" data-target="#reservationdate1"
-                                        data-toggle="datetimepicker">
-                                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
-                                    </div>
+
+                            <div class="col-md-3 col-sm-6 col-12 mb-3" style="position: relative;">
+                                <label for="original_sale_search">Original Invoice * :</label>
+                                <input type="text" class="form-control" id="original_sale_search"
+                                    placeholder="--Search Invoice No / Customer--" autocomplete="off">
+                                <input type="hidden" id="original_sale_id" name="original_sale_id" required>
+                                <div id="invoice_search_results" class="list-group"
+                                    style="display:none; position:absolute; z-index:1050; width:100%; max-height:220px; overflow-y:auto; box-shadow:0 2px 6px rgba(0,0,0,0.15);">
                                 </div>
-                                @error('date')
-                                    <span class=" error text-red text-bold">{{ $message }}</span>
-                                @enderror
-                            </div>
-                            <div class="col-md-2 col-sm-6 col-12 mb-3">
-                                <label>Date:</label>
-                                <div class="input-group date" id="reservationdate" data-target-input="nearest">
-                                    <input type="text" name="date" data-toggle="datetimepicker"
-                                        value="{{ date('YYYY-mm-dd') }}" class="form-control datetimepicker-input"
-                                        data-target="#reservationdate" />
-                                    <div class="input-group-append" data-target="#reservationdate"
-                                        data-toggle="datetimepicker">
-                                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
-                                    </div>
-                                </div>
-                                @error('date')
-                                    <span class=" error text-red text-bold">{{ $message }}</span>
+                                @error('original_sale_id')
+                                    <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
 
                             <div class="col-md-2 col-sm-6 col-12 mb-3">
-                                <label for="validationCustom01">Branch * :</label>
-                                <select class="form-control select2" id="branch_id" name="branch_id"
-                                    onchange="getWarehousesByBranch(this.value)">
-                                    <option selected disabled value="">--Select Branch--</option>
-                                    @foreach ($branch as $key => $value)
-                                        <option value="{{ $value->id }}">
-                                            {{ $value->branchCode . ' - ' . $value->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                                <label>Return Date * :</label>
+                                <div class="input-group date" id="returnDatePicker" data-target-input="nearest">
+                                    <input type="text" name="return_date" data-toggle="datetimepicker"
+                                        value="{{ date('Y-m-d') }}" class="form-control datetimepicker-input"
+                                        data-target="#returnDatePicker">
+                                    <div class="input-group-append" data-target="#returnDatePicker"
+                                        data-toggle="datetimepicker">
+                                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                                    </div>
+                                </div>
+                                @error('return_date')
+                                    <span class="error text-red text-bold">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+
+                        </div>
+
+                        <div class="form-row">
+
+                            <div class="col-md-3 col-sm-6 col-12 mb-3">
+                                <label>Sales Representative :</label>
+                                <input type="text" id="sales_person_display" class="form-control bg-light" readonly>
+                                <input type="hidden" name="sales_person_id" id="sales_person_id">
+                            </div>
+
+                            <div class="col-md-3 col-sm-6 col-12 mb-3">
+                                <label>Branch (auto) :</label>
+                                <input type="text" id="branch_name_display" class="form-control bg-light" readonly>
+                                <input type="hidden" name="branch_id" id="branch_id">
                                 @error('branch_id')
                                     <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
-
-                            <div class="col-md-2 col-sm-6 col-12 mb-3">
-                                <label for="validationCustom02">Sub-Warehouse * :</label>
-                                <select class="form-control select2" id="sub_warehouse_id" name="sub_warehouse_id">
-                                    <option selected disabled value="">--Select Branch First--</option>
-                                </select>
-
-                                <input type="hidden" name="warehouse_source" id="warehouse_source" value="">
-
-                                @error('sub_warehouse_id')
-                                    <span class="error text-red text-bold">{{ $message }}</span>
-                                @enderror
+                            <div class="col-md-3 col-sm-6 col-12 mb-3">
+                                <label>Warehouse (auto) :</label>
+                                <input type="text" id="warehouse_name_display" class="form-control bg-light" readonly>
+                                <input type="hidden" name="warehouse_id" id="warehouse_id">
                             </div>
-
-                            <div class="col-md-2 col-sm-6 col-12 mb-3">
-                                <label for="ledger_id">Ledger * :
-                                    <button type="button" class="btn btn-sm btn-primary ml-2" data-toggle="modal"
-                                        data-target="#addCustomerModel">
-                                        +
-                                    </button>
-                                </label>
-                                <select class="form-control select2" name="ledger_id" id="ledger_id">
-                                    <option selected disabled value="">--Select Ledger--</option>
-                                    <x-account :setAccounts="$ledgers" />
-                                </select>
+                            <div class="col-md-3 col-sm-6 col-12 mb-3">
+                                <label>Customer Ledger(auto) :</label>
+                                <input type="text" id="ledger_name_display" class="form-control bg-light" readonly>
+                                <input type="hidden" name="ledger_id" id="ledger_id">
                                 @error('ledger_id')
-                                    <span class=" error text-red text-bold">{{ $message }}</span>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-2 col-sm-6 col-12 mb-3">
-                                <label for="sales_person_id">Sales Representative :</label>
-
-                                <select class="form-control select2" id="sales_person_id" name="sales_person_id"
-                                    required>
-
-                                    @foreach ($employees as $employee)
-                                        <option value="{{ $employee->id }}">
-                                            {{ $employee->id_card . ' - ' . $employee->name }}
-                                        </option>
-                                    @endforeach
-
-                                </select>
-
-                                @error('sales_person_id')
                                     <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror
-                            </div>
-
-                            <div class="col-md-2 col-sm-6 col-12 mb-3">
-                                <label for="validationCustom01">Balance * :</label>
-                                <input type="text" id="customer_currentBalance" class="form-control" readonly>
-                            </div>
-                            <div class="col-md-2 col-sm-6 col-12 mb-3">
-                                <label for="validationCustom01">Payment Type * :</label>
-                                <br>
-                                <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                                    <label class="btn bg-olive">
-                                        <input type="radio" name="payment_type" value="Due"
-                                            onchange="getCustomerBalance('Due')" checked id="option3"
-                                            autocomplete="off"> Due
-                                    </label>
-                                </div>
-                                <input type="hidden" id="paymentType">
-                                <input type="hidden" id="expireData">
                             </div>
                         </div>
 
-                        <!-- Modified: 2026-09-01 - broken table-in-table layout replaced with Bootstrap grid for full responsiveness -->
                         <div class="row mt-3">
                             <div class="col-12">
-                                <h5>Sales Item</h5>
+                                <h5>Invoice Items <small class="text-muted">(select an invoice above to load items)</small>
+                                </h5>
                             </div>
                         </div>
 
@@ -233,124 +173,34 @@
                                 <div class="panel panel-default">
                                     <div class="panel-body">
                                         <div class="table-responsive sale-item-table-wrapper">
-                                            <table class="table table-bordered table-hover tableAddItem" id="show_item">
+                                            <table class="table table-bordered table-hover" id="return_item_table">
                                                 <thead>
                                                     <tr>
-                                                        <th nowrap style="width:15%" align="center" id="">
-                                                            <strong>Product Category <span style="color:red;">
-                                                                    *</span></strong>
-                                                        </th>
-                                                        <th nowrap style="width:15%" align="center" id="">
-                                                            <strong>Product <span style="color:red;">
-                                                                    *</span></strong>
-                                                        </th>
-                                                        <th nowrap style="width:11%" align="center">
-                                                            <strong>Type <span style="color:red;">
-                                                                    *</span></strong>
-                                                        </th>
-                                                        <th nowrap style="width:11%" align="center">
-                                                            <strong>Quantity <span style="color:red;">
-                                                                    *</span></strong>
-                                                        </th>
-                                                        <th nowrap style="width:11%" align="center">
-                                                            <strong>Vat <span style="color:red;">
-                                                                    *</span></strong>
-                                                        </th>
-                                                        <th nowrap style="width:12%" align="center">
-                                                            <strong>Unit
-                                                                Price(BDT) <span style="color:red;">
-                                                                    *</span></strong>
-                                                        </th>
-                                                        <th nowrap style="width:13%" align="center">
-                                                            <strong>Total Price(BDT) <span style="color:red;">
-                                                                    *</span></strong>
-                                                        </th>
-                                                        <th align="center" style="width:5%">
-                                                            <strong>Action</strong>
-                                                        </th>
+                                                        <th style="width:16%">Product</th>
+                                                        <th style="width:8%" align="center">Sold Qty</th>
+                                                        <th style="width:10%" align="center">Return Qty <span
+                                                                style="color:red;">*</span></th>
+                                                        <th style="width:8%" align="center">Remaining</th>
+                                                        <th style="width:10%" align="center">Unit Price</th>
+                                                        <th style="width:8%" align="center">VAT %</th>
+                                                        <th style="width:12%" align="center">Condition <span
+                                                                style="color:red;">*</span></th>
+                                                        <th style="width:14%" align="center">Reason</th>
+                                                        <th style="width:14%" align="center">Line Total</th>
                                                     </tr>
                                                 </thead>
-                                                <tbody>
-                                                    <tr>
-                                                        <td id="product_td">
-                                                            <select onchange="getProductList(this.value)"
-                                                                class="select2 form-control catName"
-                                                                id="form-field-select-3"
-                                                                data-placeholder="Search Category">
-                                                                <option disabled selected>--- Select Category
-                                                                    ---</option>
-                                                                <?php foreach ($category_info as $eachInfo) : ?>
-                                                                <option catName="{{ $eachInfo->name }}"
-                                                                    value="{{ $eachInfo->id }}">
-                                                                    {{ $eachInfo->name }}</option>
-                                                                <?php endforeach; ?>
-                                                            </select>
-                                                        </td>
-                                                        <td id="product_td_2">
-                                                            <select class="select2 form-control proName" id="productID"
-                                                                data-placeholder="Search Product"
-                                                                onchange="getUnitPrice(this.value)">
-                                                                <option disabled selected>---Select Product---
-                                                                </option>
-                                                            </select>
-                                                            <span class="text-success purchaseprice"></span>
-                                                        </td>
-                                                        <td>
-                                                            <select class="select2 form-control purchasetype"
-                                                                id="purchasetype" data-placeholder="Search Product"
-                                                                onchange="getUnitPrice(this.value)">
-                                                                @foreach (config('purchaseType') as $key => $value)
-                                                                    <option value="{{ $key }}">
-                                                                        {{ $value }}</option>
-                                                                @endforeach
-                                                            </select>
-                                                            <span class="text-success purchasetypeerror"></span>
-                                                        </td>
-                                                        <td>
-                                                            <input type="text" readonly class="form-control"
-                                                                style="height: 20px;" id="currentStock" placeholder="0">
-                                                            <input type="text" style="height: 20px;"
-                                                                class="form-control qty" id="qty"
-                                                                onkeyup="qtyPriceCal();" placeholder="0">
-                                                        </td>
-                                                        <td>
-                                                            <input type="text" class="form-control text-right vat"
-                                                                id="vat" onkeyup="qtyPriceCal();"
-                                                                placeholder="0.00">
-                                                        </td>
-                                                        <td>
-                                                            <input type="text"
-                                                                class="form-control text-right  unitprice" id="unitpice"
-                                                                onkeyup="qtyPriceCal();" placeholder="0.00">
-                                                        </td>
-                                                        <td><input type="text"
-                                                                class="form-control text-right ttlamount total"
-                                                                id="total" placeholder="0.00" readonly="readonly">
-                                                        </td>
-                                                        <td>
-                                                            <a id="add_item" class="btn btn-info form-control"
-                                                                href="javascript:;" title="Add Item">
-                                                                <i class="fa fa-plus"></i>
-                                                            </a>
-                                                        </td>
+                                                <tbody id="return_item_tbody">
+                                                    <tr id="no_invoice_row">
+                                                        <td colspan="9" class="text-center text-muted">No invoice
+                                                            selected yet.</td>
                                                     </tr>
                                                 </tbody>
                                                 <tfoot>
                                                     <tr>
-                                                        <td align="right"><strong>Sub-Total(BDT)</strong></td>
-                                                        <td align="right"><strong class=""></strong>
-                                                        </td>
-                                                        <td align="right"><strong class=""></strong>
-                                                        </td>
-                                                        <td align="right">
-                                                            <strong class="ttlqty"></strong>
-                                                        </td>
-                                                        <td align="right"><strong class="ttlunitprice"></strong>
-                                                        </td>
-                                                        <td align="right"><strong class="grandtotal"></strong>
-                                                        </td>
-                                                        <td align="right"><strong class=""></strong>
-                                                        </td>
+                                                        <td colspan="8" align="right"><strong>Return Sub-Total (BDT,
+                                                                incl. VAT)</strong></td>
+                                                        <td align="right"><strong class="return_grandtotal"
+                                                                id="return_grandtotal">0.00</strong></td>
                                                     </tr>
                                                 </tfoot>
                                             </table>
@@ -362,123 +212,21 @@
 
                         <div class="row">
                             <div class="col-md-8 col-12 mb-3">
-                                <textarea class="form-control" name="narration" placeholder="Note......" rows="8"></textarea>
+                                <label>Remarks:</label>
+                                <textarea class="form-control" name="remarks" placeholder="Note......" rows="6"></textarea>
                             </div>
                             <div class="col-md-4 col-12 mb-3">
                                 <div class="panel panel-default">
                                     <div class="panel-body">
                                         <div class="table-responsive">
                                             <table class="table table-bordered table-hover">
+                                                <tbody id="original_charges_tbody">
+
+                                                </tbody>
                                                 <tbody>
                                                     <tr>
-                                                        <td nowrap align="right">
-                                                            <strong>Total </strong>
-                                                        </td>
-                                                        <td align="right"> <strong id="gtoal"
-                                                                class="grandtotal"></strong>
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td nowrap align="right">
-                                                            <strong>Discount ( -
-                                                                )</strong>
-                                                        </td>
-                                                        <td>
-                                                            <div class="input-group">
-                                                                <input type="text" autocomplete="off"
-                                                                    onkeyup="discountCalculation(this.value)"
-                                                                    id="disCount" style="text-align: right"
-                                                                    name="discount" value="" class="form-control"
-                                                                    placeholder="0.00"
-                                                                    oninput="this.value = this.value.replace(/[^0-9.]/g, ''); this.value = this.value.replace(/(\..*)\./g, '$1');" />
-                                                                <select id="discountType" class="form-control"
-                                                                    onchange="discountCalculation(document.getElementById('disCount').value)">
-                                                                    <option value="flat">
-                                                                        Flat
-                                                                    </option>
-                                                                    <option value="percentage">
-                                                                        Percentage
-                                                                    </option>
-                                                                </select>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td nowrap align="right">
-                                                            <strong>Carrying Cost (
-                                                                + )
-                                                            </strong>
-                                                        </td>
-                                                        <td><input type="text" autocomplete="off"
-                                                                onkeyup="carrying_cost_Calculation(this.value)"
-                                                                id="carrying_cost" style="text-align: right"
-                                                                name="carrying_cost" class="form-control"
-                                                                placeholder="0.00"
-                                                                oninput="this.value = this.value.replace(/[^0-9.]/g, ''); this.value = this.value.replace(/(\..*)\./g, '$1');" />
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td nowrap align="right">
-                                                            <strong>Labor bill ( + )
-                                                            </strong>
-                                                        </td>
-                                                        <td><input type="text" autocomplete="off"
-                                                                onkeyup="labor_bill_Calculation(this.value)"
-                                                                id="labor_bill" style="text-align: right"
-                                                                name="labor_bill" class="form-control" placeholder="0.00"
-                                                                oninput="this.value = this.value.replace(/[^0-9.]/g, ''); this.value = this.value.replace(/(\..*)\./g, '$1');" />
-                                                        </td>
-                                                    </tr>
-                                                    <tr id="netTotal">
-                                                        <td nowrap align="right">
-                                                            <strong>Net
-                                                                Total</strong>
-                                                        </td>
-                                                        <td align="right"><strong id="ntotal"
-                                                                class="grandtotal"></strong>
-                                                        </td>
-                                                    </tr>
-                                                    <tr id="account_id" class="d-none">
-                                                        <td nowrap align="right">
-                                                            <strong>Account <span style="color:red;">
-                                                                    *
-                                                                </span></strong>
-                                                        </td>
-                                                        <td>
-                                                            <select class="form-control  select2" name="account_id"
-                                                                require>
-                                                                <option selected disabled>--
-                                                                    Select a Account
-                                                                    --</option>
-                                                                <x-account :setAccounts="$account" />
-
-                                                            </select>
-                                                        </td>
-                                                    </tr>
-
-                                                    <tr class="partisals d-none">
-                                                        <td nowrap align="right">
-                                                            <strong>Payment ( -
-                                                                )<span style="color:red;">
-                                                                    *
-                                                                </span></strong>
-                                                        </td>
-                                                        <td><input type="text" id="payment"
-                                                                onkeyup="paymentCalculation(this.value)"
-                                                                style="text-align: right" name="partialPayment"
-                                                                value="" readonly class="form-control"
-                                                                autocomplete="off" placeholder="0.00"
-                                                                oninput="this.value = this.value.replace(/[^0-9.]/g, ''); this.value = this.value.replace(/(\..*)\./g, '$1');" />
-                                                        </td>
-                                                    </tr>
-
-                                                    <tr>
-                                                        <td nowrap align="right">
-                                                            <strong>Total
-                                                                Due</strong>
-                                                        </td>
-                                                        <td align="right"><strong id="totalDue"
-                                                                class="grandtotal finalDue"></strong>
+                                                        <td nowrap align="right"><strong>Total Return Amount</strong></td>
+                                                        <td align="right"><strong id="final_return_total">0.00</strong>
                                                         </td>
                                                     </tr>
                                                 </tbody>
@@ -494,732 +242,384 @@
                                 <div class="clearfix"></div>
                                 <div class="clearfix form-actions float-right">
                                     <div class="col-md-offset-1 col-md-10">
-                                        <button class="btn btn-info float-right" id="subMitButton" type="submit">
-                                            Save
-                                        </button>
-                                        &nbsp; &nbsp; &nbsp;
+                                        <button class="btn btn-info float-right" id="subMitButton" type="submit">Save
+                                            Return</button>
+                                        &nbsp;&nbsp;&nbsp;
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <!-- End Modified: 2026-09-01 -->
-
                     </form>
                 </div>
             </div>
         </div>
-        <!-- /.col-->
     </div>
-
-    <div class="modal fade" id="addCustomerModel" tabindex="-1" role="dialog" aria-labelledby="addCustomerModelLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addCustomerModelLabel">Add Customer</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <form method="POST" id="addCustomerFOrm" action="{{ route('sale.sale.quiceAddCustomer') }}">
-                    @csrf
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-6 col-12">
-                                <div class="form-group">
-                                    <label for="validationCustom01">Company Name *:</label>
-                                    <input type="text" name="co_name" class="form-control" id="validationCustom01"
-                                        placeholder="Company Name" value="{{ old('co_name') }}">
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-12">
-                                <div class="form-group">
-                                    <label for="validationCustom01">Customer Group Name *:</label>
-                                    <select name="customergroup_id" class="form-control select2">
-                                        <option value="0">Not Applicable</option>
-                                        @foreach ($customerGroup as $data)
-                                            <option value="{{ $data->id }}">{{ $data->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-12">
-                                <div class="form-group">
-                                    <label for="validationCustom01">Contact Person:</label>
-                                    <input type="text" name="name" class="form-control" id="validationCustom01"
-                                        placeholder="Contact Person" value="{{ old('name') }}">
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-12">
-                                <div class="form-group">
-                                    <label for="validationCustom02">E-mail:</label>
-                                    <input type="text" name="email" class="form-control" id="validationCustom02"
-                                        placeholder="E-mail" value="{{ old('email') }}" required>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-12">
-                                <div class="form-group">
-                                    <label for="validationCustom01">Phone:</label>
-                                    <input type="text" name="phone" class="form-control" id="validationCustom01"
-                                        placeholder="Phone" value="{{ old('phone') }}" required>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-12">
-                                <div class="form-group">
-                                    <label for="validationCustom02">Address:</label>
-                                    <input name="address" class="form-control" id="validationCustom02"
-                                        placeholder="Address" value="{{ old('address') }}" required>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-12">
-                                <div class="form-group">
-                                    <label for="validationCustom07">Bin:</label>
-                                    <input name="bin" class="form-control" id="validationCustom07" placeholder="Bin"
-                                        value="{{ old('bin') }}">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Save Customer</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-
     <script type="text/javascript">
-        function initSaleSelect2() {
-
+        function initReturnSelect2() {
             $('.select2').each(function() {
                 let $select = $(this);
                 if ($select.hasClass('select2-hidden-accessible')) {
                     $select.select2('destroy');
                 }
-                let $modal = $select.closest('.modal');
-                let options = {
-                    width: '100%',
-                    dropdownAutoWidth: false
-                };
-
-                if ($modal.length) {
-                    options.dropdownParent = $modal;
-                }
-                $select.select2(options);
-            });
-        }
-
-
-        $(document).ready(function() {
-            initSaleSelect2();
-            // Supplier  Create 
-            $('#addCustomerFOrm').on('submit', function(e) {
-                e.preventDefault();
-                const formData = $(this).serialize();
-                $.ajax({
-                    url: $(this).attr('action'),
-                    method: 'POST',
-                    data: formData,
-                    success: function(response) {
-                        if (response.success) {
-                            $('#addCustomerModel').modal('hide');
-                            $('select[name="ledger_id"]').append(
-                                `<option value="${response.accounts.id}" selected>${response.accounts.account_name}</option>`
-                            );
-                        } else {
-                            alert('Error adding Unit');
-                        }
-                    },
-                    error: function(error) {
-                        alert('An error occurred');
-                    }
-                });
-                $("button[type='submit']").prop('disabled', false);
-            });
-        });
-
-        $(document).ready(function() {
-            $('#cty_size, #qty').on('input', function() {
-                let ctyval = $('#cty_size').val();
-                let qty = $('#qty').val();
-                let gas_qty = ctyval * qty;
-                $('#gas_qty').val(gas_qty);
-            })
-
-            var findqtyamount = function() {
-                var ttlqty = 0;
-                $.each($('.ttlqty'), function() {
-                    qty = $(this).val();
-                    qty = Number(qty);
-                    ttlqty += qty;
-                });
-                $('.ttlqty').text(parseFloat(ttlqty).toFixed(2));
-            };
-
-            var findunitamount = function() {
-                var ttlunitprice = 0;
-                $.each($('.ttlunitprice'), function() {
-                    unitprice = $(this).val();
-                    unitprice = Number(unitprice);
-                    ttlunitprice += unitprice;
-                });
-                $('.ttlunitprice').text(parseFloat(ttlunitprice).toFixed(2));
-            };
-
-            var findgrandtottal = function() {
-                var grandtotal = 0;
-                $.each($('.grandtotal'), function() {
-                    total = $(this).val();
-                    total = Number(total);
-                    grandtotal += total;
-                });
-                $('.grandtotal').text(parseFloat(grandtotal).toFixed(2));
-                var paymentType = $('input[name="payment_type"]:checked').val();
-                if (paymentType == "Cash") {
-                    $('#payment').val(parseFloat(grandtotal).toFixed(2));
-                    paymentCalculation(parseFloat(grandtotal));
-                }
-            };
-
-
-            $("#add_item").click(function() {
-
-                // start check duplicate product  
-                let seaschproduct = $('#productID option:selected')[0].getAttribute("value");
-                let tbody = $('tbody').find(".new_item" + seaschproduct).length;
-                let tbody2 = $('tbody').find("new_item" + seaschproduct);
-                console.log(tbody);
-
-                var purchasetypeval = $('.purchasetype').find('option:selected').val();
-                var purchasetypetext = $('.purchasetype').find('option:selected').text();
-
-                if (purchasetypeval == '' || purchasetypeval == null) {
-                    alertMessage.error("Please Select Type.");
-                    return false;
-                }
-
-                if (tbody > 0) {
-                    alertMessage.error('This product already exist');
-                    return;
-                }
-                // end check duplicate product
-
-                // var supid = $('.supid').val();
-                var catId = $('.catName').val();
-                var catName = $(".catName").find('option:selected').attr('catName');
-
-
-                var proId = $('.proName').val();
-                var proName = $(".proName").find('option:selected').attr('proName');
-
-                var unit = $('.unit').val();
-                var qty = $('.qty').val();
-                var vat = parseFloat($('#vat').val()) || 0;
-
-                var patmentType = $('input[name="payment_type"]:checked').val();
-                var customer_id = $('#customer_id').val();
-
-                var unitprice = $('.unitprice').val();
-
-                var total = $('.total').val();
-
-                if (catId == '' || catId == null) {
-                    alertMessage.error("Category can't be empty.");
-                    return false;
-                }
-                if (proId == '' || proId == null) {
-                    alertMessage.error("Product can't be empty.");
-
-                    return false;
-                }
-
-
-                if (qty == '' || qty == null || qty == 0) {
-                    alertMessage.error("Quantity can't be empty or zero.");
-
-                    return false;
-                } else {
-
-                    if (customer_id === null) {
-                        alertMessage.error("Please select a Customer.");
-                        return false;
-                    }
-
-                    if (patmentType === undefined) {
-                        alertMessage.error("Please select Payment Type.");
-                        return false;
-                    }
-
-
-                    $("#show_item tbody").append('<tr class="new_item' + proId +
-                        '">' +
-                        '<td style="padding-left:15px;">' +
-                        catName +
-                        '<input type="hidden" name="catName[]" value="' +
-                        catId +
-                        '"></td>' +
-                        '<td align="right">' +
-                        proName +
-                        '<input type="hidden" class="add_quantity" name="proName[]" value="' +
-                        proId +
-                        '"></td>' +
-                        '<td align="right">' +
-                        purchasetypetext +
-                        '<input type="hidden" class="add_quantity" name="purchasetype[]" value="' +
-                        purchasetypeval +
-                        '"></td>' +
-                        '<td align="right">' + qty +
-                        '<input type="hidden" class="ttlqty" name="qty[]" value="' + qty +
-                        '"></td>' +
-                        '<td align="right">' + vat +
-                        '<input type="hidden" class="ttlqty" name="vat[]" value="' + vat +
-                        '"></td>' +
-                        '<td align="right">' +
-                        unitprice +
-                        '<input type="hidden" class="ttlunitprice unitparice" name="unitprice[]" value="' +
-                        unitprice +
-                        '"></td>' +
-                        '<td align="right">' +
-                        total +
-                        '<input type="hidden" class="grandtotal" name="total[]" value="' +
-                        total +
-                        '"></td>' +
-                        '<td><a del_id="' +
-                        proId +
-                        '" class="delete_item btn form-control btn-danger" href="javascript:;" title=""><i class="fa fa-times"></i></a></td></tr>'
-                    );
-                }
-
-                $(".catName").val(null).trigger("change");
-                $(".proName").val(null).trigger("change");
-                $("#currentStock").val("");
-                $("#qty").val("");
-                $("#cty_size").val("");
-                $("#gas_qty").val("");
-                $(".unitprice").val("");
-                $(".ttlamount").val("");
-
-
-                findqtyamount();
-                findunitamount();
-                findgrandtottal();
-                checkDepositAndCreditBalance();
-            });
-
-            $('#branch_id').on('change', function() {
-                $(".catName").val(null).trigger("change");
-                $(".proName").val(null).trigger("change");
-            })
-
-            $(document).on('click', '.delete_item', function() {
-                let deleteitem = () => {
-                    var id = $(this).attr("del_id");
-                    $('.new_item' + id).remove();
-                    findqtyamount();
-                    findunitamount();
-                    findgrandtottal();
-                    checkDepositAndCreditBalance();
-                }
-
-                alertMessage.confirm('You want to remove this', deleteitem);
-
-            });
-        });
-
-        function getWarehousesByBranch(branch_id) {
-            if (!branch_id) return;
-
-            $.ajax({
-                url: "{{ route('inventorySetup.getWarehousesByBranch') }}",
-                type: "GET",
-                dataType: 'json',
-                cache: false,
-                data: {
-                    "_token": "{{ csrf_token() }}",
-                    branch_id: branch_id
-                },
-                success: function(response) {
-                    let $warehouseSelect = $('#sub_warehouse_id');
-
-                    $warehouseSelect.select2('destroy');
-
-                    $warehouseSelect.empty().append(
-                        '<option selected disabled value="">--Select Warehouse--</option>');
-
-                    if (response.data.length > 0) {
-                        $.each(response.data, function(index, item) {
-                            $warehouseSelect.append(
-                                `<option value="${item.id}">${item.text}</option>`
-                            );
-                        });
-                    } else {
-                        $warehouseSelect.append('<option disabled value="">--No Warehouse Found--</option>');
-                    }
-
-                    $('#warehouse_source').val(response.source);
-
-                    // $warehouseSelect.select2();
-                    $warehouseSelect.select2({
-                        width: '100%',
-                        dropdownParent: $warehouseSelect.closest('.modal').length ?
-                            $warehouseSelect.closest('.modal') : $(document.body)
-                    });
-                },
-                error: function() {
-                    alertMessage.error('Failed to load warehouses for this branch.');
-                }
-            });
-        }
-
-        function checkDepositAndCreditBalance() {
-
-            var paymentType = $("#paymentType").val();
-
-            if (paymentType == '') {
-                paymentType = 'Cash';
-            }
-
-            console.log(paymentType);
-            var customer_currentBalance = $("#customer_currentBalance").val();
-
-            var totalDue = $("#totalDue").text();
-            var expireDatas = $("#expireData").val();
-
-
-            var todaysDate = new Date().toISOString().slice(0, 10);
-
-            if (expireDatas == '') {
-                expireDatas = todaysDate;
-            }
-            var btn = document.getElementById('subMitButton');
-            if ((paymentType == 'Deposit') && (parseFloat(customer_currentBalance) < parseFloat(totalDue))) {
-                console.log('1');
-                btn.disabled = true;
-            } else if (paymentType == 'Cash') {
-                console.log('3');
-                btn.disabled = false;
-            } else {
-                console.log('4');
-                btn.disabled = false;
-            }
-
-        }
-
-        $(document).on('shown.bs.modal', '.modal', function() {
-
-            let $modal = $(this);
-
-            $modal.find('.select2').each(function() {
-
-                let $select = $(this);
-
-                if ($select.hasClass('select2-hidden-accessible')) {
-                    $select.select2('destroy');
-                }
-
                 $select.select2({
                     width: '100%',
-                    dropdownAutoWidth: false,
-                    dropdownParent: $modal
+                    dropdownAutoWidth: false
                 });
-
             });
-
-        });
-    </script>
-
-
-    <script>
-        function gamount() {
-            var gtoal = parseFloat(document.getElementById("gtoal").innerText);
-            var carrying_cost = parseFloat($("#carrying_cost").val());
-            var discount = parseFloat($("#disCount").val());
-            var labor_bill = parseFloat($("#labor_bill").val());
-
-            return ((gtoal || 0) + (carrying_cost || 0) + (labor_bill || 0)) - (discount || 0);
         }
 
-        function discountCalculation(amount) {
-            var gtoal = parseFloat(document.getElementById("gtoal").innerText);
-            var discountType = document.getElementById("discountType").value;
-            var discount = parseFloat(amount) || 0;
+        function initInvoiceSearchSelect2() {
+            let $searchInput = $('#original_sale_search');
+            let $hiddenId = $('#original_sale_id');
+            let $results = $('#invoice_search_results');
+            let searchTimer = null;
 
-            if (discountType === "percentage") {
-                if (discount > 100) {
-                    alertMessage.error("Percentage discount cannot exceed 100%");
-                    $('#disCount').val('');
-                    $('#ntotal').text(gtoal.toFixed(2));
-                    $('#totalDue').text(gtoal.toFixed(2));
+            $searchInput.on('keyup', function() {
+                let term = $(this).val().trim();
+                clearTimeout(searchTimer);
+
+                if (term.length < 1) {
+                    $results.hide().empty();
                     return;
                 }
-                discount = (gtoal * discount) / 100;
-            }
 
-            if (discount > gtoal) {
-                alertMessage.error("Discount cannot be greater than the total amount");
-                $('#disCount').val('');
-                $('#ntotal').text(gtoal.toFixed(2));
-                $('#totalDue').text(gtoal.toFixed(2));
-                return;
-            }
-
-            var carrying_cost = parseFloat($("#carrying_cost").val()) || 0;
-            var afterDiscount = gtoal - discount + carrying_cost;
-
-            $('#ntotal').text(afterDiscount.toFixed(2));
-            $('#totalDue').text(afterDiscount.toFixed(2));
-
-            var paymentType = $('input[name="payment_type"]:checked').val();
-            if (paymentType === "Cash") {
-                $('#payment').val(afterDiscount.toFixed(2));
-                paymentCalculation(afterDiscount);
-            }
-        }
-
-        function carrying_cost_Calculation(amount) {
-
-            var gtoal = document.getElementById("gtoal").innerText;
-            var discount = $("#disCount").val();
-            var afterCarryingCost = gamount();
-            $('#ntotal').text(parseFloat(afterCarryingCost).toFixed(2));
-            $('#totalDue').text(parseFloat(afterCarryingCost).toFixed(2));
-
-        }
-
-        function labor_bill_Calculation(amount) {
-            var gtoal = document.getElementById("gtoal").innerText;
-            var afterLaborBill = gamount();
-            $('#ntotal').text(parseFloat(afterLaborBill).toFixed(2));
-            $('#totalDue').text(parseFloat(afterLaborBill).toFixed(2));
-        }
-
-        function paymentCalculation(payamount) {
-            var ntotal = document.getElementById("ntotal").innerText;
-            var totalDue = ntotal - payamount;
-            $('.finalDue').text(parseFloat(totalDue).toFixed(2));
-        }
-
-        function qtyPriceCal() {
-            var qty = $('#qty').val();
-            var unitpice = $('#unitpice').val();
-            var vat = parseFloat($('#vat').val()) || 0;
-            var currentStock = $('#currentStock').val();
-            if (parseFloat(qty) > currentStock) {
-                $('.ttlamount').val('');
-                $('#qty').val('');
-                alertMessage.error('The desired product stock is not available.');
-            } else {
-                var totalWithoutVAT = unitpice * qty;
-                var vatAmount = (vat > 0) ? (vat / 100) * totalWithoutVAT : 0;
-                var totalWithVAT = totalWithoutVAT + vatAmount;
-                var ttlqtys = document.getElementById('total').value = totalWithVAT.toFixed(2);
-            }
-        }
-
-        function getProductList(cat_id) {
-            var branch_id = $('#branch_id').val();
-
-            if (branch_id == null) {
-                alertMessage.error('Branch Are not selected');
-                return;
-            }
-
-            $.ajax({
-                "url": "{{ route('sale.sale.getProductListForSale') }}",
-                "type": "GET",
-                cache: false,
-                data: {
-                    "_token": "{{ csrf_token() }}",
-                    cat_id: cat_id,
-                    branch_id: branch_id
-                },
-                success: function(data) {
-
-                    if ($('#productID').hasClass('select2-hidden-accessible')) {
-                        $('#productID').select2('destroy');
-                    }
-
-                    $('#productID').empty().append(data);
-
-
-                    // $('#productID').select2({
-                    //     matcher: function(params, data) {
-                    //         if ($.trim(params.term) === '') {
-                    //             return data;
-                    //         }
-                    //         if (typeof data.text === 'undefined' || !data.id) {
-                    //             return null;
-                    //         }
-
-                    //         let term = params.term.toLowerCase().trim();
-                    //         let code = ($(data.element).attr('procode') || '').toLowerCase();
-                    //         let name = ($(data.element).attr('proname') || data.text || '')
-                    //             .toLowerCase();
-                    //         let numericCode = code.replace(/[^0-9]/g, '');
-                    //         let numericTerm = term.replace(/[^0-9]/g, '');
-
-                    //         if (
-                    //             code.includes(term) ||
-                    //             name.includes(term) ||
-                    //             (numericTerm !== '' && numericCode.includes(numericTerm))
-                    //         ) {
-                    //             return data;
-                    //         }
-                    //         return null;
-                    //     }
-                    // });
-
-                    let $productSelect = $('#productID');
-
-                    let productSelectOptions = {
-                        width: '100%',
-                        dropdownAutoWidth: false,
-
-                        matcher: function(params, data) {
-
-                            if ($.trim(params.term) === '') {
-                                return data;
+                searchTimer = setTimeout(function() {
+                    $.ajax({
+                        url: "{{ route('sale.return.searchInvoices') }}",
+                        type: 'GET',
+                        dataType: 'json',
+                        data: {
+                            term: term
+                        },
+                        success: function(data) {
+                            $results.empty();
+                            if (!data.results || data.results.length === 0) {
+                                $results.append(
+                                    '<div class="list-group-item text-muted">No invoice found.</div>'
+                                );
+                            } else {
+                                $.each(data.results, function(i, item) {
+                                    $results.append(
+                                        '<a href="javascript:void(0)" class="list-group-item list-group-item-action invoice-result-item" data-id="' +
+                                        item.id + '" data-text="' + item.text +
+                                        '">' + item.text + '</a>'
+                                    );
+                                });
                             }
-
-                            if (typeof data.text === 'undefined' || !data.id) {
-                                return null;
-                            }
-
-                            let term = params.term.toLowerCase().trim();
-                            let code = ($(data.element).attr('procode') || '').toLowerCase();
-                            let name = ($(data.element).attr('proname') || data.text || '')
-                                .toLowerCase();
-
-                            let numericCode = code.replace(/[^0-9]/g, '');
-                            let numericTerm = term.replace(/[^0-9]/g, '');
-
-                            if (
-                                code.includes(term) ||
-                                name.includes(term) ||
-                                (numericTerm !== '' && numericCode.includes(numericTerm))
-                            ) {
-                                return data;
-                            }
-
-                            return null;
+                            $results.show();
+                        },
+                        error: function(xhr) {
+                            console.error('Invoice Search Error:', xhr.status, xhr
+                                .responseText);
+                            $results.empty().append(
+                                '<div class="list-group-item text-danger">Search failed.</div>'
+                            ).show();
                         }
-                    };
+                    });
+                }, 300);
+            });
 
-                    let $modal = $productSelect.closest('.modal');
+            $results.on('click', '.invoice-result-item', function() {
+                let id = $(this).data('id');
+                let text = $(this).data('text');
+                $hiddenId.val(id);
+                $searchInput.val(text);
+                $results.hide().empty();
+                loadInvoiceDetails(id);
+            });
 
-                    if ($modal.length) {
-                        productSelectOptions.dropdownParent = $modal;
-                    }
-
-                    $productSelect.select2(productSelectOptions);
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('#original_sale_search, #invoice_search_results').length) {
+                    $results.hide();
                 }
             });
         }
 
+        $(document).ready(function() {
+            initReturnSelect2();
+            initInvoiceSearchSelect2();
+        });
 
 
-        getCustomerBalance('Due')
-
-        function getCustomerBalance(payment_type) {
-
-            var customer_id = $('#customer_id').val();
-            if (!customer_id) {
-                alertMessage.error('Please Select Customer');
-                return
-            }
-            $("#paymentType").val(payment_type);
-
-            if (payment_type == 'Cash') {
-                $('#account_id').show();
-                $('#netTotal').show();
-                $('.partisals').show();
-                calculatetotal();
-            } else {
-                calculatetotal();
-                $('.partisals').css('display', 'none');
-                $('#account_id').css('display', 'none');
-                $('#netTotal').css('display', 'none');
-            }
+        function loadInvoiceDetails(saleId) {
+            if (!saleId) return;
 
             $.ajax({
-                "url": "{{ route('sale.sale.getCustomerBalance') }}",
-                "type": "GET",
-                cache: false,
+                url: "{{ route('sale.return.getInvoiceDetails') }}",
+                type: "GET",
                 dataType: "json",
+                cache: false,
                 data: {
-                    "_token": "{{ csrf_token() }}",
-                    customer_id: customer_id,
-                    payment_type: payment_type
+                    _token: "{{ csrf_token() }}",
+                    sale_id: saleId
                 },
                 success: function(data) {
-                    if (payment_type == 'Cash') {
-                        $("#customer_currentBalance").val('');
-                    } else {
-                        $("#customer_currentBalance").val(data.finalBalance);
-                        $("#expireData").val(data.expireData);
+                    $('#customer_id').val(data.customer_id);
+                    $('#customer_name_display').val(data.customer_name);
+                    $('#sales_person_id').val(data.sales_person_id);
+                    $('#sales_person_display').val(data.sales_person_name || '—');
+                    $('#branch_id').val(data.branch_id);
+                    $('#branch_name_display').val(data.branch_name);
+                    $('#warehouse_id').val(data.warehouse_id);
+                    $('#warehouse_name_display').val(data.warehouse_name || '—');
+                    $('#ledger_id').val(data.ledger_id);
+                    $('#ledger_name_display').val(data.ledger_name);
+
+                    renderOriginalCharges(data);
+
+                    let $tbody = $('#return_item_tbody');
+                    $tbody.empty();
+
+                    if (!data.items || data.items.length === 0) {
+                        $tbody.append(
+                            '<tr><td colspan="8" class="text-center text-muted">No returnable items on this invoice.</td></tr>'
+                        );
+                        calculateReturnTotal();
+                        return;
                     }
 
+                    $.each(data.items, function(index, item) {
+                        let originalQty = parseFloat(item.original_qty) || 0;
+                        let alreadyReturnedQty = parseFloat(item.already_returned_qty) || 0;
+                        let unitPrice = parseFloat(item.unit_price) || 0;
+                        let vatPercent = parseFloat(item.vat_percent) || 0;
+                        let remaining = (originalQty - alreadyReturnedQty).toFixed(2);
+                        let lineTotal = (remaining * unitPrice * (1 + vatPercent / 100));
+
+                        let row = '<tr class="return-item-row" data-sale-detail-id="' + item
+                            .sale_detail_id +
+                            '" data-unit-price="' + unitPrice + '" data-vat-percent="' + vatPercent +
+                            '" data-remaining="' + remaining + '">' +
+
+                            '<td>' + item.product_name +
+                            '<input type="hidden" name="items[' + index + '][sale_detail_id]" value="' +
+                            item.sale_detail_id + '">' +
+                            '<input type="hidden" name="items[' + index + '][product_id]" value="' +
+                            item.product_id + '">' +
+                            '<input type="hidden" name="items[' + index + '][original_qty]" value="' +
+                            originalQty + '">' +
+                            '<input type="hidden" name="items[' + index +
+                            '][already_returned_qty]" value="' + alreadyReturnedQty + '">' +
+                            '<input type="hidden" name="items[' + index + '][unit_price]" value="' +
+                            unitPrice + '">' +
+                            '<input type="hidden" name="items[' + index + '][vat_percent]" value="' +
+                            vatPercent + '">' +
+                            '</td>' +
+
+                            '<td align="center">' + originalQty + '</td>' +
+
+                            '<td>' +
+                            '<input type="text" class="form-control return_qty" name="items[' + index +
+                            '][returned_qty]" ' +
+                            'value="' + remaining + '" onkeyup="onReturnQtyChange(this)">' +
+                            '<span class="qty-exceed-error">Exceeds remaining qty</span>' +
+                            '</td>' +
+
+                            '<td align="center" class="remaining_qty_cell">' + remaining + '</td>' +
+
+                            '<td align="right">' + unitPrice.toFixed(2) + '</td>' +
+
+                            '<td align="center">' + vatPercent.toFixed(2) + '%</td>' +
+
+                            '<td>' +
+                            '<select class="form-control line_condition" name="items[' + index +
+                            '][condition]">' +
+                            '<option value="good">Good</option>' +
+                            '<option value="damaged">Damaged</option>' +
+                            '</select>' +
+                            '</td>' +
+
+                            '<td>' +
+                            '<input type="text" class="form-control" name="items[' + index +
+                            '][reason]" placeholder="Reason">' +
+                            '</td>' +
+
+                            '<td align="right"><strong class="line_total">' + lineTotal.toFixed(2) +
+                            '</strong></td>' +
+                            '</tr>';
+
+                        $tbody.append(row);
+                    });
+
+                    calculateReturnTotal();
+                },
+                error: function(xhr) {
+                    console.error('Invoice Details Error:', xhr.status, xhr.responseText);
+                    alertMessage.error('Failed to load invoice details.');
                 }
             });
         }
 
-        var calculatetotal = function() {
-            var grandtotal = 0;
-            $.each($('.grandtotal'), function() {
-                total = $(this).val();
-                total = Number(total);
-                grandtotal += total;
-            });
+        function renderOriginalCharges(data) {
+            let $box = $('#original_charges_tbody');
+            $box.empty();
 
-            if (parseFloat(grandtotal) > 0) {
-                $('.grandtotal').text(parseFloat(grandtotal).toFixed(2));
-                var paymentType = $('input[name="payment_type"]:checked').val();
-                if (paymentType == "Cash") {
-                    $('#payment').val(parseFloat(grandtotal).toFixed(2));
-                    paymentCalculation(parseFloat(grandtotal));
-                }
+            let rows = '';
+
+            if (parseFloat(data.discount) > 0) {
+                rows += '<tr><td nowrap align="right">Discount (original sale) :</td>' +
+                    '<td align="right">' + parseFloat(data.discount).toFixed(2) + '</td></tr>';
             }
-        };
+            if (parseFloat(data.carrying_cost) > 0) {
+                rows += '<tr><td nowrap align="right">Carrying Cost (original sale) :</td>' +
+                    '<td align="right">' + parseFloat(data.carrying_cost).toFixed(2) + '</td></tr>';
+            }
+            if (parseFloat(data.labor_bill) > 0) {
+                rows += '<tr><td nowrap align="right">Labor Bill (original sale) :</td>' +
+                    '<td align="right">' + parseFloat(data.labor_bill).toFixed(2) + '</td></tr>';
+            }
 
-        function getUnitPrice(v) {
-            let branch_id = $('#branch_id option:selected').val();
-            let sub_branch_id = $('#sub_warehouse_id option:selected').val();
-            let purchasetype = $('.purchasetype option:selected').val();
-            let productId = $('#productID option:selected').val();
-            $.ajax({
-                "url": "{{ route('sale.sale.saleunitPrice') }}",
-                "type": "GET",
-                cache: false,
-                data: {
-                    "_token": "{{ csrf_token() }}",
-                    'productId': productId,
-                },
-                success: function(data) {
-                    console.log(data);
-                    $("#unitpice").val(data.sale_price);
-                    $(".purchaseprice").html("Last PP :" + data.lastPurchasePrice);
+            if (rows) {
+                rows += '<tr><td colspan="2"><small class="text-muted">' +
+                    'Note: These charges are shown as information, not added as Return Amount' +
+                    '</small></td></tr>';
+            }
 
+            $box.html(rows);
+        }
+
+        function onReturnQtyChange(el) {
+            let $row = $(el).closest('tr');
+            let remaining = parseFloat($row.data('remaining')) || 0;
+            let unitPrice = parseFloat($row.data('unit-price')) || 0;
+            let vatPercent = parseFloat($row.data('vat-percent')) || 0;
+            let qty = parseFloat($(el).val()) || 0;
+            let $error = $row.find('.qty-exceed-error');
+
+            if (qty > remaining) {
+                $error.show();
+                $(el).val(remaining);
+                qty = remaining;
+            } else {
+                $error.hide();
+            }
+
+            let lineTotal = (qty * unitPrice * (1 + vatPercent / 100)).toFixed(2);
+            $row.find('.line_total').text(lineTotal);
+            calculateReturnTotal();
+        }
+
+
+
+        function calculateReturnTotal() {
+            let grandTotal = 0;
+            $('.line_total').each(function() {
+                grandTotal += parseFloat($(this).text()) || 0;
+            });
+            $('#return_grandtotal').text(grandTotal.toFixed(2));
+            $('#final_return_total').text(grandTotal.toFixed(2));
+        }
+
+        $('#saleReturnForm').on('submit', function(e) {
+            if (!$('#original_sale_id').val()) {
+                e.preventDefault();
+                alertMessage.error('Please select an original invoice first.');
+                return false;
+            }
+
+            let hasQty = false;
+            $('.return_qty').each(function() {
+                if (parseFloat($(this).val()) > 0) {
+                    hasQty = true;
                 }
             });
 
-            $.ajax({
-                "url": "{{ route('sale.sale.getProductStock') }}",
-                "type": "GET",
-                cache: false,
-                data: {
-                    "_token": "{{ csrf_token() }}",
-                    productId: productId,
-                    type: purchasetype,
-                    branch_id: branch_id,
-                    sub_branch_id: sub_branch_id,
+            if (!hasQty) {
+                e.preventDefault();
+                alertMessage.error('Please enter a return quantity for at least one item.');
+                return false;
+            }
+        });
 
-                },
-                success: function(data) {
-                    $("#currentStock").val(data);
+        function toggleRefundAccount(method) {
+            if (method === 'cash_bank') {
+                $('#refund_account_row').removeClass('d-none');
+                $('#refund_account_id').prop('required', true);
+            } else {
+                $('#refund_account_row').addClass('d-none');
+                $('#refund_account_id').prop('required', false).val('');
+            }
+        }
+
+        $('#saleReturnForm').on('submit', function(e) {
+            if (!$('#original_sale_id').val()) {
+                e.preventDefault();
+                alertMessage.error('Please select an original invoice first.');
+                return false;
+            }
+
+            let hasQty = false;
+            $('.return_qty').each(function() {
+                if (!$(this).prop('disabled') && parseFloat($(this).val()) > 0) {
+                    hasQty = true;
                 }
             });
+
+            if (!hasQty) {
+                e.preventDefault();
+                alertMessage.error('Please keep at least one item included with a return quantity.');
+                return false;
+            }
+        });
+
+        function onItemIncludeToggle(checkbox) {
+            let $row = $(checkbox).closest('tr');
+            let $qtyInput = $row.find('.return_qty');
+            let $conditionSelect = $row.find('.line_condition');
+            let $reasonInput = $row.find('input[name*="[reason]"]');
+            let remaining = parseFloat($row.data('remaining')) || 0;
+
+            if ($(checkbox).is(':checked')) {
+
+                $qtyInput.prop('disabled', false).val(remaining);
+                $conditionSelect.prop('disabled', false);
+                $reasonInput.prop('disabled', false);
+                $row.removeClass('text-muted').css('opacity', '1');
+            } else {
+
+                $qtyInput.val(0).prop('disabled', true);
+                $conditionSelect.prop('disabled', true);
+                $reasonInput.prop('disabled', true);
+                $row.addClass('text-muted').css('opacity', '0.5');
+            }
+
+            $row.find('.line_total').text((parseFloat($qtyInput.val()) * parseFloat($row.data('unit-price'))).toFixed(2));
+
+            calculateReturnTotal();
+            updateReturnType();
+        }
+
+        function updateReturnType() {
+            let anyIncluded = false;
+            let anyExcluded = false;
+            let allFullQty = true;
+
+            $('.return-item-row').each(function() {
+                let $row = $(this);
+                let included = $row.find('.item_include').is(':checked');
+
+                if (!included) {
+                    anyExcluded = true;
+                    return;
+                }
+
+                anyIncluded = true;
+                let remaining = parseFloat($row.data('remaining')) || 0;
+                let qty = parseFloat($row.find('.return_qty').val()) || 0;
+
+                if (qty < remaining) {
+                    allFullQty = false;
+                }
+            });
+
+            let type = (anyIncluded && allFullQty && !anyExcluded) ? 'Full' : 'Partial';
+
+            if (!anyIncluded) {
+                type = '-';
+            }
+
+            $('#return_type').val(type === '-' ? '' : type);
+            $('#return_type_display').val(type);
         }
     </script>
 @endsection
