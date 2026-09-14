@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Backend\Sale;
 
+use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\Category;
@@ -12,6 +13,8 @@ use App\Models\Employee;
 use App\Models\Sale;
 use App\Models\SaleReturn;
 use App\Models\SaleReturnDetails;
+use App\Models\Stock;
+use App\Models\StockSummary;
 use App\Models\Warehouse;
 use App\Services\Sale\SalesReturnService;
 use App\Transformers\SaleReturnTransformer;
@@ -195,87 +198,130 @@ class SaleReturnController extends Controller
         ]);
     }
 
-
-    public function approve($id, $userId)
+    public function show($id)
     {
-        DB::beginTransaction();
+        $title = 'Sale Return Details';
 
-        $saleReturn = SaleReturn::with('details')->lockForUpdate()->findOrFail($id);
+
+        // NOTE: adjust relation names below if they differ in your actual SaleReturn model.
+        $saleReturn = SaleReturn::with([
+            'sale',
+            'branch',
+            'warehouse',
+            'ledger',
+            'salesPerson',
+            'details.product',
+            'approvedBy',
+        ])->findOrFail($id);
+
+
+
+        $canDecide = $saleReturn->status === 'pending' && Helper::roleAccess('sale.return.approve');
+
+        return view('backend.pages.sale.return.show', get_defined_vars());
+    }
+
+    public function approve($id)
+    {
+
+
+        $saleReturn = SaleReturn::with(['sale', 'details'])->findOrFail($id);
+
+
 
         if ($saleReturn->status !== 'pending') {
-            throw new \InvalidArgumentException(
-                "This return is already '{$saleReturn->status}' and cannot be approved again."
-            );
+            return back()->with('error', 'Only pending returns can be approved.');
         }
+        DB::beginTransaction();
+
 
         $sale = $saleReturn->sale;
+        $targetWarehouseId = $sale->warehouse_id ?? null;
+        $targetBranchId    = $sale->branch_id;
+
+
 
         foreach ($saleReturn->details as $detail) {
 
-            if ($detail->condition !== 'good') {
-                // Damaged item স্টকে ফেরত যাবে না — শুধু ledger এ adjust হবে
-                continue;
+            if ($detail->condition === 'good') {
+                $this->restockReturnedItem($saleReturn, $detail, $targetBranchId, $targetWarehouseId);
             }
-
-            // ==========================================================
-            // TODO: STOCK REVERSAL
-            // $sale->warehouse_id থাকলে সেই warehouse এ, নাহলে $sale->branch_id
-            // এ $detail->product_id এর stock $detail->returned_qty দিয়ে বাড়াতে হবে।
-            //
-            // উদাহরণ (আপনার আসল Service/method দিয়ে বদলাতে হবে):
-            // app(StockService::class)->increaseStock(
-            //     productId: $detail->product_id,
-            //     branchId: $sale->branch_id,
-            //     warehouseId: $sale->warehouse_id,
-            //     qty: $detail->returned_qty
-            // );
-            // ==========================================================
         }
 
-        // ==========================================================
-        // TODO: LEDGER REVERSAL ENTRY
-        // $saleReturn->ledger_id (customer account) এর বিপরীতে
-        // $saleReturn->grand_total পরিমাণ reversal entry পোস্ট করতে হবে
-        // (customer account কে credit / Sales Return account কে debit)।
-        //
-        // উদাহরণ (আপনার আসল Voucher Service দিয়ে বদলাতে হবে):
-        // app(VoucherService::class)->createCreditVoucher([
-        //     'voucher_no'  => 'CV' . ...,
-        //     'account_id'  => $saleReturn->ledger_id,
-        //     'amount'      => $saleReturn->grand_total,
-        //     'reference'   => $saleReturn->return_no,
-        //     'narration'   => 'Sale Return - ' . $saleReturn->return_no,
-        // ]);
-        // ==========================================================
+        // TODO: accounting reversal — needs your actual account_transactions
+        // insert pattern to mirror correctly (see questions below).
+        // if ($sale->payment_type === 'Due') {
+        //     // reduce the customer's receivable by the return amount
+        // } else {
+        //     // sale was paid — create a payable voucher owed back to the customer
+        // }
 
         $saleReturn->status      = 'approved';
-        $saleReturn->approved_by = $userId;
+        $saleReturn->approved_by = auth()->id();
         $saleReturn->approved_at = now();
         $saleReturn->save();
-
         DB::commit();
-        return $saleReturn;
+
+        return redirect()->route('sale.sale.return')->with('success', 'Return #' . $saleReturn->return_no . ' approved successfully.');
     }
 
-    public function reject($id, $userId, $reason)
+
+    private function restockReturnedItem($saleReturn, $detail, $branchId, $warehouseId)
     {
-        return DB::transaction(function () use ($id, $userId, $reason) {
 
-            $saleReturn = SaleReturn::lockForUpdate()->findOrFail($id);
+        $stock = new Stock();
+        $stock->product_id   = $detail->product_id;
+        $stock->branch_id    = $branchId;
+        $stock->warehouse_id = $warehouseId;
+        $stock->general_id   = $detail->sale_return_id;
+        $stock->quantity     = $detail->returned_qty;
+        $stock->unit_price   = $detail->unit_price;
+        $stock->total_price  = $detail->line_amount;
+        $stock->invoice_no   = $saleReturn->return_no;
+        $stock->date         = $saleReturn->return_date;
+        $stock->status       = 'Sale Return'; // FIX: was 'Sales Return' — didn't match your actual stocks.status enum value, so it would silently never show up in reports filtering on that status
+        $stock->created_by   = auth()->id();
+        $stock->save();
 
-            if ($saleReturn->status !== 'pending') {
-                throw new \InvalidArgumentException(
-                    "This return is already '{$saleReturn->status}' and cannot be rejected."
-                );
-            }
+        $purchasetype = optional($detail->saleDetail)->purchasetype;
 
-            $saleReturn->status            = 'rejected';
-            $saleReturn->approved_by       = $userId;
-            $saleReturn->approved_at       = now();
-            $saleReturn->rejection_reason  = $reason;
-            $saleReturn->save();
+        $summaryQuery = StockSummary::where('product_id', $detail->product_id)
+            ->where('type', 'Branch')
+            ->where('branch_id', $branchId)
+            ->where('purchasetype', $purchasetype);
 
-            return $saleReturn;
-        });
+        if ($warehouseId) {
+            $summaryQuery->where('warehouse_id', $warehouseId);
+        }
+
+        $summary = $summaryQuery->first();
+
+        if ($summary) {
+            $summary->increment('quantity', $detail->returned_qty);
+        } else {
+            $newSummary = new StockSummary();
+            $newSummary->product_id   = $detail->product_id;
+            $newSummary->branch_id    = $branchId;
+            $newSummary->warehouse_id = $warehouseId;
+            $newSummary->type         = 'Branch';
+            $newSummary->purchasetype = $purchasetype;
+            $newSummary->quantity     = $detail->returned_qty;
+            $newSummary->save();
+        }
+    }
+
+
+    public function reject($id)
+    {
+        $saleReturn = SaleReturn::findOrFail($id);
+
+        if ($saleReturn->status !== 'pending') {
+            return back()->with('error', 'Only pending returns can be rejected.');
+        }
+
+        $saleReturn->status = 'rejected';
+        $saleReturn->save();
+
+        return redirect()->route('sale.sale.return')->with('success', 'Return #' . $saleReturn->return_no . ' rejected.');
     }
 }

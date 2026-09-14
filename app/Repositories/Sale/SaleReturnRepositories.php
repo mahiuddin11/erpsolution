@@ -133,33 +133,32 @@ class SaleReturnRepositories
 
             if ($view) {
                 $action .= '<a href="' . route('sale.return.show', $saleReturn->id) . '" class="btn btn-xs btn-default" title="View">
-            <i class="fa fa-eye" aria-hidden="true"></i>
-        </a> ';
+                <i class="fa fa-eye" aria-hidden="true"></i>
+            </a> ';
             }
 
             if ($edit && $saleReturn->status === 'pending') {
                 $action .= '<a href="' . route('sale.return.edit', $saleReturn->id) . '" class="btn btn-xs btn-default" title="Edit">
-            <i class="fa fa-edit" aria-hidden="true"></i>
-        </a> ';
+                <i class="fa fa-edit" aria-hidden="true"></i>
+            </a> ';
             }
+
 
             if ($approve && $saleReturn->status === 'pending') {
-                $action .= '<a href="javascript:;" onclick="approveReturn(' . $saleReturn->id . ')" class="btn btn-xs btn-success" title="Approve">
-            <i class="fa fa-check" aria-hidden="true"></i>
-        </a> ';
-
-                $action .= '<a href="javascript:;" onclick="rejectReturn(' . $saleReturn->id . ')" class="btn btn-xs btn-warning" title="Reject">
-            <i class="fa fa-ban" aria-hidden="true"></i>
-        </a> ';
+                $action .= '<a href="' . route('sale.return.show', $saleReturn->id) . '" class="btn btn-xs btn-success" title="Review &amp; Approve/Reject">
+                <i class="fa fa-gavel" aria-hidden="true"></i>
+            </a> ';
             }
+
 
             if ($delete && $saleReturn->status === 'pending') {
                 $action .= '<a delete_route="' . route('sale.return.destroy', $saleReturn->id) . '" delete_id="' . $saleReturn->id . '" title="Delete" class="btn btn-xs btn-default delete_row uniqueid' . $saleReturn->id . '">
-            <i class="fa fa-times"></i>
-        </a>';
+                <i class="fa fa-times"></i>
+            </a>';
             }
 
             $nestedData['action'] = $action;
+
 
             $data[] = $nestedData;
         }
