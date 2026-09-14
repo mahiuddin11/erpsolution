@@ -365,6 +365,9 @@ $parent_menu = array(
                 'childMenu' => (object) array(
                     (object) array('label' => 'Sale Return', 'route' => 'sale.sale.return', 'icon' => 'fa fa-reply', 'navigate_status' => 1),
                     (object) array('label' => 'Add Return ', 'route' => 'sale.sale.return.create', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
+                    (object) array('label' => 'edit ', 'route' => 'sale.return.edit', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
+                    (object) array('label' => 'approve', 'route' => 'sale.return.approve', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
+                    (object) array('label' => 'destroy', 'route' => 'sale.return.destroy', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
 
                 )
             ),

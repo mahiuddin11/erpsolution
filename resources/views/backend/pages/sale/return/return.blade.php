@@ -65,13 +65,12 @@
                                     <th>Sale Invoice No</th>
                                     <th>Date</th>
                                     <th>Branch</th>
+                                    <th>Warehouse</th>
                                     <th>Customer</th>
                                     <th>Sales Representative</th>
                                     <th>Return Qty</th>
                                     <th>Return Amount</th>
-                                    <th>Discount</th>
-                                    <th>Net Return</th>
-                                    <th>Refund/Adjustment</th>
+                                    <th>condition</th>
                                     <th>Status</th>
                                     <th>Action</th>
                                 </tr>
@@ -87,13 +86,12 @@
                                     <th>Sale Invoice No</th>
                                     <th>Date</th>
                                     <th>Branch</th>
+                                    <th>Warehouse</th>
                                     <th>Customer</th>
                                     <th>Sales Representative</th>
                                     <th>Return Qty</th>
                                     <th>Return Amount</th>
-                                    <th>Discount</th>
-                                    <th>Net Return</th>
-                                    <th>Refund/Adjustment</th>
+                                    <th>condition</th>
                                     <th>Status</th>
                                     <th>Action</th>
                                 </tr>

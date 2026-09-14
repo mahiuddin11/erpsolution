@@ -16,47 +16,43 @@
                 "orderable": true
             },
             {
-                "data": "invoice_no",
+                "data": "return_no",
                 "orderable": true
             },
             {
-                "data": "po_invoice",
+                "data": "sale_invoice_no",
                 "orderable": true
             },
             {
-                "data": "date",
+                "data": "return_date",
                 "orderable": true
             },
             {
-                "data": "branch_id",
+                "data": "branch_name",
                 "orderable": true
             },
             {
-                "data": "customer_id",
+                "data": "warehouse",
                 "orderable": true
             },
             {
-                "data": "sales_person_id",
+                "data": "customer_name",
                 "orderable": true
             },
             {
-                "data": "qty",
+                "data": "sales_person_name",
                 "orderable": true
             },
             {
-                "data": "sub_total",
+                "data": "total_return_qty",
+                "orderable": false
+            },
+            {
+                "data": "grand_total",
                 "orderable": true
             },
             {
-                "data": "discount",
-                "orderable": true
-            },
-            {
-                "data": "net_total",
-                "orderable": true
-            },
-            {
-                "data": "partialPayment",
+                "data": "condition",
                 "orderable": true
             },
             {
@@ -71,7 +67,6 @@
             }
         ],
 
-
         "fnDrawCallback": function() {
             $("[name='my-checkbox']").bootstrapSwitch({
                 size: "small",
@@ -80,7 +75,6 @@
             });
         },
     });
-
 
     var buttons = new $.fn.dataTable.Buttons(table, {
         buttons: [
@@ -91,4 +85,53 @@
             'print',
         ]
     }).container().appendTo($('#buttons'));
+
+
+    function approveReturn(id) {
+        alertMessage.confirm('Are you sure you want to approve this return?', function() {
+            let url = "{{ route('sale.return.approve', ':id') }}".replace(':id', id);
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: {
+                    _token: "{{ csrf_token() }}"
+                },
+                success: function(response) {
+                    alertMessage.success(response.message || 'Return approved successfully.');
+                    $('#systemDatatable').DataTable().ajax.reload(null, false);
+                },
+                error: function(xhr) {
+                    let msg = xhr.responseJSON && xhr.responseJSON.message ?
+                        xhr.responseJSON.message :
+                        'Failed to approve return.';
+                    alertMessage.error(msg);
+                }
+            });
+        });
+    }
+
+    function rejectReturn(id) {
+        alertMessage.confirm('Are you sure you want to reject this return?', function() {
+            let url = "{{ route('sale.return.reject', ':id') }}".replace(':id', id);
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: {
+                    _token: "{{ csrf_token() }}"
+                },
+                success: function(response) {
+                    alertMessage.success(response.message || 'Return rejected.');
+                    $('#systemDatatable').DataTable().ajax.reload(null, false);
+                },
+                error: function(xhr) {
+                    let msg = xhr.responseJSON && xhr.responseJSON.message ?
+                        xhr.responseJSON.message :
+                        'Failed to reject return.';
+                    alertMessage.error(msg);
+                }
+            });
+        });
+    }
 </script>

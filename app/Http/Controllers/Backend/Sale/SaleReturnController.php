@@ -15,7 +15,9 @@ use App\Models\SaleReturnDetails;
 use App\Models\Warehouse;
 use App\Services\Sale\SalesReturnService;
 use App\Transformers\SaleReturnTransformer;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use PhpParser\Node\Stmt\TryCatch;
 
 class SaleReturnController extends Controller
@@ -44,8 +46,8 @@ class SaleReturnController extends Controller
 
     public function dataProcessingSaleReturn(Request $request)
     {
-
         $json_data = $this->SaleReturnService->getList($request);
+
         return json_encode($this->SaleReturnServiceTransfromer->dataTable($json_data));
     }
 
@@ -63,13 +65,6 @@ class SaleReturnController extends Controller
             'subAccount.subAccount.subAccount.parent',
         ];
 
-        // Branch/Warehouse are no longer manually selected here — they are pulled
-        // automatically from the original invoice once selected (see getInvoiceDetails()).
-        // >>> REMOVED: manual $branch fetch + dropdown data, per updated requirement.
-
-        // Refund account choices = Cash in Hand (id:7) / Cash at Bank (id:8) — only used
-        // when refund_method = cash_bank (an ACTUAL cash/bank payout on top of the ledger
-        // reversal). This is separate from the original sale's ledger, which is auto-pulled.
         if ($user->type == "Admin" || !$user->branch_id) {
             $refundAccounts = ChartOfAccount::whereIn('id', [7, 8])
                 ->where('status', 'Active')
@@ -94,12 +89,14 @@ class SaleReturnController extends Controller
     public function store(Request $request)
     {
         try {
-            //code...
-
-            $this->SaleReturnService->store($request);
-        } catch (\Throwable $th) {
-            //throw $th;
+            $this->validate($request, $this->SaleReturnService->storeValidation($request));
+        } catch (ValidationException $e) {
+            session()->flash('error', 'Validation error !!');
+            return redirect()->back()->withErrors($e->errors())->withInput();
         }
+        $this->SaleReturnService->store($request);
+        session()->flash('success', 'Data successfully save!!');
+        return redirect()->route('sale.sale.return');
     }
 
     public function searchInvoices(Request $request)
@@ -185,18 +182,100 @@ class SaleReturnController extends Controller
             'stock_location_type' => $stockLocationType,
             'stock_location_id'   => $stockLocationId,
 
-            'ledger_id'           => $sale->account_id,
+            'ledger_id'           => $sale->ledger_id,
             'ledger_name'         => optional($sale->ledger)->account_name,
 
             'sales_person_id'     => $sale->sales_person_id,
             'sales_person_name'   => optional($sale->salesPerson)->name,
-
-            // শুধু তথ্য হিসেবে — return calculation এ কখনো যোগ হয় না
             'discount'            => (float) $sale->discount,
             'carrying_cost'       => (float) $sale->carrying_cost,
             'labor_bill'          => (float) $sale->labor_bill,
 
             'items' => $items,
         ]);
+    }
+
+
+    public function approve($id, $userId)
+    {
+        DB::beginTransaction();
+
+        $saleReturn = SaleReturn::with('details')->lockForUpdate()->findOrFail($id);
+
+        if ($saleReturn->status !== 'pending') {
+            throw new \InvalidArgumentException(
+                "This return is already '{$saleReturn->status}' and cannot be approved again."
+            );
+        }
+
+        $sale = $saleReturn->sale;
+
+        foreach ($saleReturn->details as $detail) {
+
+            if ($detail->condition !== 'good') {
+                // Damaged item স্টকে ফেরত যাবে না — শুধু ledger এ adjust হবে
+                continue;
+            }
+
+            // ==========================================================
+            // TODO: STOCK REVERSAL
+            // $sale->warehouse_id থাকলে সেই warehouse এ, নাহলে $sale->branch_id
+            // এ $detail->product_id এর stock $detail->returned_qty দিয়ে বাড়াতে হবে।
+            //
+            // উদাহরণ (আপনার আসল Service/method দিয়ে বদলাতে হবে):
+            // app(StockService::class)->increaseStock(
+            //     productId: $detail->product_id,
+            //     branchId: $sale->branch_id,
+            //     warehouseId: $sale->warehouse_id,
+            //     qty: $detail->returned_qty
+            // );
+            // ==========================================================
+        }
+
+        // ==========================================================
+        // TODO: LEDGER REVERSAL ENTRY
+        // $saleReturn->ledger_id (customer account) এর বিপরীতে
+        // $saleReturn->grand_total পরিমাণ reversal entry পোস্ট করতে হবে
+        // (customer account কে credit / Sales Return account কে debit)।
+        //
+        // উদাহরণ (আপনার আসল Voucher Service দিয়ে বদলাতে হবে):
+        // app(VoucherService::class)->createCreditVoucher([
+        //     'voucher_no'  => 'CV' . ...,
+        //     'account_id'  => $saleReturn->ledger_id,
+        //     'amount'      => $saleReturn->grand_total,
+        //     'reference'   => $saleReturn->return_no,
+        //     'narration'   => 'Sale Return - ' . $saleReturn->return_no,
+        // ]);
+        // ==========================================================
+
+        $saleReturn->status      = 'approved';
+        $saleReturn->approved_by = $userId;
+        $saleReturn->approved_at = now();
+        $saleReturn->save();
+
+        DB::commit();
+        return $saleReturn;
+    }
+
+    public function reject($id, $userId, $reason)
+    {
+        return DB::transaction(function () use ($id, $userId, $reason) {
+
+            $saleReturn = SaleReturn::lockForUpdate()->findOrFail($id);
+
+            if ($saleReturn->status !== 'pending') {
+                throw new \InvalidArgumentException(
+                    "This return is already '{$saleReturn->status}' and cannot be rejected."
+                );
+            }
+
+            $saleReturn->status            = 'rejected';
+            $saleReturn->approved_by       = $userId;
+            $saleReturn->approved_at       = now();
+            $saleReturn->rejection_reason  = $reason;
+            $saleReturn->save();
+
+            return $saleReturn;
+        });
     }
 }
