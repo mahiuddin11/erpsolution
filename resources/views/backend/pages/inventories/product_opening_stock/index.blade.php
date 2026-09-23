@@ -8,12 +8,10 @@
         .bootstrap-switch-large {
             width: 200px;
         }
-
     </style>
 @endsection
 
 @section('navbar-content')
-
     <div class="content-header">
         <div class="container-fluid">
             <div class="row mb-2">
@@ -25,7 +23,8 @@
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('home') }}">Dashboard</a></li>
                         @if (helper::roleAccess('inventorySetup.productOS.index'))
-                            <li class="breadcrumb-item"><a href="{{ route('inventorySetup.productOS.index') }}">Product Opening Stock
+                            <li class="breadcrumb-item"><a href="{{ route('inventorySetup.productOS.index') }}">Product
+                                    Opening Stock
                                 </a>
                             </li>
                         @endif
@@ -65,6 +64,8 @@
                                 <tr>
                                     <th>SL</th>
                                     <th>Invoice No</th>
+                                    <th>Branch/Project</th>
+                                    <th>WareHouse</th>
                                     <th>Created By</th>
                                     <th>Date</th>
                                     <th>Qty</th>
@@ -80,6 +81,8 @@
                                 <tr>
                                     <th>SL</th>
                                     <th>Invoice No</th>
+                                    <th>Branch/Project</th>
+                                    <th>WareHouse</th>
                                     <th>Created By</th>
                                     <th>Date</th>
                                     <th>Qty</th>

@@ -33,6 +33,8 @@ use App\Http\Controllers\Backend\Dashboard\ProcurementDashboardController;
 use App\Http\Controllers\Backend\Dashboard\ProjectDashboardController;
 use App\Http\Controllers\Backend\Dashboard\ManagementDashboardController;
 use App\Http\Controllers\Backend\Dashboard\PosDashboardController;
+use App\Http\Controllers\Backend\Settings\AccountsController;
+use App\Http\Controllers\Backend\Settings\ChartOfAccountTreeController;
 use App\Http\Controllers\Backend\Settings\SmsSettingController;
 use App\Http\Controllers\Backend\Usermanage\UserController;
 
@@ -538,16 +540,21 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //sms congigaretion operation end
 
         //account crud operation start
-        Route::get('/settings-account-list', 'AccountsController@index')->name('settings.account.index');
-        Route::get('/dataProcessingAccount', 'AccountsController@dataProcessingAccount')->name('settings.account.dataProcessingAccount');
-        Route::get('/settings-account-create', 'AccountsController@create')->name('settings.account.create');
-        Route::post('/settings-account-store', 'AccountsController@store')->name('settings.account.store');
-        Route::get('/settings-account-edit/{id}', 'AccountsController@edit')->name('settings.account.edit');
-        Route::get('/settings-account-show/{id}', 'AccountsController@show')->name('settings.account.show');
-        Route::post('/settings-account-update/{id}', 'AccountsController@update')->name('settings.account.update');
-        Route::get('/settings-account-delete/{id}', 'AccountsController@destroy')->name('settings.account.destroy');
-        Route::get('/settings-account-status/{id}/{status}', 'AccountsController@statusUpdate')->name('settings.account.status');
+        Route::get('/settings-account-list', [AccountsController::class, 'index'])->name('settings.account.index');
+        Route::get('/dataProcessingAccount', [AccountsController::class, 'dataProcessingAccount'])->name('settings.account.dataProcessingAccount');
+        Route::get('/settings-account-create', [AccountsController::class, 'create'])->name('settings.account.create');
+        Route::post('/settings-account-store', [AccountsController::class, 'store'])->name('settings.account.store');
+        Route::get('/settings-account-edit/{id}', [AccountsController::class, 'edit'])->name('settings.account.edit');
+        Route::get('/settings-account-show/{id}', [AccountsController::class, 'show'])->name('settings.account.show');
+        Route::post('/settings-account-update/{id}', [AccountsController::class, 'update'])->name('settings.account.update');
+        Route::get('/settings-account-delete/{id}', [AccountsController::class, 'destroy'])->name('settings.account.destroy');
+        Route::get('/settings-account-status/{id}/{status}', [AccountsController::class, 'statusUpdate'])->name('settings.account.status');
         //account crud operation end
+
+        //coa tree start 
+        Route::get('/settings-account-tree',  [ChartOfAccountTreeController::class, 'index'])->name('settings.coa.tree');
+        Route::get('/settings-account-data',  [ChartOfAccountTreeController::class, 'treeData'])->name('settings.coa.tree.data');
+        //coa tree end
 
         //account crud operation start
         Route::get('/settings-transfer-list', 'TransferController@index')->name('settings.transfer.index');

@@ -28,7 +28,17 @@
 
             },
             {
+                "data": "from_warehouse_id",
+                "orderable": true
+
+            },
+            {
                 "data": "to_branch_id",
+                "orderable": true
+
+            },
+            {
+                "data": "to_warehouse_id",
                 "orderable": true
 
             },

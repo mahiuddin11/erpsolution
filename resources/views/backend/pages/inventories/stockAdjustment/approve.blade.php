@@ -8,7 +8,7 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1 class="m-0"> Inventory </h1>
+                    {{-- <h1 class="m-0"> Inventory </h1> --}}
                 </div><!-- /.col -->
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
@@ -31,7 +31,7 @@
         <div class="col-md-12">
             <div class="card card-default">
                 <div class="card-header">
-                    <h3 class="card-title">Edit Stock Adustment</h3>
+                    <h3 class="card-title">Stock Adjuestmetn Aprove</h3>
                     <div class="card-tools">
                         @if (helper::roleAccess('inventorySetup.stockAdjustment.index'))
                             <a class="btn btn-default" href="{{ route('inventorySetup.stockAdjustment.index') }}"><i
@@ -71,45 +71,35 @@
                                     <span class=" error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
+
                             <div class="col-md-3 mb-3">
                                 <label>Branch * :</label>
-                                <select class="form-control select2" name="branch_id">
-                                    <option selected disabled value="">--Select Branch--</option>
-                                    @foreach ($branch as $key => $value)
+                                <select class="form-control select2" id="branch_id" name="branch_id">
+                                    <option disabled value="">--Select Branch--</option>
+                                    @foreach ($branch as $value)
                                         <option value="{{ $value->id }}"
                                             {{ $editInfo->branch_id == $value->id ? 'selected' : '' }}>
                                             {{ $value->branchCode . ' - ' . $value->name }}
                                         </option>
                                     @endforeach
                                 </select>
-
-
                                 @error('branch_id')
-                                    <span class=" error text-red text-bold">{{ $message }}</span>
+                                    <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
 
-                            {{-- <div class="col-md-2 mb-3">
-                                <div class="form-group">
-                                    <label>Adjustment Type * :</label>
-                                    <select class="form-control select2 " name="adjustment_type">
-                                        <option selected disabled value="">--Adjustment Type--</option>
-                                        <option value="Gain"
-                                            {{ $editInfo->adjustment_type == 'Gain' ? 'selected' : '' }}>
-                                            Gain</option>
-                                        <option value="Lost"
-                                            {{ $editInfo->adjustment_type == 'Lost' ? 'selected' : '' }}>
-                                            Lost</option>
-                                        <option value="Damage"
-                                            {{ $editInfo->adjustment_type == 'Damage' ? 'selected' : '' }}>
-                                            Damage
-                                        </option>
-                                    </select>
-                                    @error('adjustment_type')
-                                        <span class=" error text-red text-bold">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div> --}}
+                            <div class="col-md-3 mb-3">
+                                <label>Warehouse * :</label>
+                                <select class="form-control select2" id="warehouse_id" name="warehouse_id"
+                                    data-placeholder="--Select Warehouse--" data-selected="{{ $editInfo->warehouse_id }}">
+                                    <option selected disabled value="">--Select Warehouse--</option>
+                                </select>
+                                @error('warehouse_id')
+                                    <span class="error text-red text-bold">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+
 
                             <div class="col-md-2 mb-3">
                                 <div class="form-group">
@@ -134,117 +124,7 @@
                             </div>
 
 
-                            {{-- <table class="table table-bordered table-hover" id="show_item">
 
-                                <thead>
-                                    <tr>
-                                        <th colspan="8">Select Product Item</th>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-center"><strong>Category</strong></td>
-                                        <td class="text-center"><strong>Product</strong></td>
-                                        <td class="text-center"><strong>Quantity</strong></td>
-                                        <td class="text-center"><strong>Unit Price</strong></td>
-                                        <td class="text-center"><strong>Total</strong></td>
-                                        <td class="text-center"><strong>Action</strong></td>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>
-                                            <select onchange="getProductList(this.value)"
-                                                class="select2 form-control catName reset" id="form-field-select-3"
-                                                data-placeholder="Search Category">
-                                                <option disabled selected>---Select Category---</option>
-                                                <?php
-                                            foreach ($category_info as $eachInfo) :
-                                            ?>
-                                                <option catName="{{ $eachInfo->name }}" value="{{ $eachInfo->id }}">
-                                                    {{ $eachInfo->name }}
-                                                </option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <select class="select2 form-control proName reset" id="productID"
-                                                data-placeholder="Search Product" onchange="getUnitPrice(this.value)">
-                                                <option disabled selected>---Select Product---</option>
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <input type="number" step="any"
-                                                class="form-control text-right qty reset_qty" placeholder="Qty"
-                                                min="0">
-                                        </td>
-                                        <td>
-                                            <input type="number" step="any" min="0" id="unitprice"
-                                                class="form-control text-right unitprice reset_unitprice"
-                                                placeholder="Unit Price">
-                                        </td>
-                                        <td>
-                                            <input type="number" step="any" readonly
-                                                class="form-control text-right total reset_total" id="total"
-                                                placeholder="Total">
-                                        </td>
-                                        <td>
-                                            <a id="add_item" class="btn btn-info" style="white-space: nowrap"
-                                                href="javascript:;" title="Add Item">
-                                                <i class="fa fa-plus"></i>
-                                                Add Item
-                                            </a>
-                                        </td>
-                                    </tr>
-                                    @foreach ($editInfo->details as $detail)
-                                        <tr class="new_item">
-                                            <td style="padding-left:15px;">
-                                                {{ $detail->product->category->name ?? '' }}
-                                                <input type="hidden" name="catName[]"
-                                                    value="{{ $detail->product->category->id ?? '' }}">
-                                            </td>
-                                            <td class="text-right">
-                                                {{ $detail->product->name ?? '' }}
-                                                <input type="hidden" class="add_quantity" name="proName[]"
-                                                    value="{{ $detail->product->id ?? '' }}">
-                                            </td>
-                                            <input type="hidden" name="stockDetailsId[]" value="{{ $detail->id }}">
-                                            <td class="text-right">
-                                                <input type="number" class="ttlqty qnty form-control" name="qty[]"
-                                                    value="{{ $detail->quantity }}">
-                                            </td>
-                                            <td class="text-right">
-                                                {{ $detail->unit_price }}
-                                                <input type="hidden" class="ttlunitprice unitprice" id="unitprice"
-                                                    name="unitprice[]" value="{{ $detail->unit_price }}">
-                                            </td>
-                                            <td class="text-right">
-                                                <input type="text" readonly class="total form-control" id="total"
-                                                    name="total[]" value="{{ $detail->total_price }}">
-                                            </td>
-                                            <td>
-                                                <a del_id="${proId}" class="delete_item btn form-control btn-danger"
-                                                    href="javascript:;">
-
-                                                    <i class="fa fa-times"></i>&nbsp;Remove
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <td class="text-right"><strong>Sub-Total(BDT)</strong></td>
-                                        <td class="text-right"><strong class=""></strong></td>
-                                        <td class="text-right"><strong
-                                                class="ttlqty">{{ $editInfo->quantity ?? 0 }}</strong>
-                                        </td>
-                                        <td class="text-right"><strong
-                                                class="ttlunitprice">{{ $editInfo->subtotal ?? 0 }}</strong></td>
-                                        <td class="text-right"><strong
-                                                class="grandtotal">{{ $editInfo->grand_total ?? 0 }}</strong></td>
-                                        <td class="text-right"><strong class=""></strong></td>
-                                    </tr>
-                                </tfoot>
-                            </table> --}}
                             <table class="table table-bordered table-hover" id="show_item">
 
                                 <thead>
@@ -422,6 +302,7 @@
     <!-- /.col-->
     <script type="text/javascript">
         $(document).ready(function() {
+
             findgrandtottal();
             var findqtyamoun = function() {
 
@@ -444,83 +325,7 @@
             };
 
 
-            // $(document).on('click', '#add_item', function() {
 
-            //     var parent = $(this).parents('tr');
-
-            //     var supid = $('.supid').val();
-            //     var catId = $('.catName').val();
-
-            //     var catName = $(".catName").find('option:selected').attr('catName');
-
-            //     //            var subcatID = $('.subCat').val();
-            //     //            var subCat = $(".subCat").find('option:selected').attr('subCat');
-
-            //     var proId = $('.proName').val();
-            //     var proName = $(".proName").find('option:selected').attr('proName');
-
-            //     //            var unit_id = $('.unitName').val();
-            //     //            var unitName = $(".unitName").find('option:selected').attr('unitName');
-
-            //     //  var unit = $('.unit').val();
-            //     var qty = number_format(parent.find('.qty').val());
-
-
-
-            //     var unitprice = number_format(parent.find('.unitprice').val());
-
-
-
-
-            //     //            if (supid == '' || supid == null) {
-            //     //               // productItemValidation("Supplier can't be empty.");
-            //     //                return false;
-            //     //            }
-            //     //            if (catId == '' || catId == null) {
-            //     //               // productItemValidation("Category can't be empty.");
-            //     //                return false;
-            //     //            }
-            //     //            if (proId == '' || proId == null) {
-            //     //               // productItemValidation("Product can't be empty.");
-            //     //                return false;
-            //     //            }
-
-
-            //     if (qty == '' || qty == null || qty == 0) {
-
-            //         return false;
-            //     } else {
-            //         var total = qty * unitprice;
-            //         const row = `
-        //         <tr class="new_item${proId}">
-        //             <td style="padding-left:15px;">${catName}<input type="hidden" name="catName[]" value="${catId}"></td>
-        //             <td class="text-right">${proName}<input type="hidden" class="add_quantity" name="proName[]" value="${proId}"></td>
-
-        //             <td class="text-right">${qty}<input type="hidden" class="ttlqty" name="qty[]" value="${qty}"></td>
-        //             <td class="text-right">${unitprice}<input type="hidden" class="ttlunitprice" name="unitprice[]" value="${unitprice}">
-        //             </td>
-        //             <td class="text-right">${total}
-        //                 <input type="hidden" class="total" name="total[]" value="${total}">
-        //             </td>
-        //             <td>
-        //                 <a del_id="${proId}" class="delete_item btn form-control btn-danger" href="javascript:;" title="">
-        //                     <i class="fa fa-times"></i>&nbsp;Remove
-        //                 </a>
-        //             </td>
-        //         </tr>
-        //     `;
-            //         $("#show_item tbody").append(row);
-            //     }
-
-            //     $('.reset_unitprice').val('');
-            //     $('.reset_qty').val('');
-            //     $('.reset_total').val('');
-            //     $(".reset").val(null).trigger("change");
-
-            //     findqtyamoun();
-            //     findunitamount();
-            //     findgrandtottal();
-            // });
 
             $(document).on('click', '#add_item', function() {
 
@@ -546,23 +351,23 @@
                 } else {
                     var total = qty * unitprice;
                     const row = `
-        <tr class="new_item${proId}">
-            <td style="padding-left:15px;">${catName}<input type="hidden" name="catName[]" value="${catId}"></td>
-            <td class="text-right">${proName}<input type="hidden" class="add_quantity" name="proName[]" value="${proId}"></td>
-            <td class="text-right">${purchaseType}<input type="hidden" name="purchaseType[]" value="${purchaseType}"></td>
-            <td class="text-right">${qty}<input type="hidden" class="ttlqty" name="qty[]" value="${qty}"></td>
-            <td class="text-right">${unitprice}<input type="hidden" class="ttlunitprice" name="unitprice[]" value="${unitprice}">
-            </td>
-            <td class="text-right">${total}
-                <input type="hidden" class="total" name="total[]" value="${total}">
-            </td>
-            <td>
-                <a del_id="${proId}" class="delete_item btn form-control btn-danger" href="javascript:;" title="">
-                    <i class="fa fa-times"></i>&nbsp;Remove
-                </a>
-            </td>
-        </tr>
-        `;
+                <tr class="new_item${proId}">
+                      <td style="padding-left:15px;">${catName}<input type="hidden" name="catName[]" value="${catId}"></td>
+                      <td class="text-right">${proName}<input type="hidden" class="add_quantity" name="proName[]" value="${proId}"></td>
+                      <td class="text-right">${purchaseType}<input type="hidden" name="purchaseType[]" value="${purchaseType}"></td>
+                      <td class="text-right">${qty}<input type="hidden" class="ttlqty" name="qty[]" value="${qty}"></td>
+                      <td class="text-right">${unitprice}<input type="hidden" class="ttlunitprice" name="unitprice[]" value="${unitprice}">
+                      </td>
+                      <td class="text-right">${total}
+                          <input type="hidden" class="total" name="total[]" value="${total}">
+                      </td>
+                      <td>
+                          <a del_id="${proId}" class="delete_item btn form-control btn-danger" href="javascript:;" title="">
+                              <i class="fa fa-times"></i>&nbsp;Remove
+                          </a>
+                      </td>
+                       </tr>
+                 `;
                     $("#show_item tbody").append(row);
                 }
 
@@ -577,12 +382,7 @@
             });
 
             $(document).on('click', '.delete_item', function() {
-                // if (confirm("Are you sure?")) {
-                //     $(this).parents('tr').remove();
-                //     findqtyamoun();
-                //     findunitamount();
-                //     findgrandtottal();
-                // }
+
                 let deleteitem = () => {
                     $(this).parents('tr').remove();
                     findqtyamoun();
@@ -707,6 +507,50 @@
                     $('#submit').prop('disabled', false);
                     $('.payment_amount_error').html('')
                 }
+            });
+
+
+            let warehouseXhr = null;
+
+            function loadWarehouses(branchId, selectedId = null) {
+                const $wh = $('#warehouse_id');
+                const placeholder = '<option selected disabled value="">--Select Warehouse--</option>';
+
+                if (warehouseXhr) warehouseXhr.abort();
+
+                if (!branchId) {
+                    $wh.html(placeholder).trigger('change.select2');
+                    return;
+                }
+
+                $wh.html('<option selected disabled value="">Loading Warehouse...</option>').trigger(
+                    'change.select2');
+
+                warehouseXhr = $.ajax({
+                    url: "{{ route('inventorySetup.stockAdjustment.getWarehouseList') }}",
+                    type: 'GET',
+                    cache: false,
+                    data: {
+                        branch_id: branchId
+                    },
+                    success: function(data) {
+                        $wh.html(placeholder).append(data);
+                        if (selectedId) $wh.val(String(selectedId));
+                        $wh.trigger('change.select2');
+                    },
+                    error: function(xhr, status) {
+                        if (status === 'abort') return;
+                        $wh.html(placeholder).trigger('change.select2');
+                    }
+                });
+            }
+
+
+            loadWarehouses($('#branch_id').val(), $('#warehouse_id').data('selected'));
+
+
+            $(document).on('change', '#branch_id', function() {
+                loadWarehouses($(this).val());
             });
 
         });

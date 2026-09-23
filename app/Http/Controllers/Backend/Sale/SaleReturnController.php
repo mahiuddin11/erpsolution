@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Backend\Sale;
 
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
+use App\Models\AccountTransaction;
 use App\Models\Branch;
 use App\Models\Category;
 use App\Models\ChartOfAccount;
@@ -203,7 +204,7 @@ class SaleReturnController extends Controller
         $title = 'Sale Return Details';
 
 
-        // NOTE: adjust relation names below if they differ in your actual SaleReturn model.
+
         $saleReturn = SaleReturn::with([
             'sale',
             'branch',
@@ -221,46 +222,110 @@ class SaleReturnController extends Controller
         return view('backend.pages.sale.return.show', get_defined_vars());
     }
 
+    // public function approve($id)
+    // {
+
+
+    //     $saleReturn = SaleReturn::with(['sale', 'details'])->findOrFail($id);
+
+    //     if ($saleReturn->status !== 'pending') {
+    //         return back()->with('error', 'Only pending returns can be approved.');
+    //     }
+    //     DB::beginTransaction();
+
+
+    //     $sale = $saleReturn->sale;
+    //     $targetWarehouseId = $sale->warehouse_id ?? null;
+    //     $targetBranchId    = $sale->branch_id;
+
+
+
+    //     foreach ($saleReturn->details as $detail) {
+
+    //         if ($detail->condition === 'good') {
+    //             $this->restockReturnedItem($saleReturn, $detail, $targetBranchId, $targetWarehouseId);
+    //         }
+    //     }
+
+    //     // TODO: accounting reversal — needs your actual account_transactions
+    //     // insert pattern to mirror correctly (see questions below).
+    //     // if ($sale->payment_type === 'Due') {
+    //     //     // reduce the customer's receivable by the return amount
+    //     // } else {
+    //     //     // sale was paid — create a payable voucher owed back to the customer
+    //     // }
+
+    //     $saleReturn->status      = 'approved';
+    //     $saleReturn->approved_by = auth()->id();
+    //     $saleReturn->approved_at = now();
+    //     $saleReturn->save();
+    //     DB::commit();
+
+    //     return redirect()->route('sale.sale.return')->with('success', 'Return #' . $saleReturn->return_no . ' approved successfully.');
+    // }
+
     public function approve($id)
     {
-
-
-        $saleReturn = SaleReturn::with(['sale', 'details'])->findOrFail($id);
-
-
+        $saleReturn = SaleReturn::with(['sale', 'details.saleDetail'])->findOrFail($id);
 
         if ($saleReturn->status !== 'pending') {
             return back()->with('error', 'Only pending returns can be approved.');
         }
+
         DB::beginTransaction();
+        try {
+            $sale = $saleReturn->sale;
+
+            $targetBranchId    = $saleReturn->branch_id;
+            $targetWarehouseId = $saleReturn->warehouse_id;
+
+            foreach ($saleReturn->details as $detail) {
 
 
-        $sale = $saleReturn->sale;
-        $targetWarehouseId = $sale->warehouse_id ?? null;
-        $targetBranchId    = $sale->branch_id;
-
-
-
-        foreach ($saleReturn->details as $detail) {
-
-            if ($detail->condition === 'good') {
-                $this->restockReturnedItem($saleReturn, $detail, $targetBranchId, $targetWarehouseId);
+                if ($detail->condition === 'good') {
+                    $this->restockReturnedItem($saleReturn, $detail, $targetBranchId, $targetWarehouseId);
+                }
             }
+
+
+
+
+            $returnAmount = (float) $saleReturn->grand_total;
+
+            AccountTransaction::create([
+                'invoice'    => $saleReturn->return_no,
+                'table_id'   => $saleReturn->id,
+                'account_id' => 1522, // same Sales Revenue account the original sale used
+                'type'       => 28,
+                'branch_id'  => $targetBranchId,
+                'debit'      => $returnAmount,
+                'remark'     =>  $saleReturn->return_no . ' against Invoice ' . optional($sale)->invoice_no . '--' . 'Note :' . $saleReturn->remarks,
+                'created_by' => auth()->id(),
+                'created_at' => $saleReturn->return_date,
+            ]);
+
+            AccountTransaction::create([
+                'invoice'    => $saleReturn->return_no,
+                'table_id'   => $saleReturn->id,
+                'account_id' => $saleReturn->ledger_id, // same customer ledger the original sale used
+                'type'       => 28,
+                'branch_id'  => $targetBranchId,
+                'credit'     => $returnAmount,
+                'remark'     => $saleReturn->return_no . ' against Invoice ' . optional($sale)->invoice_no . '--' . 'Note :' . $saleReturn->remarks,
+                'created_by' => auth()->id(),
+                'created_at' => $saleReturn->return_date,
+            ]);
+
+            $saleReturn->status      = 'approved';
+            $saleReturn->approved_by = auth()->id();
+            $saleReturn->approved_at = now();
+            $saleReturn->save();
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollback();
+            return back()->with('error', 'Failed to approve return: ' . $e->getMessage());
         }
-
-        // TODO: accounting reversal — needs your actual account_transactions
-        // insert pattern to mirror correctly (see questions below).
-        // if ($sale->payment_type === 'Due') {
-        //     // reduce the customer's receivable by the return amount
-        // } else {
-        //     // sale was paid — create a payable voucher owed back to the customer
-        // }
-
-        $saleReturn->status      = 'approved';
-        $saleReturn->approved_by = auth()->id();
-        $saleReturn->approved_at = now();
-        $saleReturn->save();
-        DB::commit();
 
         return redirect()->route('sale.sale.return')->with('success', 'Return #' . $saleReturn->return_no . ' approved successfully.');
     }
@@ -279,7 +344,7 @@ class SaleReturnController extends Controller
         $stock->total_price  = $detail->line_amount;
         $stock->invoice_no   = $saleReturn->return_no;
         $stock->date         = $saleReturn->return_date;
-        $stock->status       = 'Sale Return'; // FIX: was 'Sales Return' — didn't match your actual stocks.status enum value, so it would silently never show up in reports filtering on that status
+        $stock->status       = 'Sale Return';
         $stock->created_by   = auth()->id();
         $stock->save();
 

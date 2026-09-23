@@ -121,6 +121,12 @@
             color: #155724;
         }
 
+        .badge-wh {
+            background: #e2e3f5;
+            color: #383d8f;
+            margin-left: 4px;
+        }
+
         .details-panel {
             background: #fff;
             border: 1px solid var(--tt-border);
@@ -333,9 +339,21 @@
             color: #dc3545;
         }
 
+        .remaining-hint {
+            font-size: 11px;
+            color: #868e96;
+            display: block;
+            margin-top: 2px;
+        }
+
         .remaining-display {
             font-weight: 600;
             font-size: 14px;
+        }
+
+        .product-row-loading {
+            opacity: .6;
+            pointer-events: none;
         }
 
         .pr-add-panel {
@@ -430,57 +448,6 @@
         }
     </style>
 @endsection
-@php
-    $resolveBranchWarehouse = function ($storedId) use ($branchs) {
-        if (!$storedId) {
-            return ['branch_id' => null, 'warehouse_id' => null];
-        }
-        $row = $branchs->firstWhere('id', $storedId);
-        if (!$row) {
-            return ['branch_id' => null, 'warehouse_id' => null];
-        }
-        if ((int) $row->parent_id === 0) {
-            return ['branch_id' => $row->id, 'warehouse_id' => null];
-        }
-        return ['branch_id' => $row->parent_id, 'warehouse_id' => $row->id];
-    };
-
-    $sourceResolved = $resolveBranchWarehouse(
-        $editInfo->transfer_type === 'branch_to_project' ? $editInfo->branch_id : null,
-    );
-    $destResolved = $resolveBranchWarehouse(
-        $editInfo->transfer_type === 'project_to_branch' ? $editInfo->branch_id : null,
-    );
-
-    // FIX: initial "resolved" id for the stock-check hidden input must be the
-    // WAREHOUSE id when a warehouse is set, otherwise fall back to the branch id.
-    // Previously this was hardcoded to branch_id only, so the very first stock
-    // check on page load ignored the warehouse entirely.
-    $sourceInitialId = $sourceResolved['warehouse_id'] ?? $sourceResolved['branch_id'];
-    $destInitialId = $destResolved['warehouse_id'] ?? $destResolved['branch_id'];
-
-    $transferTypeLabels = [
-        'branch_to_project' => [
-            'icon' => 'fa-warehouse',
-            'title' => 'Branch / Warehouse &rarr; Project',
-            'sub' => 'Issue material from stock to a running project',
-            'badge' => 'req',
-        ],
-        'project_to_project' => [
-            'icon' => 'fa-people-arrows',
-            'title' => 'Project &rarr; Project',
-            'sub' => 'Move surplus material between two projects',
-            'badge' => 'req',
-        ],
-        'project_to_branch' => [
-            'icon' => 'fa-undo-alt',
-            'title' => 'Project &rarr; Branch / Warehouse',
-            'sub' => 'Return unused material back to stock',
-            'badge' => 'noreq',
-        ],
-    ];
-    $currentTypeInfo = $transferTypeLabels[$editInfo->transfer_type] ?? null;
-@endphp
 
 @section('navbar-content')
     <div class="content-header">
@@ -505,6 +472,48 @@
 @endsection
 
 @section('admin-content')
+    @php
+        // Variables coming from ProjectTransferController@edit:
+        // $sourceResolved / $destResolved = ['branch_id' => real branch, 'warehouse_id' => warehouse|null]
+        // $sourceWarehouses / $destWarehouses = warehouses under that branch
+        $type = $editInfo->transfer_type;
+
+        $transferTypeLabels = [
+            'branch_to_project' => [
+                'icon' => 'fa-warehouse',
+                'title' => 'Branch / Warehouse &rarr; Project',
+                'sub' => 'Issue material from a warehouse to a running project',
+                'badge' => 'req',
+                'wh' => true,
+            ],
+            'project_to_project' => [
+                'icon' => 'fa-people-arrows',
+                'title' => 'Project &rarr; Project',
+                'sub' => 'Move surplus material between two projects',
+                'badge' => 'req',
+                'wh' => false,
+            ],
+            'project_to_branch' => [
+                'icon' => 'fa-undo-alt',
+                'title' => 'Project &rarr; Branch / Warehouse',
+                'sub' => 'Return unused material back to a warehouse',
+                'badge' => 'noreq',
+                'wh' => true,
+            ],
+        ];
+        $currentTypeInfo = $transferTypeLabels[$type] ?? null;
+
+        // "Branch › Warehouse" text for the route boxes
+        $routeLabel = function ($res) use ($branchs) {
+            $b = $res['branch_id'] ? optional($branchs->firstWhere('id', $res['branch_id']))->name : null;
+            $w = $res['warehouse_id'] ? optional($branchs->firstWhere('id', $res['warehouse_id']))->name : null;
+            return $b ? ($w ? $b . ' › ' . $w : $b) : '-';
+        };
+
+        // branch_to_project: source is locked. Old transfers may have no warehouse yet -> let the user pick one.
+        $srcWhLocked = !empty($sourceResolved['warehouse_id']);
+    @endphp
+
     <div class="row">
         <div class="col-md-12">
             <div class="card card-default">
@@ -528,10 +537,7 @@
                             </div>
                         @endif
 
-                        {{-- ============ STEP 1: TRANSFER TYPE ============ --}}
-                        {{-- FIX: only the SELECTED transfer type card is rendered now.
-                             The other two are not shown at all (previously all three
-                             were rendered with the other two just disabled/greyed). --}}
+                        {{-- ============ STEP 1: TRANSFER TYPE (locked) ============ --}}
                         <div class="section-title"><span class="step-num">1</span> Transfer Type
                             <span class="badge badge-secondary ml-2" style="font-size:11px;"><i class="fas fa-lock"></i>
                                 Locked after creation</span>
@@ -550,14 +556,18 @@
                                         <span class="tt-badge badge-noreq"><i class="fas fa-check"></i> No requisition
                                             needed</span>
                                     @endif
+                                    @if ($currentTypeInfo['wh'])
+                                        <span class="tt-badge badge-wh"><i class="fas fa-warehouse"></i> Warehouse
+                                            required</span>
+                                    @endif
                                 </label>
                             </div>
                         @endif
-                        <input type="hidden" name="transfer_type" value="{{ $editInfo->transfer_type }}">
+                        <input type="hidden" name="transfer_type" value="{{ $type }}">
 
                         <hr>
 
-                        {{-- ============ STEP 2: ROUTE DETAILS (unchanged) ============ --}}
+                        {{-- ============ STEP 2: ROUTE DETAILS ============ --}}
                         <div class="section-title"><span class="step-num">2</span> Transfer Details</div>
 
                         <div class="details-panel">
@@ -574,12 +584,10 @@
                                         readonly>
                                 </div>
 
-                                @if (in_array($editInfo->transfer_type, ['branch_to_project', 'project_to_project']))
+                                {{-- Requisition (locked) --}}
+                                @if (in_array($type, ['branch_to_project', 'project_to_project']))
                                     <div class="col-lg-3 col-md-4 col-sm-6 form-group">
-                                        <label>
-                                            Purchase Requisition <span class="required-star">*</span>
-                                        </label>
-
+                                        <label>Purchase Requisition <span class="required-star">*</span></label>
                                         <select class="form-control select2" disabled>
                                             <option value="">-- Select Requisition --</option>
                                             @foreach ($purchaserequisitions as $pr)
@@ -589,20 +597,16 @@
                                                 </option>
                                             @endforeach
                                         </select>
-
                                         <input type="hidden" name="purchase_requisition"
                                             value="{{ $editInfo->purchase_requisition_id }}">
                                     </div>
                                 @endif
 
-                                @if ($editInfo->transfer_type === 'branch_to_project')
+                                {{-- SOURCE branch + warehouse (branch_to_project) --}}
+                                @if ($type === 'branch_to_project')
                                     <div class="col-lg-3 col-md-6 col-sm-6 form-group">
-                                        <label>
-                                            Source Branch <span class="required-star">*</span>
-                                        </label>
-
-                                        <select class="form-control select2 branch-picker" data-target="from_branch_id"
-                                            data-preselect-warehouse="{{ $sourceResolved['warehouse_id'] }}" disabled>
+                                        <label>Source Branch <span class="required-star">*</span></label>
+                                        <select class="form-control select2" disabled>
                                             <option value="">-- Select Branch --</option>
                                             @foreach ($branchs->where('parent_id', 0) as $branch)
                                                 <option value="{{ $branch->id }}"
@@ -611,39 +615,42 @@
                                                 </option>
                                             @endforeach
                                         </select>
-
-                                        {{-- FIX: value is now the resolved WAREHOUSE id when one is set,
-                                             otherwise the branch id — this is what stock checks read on
-                                             initial page load. --}}
-                                        <input type="hidden" name="from_branch_id" value="{{ $sourceInitialId }}">
+                                        <input type="hidden" name="from_branch_id"
+                                            value="{{ $sourceResolved['branch_id'] }}">
                                     </div>
 
                                     <div class="col-lg-2 col-md-6 col-sm-6 form-group">
-                                        <label>
-                                            Warehouse <span class="text-muted">(optional)</span>
-                                        </label>
-
-                                        <div class="warehouse-wrap" data-target="from_branch_id"
-                                            style="display:{{ $sourceResolved['warehouse_id'] ? 'block' : 'none' }}">
-                                            <select class="form-control select2 warehouse-picker"
-                                                data-target="from_branch_id" disabled>
-                                                <option value="">-- Warehouse --</option>
-                                                @foreach ($warehouses ?? [] as $warehouse)
-                                                    <option value="{{ $warehouse->id }}"
-                                                        {{ $warehouse->id == $sourceResolved['warehouse_id'] ? 'selected' : '' }}>
-                                                        {{ $warehouse->name }}
+                                        <label>Warehouse <span class="required-star">*</span></label>
+                                        @if ($srcWhLocked)
+                                            <select class="form-control select2" disabled>
+                                                @foreach ($sourceWarehouses as $wh)
+                                                    <option value="{{ $wh->id }}"
+                                                        {{ $wh->id == $sourceResolved['warehouse_id'] ? 'selected' : '' }}>
+                                                        {{ $wh->name }}
                                                     </option>
                                                 @endforeach
                                             </select>
-                                        </div>
+                                            <input type="hidden" name="from_warehouse_id"
+                                                value="{{ $sourceResolved['warehouse_id'] }}">
+                                        @else
+                                            <select name="from_warehouse_id" class="form-control select2" required>
+                                                <option value="">-- Select Warehouse --</option>
+                                                @foreach ($sourceWarehouses as $wh)
+                                                    <option value="{{ $wh->id }}">{{ $wh->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            <small class="text-danger">No warehouse on this transfer yet — please
+                                                select one.</small>
+                                        @endif
                                     </div>
                                 @endif
 
-                                @if ($editInfo->transfer_type === 'project_to_branch')
+                                {{-- DESTINATION branch + warehouse (project_to_branch) --}}
+                                @if ($type === 'project_to_branch')
                                     <div class="col-lg-3 col-md-6 col-sm-6 form-group">
                                         <label>Destination Branch <span class="required-star">*</span></label>
-                                        <select class="form-control select2 branch-picker" data-target="to_branch_id"
-                                            data-preselect-warehouse="{{ $destResolved['warehouse_id'] }}">
+                                        <select name="to_branch_id" class="form-control select2 branch-picker"
+                                            data-target="to_branch_id" required>
                                             <option value="">-- Select Branch --</option>
                                             @foreach ($branchs->where('parent_id', 0) as $branch)
                                                 <option value="{{ $branch->id }}"
@@ -651,25 +658,20 @@
                                                     {{ $branch->name }}</option>
                                             @endforeach
                                         </select>
-                                        {{-- FIX: same resolved-id correction applied here --}}
-                                        <input type="hidden" name="to_branch_id" value="{{ $destInitialId }}">
                                     </div>
 
                                     <div class="col-lg-2 col-md-6 col-sm-6 form-group">
-                                        <label>Warehouse <span class="text-muted">(optional)</span></label>
-                                        <div class="warehouse-wrap" data-target="to_branch_id"
-                                            style="display:{{ $destResolved['warehouse_id'] ? 'block' : 'none' }}">
-                                            <select class="form-control select2 warehouse-picker"
-                                                data-target="to_branch_id">
-                                                <option value="">-- Warehouse --</option>
-                                                @foreach ($warehouses ?? [] as $warehouse)
-                                                    <option value="{{ $warehouse->id }}"
-                                                        {{ $warehouse->id == $destResolved['warehouse_id'] ? 'selected' : '' }}>
-                                                        {{ $warehouse->name }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </div>
+                                        <label>Warehouse <span class="required-star">*</span></label>
+                                        <select name="to_warehouse_id" class="form-control select2 warehouse-picker"
+                                            data-target="to_branch_id" required>
+                                            <option value="">-- Select Warehouse --</option>
+                                            @foreach ($destWarehouses as $wh)
+                                                <option value="{{ $wh->id }}"
+                                                    {{ $wh->id == $destResolved['warehouse_id'] ? 'selected' : '' }}>
+                                                    {{ $wh->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
                                     </div>
                                 @endif
                             </div>
@@ -677,14 +679,13 @@
                             <div class="route-visual">
                                 <div class="route-node route-node-from">
                                     <span class="route-node-tag"><i class="fas fa-upload"></i> FROM</span>
-                                    @if ($editInfo->transfer_type === 'branch_to_project')
+                                    @if ($type === 'branch_to_project')
                                         <div class="form-group">
                                             <label class="mb-1">Source</label>
                                             <div class="route-resolved-box">
                                                 <i class="fas fa-warehouse mr-2 text-muted"></i>
-                                                <span class="route-resolved-text" data-target="from_branch_id">
-                                                    {{ optional($branchs->firstWhere('id', $sourceInitialId))->name ?? '-' }}
-                                                </span>
+                                                <span class="route-resolved-text"
+                                                    data-target="from_branch_id">{{ $routeLabel($sourceResolved) }}</span>
                                             </div>
                                         </div>
                                     @else
@@ -707,7 +708,7 @@
 
                                 <div class="route-node route-node-to">
                                     <span class="route-node-tag"><i class="fas fa-flag-checkered"></i> TO</span>
-                                    @if ($editInfo->transfer_type === 'branch_to_project')
+                                    @if ($type === 'branch_to_project')
                                         <div class="form-group">
                                             <label>Project <span class="required-star">*</span></label>
                                             <select name="to_project_id_a" class="form-control select2" required>
@@ -719,7 +720,7 @@
                                                 @endforeach
                                             </select>
                                         </div>
-                                    @elseif ($editInfo->transfer_type === 'project_to_project')
+                                    @elseif ($type === 'project_to_project')
                                         <div class="form-group">
                                             <label>Project <span class="required-star">*</span></label>
                                             <select name="to_project_id_b" class="form-control select2" required>
@@ -736,9 +737,8 @@
                                             <label class="mb-1">Destination</label>
                                             <div class="route-resolved-box">
                                                 <i class="fas fa-building mr-2 text-muted"></i>
-                                                <span class="route-resolved-text" data-target="to_branch_id">
-                                                    {{ optional($branchs->firstWhere('id', $destInitialId))->name ?? '-' }}
-                                                </span>
+                                                <span class="route-resolved-text"
+                                                    data-target="to_branch_id">{{ $routeLabel($destResolved) }}</span>
                                             </div>
                                         </div>
                                     @endif
@@ -758,7 +758,8 @@
                         {{-- ============ STEP 3: PRODUCTS ============ --}}
                         <div class="section-title justify-content-between">
                             <span><span class="step-num">3</span> Products to Transfer</span>
-                            <span class="product-count-badge" id="productCountBadge">{{ $details->count() }} items</span>
+                            <span class="product-count-badge" id="productCountBadge">{{ $details->count() }}
+                                {{ $details->count() === 1 ? 'item' : 'items' }}</span>
                         </div>
 
                         <div class="products-panel">
@@ -787,6 +788,12 @@
                                     </button>
                                 </div>
                             @endif
+
+                            <small class="text-muted d-block mb-2">
+                                <i class="fas fa-info-circle"></i>
+                                Available Stock includes the quantity this transfer has already taken from the same
+                                source, so you can edit it without being blocked by your own quantity.
+                            </small>
 
                             <div class="table-responsive">
                                 <table class="table table-bordered" id="productTable">
@@ -834,8 +841,8 @@
                                                             {{ $d->purchasetype == 'local' ? 'selected' : '' }}>Local
                                                         </option>
                                                         <option value="imported"
-                                                            {{ $d->purchasetype == 'imported' ? 'selected' : '' }}>Imported
-                                                        </option>
+                                                            {{ $d->purchasetype == 'imported' ? 'selected' : '' }}>
+                                                            Imported</option>
                                                     </select>
                                                 </td>
                                                 <td data-label="Available Stock">
@@ -847,7 +854,11 @@
                                                         class="form-control qty-input" value="{{ $d->qty }}"
                                                         @if (isset($lineMax[$d->id])) max="{{ $lineMax[$d->id] }}" @endif
                                                         required>
+                                                    {{-- UI-only helper. The server must re-read the remaining qty from pr_details. --}}
+                                                    <input type="hidden" name="requested_qty[]"
+                                                        value="{{ $lineMax[$d->id] ?? '' }}">
                                                     <div class="stock-hint"></div>
+                                                    <span class="remaining-hint"></span>
                                                 </td>
                                                 <td data-label="Remaining" class="text-center">
                                                     <span class="remaining-display text-muted">-</span>
@@ -856,31 +867,19 @@
                                                     <i class="fas fa-trash text-danger remove-row-btn" title="Remove row"
                                                         role="button" tabindex="0"></i>
                                                 </td>
-                                                <input type="hidden" name="requested_qty[]"
-                                                    value="{{ isset($lineMax[$d->id]) ? $lineMax[$d->id] : '' }}">
                                             </tr>
                                         @endforeach
                                     </tbody>
                                 </table>
                             </div>
 
-                            <div class="products-empty" id="productsEmptyHint" style="display:none">
+                            <div class="products-empty" id="productsEmptyHint">
                                 <i class="fas fa-box-open"></i>
-                                No products added yet. Use "Add Product Row" to start.
+                                No products added yet.
                             </div>
 
-                            {{-- <div class="products-toolbar">
-                                <button type="button" class="btn btn-outline-primary btn-sm" id="addRowBtn">
-                                    <i class="fas fa-plus"></i> Add Product Row (manual)
-                                </button>
-                                <div class="products-summary">
-                                    <strong id="totalRowsText">{{ $details->count() }} rows</strong> &middot;
-                                    Total qty: <strong id="totalQtyText">{{ $details->sum('qty') }}</strong>
-                                </div>
-                            </div> --}}
-
                             <div class="products-toolbar">
-                                @if ($editInfo->transfer_type === 'project_to_branch')
+                                @if ($type === 'project_to_branch')
                                     <button type="button" class="btn btn-outline-primary btn-sm" id="addRowBtn">
                                         <i class="fas fa-plus"></i> Add Product Row (manual)
                                     </button>
@@ -897,15 +896,15 @@
                     <div class="card-footer d-flex justify-content-between">
                         <a href="{{ route('project.transferproject.index') }}" class="btn btn-default"><i
                                 class="fas fa-arrow-left"></i> Cancel</a>
-                        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Update
-                            Transfer</button>
+                        <button type="submit" class="btn btn-primary" id="submitBtn"><i class="fas fa-save"></i>
+                            Update Transfer</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    {{-- Hidden template row (fully manual add — no requisition cap) --}}
+    {{-- One template for both "manual add" and "add from requisition" (outside the <form>, never submitted) --}}
     <table style="display:none">
         <tbody id="rowTemplate">
             <tr>
@@ -929,56 +928,23 @@
                         <option value="imported">Imported</option>
                     </select>
                 </td>
-                <td data-label="Available Stock"><input type="text" class="form-control stock-display" value="-"
-                        readonly></td>
+                <td data-label="Available Stock">
+                    <input type="text" class="form-control stock-display" value="-" readonly>
+                </td>
                 <td data-label="Qty">
                     <input type="number" name="qty[]" min="0.01" step="0.01" class="form-control qty-input"
                         required>
+                    <input type="hidden" name="requested_qty[]" value="">
                     <div class="stock-hint"></div>
+                    <span class="remaining-hint"></span>
                 </td>
-                <td data-label="Remaining" class="text-center"><span class="remaining-display text-muted">-</span></td>
-                <td class="text-center remove-cell"><i class="fas fa-trash text-danger remove-row-btn" title="Remove row"
-                        role="button" tabindex="0"></i></td>
-                <input type="hidden" name="requested_qty[]" value="">
-            </tr>
-        </tbody>
-    </table>
-
-    {{-- Hidden template for a row added from the Requisition remaining list --}}
-    <table style="display:none">
-        <tbody id="prRowTemplate">
-            <tr>
-                <td class="row-index-cell"><span class="row-badge row-index"></span></td>
-                <td data-label="Category">
-                    <select name="category_nm[]" class="form-control select2 category-select" required>
-                        <option value="">-- Category --</option>
-                        @foreach ($category_info as $cat)
-                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                        @endforeach
-                    </select>
+                <td data-label="Remaining" class="text-center">
+                    <span class="remaining-display text-muted">-</span>
                 </td>
-                <td data-label="Product">
-                    <select name="product_nm[]" class="form-control select2 product-select" required>
-                        <option value="">-- Select category first --</option>
-                    </select>
+                <td class="text-center remove-cell">
+                    <i class="fas fa-trash text-danger remove-row-btn" title="Remove row" role="button"
+                        tabindex="0"></i>
                 </td>
-                <td data-label="Purchase Type">
-                    <select name="purchasetype[]" class="form-control purchasetype-select" required>
-                        <option value="local">Local</option>
-                        <option value="imported">Imported</option>
-                    </select>
-                </td>
-                <td data-label="Available Stock"><input type="text" class="form-control stock-display" value="-"
-                        readonly></td>
-                <td data-label="Qty">
-                    <input type="number" name="qty[]" min="0.01" step="0.01" class="form-control qty-input"
-                        required>
-                    <div class="stock-hint"></div>
-                </td>
-                <td data-label="Remaining" class="text-center"><span class="remaining-display text-muted">-</span></td>
-                <td class="text-center remove-cell"><i class="fas fa-trash text-danger remove-row-btn" title="Remove row"
-                        role="button" tabindex="0"></i></td>
-                <input type="hidden" name="requested_qty[]" value="">
             </tr>
         </tbody>
     </table>
@@ -988,6 +954,43 @@
     <script src="{{ asset('backend/plugins/select2/js/select2.full.min.js') }}"></script>
     <script>
         $(function() {
+
+            var TYPE = @json($editInfo->transfer_type);
+            var TRANSFER_ID = @json($editInfo->id);
+            var routes = {
+                filterProduct: "{{ route('project.transferproject.filterproduct') }}",
+                availableStock: "{{ route('project.transferproject.availableStock') }}",
+                getWarehouses: "{{ route('project.transferproject.getWarehouses') }}"
+            };
+
+            /* ---------------- Helpers ---------------- */
+            function round2(n) {
+                return Math.round((n + Number.EPSILON) * 100) / 100;
+            }
+
+            function notify(msg) {
+                if (typeof toastr !== 'undefined' && toastr.warning) {
+                    toastr.warning(msg);
+                } else {
+                    alert(msg);
+                }
+            }
+
+            // new Option() escapes text, so names can never inject HTML.
+            function fillSelect($sel, items, placeholder) {
+                $sel.empty().append(new Option(placeholder, '', true, true));
+                $.each(items, function(i, it) {
+                    $sel.append(new Option(it.name, it.id));
+                });
+            }
+
+            // Templates must not carry select2 markup (a layout-level init could touch them).
+            $('#rowTemplate .select2').each(function() {
+                var $el = $(this);
+                if ($el.hasClass('select2-hidden-accessible')) {
+                    $el.select2('destroy');
+                }
+            });
 
             function initSelect2(scope) {
                 scope.find('.select2').each(function() {
@@ -999,8 +1002,10 @@
                     });
                 });
             }
-            initSelect2($('body'));
+            // form only -> the hidden template rows are never initialised
+            initSelect2($('#transferForm'));
 
+            /* ---------------- Remaining / qty validation ---------------- */
             function updateRemainingDisplay($row) {
                 var requested = parseFloat($row.find('input[name="requested_qty[]"]').val());
                 var $display = $row.find('.remaining-display');
@@ -1014,67 +1019,125 @@
                 $display.toggleClass('text-danger', remaining < 0).toggleClass('text-success', remaining >= 0);
             }
 
-            /* Existing rows: load correct product list per category, preselect, then trigger
-               stock check via .trigger('change') (which reads the resolved from_branch_id /
-               from_project_id hidden/select values). */
-            $('#productRows tr').each(function() {
-                var $row = $(this);
-                var categoryId = $row.find('.category-select').val();
-                var preselectId = $row.find('.product-select').data('preselect');
+            // Duplicate rows (same product + purchase type) share one stock pool.
+            function groupQty(productId, ptype) {
+                var total = 0;
+                $('#productRows tr').each(function() {
+                    var $r = $(this);
+                    if ($r.find('.product-select').val() === productId &&
+                        $r.find('.purchasetype-select').val() === ptype) {
+                        total += parseFloat($r.find('.qty-input').val()) || 0;
+                    }
+                });
+                return total;
+            }
 
-                if (categoryId) {
-                    $.get("{{ route('project.transferproject.filterproduct') }}", {
-                            category_id: categoryId
-                        })
-                        .done(function(res) {
-                            var options = '<option value="">-- Select Product --</option>';
-                            $.each(res, function(i, p) {
-                                var sel = (p.id == preselectId) ? 'selected' : '';
-                                options += '<option value="' + p.id + '" ' + sel + '>' + p
-                                    .name + '</option>';
-                            });
-                            $row.find('.product-select').html(options).trigger('change.select2');
-                            $row.find('.product-select').trigger('change');
-                        });
+            function validateQty($row) {
+                var available = $row.data('available');
+                var qty = parseFloat($row.find('.qty-input').val()) || 0;
+                var requested = parseFloat($row.find('input[name="requested_qty[]"]').val()) || 0;
+                var productId = $row.find('.product-select').val();
+                var ptype = $row.find('.purchasetype-select').val();
+                var $hint = $row.find('.stock-hint');
+                var $remainingHint = $row.find('.remaining-hint');
+
+                if (requested > 0 && qty > requested) {
+                    $remainingHint.text('Only ' + requested +
+                            ' remaining in the requisition — you cannot enter more than this.')
+                        .css('color', '#dc3545');
+                } else {
+                    $remainingHint.text('');
                 }
-                updateRemainingDisplay($row);
-            });
 
-            /* Branch -> Warehouse preselect for header fields (initial paint only;
-               subsequent changes are handled by the .branch-picker/.warehouse-picker
-               handlers further below). */
-            $('.branch-picker').each(function() {
-                var $picker = $(this);
-                var target = $picker.data('target');
-                var branchId = $picker.val();
-                var preselectWarehouseId = $picker.data('preselect-warehouse');
-                if (!branchId) return;
+                if (available === undefined || !productId) {
+                    $hint.removeClass('ok low').text('');
+                    return;
+                }
 
-                var $wrap = $('.warehouse-wrap[data-target="' + target + '"]');
-                var $wh = $wrap.find('.warehouse-picker');
+                var total = groupQty(productId, ptype);
+                if (total > available) {
+                    var dup = total > qty ? ' [combined qty of duplicate rows: ' + round2(total) + ']' : '';
+                    $hint.removeClass('ok').addClass('low').text(
+                        'No stock available (Available: ' + available + ')' + dup +
+                        '. Reduce the quantity or remove the row.'
+                    );
+                } else {
+                    $hint.removeClass('low').addClass('ok').text('OK');
+                }
+            }
 
-                $.get("{{ route('project.transferproject.getWarehouses') }}", {
-                        branch_id: branchId
-                    })
-                    .done(function(res) {
-                        if (res.length > 0) {
-                            var options = '<option value="">-- Warehouse --</option>';
-                            $.each(res, function(i, w) {
-                                var sel = (preselectWarehouseId && w.id ==
-                                    preselectWarehouseId) ? 'selected' : '';
-                                options += '<option value="' + w.id + '" ' + sel + '>' + w
-                                    .name + '</option>';
-                            });
-                            $wh.html(options).trigger('change.select2');
-                            $wrap.show();
-                        } else {
-                            $wrap.hide();
+            function validateAllRows() {
+                $('#productRows tr').each(function() {
+                    validateQty($(this));
+                });
+            }
+
+            /* ---------------- Stock lookup: branch + warehouse (or project) ---------------- */
+            function currentFromKey() {
+                if (TYPE === 'branch_to_project') {
+                    var b = $('input[name=from_branch_id]').val();
+                    // hidden input when the warehouse is locked, <select> for old transfers without one
+                    var w = $('[name=from_warehouse_id]').val();
+                    return {
+                        ok: !!(b && w),
+                        params: {
+                            source_type: 'branch',
+                            branch_id: b,
+                            warehouse_id: w
                         }
+                    };
+                }
+                var p = $('select[name=from_project_id]').val();
+                return {
+                    ok: !!p,
+                    params: {
+                        source_type: 'project',
+                        project_id: p
+                    }
+                };
+            }
+
+            function checkStock($row) {
+                var productId = $row.find('.product-select').val();
+                var from = currentFromKey();
+
+                $row.removeData('available'); // never validate against a stale number
+
+                if (!productId || !from.ok) {
+                    $row.find('.stock-hint').removeClass('ok low').text('');
+                    $row.find('.stock-display').val(productId && !from.ok ? 'Select source first' : '-');
+                    return;
+                }
+
+                var seq = ($row.data('stockSeq') || 0) + 1;
+                $row.data('stockSeq', seq);
+                $row.find('.stock-display').val('Checking...');
+
+                // transfer_id lets the server add back the qty this transfer already took from the same source
+                $.get(routes.availableStock, $.extend({
+                        product_id: productId,
+                        purchase_type: $row.find('.purchasetype-select').val(),
+                        transfer_id: TRANSFER_ID
+                    }, from.params))
+                    .done(function(res) {
+                        if ($row.data('stockSeq') !== seq) return; // outdated response
+                        $row.find('.stock-display').val(res.quantity + ' ' + (res.unit || ''));
+                        $row.data('available', res.quantity);
+                        validateAllRows();
+                    })
+                    .fail(function() {
+                        if ($row.data('stockSeq') !== seq) return;
+                        $row.find('.stock-display').val('Error');
                     });
-            });
+            }
 
-            var rowCount = {{ $details->count() }};
+            function checkAllStocks() {
+                $('#productRows tr').each(function() {
+                    checkStock($(this));
+                });
+            }
 
+            /* ---------------- Rows ---------------- */
             function renumberRows() {
                 $('#productRows tr').each(function(i) {
                     $(this).find('.row-index').text(i + 1);
@@ -1090,26 +1153,54 @@
                 });
                 $('#productCountBadge').text(rows + (rows === 1 ? ' item' : ' items'));
                 $('#totalRowsText').text(rows + (rows === 1 ? ' row' : ' rows'));
-                $('#totalQtyText').text(totalQty);
+                $('#totalQtyText').text(round2(totalQty));
                 $('#productTable, .products-toolbar').toggle(rows > 0);
                 $('#productsEmptyHint').toggle(rows === 0);
             }
 
-            $('#addRowBtn').on('click', function() {
-                rowCount++;
+            function addRow() {
                 var $row = $('#rowTemplate tr').clone();
-                $row.find('.row-index').text(rowCount);
                 $('#productRows').append($row);
                 initSelect2($row);
                 renumberRows();
                 updateProductsSummary();
+                return $row;
+            }
+
+            // Existing lines: load the product list of the saved category, keep the saved product selected,
+            // then run the stock check (this fires the change handler below).
+            $('#productRows tr').each(function() {
+                var $row = $(this);
+                var $ps = $row.find('.product-select');
+                var categoryId = $row.find('.category-select').val();
+                var preselectId = String($ps.attr('data-preselect'));
+                var savedName = $ps.find('option:selected').text();
+
+                updateRemainingDisplay($row);
+                if (!categoryId) return;
+
+                $.get(routes.filterProduct, {
+                        category_id: categoryId
+                    })
+                    .done(function(res) {
+                        fillSelect($ps, res, '-- Select Product --');
+                        if (!$ps.find('option[value="' + preselectId + '"]').length) {
+                            // product no longer in the category list: keep the saved one
+                            $ps.append(new Option(savedName, preselectId));
+                        }
+                        $ps.val(preselectId).trigger('change');
+                    });
             });
 
+            $('#addRowBtn').on('click', addRow);
+
+            // add remaining item of the same requisition
             $('#addFromPrBtn').on('click', function() {
-                var $opt = $('#prRemainingSelect option:selected');
+                var $sel = $('#prRemainingSelect');
+                var $opt = $sel.find('option:selected');
                 var productId = $opt.val();
                 if (!productId) {
-                    alert('একটা item সিলেক্ট করুন।');
+                    notify('একটা item সিলেক্ট করুন।');
                     return;
                 }
 
@@ -1117,48 +1208,51 @@
                 var purchasetype = $opt.data('purchasetype');
                 var remaining = parseFloat($opt.data('remaining'));
 
-                rowCount++;
-                var $row = $('#prRowTemplate tr').clone();
-                $('#productRows').append($row);
-                initSelect2($row);
-
+                var $row = addRow();
+                $row.data('prOpt', $opt.clone()); // put it back into the dropdown if the row is removed
                 $row.find('.category-select').val(categoryId).trigger('change.select2');
 
-                $.get("{{ route('project.transferproject.filterproduct') }}", {
+                $.get(routes.filterProduct, {
                         category_id: categoryId
                     })
                     .done(function(res) {
-                        var options = '<option value="">-- Select Product --</option>';
-                        $.each(res, function(i, p) {
-                            var sel = (p.id == productId) ? 'selected' : '';
-                            options += '<option value="' + p.id + '" ' + sel + '>' + p.name +
-                                '</option>';
-                        });
-                        $row.find('.product-select').html(options).trigger('change.select2');
+                        var $ps = $row.find('.product-select');
+                        fillSelect($ps, res, '-- Select Product --');
+                        $ps.val(String(productId));
 
                         $row.find('.purchasetype-select').val(purchasetype || 'local');
                         $row.find('.qty-input').attr('max', remaining).val(remaining);
                         $row.find('input[name="requested_qty[]"]').val(remaining);
                         updateRemainingDisplay($row);
+                        updateProductsSummary();
 
-                        $row.find('.product-select').trigger('change');
+                        $ps.trigger('change');
+                    })
+                    .fail(function() {
+                        notify('Could not load products for this item.');
                     });
 
                 $opt.remove();
-                $('#prRemainingSelect').val('').trigger('change.select2');
-
-                renumberRows();
-                updateProductsSummary();
+                $sel.val('').trigger('change.select2');
             });
 
             $('#productRows').on('click keypress', '.remove-row-btn', function(e) {
-                if (e.type === 'keypress' && e.which !== 13 && e.which !== 32) return;
+                if (e.type === 'keypress') {
+                    if (e.which !== 13 && e.which !== 32) return;
+                    e.preventDefault();
+                }
                 if ($('#productRows tr').length > 1) {
-                    $(this).closest('tr').remove();
+                    var $row = $(this).closest('tr');
+                    var prOpt = $row.data('prOpt');
+                    if (prOpt && $('#prRemainingSelect').length) {
+                        $('#prRemainingSelect').append(prOpt).trigger('change.select2');
+                    }
+                    $row.remove();
                     renumberRows();
                     updateProductsSummary();
+                    validateAllRows();
                 } else {
-                    alert('At least one product row is required.');
+                    notify('At least one product row is required.');
                 }
             });
 
@@ -1166,174 +1260,171 @@
                 var $row = $(this).closest('tr');
                 var categoryId = $(this).val();
                 var $productSelect = $row.find('.product-select');
-                $productSelect.html('<option value="">Loading...</option>');
 
-                $.get("{{ route('project.transferproject.filterproduct') }}", {
+                if (!categoryId) {
+                    fillSelect($productSelect, [], '-- Select category first --');
+                    $productSelect.trigger('change');
+                    return;
+                }
+
+                $row.addClass('product-row-loading');
+                fillSelect($productSelect, [], 'Loading...');
+
+                $.get(routes.filterProduct, {
                         category_id: categoryId
                     })
                     .done(function(res) {
-                        var options = '<option value="">-- Select Product --</option>';
-                        $.each(res, function(i, p) {
-                            options += '<option value="' + p.id + '">' + p.name + '</option>';
-                        });
-                        $productSelect.html(options).trigger('change');
+                        fillSelect($productSelect, res, '-- Select Product --');
+                        $productSelect.trigger('change');
+                    })
+                    .fail(function() {
+                        fillSelect($productSelect, [], 'Could not load products');
+                        $productSelect.trigger('change');
+                    })
+                    .always(function() {
+                        $row.removeClass('product-row-loading');
                     });
             });
 
-
-            function currentFromKey() {
-                var type = '{{ $editInfo->transfer_type }}';
-                if (type === 'branch_to_project') {
-                    return {
-                        type: 'branch',
-                        id: $('input[name=from_branch_id]').val()
-                    };
-                }
-                return {
-                    type: 'project',
-                    id: $('select[name=from_project_id]').val()
-                };
-            }
-
             $('#productRows').on('change', '.product-select, .purchasetype-select', function() {
-                var $row = $(this).closest('tr');
-                var productId = $row.find('.product-select').val();
-                var purchaseType = $row.find('.purchasetype-select').val();
-                var from = currentFromKey();
-
-                if (!productId || !from.id) {
-                    $row.find('.stock-display').val('-');
-                    return;
-                }
-                $row.find('.stock-display').val('Checking...');
-
-
-                $.get("{{ route('project.transferproject.availableStock') }}", {
-                    product_id: productId,
-                    source_type: from.type,
-                    source_id: from.id,
-                    purchase_type: purchaseType
-                }).done(function(res) {
-                    $row.find('.stock-display').val(res.quantity + ' ' + (res.unit || ''));
-                    $row.data('available', res.quantity);
-                    validateQty($row);
-                });
+                checkStock($(this).closest('tr'));
+                validateAllRows();
             });
 
-            function validateQty($row) {
-                var available = $row.data('available');
-                var qty = parseFloat($row.find('.qty-input').val()) || 0;
-                var $hint = $row.find('.stock-hint');
-                if (available === undefined) {
-                    $hint.text('');
-                    return;
-                }
-                if (qty > available) {
-                    $hint.removeClass('ok').addClass('low').text('No stock available (Available: ' + available +
-                        ')');
-                } else {
-                    $hint.removeClass('low').addClass('ok').text('OK');
-                }
-            }
-
             $('#productRows').on('input', '.qty-input', function() {
-                var $row = $(this).closest('tr');
-                validateQty($row);
-                updateRemainingDisplay($row);
+                updateRemainingDisplay($(this).closest('tr'));
+                validateAllRows();
                 updateProductsSummary();
             });
 
-            $(document).on('change', 'input[name=from_branch_id], select[name=from_project_id]', function() {
-                $('#productRows tr').each(function() {
-                    $(this).find('.product-select').trigger('change');
-                });
+            // Source changed -> re-check every row
+            $(document).on('change', 'select[name=from_project_id], select[name=from_warehouse_id]', function() {
+                checkAllStocks();
             });
 
+            /* ---------------- Destination Branch -> Warehouse (project_to_branch) ---------------- */
+            function updateRouteLabel(target) {
+                var $b = $('.branch-picker[data-target="' + target + '"]');
+                var $w = $('.warehouse-picker[data-target="' + target + '"]');
+                var b = $b.val() ? $b.find('option:selected').text() : '';
+                var w = $w.val() ? $w.find('option:selected').text() : '';
+                var text = (b && w) ? b + ' › ' + w : b;
+                $('.route-resolved-text[data-target="' + target + '"]').text(text || '-');
+            }
+
+            $(document).on('change', '.branch-picker', function() {
+                var target = $(this).data('target');
+                var branchId = $(this).val();
+                var $wh = $('.warehouse-picker[data-target="' + target + '"]');
+
+                fillSelect($wh, [], '-- Select branch first --');
+                $wh.trigger('change'); // updates the route label
+                if (!branchId) return;
+
+                fillSelect($wh, [], 'Loading...');
+                $wh.trigger('change.select2');
+
+                $.get(routes.getWarehouses, {
+                        branch_id: branchId
+                    })
+                    .done(function(res) {
+                        if (!res.length) {
+                            fillSelect($wh, [], 'No warehouse under this branch');
+                            $wh.trigger('change.select2');
+                            alert(
+                                'This branch has no warehouse. Create a warehouse first, then save the transfer.');
+                            return;
+                        }
+                        fillSelect($wh, res, '-- Select Warehouse --');
+                        $wh.trigger('change.select2');
+                    })
+                    .fail(function() {
+                        fillSelect($wh, [], 'Could not load warehouses');
+                        $wh.trigger('change.select2');
+                    });
+            });
+
+            $(document).on('change', '.warehouse-picker', function() {
+                updateRouteLabel($(this).data('target'));
+            });
+
+            /* ---------------- Submit guard ---------------- */
+            var $submitBtn = $('#submitBtn');
+            var submitBtnHtml = $submitBtn.html();
+
             $('#transferForm').on('submit', function(e) {
-                var blocked = false,
-                    overRequested = false;
+                function stop(msg) {
+                    e.preventDefault();
+                    alert(msg);
+                }
+
+                // Warehouse is mandatory for branch <-> project transfers
+                if (TYPE === 'branch_to_project' && !$('[name=from_warehouse_id]').val()) {
+                    return stop('Please select the source warehouse.');
+                }
+                if (TYPE === 'project_to_branch' && !$('select[name=to_warehouse_id]').val()) {
+                    return stop('Please select the destination warehouse.');
+                }
+                if (TYPE === 'project_to_project' &&
+                    $('select[name=from_project_id]').val() === $('select[name=to_project_id_b]').val()) {
+                    return stop('Source and destination project cannot be the same.');
+                }
+
+                var unverified = false;
+                var overRequested = false;
+                var pools = {}; // product|purchasetype -> {sum, available}
+
                 $('#productRows tr').each(function() {
                     var $row = $(this);
                     var available = $row.data('available');
                     var qty = parseFloat($row.find('.qty-input').val()) || 0;
                     var requested = parseFloat($row.find('input[name="requested_qty[]"]').val()) ||
                         0;
-                    if (available !== undefined && qty > available) blocked = true;
+                    var key = $row.find('.product-select').val() + '|' + $row.find(
+                            '.purchasetype-select')
+                        .val();
+
+                    if (available === undefined) unverified = true;
                     if (requested > 0 && qty > requested) overRequested = true;
+
+                    pools[key] = pools[key] || {
+                        sum: 0,
+                        available: available
+                    };
+                    pools[key].sum += qty;
+                });
+
+                if (unverified) {
+                    return stop(
+                        'Available stock could not be verified for one or more rows. Wait for the stock check to finish, or re-select the product.'
+                    );
+                }
+
+                var blocked = false;
+                $.each(pools, function(k, p) {
+                    if (p.available !== undefined && p.sum > p.available) blocked = true;
                 });
                 if (blocked) {
-                    e.preventDefault();
-                    alert('One or more rows exceed available stock.');
-                    return;
+                    return stop(
+                        'One or more rows exceed available stock. Please reduce qty or remove the row before updating.'
+                    );
                 }
                 if (overRequested) {
-                    e.preventDefault();
-                    alert('One or more rows exceed the remaining requisition quantity.');
-                    return;
+                    return stop('One or more rows exceed the remaining requisition quantity.');
                 }
-                $(this).find('button[type=submit]').prop('disabled', true).html(
-                    '<i class="fas fa-spinner fa-spin"></i> Updating...');
+
+                $submitBtn.prop('disabled', true)
+                    .html('<i class="fas fa-spinner fa-spin"></i> Updating...');
             });
 
-        });
+            // Back/forward cache: never come back to a stuck "Updating..." button
+            $(window).on('pageshow', function(e) {
+                if (e.originalEvent && e.originalEvent.persisted) {
+                    $submitBtn.prop('disabled', false).html(submitBtnHtml);
+                }
+            });
 
-        function resolveRouteNode(target) {
-            return target === 'to_branch_id' ? $('.route-node-to') : $('.route-node-from');
-        }
-
-        function updateRouteLabel(target, text) {
-            var $resolved = resolveRouteNode(target).find('.route-resolved-text[data-target="' + target + '"]');
-            if ($resolved.length) $resolved.text(text || '-');
-        }
-
-        $(document).on('change', '.branch-picker', function() {
-            var $picker = $(this);
-            var target = $picker.data('target');
-            var $wrap = $('.warehouse-wrap[data-target="' + target + '"]');
-            var $wh = $wrap.find('.warehouse-picker');
-            var branchId = $picker.val();
-            var branchTxt = $picker.find('option:selected').text();
-
-            $('input[type=hidden][name="' + target + '"]').val(branchId).trigger('change');
-            updateRouteLabel(target, branchId ? branchTxt : '');
-
-            if (!branchId) {
-                $wrap.hide();
-                return;
-            }
-
-            $.get("{{ route('project.transferproject.getWarehouses') }}", {
-                    branch_id: branchId
-                })
-                .done(function(res) {
-                    if (res.length > 0) {
-                        var options = '<option value="">-- Warehouse --</option>';
-                        $.each(res, function(i, w) {
-                            options += '<option value="' + w.id + '">' + w.name + '</option>';
-                        });
-                        $wh.html(options).trigger('change.select2');
-                        $wrap.show();
-                    } else {
-                        $wrap.hide();
-                    }
-                });
-        });
-
-        $(document).on('change', '.warehouse-picker', function() {
-            var $picker = $(this);
-            var target = $picker.data('target');
-            var whId = $picker.val();
-            var whTxt = $picker.find('option:selected').text();
-            var branchTxt = $('.branch-picker[data-target="' + target + '"]').find('option:selected').text();
-
-            if (whId) {
-                $('input[type=hidden][name="' + target + '"]').val(whId).trigger('change');
-                updateRouteLabel(target, whTxt);
-            } else {
-                var branchId = $('.branch-picker[data-target="' + target + '"]').val();
-                $('input[type=hidden][name="' + target + '"]').val(branchId).trigger('change');
-                updateRouteLabel(target, branchTxt);
-            }
+            updateProductsSummary();
         });
     </script>
 @endsection

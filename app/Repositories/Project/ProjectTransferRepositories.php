@@ -14,6 +14,7 @@ use App\Models\Stock;
 use App\Models\StockSummary;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class ProjectTransferRepositories
 {
@@ -689,9 +690,9 @@ class ProjectTransferRepositories
 
     public function store($request)
     {
+
         DB::beginTransaction();
         $user = Auth::user();
-
 
         try {
             $type = $request->transfer_type;
@@ -717,10 +718,9 @@ class ProjectTransferRepositories
                 $purchaseorder->branch_id               = $request->from_branch_id;
                 $purchaseorder->project_id               = $request->to_project_id_a;
                 $purchaseorder->purchase_requisition_id = $request->purchase_requisition;
-                // >>> NEW
-                $purchaseorder->warehouse_id     = $this->resolveWarehouseIdForBranch($request->from_branch_id);
-                $purchaseorder->backup_branch_id = $request->from_branch_id; // FIXED: was missing
-                // <<< END NEW
+                $purchaseorder->warehouse_id     = $request->from_warehouse_id;
+                $purchaseorder->backup_branch_id = $request->from_branch_id;
+
                 $fromBranchId = $request->from_branch_id;
             } elseif ($type === 'project_to_project') {
                 $purchaseorder->project_id               = $request->from_project_id;
@@ -733,10 +733,9 @@ class ProjectTransferRepositories
                 $purchaseorder->project_id = $request->from_project_id;
                 $purchaseorder->branch_id  = $request->to_branch_id;
                 $fromProjectId = $request->from_project_id;
-                // >>> NEW
-                $purchaseorder->warehouse_id     = $this->resolveWarehouseIdForBranch($request->to_branch_id);
+                $purchaseorder->warehouse_id     = $request->to_warehouse_id;
                 $purchaseorder->backup_branch_id = $request->to_branch_id; // FIXED: was missing
-                // <<< END NEW
+
             }
 
             $purchaseorder->save();
@@ -775,8 +774,7 @@ class ProjectTransferRepositories
                 if ($type === 'branch_to_project') {
                     $purchaseOrderDetails->branch_id  = $request->from_branch_id;
                     $purchaseOrderDetails->project_id = $request->to_project_id_a;
-
-                    $purchaseOrderDetails->warehouse_id     = $this->resolveWarehouseIdForBranch($request->from_branch_id);
+                    $purchaseOrderDetails->warehouse_id     = $request->from_warehouse_id;
                     $purchaseOrderDetails->backup_branch_id = $request->from_branch_id;
                 } elseif ($type === 'project_to_project') {
                     $purchaseOrderDetails->project_id = $request->to_project_id_b; // destination
@@ -784,28 +782,23 @@ class ProjectTransferRepositories
                 } else {
                     $purchaseOrderDetails->branch_id  = $request->to_branch_id;
                     $purchaseOrderDetails->project_id = $request->from_project_id;
-                    // >>> NEW
-                    $purchaseOrderDetails->warehouse_id     = $this->resolveWarehouseIdForBranch($request->to_branch_id);
+                    $purchaseOrderDetails->warehouse_id     = $request->to_warehouse_id;
                     $purchaseOrderDetails->backup_branch_id = $request->to_branch_id; // FIXED: was missing
-                    // <<< END NEW
+
                 }
                 $purchaseOrderDetails->save();
 
-                // ---- 2b. Stock ledger rows ----
-                // FIXED: every row below now explicitly carries BOTH 'warehouse_id'
-                // and 'backup_branch_id' keys (previously missing on several rows,
-                // causing an undefined-array-key access in the foreach below).
                 $stockRows = [];
 
                 if ($type === 'branch_to_project') {
-                    $stockRows[] = ['branch_id' => $request->from_branch_id, 'warehouse_id' => $this->resolveWarehouseIdForBranch($request->from_branch_id), 'backup_branch_id' => $request->from_branch_id, 'project_id' => null, 'status' => 'Branch to Project', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
+                    $stockRows[] = ['branch_id' => $request->from_branch_id, 'warehouse_id' => $request->from_warehouse_id, 'backup_branch_id' => $request->from_branch_id, 'project_id' => null, 'status' => 'Branch to Project', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
                     $stockRows[] = ['branch_id' => 0, 'warehouse_id' => null, 'backup_branch_id' => null, 'project_id' => $request->to_project_id_a, 'status' => 'Project Transfer In', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
                 } elseif ($type === 'project_to_project') {
                     $stockRows[] = ['branch_id' => 0, 'warehouse_id' => null, 'backup_branch_id' => null, 'project_id' => $request->from_project_id, 'status' => 'Project To Project Out', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
                     $stockRows[] = ['branch_id' => 0, 'warehouse_id' => null, 'backup_branch_id' => null, 'project_id' => $request->to_project_id_b, 'status' => 'Project To Project In', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
                 } else { // project_to_branch
                     $stockRows[] = ['branch_id' => 0, 'warehouse_id' => null, 'backup_branch_id' => null, 'project_id' => $request->from_project_id, 'status' => 'Project Transfer Out', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
-                    $stockRows[] = ['branch_id' => $request->to_branch_id, 'warehouse_id' => $this->resolveWarehouseIdForBranch($request->to_branch_id), 'backup_branch_id' => $request->to_branch_id, 'project_id' => null, 'status' => 'Project to Branch', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
+                    $stockRows[] = ['branch_id' => $request->to_branch_id, 'warehouse_id' => $request->to_warehouse_id, 'backup_branch_id' => $request->to_branch_id, 'project_id' => null, 'status' => 'Project to Branch', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
                 }
 
                 foreach ($stockRows as $row) {
@@ -821,24 +814,16 @@ class ProjectTransferRepositories
                     $stock->status     = $row['status'];
                     $stock->invoice_no = $row['invoice_no'] ?? '';
                     $stock->created_by = $user->id ?? $this->user_id;
-                    // >>> NEW
                     $stock->warehouse_id     = $row['warehouse_id'];
                     $stock->backup_branch_id = $row['backup_branch_id']; // FIXED: was never set before
                     // <<< END NEW
                     $stock->save();
                 }
 
-                // ---- 2c. StockSummary sync (purchasetype-aware) ----
-                // FIXED: the lookup key ($fromMatchKey / $toMatchKey) used in
-                // ->where() below is kept EXACTLY as it was before (branch_id,
-                // product_id, type, purchasetype only) — this preserves the
-                // original matching behavior 100%. The new columns
-                // (project_id, warehouse_id, backup_branch_id) are computed
-                // separately ($fromExtra / $toExtra) and are only ever written
-                // when a NEW row is created — never used for matching.
+         
                 if ($type === 'branch_to_project') {
                     $fromMatchKey = ['branch_id' => $request->from_branch_id, 'product_id' => $productId, 'type' => 'Branch', 'purchasetype' => $ptype];
-                    $fromExtra    = ['project_id' => null, 'warehouse_id' => $this->resolveWarehouseIdForBranch($request->from_branch_id), 'backup_branch_id' => $request->from_branch_id];
+                    $fromExtra    = ['project_id' => null, 'warehouse_id' => $request->from_warehouse_id, 'backup_branch_id' => $request->from_branch_id];
 
                     $toMatchKey = ['branch_id' => $request->to_project_id_a, 'product_id' => $productId, 'type' => 'Project', 'purchasetype' => $ptype];
                     $toExtra    = ['project_id' => $request->to_project_id_a, 'warehouse_id' => null, 'backup_branch_id' => null];
@@ -855,7 +840,7 @@ class ProjectTransferRepositories
                     $fromExtra    = ['project_id' => $request->from_project_id, 'warehouse_id' => null, 'backup_branch_id' => null];
 
                     $toMatchKey = ['branch_id' => $request->to_branch_id, 'product_id' => $productId, 'type' => 'Branch', 'purchasetype' => $ptype];
-                    $toExtra    = ['project_id' => null, 'warehouse_id' => $this->resolveWarehouseIdForBranch($request->to_branch_id), 'backup_branch_id' => $request->to_branch_id];
+                    $toExtra    = ['project_id' => null, 'warehouse_id' => $request->to_warehouse_id, 'backup_branch_id' => $request->to_branch_id];
                 }
 
                 // FROM: decrement (create if somehow missing, to avoid a hard failure)
@@ -870,11 +855,9 @@ class ProjectTransferRepositories
                     $fromRow->type         = $fromMatchKey['type'];
                     $fromRow->purchasetype = $fromMatchKey['purchasetype'];
                     $fromRow->quantity     = -$transferQty;
-                    // >>> NEW
                     $fromRow->project_id       = $fromExtra['project_id'];
                     $fromRow->warehouse_id     = $fromExtra['warehouse_id'];
                     $fromRow->backup_branch_id = $fromExtra['backup_branch_id'];
-                    // <<< END NEW
                     $fromRow->save();
                 }
 
@@ -893,11 +876,9 @@ class ProjectTransferRepositories
                     $toRow->type         = $toMatchKey['type'];
                     $toRow->purchasetype = $toMatchKey['purchasetype'];
                     $toRow->quantity     = $transferQty;
-                    // >>> NEW
                     $toRow->project_id       = $toExtra['project_id'];
                     $toRow->warehouse_id     = $toExtra['warehouse_id'];
                     $toRow->backup_branch_id = $toExtra['backup_branch_id'];
-                    // <<< END NEW
                     $toRow->save();
                 }
 
@@ -946,58 +927,114 @@ class ProjectTransferRepositories
 
     public function update($request, $id)
     {
+        $user            = Auth::user();
+        $projectTransfer = $this->projectTransfer::findOrFail($id);
+        $type            = $projectTransfer->transfer_type; // locked, comes from the existing record — not from $request
+
+        /* ---------- validation (before the transaction; a failure redirects back with errors) ---------- */
+        $rules = [
+            'date'           => 'required|date',
+            'product_nm'     => 'required|array|min:1',
+            'product_nm.*'   => 'required|integer',
+            'category_nm.*'  => 'required|integer',
+            'purchasetype.*' => 'required|in:local,imported',
+            'qty.*'          => 'required|numeric|min:0.01',
+        ];
+
+        if ($type === 'branch_to_project') {
+            $rules['to_project_id_a'] = 'required|exists:projects,id';
+            if (!$projectTransfer->warehouse_id) { // old transfer without a warehouse -> it must be chosen now
+                $rules['from_warehouse_id'] = ['required', Rule::exists('branches', 'id')->where('parent_id', $projectTransfer->branch_id)];
+            }
+        } elseif ($type === 'project_to_project') {
+            $rules['from_project_id'] = 'required|exists:projects,id';
+            $rules['to_project_id_b'] = 'required|exists:projects,id|different:from_project_id';
+        } else { // project_to_branch
+            $rules['from_project_id'] = 'required|exists:projects,id';
+            $rules['to_branch_id']    = ['required', Rule::exists('branches', 'id')->where('parent_id', 0)];
+            $rules['to_warehouse_id'] = ['required', Rule::exists('branches', 'id')->where('parent_id', $request->to_branch_id)];
+        }
+        $request->validate($rules);
+
         DB::beginTransaction();
-        $user = Auth::user();
 
         try {
-            $purchaseorder = $this->projectTransfer::findOrFail($id);
-            $type = $purchaseorder->transfer_type; // locked, comes from the existing record — not from $request
+            // requisition, and the source branch / warehouse of branch_to_project, are locked on edit:
+            // they come from the saved transfer, not from the browser.
+            $prId = $projectTransfer->purchase_requisition_id;
 
-            $oldDetails = ProjectTransferDetails::where('project_transfer_id', $id)->get();
+            $fromBranchId    = null;
+            $fromWarehouseId = null;
+            $fromProjectId   = null;
+            $toBranchId      = null;
+            $toWarehouseId   = null;
 
-            // ---------- STEP 1: reverse old effects (StockSummary + pr_details.remaining_qty) ----------
-            // NOTE: match keys here are intentionally kept EXACTLY as before (branch_id,
-            // product_id, type, purchasetype only) — same as store()'s StockSummary
-            // matching convention — so this correctly finds/reverses rows regardless
-            // of whether they were created by the old or new store() logic.
-            foreach ($oldDetails as $old) {
-                $oldQty = (float) $old->qty;
-                $ptype  = $old->purchasetype ?: 'local';
+            if ($type === 'branch_to_project') {
+                $fromBranchId    = $projectTransfer->branch_id ?: $request->from_branch_id;
+                $fromWarehouseId = $projectTransfer->warehouse_id ?: $request->from_warehouse_id;
+            } elseif ($type === 'project_to_project') {
+                $fromProjectId = $request->from_project_id;
+            } else { // project_to_branch
+                $fromProjectId = $request->from_project_id;
+                $toBranchId    = $request->to_branch_id;
+                $toWarehouseId = $request->to_warehouse_id;
+            }
+
+            // pr_details line: same product + purchase type first, then any line of that product
+            $findPr = function ($productId, $ptype) use ($prId) {
+                $base = PrDetails::where('pr_id', $prId)->where('product_id', $productId);
+
+                return (clone $base)->where('purchasetype', $ptype)->lockForUpdate()->first()
+                    ?? $base->lockForUpdate()->first();
+            };
+
+            /* ---------- STEP 1: give the OLD quantities back (keys come from the saved transfer) ---------- */
+            $PrTrDetails = ProjectTransferDetails::where('project_transfer_id', $id)->get();
+
+            foreach ($PrTrDetails as $detail) {
+                $Qty      = (float) $detail->qty;
+                $oldPtype = $detail->purchasetype ?: 'local';
+                $pid      = $detail->product_id;
 
                 if ($type === 'branch_to_project') {
-                    $fromKey = ['branch_id' => $purchaseorder->branch_id, 'product_id' => $old->product_id, 'type' => 'Branch', 'purchasetype' => $ptype];
-                    $toKey   = ['branch_id' => $purchaseorder->project_id, 'product_id' => $old->product_id, 'type' => 'Project', 'purchasetype' => $ptype];
+                    $fromKey = ['branch_id' => $projectTransfer->branch_id, 'warehouse_id' => $projectTransfer->warehouse_id, 'product_id' => $pid, 'type' => 'Branch', 'purchasetype' => $oldPtype];
+                    $toKey   = ['branch_id' => $projectTransfer->project_id, 'product_id' => $pid, 'type' => 'Project', 'purchasetype' => $oldPtype];
                 } elseif ($type === 'project_to_project') {
-                    $fromKey = ['branch_id' => $purchaseorder->project_id, 'product_id' => $old->product_id, 'type' => 'Project', 'purchasetype' => $ptype];
-                    $toKey   = ['branch_id' => $purchaseorder->to_project_id, 'product_id' => $old->product_id, 'type' => 'Project', 'purchasetype' => $ptype];
+                    $fromKey = ['branch_id' => $projectTransfer->project_id, 'product_id' => $pid, 'type' => 'Project', 'purchasetype' => $oldPtype];
+                    $toKey   = ['branch_id' => $projectTransfer->to_project_id, 'product_id' => $pid, 'type' => 'Project', 'purchasetype' => $oldPtype];
                 } else { // project_to_branch
-                    $fromKey = ['branch_id' => $purchaseorder->project_id, 'product_id' => $old->product_id, 'type' => 'Project', 'purchasetype' => $ptype];
-                    $toKey   = ['branch_id' => $purchaseorder->branch_id, 'product_id' => $old->product_id, 'type' => 'Branch', 'purchasetype' => $ptype];
+                    $fromKey = ['branch_id' => $projectTransfer->project_id, 'product_id' => $pid, 'type' => 'Project', 'purchasetype' => $oldPtype];
+                    $toKey   = ['branch_id' => $projectTransfer->branch_id, 'warehouse_id' => $projectTransfer->warehouse_id, 'product_id' => $pid, 'type' => 'Branch', 'purchasetype' => $oldPtype];
                 }
 
                 // give back to source
-                $fromRow = StockSummary::where($fromKey)->first();
+                $fromRow = StockSummary::where($fromKey)->lockForUpdate()->first();
                 if ($fromRow) {
-                    $fromRow->quantity = $fromRow->quantity + $oldQty;
+                    $fromRow->quantity = $fromRow->quantity + $Qty;
                     $fromRow->save();
                 }
 
                 // remove from destination
-                $toRow = StockSummary::where($toKey)->first();
+                $toRow = StockSummary::where($toKey)->lockForUpdate()->first();
                 if ($toRow) {
-                    $toRow->quantity = $toRow->quantity - $oldQty;
+                    $toRow->quantity = $toRow->quantity - $Qty;
                     $toRow->save();
+
+                    if ((float) $toRow->quantity < -0.00001) {
+                        throw new \RuntimeException(
+                            'This transfer cannot be edited: the received quantity of product #' . $pid .
+                                ' has already been used or moved out of the destination.'
+                        );
+                    }
                 }
 
-                // restore requisition remaining balance (branch_to_project only, requisition-linked lines only)
-                if ($type === 'branch_to_project' && $purchaseorder->purchase_requisition_id && $old->requested_qty !== null) {
-                    $prDetail = PrDetails::where('pr_id', $purchaseorder->purchase_requisition_id)
-                        ->where('product_id', $old->product_id)
-                        ->first();
+                // restore requisition remaining balance (branch_to_project only, same rule as step 3d)
+                if ($type === 'branch_to_project' && $prId) {
+                    $prDetail = $findPr($pid, $oldPtype);
 
                     if ($prDetail) {
                         $current  = $prDetail->remaining_qty !== null ? (float) $prDetail->remaining_qty : (float) $prDetail->qty;
-                        $restored = min($current + $oldQty, (float) $prDetail->qty);
+                        $restored = min($current + $Qty, (float) $prDetail->qty);
 
                         $prDetail->remaining_qty = $restored;
                         $prDetail->status        = $restored >= (float) $prDetail->qty ? 'Accepted' : 'Partial';
@@ -1006,58 +1043,111 @@ class ProjectTransferRepositories
                 }
             }
 
-            // remove old ledger + detail rows tied to this transfer
-            Stock::where('general_id', $id)->delete();
-            ProjectTransferDetails::where('project_transfer_id', $id)->delete();
-
-            // ---------- STEP 2: update header (mirrors store()'s header logic, incl. warehouse_id/backup_branch_id) ----------
-            $purchaseorder->order_date = $request->date;
-            $purchaseorder->note       = $request->note;
-            // invoice_no is intentionally left untouched — update() never regenerates it
-
-            $fromBranchId  = null;
-            $fromProjectId = null;
-
-            if ($type === 'branch_to_project') {
-                $purchaseorder->branch_id               = $request->from_branch_id;
-                $purchaseorder->project_id               = $request->to_project_id_a;
-                $purchaseorder->purchase_requisition_id = $request->purchase_requisition;
-                $purchaseorder->warehouse_id             = $this->resolveWarehouseIdForBranch($request->from_branch_id);
-                $purchaseorder->backup_branch_id         = $request->from_branch_id;
-                $fromBranchId = $request->from_branch_id;
-            } elseif ($type === 'project_to_project') {
-                $purchaseorder->project_id               = $request->from_project_id;
-                $purchaseorder->to_project_id            = $request->to_project_id_b;
-                $purchaseorder->purchase_requisition_id = $request->purchase_requisition ?: null;
-                $purchaseorder->warehouse_id             = null;
-                $purchaseorder->backup_branch_id         = null;
-                $fromProjectId = $request->from_project_id;
-            } else { // project_to_branch
-                $purchaseorder->project_id       = $request->from_project_id;
-                $purchaseorder->branch_id        = $request->to_branch_id;
-                $purchaseorder->warehouse_id     = $this->resolveWarehouseIdForBranch($request->to_branch_id);
-                $purchaseorder->backup_branch_id = $request->to_branch_id;
-                $fromProjectId = $request->from_project_id;
-            }
-
-            $purchaseorder->save();
-            $purchaseOr_id = $purchaseorder->id;
-            $invoiceNo     = $purchaseorder->invoice_no; // reuse existing invoice_no on every stock row, same as store()
-
-            // ---------- STEP 3: re-apply exactly like store() ----------
+            /* ---------- STEP 1b: check the NEW lines BEFORE anything is re-applied ---------- */
             $category     = $request->category_nm;
             $product      = $request->product_nm;
             $qty          = $request->qty;
             $purchasetype = $request->purchasetype;
             $requestedQty = $request->requested_qty ?? [];
 
+            $pools = []; // product|purchasetype => total qty (duplicate rows share one stock pool)
+            for ($i = 0; $i < count($product); $i++) {
+                $poolKey         = $product[$i] . '|' . ($purchasetype[$i] ?? 'local');
+                $pools[$poolKey] = ($pools[$poolKey] ?? 0) + (float) $qty[$i];
+            }
+
+            $prBefore = []; // remaining requisition qty before this transfer (per pool)
+            foreach ($pools as $poolKey => $sum) {
+                [$pid, $pt] = explode('|', $poolKey, 2);
+
+                if ($type === 'branch_to_project') {
+                    $srcKey = ['branch_id' => $fromBranchId, 'warehouse_id' => $fromWarehouseId, 'product_id' => $pid, 'type' => 'Branch', 'purchasetype' => $pt];
+                } else {
+                    $srcKey = ['branch_id' => $fromProjectId, 'product_id' => $pid, 'type' => 'Project', 'purchasetype' => $pt];
+                }
+
+                $srcRow    = StockSummary::where($srcKey)->lockForUpdate()->first();
+                $available = $srcRow ? (float) $srcRow->quantity : 0.0;
+
+                if ($sum > $available + 0.00001) {
+                    throw new \RuntimeException(
+                        'Insufficient stock for product #' . $pid . ' (' . $pt . '). Available: ' .
+                            round($available, 2) . ', requested: ' . round($sum, 2) . '.'
+                    );
+                }
+
+                if ($type === 'branch_to_project' && $prId) {
+                    $prDetail = $findPr($pid, $pt);
+                    if ($prDetail) {
+                        $remaining = $prDetail->remaining_qty !== null ? (float) $prDetail->remaining_qty : (float) $prDetail->qty;
+                        if ($sum > $remaining + 0.00001) {
+                            throw new \RuntimeException(
+                                'Quantity of product #' . $pid . ' exceeds the remaining requisition quantity (' . round($remaining, 2) . ').'
+                            );
+                        }
+                        $prBefore[$poolKey] = $remaining;
+                    }
+                }
+            }
+
+            // remove old ledger + detail rows tied to THIS transfer.
+            // general_id is a generic id, so the delete is limited to this transfer's invoice / statuses.
+            Stock::where('general_id', $id)
+                ->where(function ($q) use ($projectTransfer) {
+                    $q->where('invoice_no', $projectTransfer->invoice_no)
+                        ->orWhereIn('status', [
+                            'Branch to Project',
+                            'Project Transfer In',
+                            'Project To Project Out',
+                            'Project To Project In',
+                            'Project Transfer Out',
+                            'Project to Branch',
+                        ]);
+                })
+                ->delete();
+
+            ProjectTransferDetails::where('project_transfer_id', $id)->delete();
+
+            /* ---------- STEP 2: update header ---------- */
+            $projectTransfer->order_date = $request->date;
+            $projectTransfer->note       = $request->note;
+            $projectTransfer->update_by  = $user->id ?? $this->user_id;
+            // invoice_no and purchase_requisition_id are intentionally left untouched
+
+            if ($type === 'branch_to_project') {
+                $projectTransfer->branch_id         = $fromBranchId;
+                $projectTransfer->warehouse_id      = $fromWarehouseId;
+                $projectTransfer->project_id        = $request->to_project_id_a;
+                $projectTransfer->backup_branch_id  = $fromBranchId;
+            } elseif ($type === 'project_to_project') {
+                $projectTransfer->project_id        = $request->from_project_id;
+                $projectTransfer->to_project_id     = $request->to_project_id_b;
+                $projectTransfer->warehouse_id      = null;
+                $projectTransfer->backup_branch_id  = null;
+            } else { // project_to_branch
+                $projectTransfer->project_id        = $request->from_project_id;
+                $projectTransfer->branch_id         = $toBranchId;
+                $projectTransfer->warehouse_id      = $toWarehouseId;
+                $projectTransfer->backup_branch_id  = $toBranchId;
+            }
+
+            $projectTransfer->save();
+            $purchaseOr_id = $projectTransfer->id;
+            $invoiceNo     = $projectTransfer->invoice_no; // reuse existing invoice_no on every stock row
+
+            /* ---------- STEP 3: re-apply the new lines ---------- */
             for ($i = 0; $i < count($product); $i++) {
                 $productId   = $product[$i];
                 $transferQty = (float) $qty[$i];
                 $ptype       = $purchasetype[$i] ?? 'local';
-                $reqQtySnap  = isset($requestedQty[$i]) && $requestedQty[$i] !== '' ? (float) $requestedQty[$i] : null;
+                $poolKey     = $productId . '|' . $ptype;
 
-                $unitPrice  = $this->resolveUnitPrice($type, $productId, $fromBranchId, $fromProjectId);
+                // branch_to_project lines take the snapshot from the server, not from the browser
+                $clientSnap = isset($requestedQty[$i]) && $requestedQty[$i] !== '' ? (float) $requestedQty[$i] : null;
+                $reqQtySnap = $prBefore[$poolKey] ?? $clientSnap;
+
+                // 5th argument = warehouse (use it inside resolveUnitPrice if the price is read per warehouse)
+                $unitPrice  = $this->resolveUnitPrice($type, $productId, $fromBranchId, $fromProjectId, $fromWarehouseId);
                 $totalPrice = round($unitPrice * $transferQty);
 
                 // ---- 3a. Detail line ----
@@ -1073,35 +1163,33 @@ class ProjectTransferRepositories
                 $detail->status              = 'Accepted';
 
                 if ($type === 'branch_to_project') {
-                    $detail->branch_id  = $request->from_branch_id;
-                    $detail->project_id = $request->to_project_id_a;
-
-                    $detail->warehouse_id     = $this->resolveWarehouseIdForBranch($request->from_branch_id);
-                    $detail->backup_branch_id = $request->from_branch_id;
+                    $detail->branch_id        = $fromBranchId;
+                    $detail->warehouse_id     = $fromWarehouseId;
+                    $detail->backup_branch_id = $fromBranchId;
+                    $detail->project_id       = $request->to_project_id_a;
                 } elseif ($type === 'project_to_project') {
                     $detail->project_id = $request->to_project_id_b;
                     // no branch involved -> warehouse_id / backup_branch_id stay NULL
-                } else {
-                    $detail->branch_id  = $request->to_branch_id;
-                    $detail->project_id = $request->from_project_id;
-
-                    $detail->warehouse_id     = $this->resolveWarehouseIdForBranch($request->to_branch_id);
-                    $detail->backup_branch_id = $request->to_branch_id;
+                } else { // project_to_branch
+                    $detail->branch_id        = $toBranchId;
+                    $detail->warehouse_id     = $toWarehouseId;
+                    $detail->backup_branch_id = $toBranchId;
+                    $detail->project_id       = $request->from_project_id;
                 }
                 $detail->save();
 
-                // ---- 3b. Stock ledger rows (mirrors store()'s stockRows structure exactly) ----
+                // ---- 3b. Stock ledger rows ----
                 $stockRows = [];
 
                 if ($type === 'branch_to_project') {
-                    $stockRows[] = ['branch_id' => $request->from_branch_id, 'warehouse_id' => $this->resolveWarehouseIdForBranch($request->from_branch_id), 'backup_branch_id' => $request->from_branch_id, 'project_id' => null, 'status' => 'Branch to Project', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
-                    $stockRows[] = ['branch_id' => 0, 'warehouse_id' => null, 'backup_branch_id' => null, 'project_id' => $request->to_project_id_a, 'status' => 'Project Transfer In', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
+                    $stockRows[] = ['branch_id' => $fromBranchId, 'warehouse_id' => $fromWarehouseId, 'backup_branch_id' => $fromBranchId, 'project_id' => null, 'status' => 'Branch to Project'];
+                    $stockRows[] = ['branch_id' => 0, 'warehouse_id' => null, 'backup_branch_id' => null, 'project_id' => $request->to_project_id_a, 'status' => 'Project Transfer In'];
                 } elseif ($type === 'project_to_project') {
-                    $stockRows[] = ['branch_id' => 0, 'warehouse_id' => null, 'backup_branch_id' => null, 'project_id' => $request->from_project_id, 'status' => 'Project To Project Out', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
-                    $stockRows[] = ['branch_id' => 0, 'warehouse_id' => null, 'backup_branch_id' => null, 'project_id' => $request->to_project_id_b, 'status' => 'Project To Project In', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
+                    $stockRows[] = ['branch_id' => 0, 'warehouse_id' => null, 'backup_branch_id' => null, 'project_id' => $request->from_project_id, 'status' => 'Project To Project Out'];
+                    $stockRows[] = ['branch_id' => 0, 'warehouse_id' => null, 'backup_branch_id' => null, 'project_id' => $request->to_project_id_b, 'status' => 'Project To Project In'];
                 } else { // project_to_branch
-                    $stockRows[] = ['branch_id' => 0, 'warehouse_id' => null, 'backup_branch_id' => null, 'project_id' => $request->from_project_id, 'status' => 'Project Transfer Out', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
-                    $stockRows[] = ['branch_id' => $request->to_branch_id, 'warehouse_id' => $this->resolveWarehouseIdForBranch($request->to_branch_id), 'backup_branch_id' => $request->to_branch_id, 'project_id' => null, 'status' => 'Project to Branch', 'invoice_no' => $invoiceNo, 'unit_price' => $unitPrice, 'totalPrice' => $totalPrice];
+                    $stockRows[] = ['branch_id' => 0, 'warehouse_id' => null, 'backup_branch_id' => null, 'project_id' => $request->from_project_id, 'status' => 'Project Transfer Out'];
+                    $stockRows[] = ['branch_id' => $toBranchId, 'warehouse_id' => $toWarehouseId, 'backup_branch_id' => $toBranchId, 'project_id' => null, 'status' => 'Project to Branch'];
                 }
 
                 foreach ($stockRows as $row) {
@@ -1109,23 +1197,24 @@ class ProjectTransferRepositories
                     $stock->general_id       = $purchaseOr_id;
                     $stock->product_id       = $productId;
                     $stock->quantity         = $transferQty;
-                    $stock->unit_price       = $row['unit_price'];
-                    $stock->total_price      = $row['totalPrice'];
+                    $stock->unit_price       = $unitPrice;
+                    $stock->total_price      = $totalPrice;
                     $stock->branch_id        = $row['branch_id'];
+                    $stock->warehouse_id     = $row['warehouse_id'];
                     $stock->project_id       = $row['project_id'];
                     $stock->date             = $request->date;
                     $stock->status           = $row['status'];
-                    $stock->invoice_no       = $row['invoice_no'] ?? '';
+                    $stock->invoice_no       = $invoiceNo ?? '';
                     $stock->created_by       = $user->id ?? $this->user_id;
-                    $stock->warehouse_id     = $row['warehouse_id'];
                     $stock->backup_branch_id = $row['backup_branch_id'];
                     $stock->save();
                 }
 
-                // ---- 3c. StockSummary sync (matching key unchanged, extra columns only on new-row creation) ----
+                // ---- 3c. StockSummary: Branch rows are matched by branch_id + warehouse_id ----
                 if ($type === 'branch_to_project') {
-                    $fromMatchKey = ['branch_id' => $request->from_branch_id, 'product_id' => $productId, 'type' => 'Branch', 'purchasetype' => $ptype];
-                    $fromExtra    = ['project_id' => null, 'warehouse_id' => $this->resolveWarehouseIdForBranch($request->from_branch_id), 'backup_branch_id' => $request->from_branch_id];
+                    // FROM = branch + warehouse (decreases) | TO = project (increases)
+                    $fromMatchKey = ['branch_id' => $fromBranchId, 'warehouse_id' => $fromWarehouseId, 'product_id' => $productId, 'type' => 'Branch', 'purchasetype' => $ptype];
+                    $fromExtra    = ['project_id' => null, 'warehouse_id' => $fromWarehouseId, 'backup_branch_id' => $fromBranchId];
 
                     $toMatchKey = ['branch_id' => $request->to_project_id_a, 'product_id' => $productId, 'type' => 'Project', 'purchasetype' => $ptype];
                     $toExtra    = ['project_id' => $request->to_project_id_a, 'warehouse_id' => null, 'backup_branch_id' => null];
@@ -1135,26 +1224,27 @@ class ProjectTransferRepositories
 
                     $toMatchKey = ['branch_id' => $request->to_project_id_b, 'product_id' => $productId, 'type' => 'Project', 'purchasetype' => $ptype];
                     $toExtra    = ['project_id' => $request->to_project_id_b, 'warehouse_id' => null, 'backup_branch_id' => null];
-                } else {
+                } else { // project_to_branch
+                    // FROM = project (decreases) | TO = branch + warehouse (increases)
                     $fromMatchKey = ['branch_id' => $request->from_project_id, 'product_id' => $productId, 'type' => 'Project', 'purchasetype' => $ptype];
                     $fromExtra    = ['project_id' => $request->from_project_id, 'warehouse_id' => null, 'backup_branch_id' => null];
 
-                    $toMatchKey = ['branch_id' => $request->to_branch_id, 'product_id' => $productId, 'type' => 'Branch', 'purchasetype' => $ptype];
-                    $toExtra    = ['project_id' => null, 'warehouse_id' => $this->resolveWarehouseIdForBranch($request->to_branch_id), 'backup_branch_id' => $request->to_branch_id];
+                    $toMatchKey = ['branch_id' => $toBranchId, 'warehouse_id' => $toWarehouseId, 'product_id' => $productId, 'type' => 'Branch', 'purchasetype' => $ptype];
+                    $toExtra    = ['project_id' => null, 'warehouse_id' => $toWarehouseId, 'backup_branch_id' => $toBranchId];
                 }
 
                 // FROM: decrement (create if somehow missing, to avoid a hard failure)
-                $fromRow = StockSummary::where($fromMatchKey)->first();
+                $fromRow = StockSummary::where($fromMatchKey)->lockForUpdate()->first();
                 if ($fromRow) {
                     $fromRow->quantity = $fromRow->quantity - $transferQty;
                     $fromRow->save();
                 } else {
                     $fromRow = new StockSummary();
-                    $fromRow->branch_id    = $fromMatchKey['branch_id'];
-                    $fromRow->product_id   = $fromMatchKey['product_id'];
-                    $fromRow->type         = $fromMatchKey['type'];
-                    $fromRow->purchasetype = $fromMatchKey['purchasetype'];
-                    $fromRow->quantity     = -$transferQty;
+                    $fromRow->branch_id        = $fromMatchKey['branch_id'];
+                    $fromRow->product_id       = $fromMatchKey['product_id'];
+                    $fromRow->type             = $fromMatchKey['type'];
+                    $fromRow->purchasetype     = $fromMatchKey['purchasetype'];
+                    $fromRow->quantity         = -$transferQty;
                     $fromRow->project_id       = $fromExtra['project_id'];
                     $fromRow->warehouse_id     = $fromExtra['warehouse_id'];
                     $fromRow->backup_branch_id = $fromExtra['backup_branch_id'];
@@ -1162,17 +1252,17 @@ class ProjectTransferRepositories
                 }
 
                 // TO: increment or create
-                $toRow = StockSummary::where($toMatchKey)->first();
+                $toRow = StockSummary::where($toMatchKey)->lockForUpdate()->first();
                 if ($toRow) {
                     $toRow->quantity = $toRow->quantity + $transferQty;
                     $toRow->save();
                 } else {
                     $toRow = new StockSummary();
-                    $toRow->branch_id    = $toMatchKey['branch_id'];
-                    $toRow->product_id   = $toMatchKey['product_id'];
-                    $toRow->type         = $toMatchKey['type'];
-                    $toRow->purchasetype = $toMatchKey['purchasetype'];
-                    $toRow->quantity     = $transferQty;
+                    $toRow->branch_id        = $toMatchKey['branch_id'];
+                    $toRow->product_id       = $toMatchKey['product_id'];
+                    $toRow->type             = $toMatchKey['type'];
+                    $toRow->purchasetype     = $toMatchKey['purchasetype'];
+                    $toRow->quantity         = $transferQty;
                     $toRow->project_id       = $toExtra['project_id'];
                     $toRow->warehouse_id     = $toExtra['warehouse_id'];
                     $toRow->backup_branch_id = $toExtra['backup_branch_id'];
@@ -1180,10 +1270,8 @@ class ProjectTransferRepositories
                 }
 
                 // ---- 3d. Decrement pr_details.remaining_qty (branch_to_project only) ----
-                if ($type === 'branch_to_project' && $request->purchase_requisition) {
-                    $prDetail = PrDetails::where('pr_id', $request->purchase_requisition)
-                        ->where('product_id', $productId)
-                        ->first();
+                if ($type === 'branch_to_project' && $prId) {
+                    $prDetail = $findPr($productId, $ptype);
 
                     if ($prDetail) {
                         $current      = $prDetail->remaining_qty !== null ? (float) $prDetail->remaining_qty : (float) $prDetail->qty;
@@ -1196,9 +1284,9 @@ class ProjectTransferRepositories
                 }
             }
 
-            // ---------- STEP 4: requisition header status (branch_to_project only, mirrors store()) ----------
-            if ($type === 'branch_to_project' && $request->purchase_requisition) {
-                PurchaseRequisition::where('id', $request->purchase_requisition)->update([
+            /* ---------- STEP 4: requisition header status (branch_to_project only) ---------- */
+            if ($type === 'branch_to_project' && $prId) {
+                PurchaseRequisition::where('id', $prId)->update([
                     'approve_by' => $user->id ?? $this->user_id,
                     'approve_at' => date('Y-m-d'),
                     'status'     => 'Accepted',
@@ -1206,7 +1294,7 @@ class ProjectTransferRepositories
             }
 
             DB::commit();
-            return $purchaseorder;
+            return $projectTransfer;
         } catch (\Exception $e) {
             DB::rollback();
             \Log::error('ProjectTransfer update failed: ' . $e->getMessage(), [
@@ -1217,6 +1305,8 @@ class ProjectTransferRepositories
             return null;
         }
     }
+
+
     // public function update($request, $id)
     // {
     //     DB::beginTransaction();
@@ -1707,8 +1797,6 @@ class ProjectTransferRepositories
         }
 
         $branch = DB::table('branches')->where('id', $branchId)->first();
-
-
         // no matching branches row, or it's a real branch (parent_id = 0) -> no warehouse mapping
         if (!$branch || (int) $branch->parent_id === 0) {
             return null;

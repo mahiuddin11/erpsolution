@@ -1,6 +1,6 @@
 @extends('backend.layouts.master')
 @section('title')
-    Stock - {{ $title }}
+    Stock Transfer - {{ $title }}
 @endsection
 
 @section('styles')
@@ -16,21 +16,21 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1 class="m-0">
-                        Stock </h1>
-                </div><!-- /.col -->
+                    {{-- <h1 class="m-0">Stock Transfer</h1> --}}
+                </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('home') }}">Dashboard</a></li>
                         @if (helper::roleAccess('inventorySetup.transfer.index'))
-                            <li class="breadcrumb-item"><a href="{{ route('inventorySetup.transfer.index') }}">Sale</a>
+                            <li class="breadcrumb-item">
+                                <a href="{{ route('inventorySetup.transfer.index') }}">Transfer List</a>
                             </li>
                         @endif
-                        <li class="breadcrumb-item active"><span>Stock Tranfer List</span></li>
+                        <li class="breadcrumb-item active"><span>Stock Transfer Edit</span></li>
                     </ol>
-                </div><!-- /.col -->
-            </div><!-- /.row -->
-        </div><!-- /.container-fluid -->
+                </div>
+            </div>
+        </div>
     </div>
 @endsection
 
@@ -39,21 +39,25 @@
         <div class="col-md-12">
             <div class="card card-default">
                 <div class="card-header">
-                    <h3 class="card-title">Stock Tranfer </h3>
+                    <h3 class="card-title">Stock Transfer Edit</h3>
                 </div>
 
-
                 <div class="card-body">
-                    <form class="needs-validation" method="POST"
+                    <form id="transferForm" class="needs-validation" method="POST"
                         action="{{ route('inventorySetup.transfer.update', $transfe->id) }}" novalidate>
                         @csrf
+
                         <div class="form-row">
+
+                            {{-- Invoice Number --}}
                             <div class="col-md-3 mb-3">
-                                <label for="validationCustom01">Invoice Number :</label>
-                                <input class="bg-green form-control" readonly=""
-                                    style="padding: 5px; font-weight : bold; width: 100%"
-                                    value="{{ $transfe->voucher_code }}" for="validationCustom01">
+                                <label>Invoice Number :</label>
+                                <input class="bg-green form-control" readonly
+                                    style="padding: 5px; font-weight: bold; width: 100%"
+                                    value="{{ $transfe->voucher_code }}">
                             </div>
+
+                            {{-- Date --}}
                             <div class="col-md-3 mb-3">
                                 <label>Date:</label>
                                 <div class="input-group date" id="reservationdate" data-target-input="nearest">
@@ -65,147 +69,183 @@
                                         <div class="input-group-text"><i class="fa fa-calendar"></i></div>
                                     </div>
                                 </div>
-
                                 @error('date')
-                                    <span class=" error text-red text-bold">{{ $message }}</span>
+                                    <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
+
+                            <div class="w-100"></div>
+
+                            {{-- From Branch --}}
                             <div class="col-md-3 mb-3">
-                                <label for="validationCustom01">From Branch * :</label>
-                                <select class="form-control select2" id="from_branch_id" name="from_branch_id"
-                                    onchange="duplicateBranchCheck()">
-                                    <option selected disabled value="">--Select Branch--</option>
-                                    @foreach ($branch as $key => $value)
-                                        <option {{ $transfe->from_branch_id == $value->id ? 'selected' : '' }}
-                                            value="{{ $value->id }}">
-                                            {{ $value->branchCode . ' - ' . $value->name }}
+                                <label>From Branch * :</label>
+                                <select class="form-control select2 from_branch" id="from_branch_id" name="from_branch_id">
+                                    <option disabled value="" {{ $transfe->from_branch_id ? '' : 'selected' }}>
+                                        --Select
+                                        Branch--</option>
+                                    @foreach ($formattedBranches as $value)
+                                        <option value="{{ $value->id }}"
+                                            {{ (int) $transfe->from_branch_id === (int) $value->id ? 'selected' : '' }}>
+                                            {{ $value->display_name }}
                                         </option>
                                     @endforeach
                                 </select>
                                 @error('from_branch_id')
-                                    <span class=" error text-red text-bold">{{ $message }}</span>
+                                    <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
+
+                            {{-- From Warehouse (JS দিয়ে ভরবে) --}}
                             <div class="col-md-3 mb-3">
-                                <label for="validationCustom01">To Branch * :</label>
-                                <select class="form-control select2" id="to_branch_id" name="to_branch_id"
-                                    onchange="duplicateBranchCheck()">
-                                    <option selected disabled value="">--Select Branch--</option>
-                                    @foreach ($tobranch as $key => $value)
-                                        <option {{ $transfe->to_branch_id == $value->id ? 'selected' : '' }}
-                                            value="{{ $value->id }}">
-                                            {{ $value->branchCode . ' - ' . $value->name }}
+                                <label>From Warehouse * :</label>
+                                <select class="form-control select2" id="from_warehouse_id" name="from_warehouse_id"
+                                    disabled>
+                                    <option selected disabled value="">-- Select Branch First --</option>
+                                </select>
+                                @error('from_warehouse_id')
+                                    <span class="error text-red text-bold">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            {{-- To Branch --}}
+                            <div class="col-md-3 mb-3">
+                                <label>To Branch * :</label>
+                                <select class="form-control select2" id="to_branch_id" name="to_branch_id">
+                                    <option disabled value="" {{ $transfe->to_branch_id ? '' : 'selected' }}>--Select
+                                        Branch--</option>
+                                    @foreach ($formattedToBranches as $value)
+                                        <option value="{{ $value->id }}"
+                                            {{ (int) $transfe->to_branch_id === (int) $value->id ? 'selected' : '' }}>
+                                            {{ $value->display_name }}
                                         </option>
                                     @endforeach
                                 </select>
                                 @error('to_branch_id')
-                                    <span class=" error text-red text-bold">{{ $message }}</span>
+                                    <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
 
-                            <table class=" table-responsive table table-bordered">
+                            {{-- To Warehouse (JS দিয়ে ভরবে) --}}
+                            <div class="col-md-3 mb-3">
+                                <label>To Warehouse * :</label>
+                                <select class="form-control select2" id="to_warehouse_id" name="to_warehouse_id" disabled>
+                                    <option selected disabled value="">-- Select Branch First --</option>
+                                </select>
+                                @error('to_warehouse_id')
+                                    <span class="error text-red text-bold">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            {{-- Product Table --}}
+                            <table class="table-responsive table table-bordered w-100">
                                 <tr>
                                     <td>
-                                        <div class="col-md-9 float-left ">
-                                            Transfer Item
-                                        </div>
-                                        <div class="col-md-3 float-right">
-                                        </div>
+                                        <div class="col-md-9 float-left">Transfer Item</div>
+                                        <div class="col-md-3 float-right"></div>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td style="padding: 10px!important;">
+                                    <td style="padding: 10px !important;">
                                         <div class="col-md-12">
                                             <div class="col-md-12 float-left">
                                                 <div class="panel panel-default">
                                                     <div class="panel-body">
-
                                                         <table class="table table-bordered table-hover tableAddItem"
                                                             id="show_item">
                                                             <thead>
                                                                 <tr>
-                                                                    <th nowrap style="width:20%" align="center"
-                                                                        id="">
-                                                                        <strong>Product Category <span style="color:red;">
-                                                                                *</span></strong>
+                                                                    <th nowrap style="width:18%" align="center">
+                                                                        <strong>Product Category <span
+                                                                                style="color:red;">*</span></strong>
                                                                     </th>
-                                                                    <th nowrap style="width:25%" align="center"
-                                                                        id="">
-                                                                        <strong>Product <span style="color:red;">
-                                                                                *</span></strong>
+                                                                    <th nowrap style="width:22%" align="center">
+                                                                        <strong>Product <span
+                                                                                style="color:red;">*</span></strong>
                                                                     </th>
                                                                     <th nowrap style="width:10%" align="center">
-                                                                        <strong>Type <span style="color:red;">
-                                                                                *</span></strong>
+                                                                        <strong>Type <span
+                                                                                style="color:red;">*</span></strong>
                                                                     </th>
                                                                     <th nowrap style="width:10%" align="center">
-                                                                        <strong>Quantity <span style="color:red;">
-                                                                                *</span></strong>
+                                                                        <strong>Quantity <span
+                                                                                style="color:red;">*</span></strong>
                                                                     </th>
-                                                                    <th nowrap style="width:12%" align="center"><strong>Unit
-                                                                            Price(BDT) <span style="color:red;">
-                                                                                *</span></strong></th>
+                                                                    <th nowrap style="width:12%" align="center">
+                                                                        <strong>Unit Price(BDT) <span
+                                                                                style="color:red;">*</span></strong>
+                                                                    </th>
                                                                     <th nowrap style="width:13%" align="center">
-                                                                        <strong>Total Price(BDT) <span style="color:red;">
-                                                                                *</span></strong>
+                                                                        <strong>Total Price(BDT) <span
+                                                                                style="color:red;">*</span></strong>
                                                                     </th>
                                                                     <th align="center" style="width:5%">
                                                                         <strong>Action</strong>
                                                                     </th>
                                                                 </tr>
                                                             </thead>
+
                                                             <tbody>
-                                                                <tr>
-                                                                    <td id="product_td">
+                                                                {{-- নতুন item যোগ করার input row --}}
+                                                                <tr id="input_row">
+                                                                    <td>
                                                                         <select onchange="getProductList(this.value)"
                                                                             class="select2 form-control catName"
                                                                             id="form-field-select-3"
                                                                             data-placeholder="Search Category">
-                                                                            <option disabled selected>--- Select Category
-                                                                                ---</option>
-                                                                            <?php foreach ($category_info as $eachInfo) : ?>
-                                                                            <option catName="{{ $eachInfo->name }}"
-                                                                                value="{{ $eachInfo->id }}">
-                                                                                {{ $eachInfo->name }}</option>
-                                                                            <?php endforeach; ?>
+                                                                            <option disabled selected>--- Select
+                                                                                Category ---</option>
+                                                                            @foreach ($category_info as $eachInfo)
+                                                                                <option catName="{{ $eachInfo->name }}"
+                                                                                    value="{{ $eachInfo->id }}">
+                                                                                    {{ $eachInfo->name }}
+                                                                                </option>
+                                                                            @endforeach
                                                                         </select>
                                                                     </td>
-                                                                    <td id="product_td">
+                                                                    <td>
                                                                         <select class="select2 form-control proName"
                                                                             id="productID"
                                                                             data-placeholder="Search Product"
                                                                             onchange="getUnitPrice(this.value)">
-                                                                            <option disabled selected>---Select Product---
-                                                                            </option>
+                                                                            <option disabled selected>---Select
+                                                                                Product---</option>
                                                                         </select>
                                                                     </td>
                                                                     <td>
                                                                         <select class="form-control purchaseType"
                                                                             id="purchaseType"
-                                                                            onchange="getUnitPrice($('#productID').val())">
+                                                                            onchange="onProductOrTypeChange()">
                                                                             <option disabled selected value="">
-                                                                                --Type--</option>
+                                                                                --Select Type--</option>
                                                                             <option value="local">Local</option>
                                                                             <option value="imported">Imported</option>
                                                                         </select>
                                                                     </td>
-
                                                                     <td>
+                                                                        <small class="text-muted">Available</small>
                                                                         <input type="text" readonly
-                                                                            class="form-control  " style="height: 20px;"
-                                                                            id="currentStock" placeholder="0">
-                                                                        <input type="text" style="height: 20px;"
-                                                                            class="form-control  qty" id="qty"
+                                                                            class="form-control mb-1"
+                                                                            style="height:16px; background:#f0f4ff; font-weight:bold; color:#1a56db;"
+                                                                            id="currentStock" placeholder="Stock: 0">
+
+                                                                        <small class="text-muted">Transfer Qty</small>
+                                                                        <input type="number" min="1"
+                                                                            style="height:28px;"
+                                                                            class="form-control input-qty" id="qty"
                                                                             onkeyup="qtyPriceCal(this.value);"
+                                                                            oninput="qtyPriceCal(this.value);"
                                                                             placeholder="0">
                                                                     </td>
-                                                                    <td><input type="text" readonly
-                                                                            class="form-control text-right  unitprice"
-                                                                            id="unitpice" placeholder="0.00"></td>
-                                                                    <td><input type="text"
-                                                                            class="form-control text-right ttlamount total"
-                                                                            id="total" placeholder="0.00"
-                                                                            readonly="readonly"></td>
+                                                                    <td>
+                                                                        <input type="text" readonly
+                                                                            class="form-control text-right input-unitprice"
+                                                                            id="unitpice" placeholder="0.00">
+                                                                    </td>
+                                                                    <td>
+                                                                        <input type="text"
+                                                                            class="form-control text-right input-total"
+                                                                            id="total" placeholder="0.00" readonly>
+                                                                    </td>
                                                                     <td>
                                                                         <a id="add_item"
                                                                             class="btn btn-info form-control"
@@ -217,107 +257,101 @@
 
 
                                                                 @foreach ($transfeDetails as $value)
-                                                                    <tr class="new_item{{ $value->product_id }}">
-                                                                        <td style="padding-left:15px;">
-                                                                            {{ $value->category->name }}<input
-                                                                                type="hidden" name="catName[]"
-                                                                                value="{{ $value->category_id }}"></td>
-                                                                        <td align="right">
-                                                                            {{ $value->product->name }}<input
-                                                                                type="hidden" class="add_quantity"
-                                                                                name="proName[]"
-                                                                                value="{{ $value->product_id }}"></td>
-                                                                        <td align="right">
+                                                                    <tr class="item-row"
+                                                                        data-proid="{{ $value->product_id }}"
+                                                                        data-ptype="{{ $value->purchasetype ?? '' }}">
+                                                                        <td style="padding-left:12px;">
+                                                                            {{ $value->category->name ?? '-' }}
+                                                                            <input type="hidden" name="catName[]"
+                                                                                value="{{ $value->category_id }}">
+                                                                        </td>
+                                                                        <td>
+                                                                            {{ $value->product->name ?? '-' }}
+                                                                            <input type="hidden" name="proName[]"
+                                                                                value="{{ $value->product_id }}">
+                                                                        </td>
+                                                                        <td>
                                                                             {{ $value->purchasetype ?? '-' }}
                                                                             <input type="hidden" name="purchaseType[]"
                                                                                 value="{{ $value->purchasetype ?? '' }}">
                                                                         </td>
-
-                                                                        <td align="right">{{ $value->qty }}<input
-                                                                                type="hidden" class="ttlqty"
+                                                                        <td align="right">
+                                                                            {{ $value->qty }}
+                                                                            <input type="hidden" class="row-qty"
                                                                                 name="qty[]"
                                                                                 value="{{ $value->qty }}">
                                                                         </td>
-                                                                        <td align="right">{{ $value->unit_price }}<input
-                                                                                type="hidden"
-                                                                                class="ttlunitprice unitparice"
+                                                                        <td align="right">
+                                                                            {{ number_format($value->unit_price, 2) }}
+                                                                            <input type="hidden" class="row-unitprice"
                                                                                 name="unitprice[]"
-                                                                                value="{{ $value->unit_price }}"></td>
-                                                                        <td align="right">{{ $value->total_price }}<input
-                                                                                type="hidden" class="grandtotal"
+                                                                                value="{{ $value->unit_price }}">
+                                                                        </td>
+                                                                        <td align="right">
+                                                                            {{ number_format($value->total_price, 2) }}
+                                                                            <input type="hidden" class="row-total"
                                                                                 name="total[]"
-                                                                                value="{{ $value->total_price }}"></td>
-
-                                                                        <td><a del_id="{{ $value->product_id }}"
-                                                                                class="delete_item btn form-control btn-danger"
-                                                                                href="javascript:;" title=""><i
-                                                                                    class="fa fa-times"></i></a></td>
+                                                                                value="{{ $value->total_price }}">
+                                                                        </td>
+                                                                        <td align="center">
+                                                                            <a del_id="{{ $value->product_id }}"
+                                                                                class="delete_item btn btn-sm btn-danger"
+                                                                                href="javascript:;" title="Remove">
+                                                                                <i class="fa fa-times"></i>
+                                                                            </a>
+                                                                        </td>
                                                                     </tr>
                                                                 @endforeach
                                                             </tbody>
                                                             <tfoot>
                                                                 <tr>
-                                                                    <td align="right"><strong>Sub-Total(BDT)</strong></td>
-                                                                    <td align="right"><strong class=""></strong>
+                                                                    <td align="right" colspan="3">
+                                                                        <strong>Sub-Total (BDT)</strong>
                                                                     </td>
-                                                                    <td align="right"><strong class=""></strong>
+                                                                    <td align="right">
+                                                                        <strong id="foot-ttlqty">0.00</strong>
                                                                     </td>
-                                                                    <td
-                                                                        align="
-                                                                            right">
-                                                                        <strong
-                                                                            class="ttlqty">{{ $transfeDetails->sum('qty') }}</strong>
+                                                                    <td align="right">
+                                                                        <strong id="foot-ttlunitprice">0.00</strong>
                                                                     </td>
-                                                                    <td align="right"><strong
-                                                                            class="ttlunitprice">{{ $transfeDetails->sum('unit_price') }}</strong>
+                                                                    <td align="right">
+                                                                        <strong id="foot-grandtotal">0.00</strong>
                                                                     </td>
-                                                                    <td align="right"><strong
-                                                                            class="grandtotal">{{ $transfeDetails->sum('total_price') }}</strong>
-                                                                    </td>
-                                                                    <td align="right"><strong class=""></strong>
-                                                                    </td>
+                                                                    <td></td>
                                                                 </tr>
                                                             </tfoot>
                                                         </table>
-
                                                     </div>
                                                 </div>
                                             </div>
 
-
                                             <div class="row">
-
                                                 <div class="col-md-8">
-                                                    <table class="">
+                                                    <table>
                                                         <tr>
                                                             <td>
-                                                                <textarea
-                                                                    style="
-                                                                                                                                                        border:none;"
-                                                                    cols="157" class="form-control" name="narration" placeholder="Note......" type="text">{{ $transfe->note ?? '' }} </textarea>
+                                                                <textarea cols="157" class="form-control" name="narration" placeholder="Note......" style="border:none;">{{ trim($transfe->note ?? '') }}</textarea>
                                                             </td>
                                                         </tr>
                                                     </table>
                                                 </div>
-
                                                 <div class="col-md-4 float-right">
-                                                    <div class="panel  panel-default">
+                                                    <div class="panel panel-default">
                                                         <div class="panel-body">
-
-                                                            <table class="table table-bordered table-hover ">
+                                                            <table class="table table-bordered table-hover">
                                                                 <tbody>
                                                                     <tr>
-                                                                        <td nowrap align="right"><strong>Total </strong>
+                                                                        <td nowrap align="right">
+                                                                            <strong>Total</strong>
                                                                         </td>
-                                                                        <td align="right"> <strong id="gtoal"
-                                                                                class="grandtotal">{{ $transfeDetails->sum('total_price') }}.00</strong>
+                                                                        <td align="right">
+                                                                            <strong id="gtoal"></strong>
                                                                         </td>
                                                                     </tr>
                                                                     <tr>
-                                                                        <td nowrap align="right"><strong>Shiping Charge (
-                                                                                +
-                                                                                )
-                                                                            </strong></td>
+                                                                        <td nowrap align="right">
+                                                                            <strong>Shipping Charge ( + )</strong>
+                                                                        </td>
                                                                         <td>
                                                                             <input type="text" autocomplete="off"
                                                                                 onkeyup="shipingCalculation(this.value)"
@@ -327,23 +361,17 @@
                                                                                 class="form-control" placeholder="0.00"
                                                                                 oninput="this.value = this.value.replace(/[^0-9.]/g, ''); this.value = this.value.replace(/(\..*)\./g, '$1');" />
                                                                         </td>
-                                                                        @php
-                                                                            $nettotal =
-                                                                                $transfeDetails->sum('total_price') +
-                                                                                $transfe->shipping;
-                                                                        @endphp
                                                                     </tr>
                                                                     <tr>
-                                                                        <td nowrap align="right"><strong>Net
-                                                                                Total</strong>
+                                                                        <td nowrap align="right">
+                                                                            <strong>Net Total</strong>
                                                                         </td>
-                                                                        <td align="right"><strong id="ntotal"
-                                                                                class="grandtotal abc">{{ abs($nettotal) }}.00</strong>
+                                                                        <td align="right">
+                                                                            <strong id="ntotal"></strong>
                                                                         </td>
                                                                     </tr>
                                                                     <tr>
                                                                         <td colspan="2" style="height: 102px;">
-
                                                                             <div class="clearfix"></div>
                                                                             <div class="clearfix form-actions float-right">
                                                                                 <div class="col-md-offset-1 col-md-10">
@@ -351,319 +379,491 @@
                                                                                         id="subMitButton" type="submit">
                                                                                         Save
                                                                                     </button>
-                                                                                    &nbsp; &nbsp; &nbsp;
-
                                                                                 </div>
                                                                             </div>
                                                                         </td>
                                                                     </tr>
-
-
                                                                 </tbody>
                                                             </table>
-
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
 
+                                        </div>
                                     </td>
                                 </tr>
-
                             </table>
 
-
-
                         </div>
-
                     </form>
                 </div>
-
-
-
             </div>
         </div>
-        <!-- /.col-->
     </div>
 
     <script type="text/javascript">
+        var fromWarehouseMap = @json($fromWarehousesByBranch ?? []);
+        var toWarehouseMap = @json($toWarehousesByBranch ?? []);
+
+        // Transfer এ আগে সেভ করা warehouse (page load এ preselect হবে)
+        var selectedFromWh = @json($transfe->from_warehouse_id);
+        var selectedToWh = @json($transfe->to_warehouse_id);
+
+        var stockReqSeq = 0;
+
         $(document).ready(function() {
 
             var findqtyamount = function() {
-
                 var ttlqty = 0;
-                $.each($('.ttlqty'), function() {
-                    qty = $(this).val();
-                    qty = Number(qty);
-                    ttlqty += qty;
+                $('#show_item tbody tr.item-row input.row-qty').each(function() {
+                    ttlqty += parseFloat($(this).val()) || 0;
                 });
-                $('.ttlqty').text(parseFloat(ttlqty).toFixed(2));
-
+                $('#foot-ttlqty').text(parseFloat(ttlqty).toFixed(2));
             };
 
             var findunitamount = function() {
                 var ttlunitprice = 0;
-                $.each($('.ttlunitprice'), function() {
-                    unitprice = $(this).val();
-                    unitprice = Number(unitprice);
-                    ttlunitprice += unitprice;
+                $('#show_item tbody tr.item-row input.row-unitprice').each(function() {
+                    ttlunitprice += parseFloat($(this).val()) || 0;
                 });
-                $('.ttlunitprice').text(parseFloat(ttlunitprice).toFixed(2));
+                $('#foot-ttlunitprice').text(parseFloat(ttlunitprice).toFixed(2));
             };
 
             var findgrandtottal = function() {
                 var grandtotal = 0;
-                $.each($('.grandtotal'), function() {
-                    total = $(this).val();
-                    total = Number(total);
-                    grandtotal += total;
+                $('#show_item tbody tr.item-row input.row-total').each(function() {
+                    grandtotal += parseFloat($(this).val()) || 0;
                 });
-                $('.grandtotal').text(parseFloat(grandtotal).toFixed(2));
+                $('#foot-grandtotal').text(parseFloat(grandtotal).toFixed(2));
+                $('#gtoal').text(parseFloat(grandtotal).toFixed(2));
+                var shipping = parseFloat($('#disCount').val()) || 0;
+                $('#ntotal').text(parseFloat(grandtotal + shipping).toFixed(2));
             };
 
-
+            // =====================================================
+            // Add item
+            // =====================================================
             $("#add_item").click(function() {
+                var catId = $('#form-field-select-3').val();
+                var catName = $('#form-field-select-3').find('option:selected').attr('catName');
+                var proId = $('#productID').val();
+                var proName = $('#productID').find('option:selected').attr('proName');
+                var purchaseType = $('#purchaseType').val();
+                var qty = parseFloat($('#qty').val()) || 0;
+                var unitprice = parseFloat($('#unitpice').val()) || 0;
+                var total = parseFloat($('#total').val()) || 0;
+                var stock = parseFloat($('#currentStock').val()) || 0;
 
-                // var supid = $('.supid').val();
-                var catId = $('.catName').val();
-                var catName = $(".catName").find('option:selected').attr('catName');
-
-                var proId = $('.proName').val();
-                var proName = $(".proName").find('option:selected').attr('proName');
-
-                //            var unit_id = $('.unitName').val();
-                //            var unitName = $(".unitName").find('option:selected').attr('unitName');
-
-                var unit = $('.unit').val();
-                var purchaseType = $('#purchaseType').val(); // Added: 2026-08-27
-                var qty = $('.qty').val();
-
-                if (purchaseType == '' || purchaseType == null) {
+                if (!fromLocationReady()) {
+                    return false;
+                }
+                if (!catId) {
+                    alertMessage.error("Category can't be empty.");
+                    return false;
+                }
+                if (!proId) {
+                    alertMessage.error("Product can't be empty.");
+                    return false;
+                }
+                if (!purchaseType) {
                     alertMessage.error("Purchase Type can't be empty.");
                     return false;
                 }
-
-                var unitprice = $('.unitprice').val();
-
-                var total = $('.total').val();
-
-                if (catId == '' || catId == null) {
-                    // productItemValidation("Category can't be empty.");
+                if (qty <= 0) {
+                    alertMessage.error("Quantity can't be empty or zero.");
                     return false;
                 }
-                if (proId == '' || proId == null) {
-                    // productItemValidation("Product can't be empty.");
+                if (qty > stock) {
+                    alertMessage.error('Transfer quantity exceeds available stock. Available: ' + stock);
                     return false;
                 }
 
-                if (qty == '' || qty == null || qty == 0) {
-                    //   productItemValidation("Quantity can't be empty or zero.");
+                // একই product + type দুইবার যোগ করা যাবে না (আগে সেভ করা row ও এর মধ্যে ধরা হয়)
+                if ($('#show_item tbody tr.item-row[data-proid="' + proId + '"][data-ptype="' +
+                        purchaseType + '"]').length > 0) {
+                    alertMessage.error('This product (' + purchaseType +
+                        ') is already added. Remove it first to change quantity.');
                     return false;
-                } else {
-
-                    // Fixed: 2026-08-27 - previous version had a broken/mismatched template string here
-                    // (stray '<', 'td', 'align', '=' tokens split across lines) which was a JS syntax error.
-                    // Rebuilt cleanly as a single valid string concatenation, Type <td> included after Product.
-                    var rowHtml = '<tr class="new_item' + proId + '">' +
-                        '<td style="padding-left:15px;">' + catName +
-                        '<input type="hidden" name="catName[]" value="' + catId + '"></td>' +
-                        '<td align="right">' + proName +
-                        '<input type="hidden" class="add_quantity" name="proName[]" value="' + proId +
-                        '"></td>' +
-                        '<td align="right">' + purchaseType +
-                        '<input type="hidden" name="purchaseType[]" value="' + purchaseType + '"></td>' +
-                        '<td align="right">' + qty +
-                        '<input type="hidden" class="ttlqty" name="qty[]" value="' + qty + '"></td>' +
-                        '<td align="right">' + unitprice +
-                        '<input type="hidden" class="ttlunitprice unitparice" name="unitprice[]" value="' +
-                        unitprice + '"></td>' +
-                        '<td align="right">' + total +
-                        '<input type="hidden" class="grandtotal" name="total[]" value="' + total +
-                        '"></td>' +
-                        '<td><a del_id="' + proId +
-                        '" class="delete_item btn form-control btn-danger" href="javascript:;" title=""><i class="fa fa-times"></i></a></td>' +
-                        '</tr>';
-
-                    $("#show_item tbody").append(rowHtml);
                 }
 
-                $('.unitprice').val('');
-                $('.qty').val('');
-                $('.total').val('');
-                $('#purchaseType').val('').trigger('select2:updated'); // Added: 2026-08-27
-                // $('.unitName').val('').trigger('chosen:updated');
-                $('.proName').val('').trigger('select2:updated');
-                $('.catId').val('').trigger('select2:updated');
-                //$('.subCat').val('').trigger('chosen:updated');
+                $('#show_item tbody').append(
+                    '<tr class="item-row" data-proid="' + proId + '" data-ptype="' + purchaseType +
+                    '">' +
+                    '<td style="padding-left:12px;">' + catName +
+                    '<input type="hidden" name="catName[]" value="' + catId + '"></td>' +
+                    '<td>' + proName +
+                    '<input type="hidden" name="proName[]" value="' + proId + '"></td>' +
+                    '<td>' + purchaseType +
+                    '<input type="hidden" name="purchaseType[]" value="' + purchaseType + '"></td>' +
+                    '<td align="right">' + qty +
+                    '<input type="hidden" class="row-qty" name="qty[]" value="' + qty + '"></td>' +
+                    '<td align="right">' + parseFloat(unitprice).toFixed(2) +
+                    '<input type="hidden" class="row-unitprice" name="unitprice[]" value="' +
+                    unitprice + '"></td>' +
+                    '<td align="right">' + parseFloat(total).toFixed(2) +
+                    '<input type="hidden" class="row-total" name="total[]" value="' + total +
+                    '"></td>' +
+                    '<td align="center">' +
+                    '<a del_id="' + proId +
+                    '" class="delete_item btn btn-sm btn-danger" href="javascript:;" title="Remove">' +
+                    '<i class="fa fa-times"></i>' +
+                    '</a>' +
+                    '</td>' +
+                    '</tr>'
+                );
+
+                // Input row reset
+                $('#total').val('');
+                $('#unitpice').val('');
+                $('#currentStock').val('');
+                $('#qty').val('');
+                $('#form-field-select-3').val(null).trigger('change');
+                $('#productID').empty()
+                    .append('<option disabled selected>---Select Product---</option>')
+                    .trigger('change');
+                $('#purchaseType').val('');
+
                 findqtyamount();
                 findunitamount();
                 findgrandtottal();
-                checkDepositAndCreditBalance();
             });
 
+            // =====================================================
+            // Delete item — data-proid + data-ptype ধরে row remove
+            // =====================================================
             $(document).on('click', '.delete_item', function() {
-                // if (confirm("Are you sure?")) {
-                //     var id = $(this).attr("del_id");
-                //     $('.new_item' + id).remove();
-                //     findqtyamount();
-                //     findunitamount();
-                //     findgrandtottal();
-                //     checkDepositAndCreditBalance();
-                // }
-
-                let deleteitem = () => {
-                    var id = $(this).attr("del_id");
-                    $('.new_item' + id).remove();
+                var $this = $(this);
+                var deleteitem = function() {
+                    var proid = $this.attr('del_id');
+                    var ptype = $this.closest('tr').attr('data-ptype');
+                    $('#show_item tbody tr.item-row[data-proid="' + proid + '"][data-ptype="' + ptype +
+                        '"]').remove();
                     findqtyamount();
                     findunitamount();
                     findgrandtottal();
-                    checkDepositAndCreditBalance();
-                }
-
-                alertMessage.confirm('You want to remove this', deleteitem);
-
+                };
+                alertMessage.confirm('You want to remove this item?', deleteitem);
             });
+
+            // From location বদলালে item area + সব row রিসেট (stock পুরনো location এর হিসাবে ছিল)
+            var resetItemArea = function() {
+                stockReqSeq++;
+                $('#form-field-select-3').val(null).trigger('change');
+                $('#productID').empty()
+                    .append('<option disabled selected>---Select Product---</option>')
+                    .trigger('change');
+                $('#purchaseType').val('');
+                $('#currentStock').val('');
+                $('#unitpice').val('');
+                $('#qty').val('');
+                $('#total').val('');
+                $('#show_item tbody tr.item-row').remove();
+                findqtyamount();
+                findunitamount();
+                findgrandtottal();
+            };
+
+            // -------- Branch / Warehouse change handlers (user action) --------
+            $("#from_branch_id").on("change", function() {
+                loadWarehouses('from');
+            });
+
+            $("#from_warehouse_id").on("change", function() {
+                resetItemArea();
+                duplicateLocationCheck();
+            });
+
+            $("#to_branch_id").on("change", function() {
+                loadWarehouses('to');
+            });
+
+            $("#to_warehouse_id").on("change", function() {
+                duplicateLocationCheck();
+            });
+
+            // -------- Submit validation --------
+            $('#transferForm').on('submit', function(e) {
+                if (!$('#from_branch_id').val()) {
+                    alertMessage.error('Please select From Branch.');
+                    e.preventDefault();
+                    return false;
+                }
+                if (warehouseRequired('from') && !$('#from_warehouse_id').val()) {
+                    alertMessage.error('Please select From Warehouse.');
+                    e.preventDefault();
+                    return false;
+                }
+                if (!$('#to_branch_id').val()) {
+                    alertMessage.error('Please select To Branch.');
+                    e.preventDefault();
+                    return false;
+                }
+                if (warehouseRequired('to') && !$('#to_warehouse_id').val()) {
+                    alertMessage.error('Please select To Warehouse.');
+                    e.preventDefault();
+                    return false;
+                }
+                if ($('#show_item tbody tr.item-row').length === 0) {
+                    alertMessage.error('Please add at least one item.');
+                    e.preventDefault();
+                    return false;
+                }
+                $('#subMitButton').prop('disabled', true);
+            });
+
+            // =====================================================
+            // Page load: সেভ করা warehouse preselect (silent = row রিসেট হবে না)
+            // =====================================================
+            loadWarehouses('from', selectedFromWh, true);
+            loadWarehouses('to', selectedToWh, true);
+
+            findqtyamount();
+            findunitamount();
+            findgrandtottal();
         });
 
-
-
-        function checkDepositAndCreditBalance() {
-
-            var paymentType = $("#paymentType").val();
-
-            if (paymentType == '') {
-                paymentType = 'Cash';
-            }
-
-            console.log(paymentType);
-            var customer_currentBalance = $("#customer_currentBalance").val();
-            // var totalDue = document.getElementById("totalDue").innerText;
-
-            var totalDue = $("#totalDue").text();
-            var expireDatas = $("#expireData").val();
-
-
-            var todaysDate = new Date().toISOString().slice(0, 10);
-
-            if (expireDatas == '') {
-                expireDatas = todaysDate;
-            }
-            var btn = document.getElementById('subMitButton');
-            if ((paymentType == 'Deposit') && (parseFloat(customer_currentBalance) < parseFloat(totalDue))) {
-                //  console.log('1');
-                btn.disabled = true;
-            } else if (((paymentType == 'Credit') && (parseFloat(customer_currentBalance) < parseFloat(totalDue))) || (
-                    expireDatas < todaysDate)) {
-                // console.log('2');
-                btn.disabled = true;
-            } else if (paymentType == 'Cash') {
-                //  console.log('3');
-                btn.disabled = false;
-            } else {
-                //  console.log('4');
-                btn.disabled = false;
-            }
-
-        }
-    </script>
-
-
-    <script>
+        // =====================================================
+        // Shipping charge calculation
+        // =====================================================
         function shipingCalculation(amount) {
-            var gtoal = document.getElementById("gtoal").innerText;
-            var afterDiscount = (parseFloat(gtoal)) + (parseFloat(amount));
-            console.log(afterDiscount);
-            $('.abc').text(parseFloat(afterDiscount).toFixed(2));
+            var gtoal = parseFloat($('#gtoal').text()) || 0;
+            var shipping = parseFloat(amount) || 0;
+            $('#ntotal').text(parseFloat(gtoal + shipping).toFixed(2));
         }
 
-        function paymentCalculation(payamount) {
-            var ntotal = document.getElementById("ntotal").innerText;
-            var totalDue = ntotal - payamount;
-            $('.finalDue').text(parseFloat(totalDue).toFixed(2));
-        }
-
+        // =====================================================
+        // Qty input → total price + stock check
+        // =====================================================
         function qtyPriceCal(qty) {
-            var unitpice = $('#unitpice').val();
-            var currentStock = $('#currentStock').val();
-            if (parseFloat(qty) > currentStock) {
-                $('.ttlamount').val('');
-                $('#qty').val('');
-                // lert('The desired product stock is not available');
-                alertMessage.error('The desired product stock is not available');
+            var unitpice = parseFloat($('#unitpice').val()) || 0;
+            var currentStock = parseFloat($('#currentStock').val()) || 0;
+            var inputQty = parseFloat(qty) || 0;
 
+            if (inputQty > currentStock && currentStock > 0) {
+                $('#total').val('');
+                $('#qty').val('');
+                alertMessage.error('Transfer quantity exceeds available stock. Available: ' + currentStock);
+            } else if (inputQty > 0 && unitpice > 0) {
+                $('#total').val(parseFloat(unitpice * inputQty).toFixed(2));
             } else {
-                var ttlqtys = document.getElementById('total').value = unitpice * qty;
+                $('#total').val('');
             }
         }
 
+        // নির্বাচিত branch এর অধীনে warehouse থাকলে warehouse বাধ্যতামূলক
+        function warehouseRequired(side) {
+            var branchId = $('#' + side + '_branch_id').val();
+            var map = (side === 'from') ? fromWarehouseMap : toWarehouseMap;
+            return !!(branchId && map[branchId] && map[branchId].length > 0);
+        }
+
+        function loadWarehouses(side, preselectId, silent) {
+            var branchId = $('#' + side + '_branch_id').val();
+            var map = (side === 'from') ? fromWarehouseMap : toWarehouseMap;
+            var list = (branchId && map[branchId]) ? map[branchId] : [];
+            var $sel = $('#' + side + '_warehouse_id');
+
+            $sel.empty();
+
+            if (!branchId) {
+                $sel.append('<option selected disabled value="">-- Select Branch First --</option>')
+                    .prop('disabled', true);
+            } else if (list.length === 0) {
+                $sel.append('<option selected value="">-- No warehouse (branch level) --</option>')
+                    .prop('disabled', true);
+            } else {
+                $sel.prop('disabled', false)
+                    .append('<option selected disabled value="">--Select Warehouse--</option>');
+                $.each(list, function(i, w) {
+                    $sel.append($('<option>').val(w.id).text(w.name));
+                });
+
+                var hasPreselect = preselectId && list.some(function(w) {
+                    return String(w.id) === String(preselectId);
+                });
+
+                if (hasPreselect) {
+                    $sel.val(preselectId);
+                } else if (list.length === 1) {
+                    $sel.val(list[0].id);
+                }
+            }
+
+            if (silent) {
+                $sel.trigger('change.select2'); // শুধু select2 UI refresh, handler চলবে না
+            } else {
+                $sel.trigger('change');
+            }
+        }
+
+        function fromLocationReady() {
+            if (!$('#from_branch_id').val()) {
+                alertMessage.error('Please select From Branch first.');
+                return false;
+            }
+            if (warehouseRequired('from') && !$('#from_warehouse_id').val()) {
+                alertMessage.error('Please select From Warehouse first.');
+                return false;
+            }
+            return true;
+        }
+
+        function duplicateLocationCheck() {
+            var fromBranch = $('#from_branch_id').val();
+            var toBranch = $('#to_branch_id').val();
+            if (!fromBranch || !toBranch || fromBranch !== toBranch) {
+                return;
+            }
+
+            var fromWh = $('#from_warehouse_id').val() || '';
+            var toWh = $('#to_warehouse_id').val() || '';
+            if (fromWh !== toWh) {
+                return;
+            }
+
+            if (fromWh === '' && (warehouseRequired('from') || warehouseRequired('to'))) {
+                return;
+            }
+
+            if (fromWh !== '') {
+                alertMessage.error('From Warehouse and To Warehouse cannot be the same.');
+                $('#to_warehouse_id').val('').trigger('change');
+            } else {
+                alertMessage.error('From Branch and To Branch cannot be the same.');
+                $('#to_branch_id').val('').trigger('change');
+            }
+        }
+
+        // =====================================================
+        // Category → Product list (branch + warehouse অনুযায়ী)
+        // =====================================================
         function getProductList(cat_id) {
+            if (!cat_id) {
+                return;
+            }
+
+            if (!fromLocationReady()) {
+                $('#form-field-select-3').val(null).trigger('change');
+                return;
+            }
+
+            var from_branch_id = $('#from_branch_id').val();
+            var from_warehouse_id = $('#from_warehouse_id').val() || '';
+
+            stockReqSeq++;
+
+            $('#productID').empty().append('<option disabled selected>Loading...</option>');
+            $('#purchaseType').val('');
+            $('#currentStock').val('');
+            $('#unitpice').val('');
+            $('#qty').val('');
+            $('#total').val('');
+
             $.ajax({
-                "url": "{{ route('inventorySetup.purchase.getProductList') }}",
-                "type": "GET",
+                url: "{{ route('inventorySetup.transfer.getProductListTransfer') }}",
+                type: "GET",
                 cache: false,
                 data: {
                     "_token": "{{ csrf_token() }}",
-                    cat_id: cat_id
+                    cat_id: cat_id,
+                    branch_id: from_branch_id,
+                    warehouse_id: from_warehouse_id
                 },
                 success: function(data) {
-                    $('#productID').select2();
-                    $('#productID option').remove();
+                    $('#productID').empty();
                     $('#productID').append($(data));
-                    $("#productID").trigger("select2:updated");
+                    $('#productID').trigger('change');
                 }
             });
         }
-
-
 
         function getUnitPrice(productId) {
-            // Modified: 2026-08-27 - now also sends branch_id + purchase_type so backend
-            // can return price/stock filtered by Local/Imported for this branch.
-            $.ajax({
-                "url": "{{ route('inventorySetup.purchase.unitPice') }}",
-                "type": "GET",
-                cache: false,
-                data: {
-                    "_token": "{{ csrf_token() }}",
-                    productId: productId,
-                    branch_id: $('#from_branch_id').val(),
-                    purchase_type: $('#purchaseType').val()
-                },
-                success: function(data) {
-                    $("#unitpice").val(data);
-                }
-            });
+            if (!productId) return;
 
-            $.ajax({
-                "url": "{{ route('sale.sale.getProductStock') }}",
-                "type": "GET",
-                cache: false,
-                data: {
-                    "_token": "{{ csrf_token() }}",
-                    productId: productId,
-                    branch_id: $('#from_branch_id').val(),
-                    purchase_type: $('#purchaseType').val()
-                },
-                success: function(data) {
-                    $("#currentStock").val(data);
-                }
-            });
+            stockReqSeq++; // পুরনো product এর দেরিতে আসা response বাতিল
+
+            $('#purchaseType').val('');
+            $('#unitpice').val('');
+            $('#currentStock').val('');
+            $('#qty').val('');
+            $('#total').val('');
         }
-    </script>
-    <script>
-        function duplicateBranchCheck() {
-            var fromBranch = $('#from_branch_id').val();
-            var tobranch = $('#to_branch_id').val();
 
-            if (fromBranch == tobranch) {
-                // lert('Branch you give cannot be Same');
-                alertMessage.error('Branch you give cannot be Same');
-                $("#from_branch_id").val('').select2();
-                $("#to_branch_id").val('').select2();
+        // =====================================================
+        // Product / Type বদলালে price + stock (branch + warehouse + type অনুযায়ী)
+        // =====================================================
+        function onProductOrTypeChange() {
+            var productId = $('#productID').val();
+            var purchaseType = $('#purchaseType').val();
+            var from_branch_id = $('#from_branch_id').val();
+            var from_warehouse_id = $('#from_warehouse_id').val() || '';
+
+            $('#unitpice').val('');
+            $('#currentStock').val('');
+            $('#qty').val('');
+            $('#total').val('');
+
+            if (!productId || !purchaseType) {
+                return;
             }
+
+            if (!fromLocationReady()) {
+                $('#purchaseType').val('');
+                return;
+            }
+
+            var seq = ++stockReqSeq;
+
+            $.ajax({
+                url: "{{ route('InventorySetup.unitPiceForSale') }}",
+                type: "GET",
+                cache: false,
+                data: {
+                    "_token": "{{ csrf_token() }}",
+                    productId: productId,
+                    branch_id: from_branch_id,
+                    warehouse_id: from_warehouse_id,
+                    purchase_type: purchaseType
+                },
+                success: function(data) {
+                    if (seq !== stockReqSeq) return;
+
+                    var parsed = (typeof data === 'string') ? JSON.parse(data) : data;
+                    $('#unitpice').val(parsed.purchases_price);
+
+                    var qty = parseFloat($('#qty').val()) || 0;
+                    if (qty > 0) {
+                        qtyPriceCal(qty);
+                    }
+                }
+            });
+
+            $.ajax({
+                url: "{{ route('InventorySetup.getProductStock') }}",
+                type: "GET",
+                cache: false,
+                data: {
+                    "_token": "{{ csrf_token() }}",
+                    productId: productId,
+                    branch_id: from_branch_id,
+                    warehouse_id: from_warehouse_id,
+                    purchase_type: purchaseType
+                },
+                success: function(data) {
+                    if (seq !== stockReqSeq) return;
+                    var stock = parseFloat(data) || 0;
+                    $('#currentStock').val(stock);
+
+                    if (stock <= 0) {
+                        alertMessage.error('No available stock for this product as ' + purchaseType +
+                            ' in the selected branch/warehouse.');
+                    }
+                }
+            });
         }
     </script>
 @endsection
+
 @section('scripts')
 @endsection

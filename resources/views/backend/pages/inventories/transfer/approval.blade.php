@@ -66,6 +66,9 @@
                             </div>
                             <div class="col-md-2 mb-3">
                                 <label>Date * :</label>
+                                {{-- TODO-CONFIRM: Carbon::parse() তে কোনো আর্গুমেন্ট নেই, তাই এটা transfer এর তারিখ নয়, আজকের তারিখ দেখায়।
+                                     এই date ই approval এ Stock ledger এর তারিখ হয়। ইচ্ছাকৃত (approve এর দিন) হলে থাকবে,
+                                     নাহলে Carbon::parse($editInfo->date) হবে। --}}
                                 @php
                                     $date = $editInfo->date ? \Carbon\Carbon::parse()->format('Y-m-d') : '';
                                 @endphp
@@ -75,34 +78,52 @@
                                     <span class=" error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <label>From Branch * :</label>
-                                <select class="form-control select2" name="from_branch_id">
-                                    <option selected disabled value="">--Select From Branch--</option>
+
+                            {{-- >>> FIX: আগে From Branch / To Branch দুটি col-md-4 select ছিল (বদলানো যেত)।
+                                 এখন ব্রাঞ্চ শুধু দেখার জন্য (disabled select + hidden input) এবং পাশে warehouse এর নাম।
+                                 approval এ ব্রাঞ্চ/warehouse বদলালে stock ভুল জায়গায় নড়ত, তাই DB এর মানই ব্যবহার হয়। --}}
+                            <div class="w-100"></div>
+
+                            <div class="col-md-3 mb-3">
+                                <label>From Branch :</label>
+                                <select class="form-control select2" disabled>
+                                    <option value="">--Select From Branch--</option>
                                     @foreach ($branch as $key => $value)
                                         <option value="{{ $value->id }}"
                                             {{ $editInfo->from_branch_id == $value->id ? 'selected' : '' }}>
                                             {{ $value->branchCode . ' - ' . $value->name }}</option>
                                     @endforeach
                                 </select>
-                                @error('branch_id')
-                                    <span class=" error text-red text-bold">{{ $message }}</span>
-                                @enderror
+                                <input type="hidden" name="from_branch_id" value="{{ $editInfo->from_branch_id }}">
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <label>To Branch * :</label>
-                                <select class="form-control select2" name="to_branch_id">
-                                    <option selected disabled value="">--Select To Branch--</option>
+
+                            {{-- >>> NEW: From Warehouse (শুধু দেখার জন্য) --}}
+                            <div class="col-md-3 mb-3">
+                                <label>From Warehouse :</label>
+                                <input type="text" class="form-control" readonly
+                                    value="{{ $editInfo->from_warehouse_id ? $warehouseNames[$editInfo->from_warehouse_id] ?? '#' . $editInfo->from_warehouse_id : '— (branch level)' }}">
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label>To Branch :</label>
+                                <select class="form-control select2" disabled>
+                                    <option value="">--Select To Branch--</option>
                                     @foreach ($branch as $key => $value)
                                         <option value="{{ $value->id }}"
                                             {{ $editInfo->to_branch_id == $value->id ? 'selected' : '' }}>
                                             {{ $value->branchCode . ' - ' . $value->name }}</option>
                                     @endforeach
                                 </select>
-                                @error('branch_id')
-                                    <span class=" error text-red text-bold">{{ $message }}</span>
-                                @enderror
+                                <input type="hidden" name="to_branch_id" value="{{ $editInfo->to_branch_id }}">
                             </div>
+
+                            {{-- >>> NEW: To Warehouse (শুধু দেখার জন্য) --}}
+                            <div class="col-md-3 mb-3">
+                                <label>To Warehouse :</label>
+                                <input type="text" class="form-control" readonly
+                                    value="{{ $editInfo->to_warehouse_id ? $warehouseNames[$editInfo->to_warehouse_id] ?? '#' . $editInfo->to_warehouse_id : '— (branch level)' }}">
+                            </div>
+                            {{-- <<< END FIX --}}
 
 
 

@@ -64,6 +64,7 @@
                                     <th>Invoice No</th>
                                     <th>Date</th>
                                     <th>Branch</th>
+                                    <th>Warehouse</th>
                                     <th>Supplier</th>
                                     <th>Payment Type</th>
                                     <th>Quantity</th>
@@ -85,6 +86,7 @@
                                     <th>Invoice No</th>
                                     <th>Date</th>
                                     <th>Branch</th>
+                                    <th>Warehouse</th>
                                     <th>Supplier</th>
                                     <th>Payment Type</th>
                                     <th>Quantity</th>

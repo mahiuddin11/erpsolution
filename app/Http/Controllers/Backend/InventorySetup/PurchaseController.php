@@ -420,7 +420,7 @@ class PurchaseController extends Controller
         $title = 'Edit Purchase';
         $accounts = ChartOfAccount::getaccount(4)->get();
 
-        // >>> NEW — determine source (new warehouses table vs old branches table) and build dropdown data accordingly
+      
         $usingNewWarehouseTable = !empty($editInfo->warehouse_id);
 
         if ($usingNewWarehouseTable) {
@@ -457,7 +457,7 @@ class PurchaseController extends Controller
         }
 
         $warehouseSource = $usingNewWarehouseTable ? 'new' : 'old';
-        // <<< END NEW
+       
 
         $account_id = $editInfo->chart_of_account_id;
         $debit = Transection::where('account_id', '=', $account_id)->sum('debit');

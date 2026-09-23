@@ -16,4 +16,16 @@ class ProductOpeningStock extends Model
     function details(){
         return $this->hasMany(ProductOpeningStockDetails::class,"product_opening_stock_id","id");
     }
+
+    public function branch(){
+        return $this->belongsTo(Branch::class, 'branch_id', 'id');
+    }
+
+    public function warehouse(){
+        return $this->belongsTo(Warehouse::class, 'warehouse_id', 'id');
+    }
+
+    public function project(){
+        return $this->belongsTo(Project::class, 'project_id', 'id');
+    }
 }

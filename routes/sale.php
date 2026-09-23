@@ -41,9 +41,9 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //sale return end
 
 
-        Route::get('/getCustomerBalance', 'SaleController@getCustomerBalance')->name('sale.sale.getCustomerBalance');
-        Route::get('/getProductStock', 'SaleController@getProductStock')->name('sale.sale.getProductStock');
-        Route::get('/saleunitPrice', 'SaleController@unitPrice')->name('sale.sale.saleunitPrice');
+        Route::get('/getCustomerBalance', [SaleController::class, 'getCustomerBalance'])->name('sale.sale.getCustomerBalance');
+        Route::get('/getProductStock', [SaleController::class, 'getProductStock'])->name('sale.sale.getProductStock');
+        Route::get('/saleunitPrice', [SaleController::class, 'unitPrice'])->name('sale.sale.saleunitPrice');
 
 
         // delivery chalan start

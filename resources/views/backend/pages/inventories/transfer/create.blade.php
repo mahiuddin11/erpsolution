@@ -16,7 +16,7 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1 class="m-0">Stock Transfer</h1>
+                    {{-- <h1 class="m-0">Stock Transfer Create</h1> --}}
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
@@ -39,11 +39,12 @@
         <div class="col-md-12">
             <div class="card card-default">
                 <div class="card-header">
-                    <h3 class="card-title">Stock Transfer</h3>
+                    <h3 class="card-title">Stock Transfer Create</h3>
                 </div>
                 <div class="card-body">
-                    <form class="needs-validation" method="POST" action="{{ route('inventorySetup.transfer.store') }}"
-                        novalidate>
+
+                    <form id="transferForm" class="needs-validation" method="POST"
+                        action="{{ route('inventorySetup.transfer.store') }}" novalidate>
                         @csrf
 
                         <div class="form-row">
@@ -73,11 +74,14 @@
                                 @enderror
                             </div>
 
+
+                            <div class="w-100"></div>
+
                             {{-- From Branch --}}
+
                             <div class="col-md-3 mb-3">
                                 <label>From Branch * :</label>
-                                <select class="form-control select2 from_branch" id="from_branch_id" name="from_branch_id"
-                                    onchange="duplicateBranchCheck()">
+                                <select class="form-control select2 from_branch" id="from_branch_id" name="from_branch_id">
                                     <option selected disabled value="">--Select Branch--</option>
                                     @foreach ($formattedBranches as $value)
                                         <option value="{{ $value->id }}">
@@ -90,11 +94,24 @@
                                 @enderror
                             </div>
 
+                            {{-- >>> NEW: From Warehouse (নির্বাচিত From Branch এর অধীনের warehouse) --}}
+                            <div class="col-md-3 mb-3">
+                                <label>From Warehouse * :</label>
+                                <select class="form-control select2" id="from_warehouse_id" name="from_warehouse_id"
+                                    disabled>
+                                    <option selected disabled value="">-- Select Branch First --</option>
+                                </select>
+                                @error('from_warehouse_id')
+                                    <span class="error text-red text-bold">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+
                             {{-- To Branch --}}
+
                             <div class="col-md-3 mb-3">
                                 <label>To Branch * :</label>
-                                <select class="form-control select2" id="to_branch_id" name="to_branch_id"
-                                    onchange="duplicateBranchCheck()">
+                                <select class="form-control select2" id="to_branch_id" name="to_branch_id">
                                     <option selected disabled value="">--Select Branch--</option>
                                     @foreach ($formattedToBranches as $value)
                                         <option value="{{ $value->id }}">
@@ -106,6 +123,18 @@
                                     <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
+
+                            {{-- >>> NEW: To Warehouse --}}
+                            <div class="col-md-3 mb-3">
+                                <label>To Warehouse * :</label>
+                                <select class="form-control select2" id="to_warehouse_id" name="to_warehouse_id" disabled>
+                                    <option selected disabled value="">-- Select Branch First --</option>
+                                </select>
+                                @error('to_warehouse_id')
+                                    <span class="error text-red text-bold">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            {{-- <<< END NEW --}}
 
                             {{-- Product Table --}}
                             <table class="table-responsive table table-bordered w-100">
@@ -331,16 +360,15 @@
     </div>
 
     <script type="text/javascript">
+        var fromWarehouseMap = @json($fromWarehousesByBranch ?? []);
+        var toWarehouseMap = @json($toWarehousesByBranch ?? []);
+
+        var stockReqSeq = 0;
+
+
         $(document).ready(function() {
 
-            /*
-             * =====================================================
-             * ✅ Calculation functions
-             * শুধু item-row class এর hidden input থেকে value নেওয়া হচ্ছে।
-             * tfoot strong (#foot-*), #gtoal, #ntotal — এগুলোতে
-             * কোনো shared class নেই, তাই double-count সম্পূর্ণ দূর।
-             * =====================================================
-             */
+
 
             var findqtyamount = function() {
                 var ttlqty = 0;
@@ -383,6 +411,12 @@
                 var total = parseFloat($('#total').val()) || 0;
                 var stock = parseFloat($('#currentStock').val()) || 0;
 
+                // >>> NEW: From ব্রাঞ্চ + warehouse ছাড়া item যোগ করা যাবে না
+                if (!fromLocationReady()) {
+                    return false;
+                }
+                // <<< END NEW
+
                 // Validation
                 if (!catId) {
                     alertMessage.error("Category can't be empty.");
@@ -414,15 +448,7 @@
                     return false;
                 }
 
-                /*
-                 *  FIX: Added row এ আলাদা class ব্যবহার:
-                 *   - tr.item-row          → calculation loop এর জন্য
-                 *   - data-proid + data-ptype → duplicate/delete check এর জন্য
-                 *   - input.row-qty        → qty loop
-                 *   - input.row-unitprice  → unit price loop
-                 *   - input.row-total      → grand total loop
-                 * input row এর id গুলোর (qty, unitpice, total) সাথে কোনো conflict নেই।
-                 */
+
 
                 $('#show_item tbody').append(
                     '<tr class="item-row" data-proid="' + proId + '" data-ptype="' + purchaseType +
@@ -482,10 +508,9 @@
                 alertMessage.confirm('You want to remove this item?', deleteitem);
             });
 
-            // =====================================================
-            // ✅ From Branch change → input row + added rows সব reset
-            // =====================================================
-            $("#from_branch_id").on("change", function() {
+
+            var resetItemArea = function() {
+                stockReqSeq++; // চলমান পুরনো AJAX response বাতিল
                 $('#form-field-select-3').val(null).trigger('change');
                 $('#productID').empty()
                     .append('<option disabled selected>---Select Product---</option>')
@@ -495,11 +520,62 @@
                 $('#unitpice').val('');
                 $('#qty').val('');
                 $('#total').val('');
-                // Branch change হলে আগে add করা সব row সরানো
+                // আগে add করা সব row সরানো
                 $('#show_item tbody tr.item-row').remove();
                 findqtyamount();
                 findunitamount();
                 findgrandtottal();
+            };
+
+
+            $("#from_branch_id").on("change", function() {
+                loadWarehouses('from');
+            });
+
+
+            $("#from_warehouse_id").on("change", function() {
+                resetItemArea();
+                duplicateLocationCheck();
+            });
+
+
+            $("#to_branch_id").on("change", function() {
+                loadWarehouses('to');
+            });
+
+
+            $("#to_warehouse_id").on("change", function() {
+                duplicateLocationCheck();
+            });
+
+
+            $('#transferForm').on('submit', function(e) {
+                if (!$('#from_branch_id').val()) {
+                    alertMessage.error('Please select From Branch.');
+                    e.preventDefault();
+                    return false;
+                }
+                if (warehouseRequired('from') && !$('#from_warehouse_id').val()) {
+                    alertMessage.error('Please select From Warehouse.');
+                    e.preventDefault();
+                    return false;
+                }
+                if (!$('#to_branch_id').val()) {
+                    alertMessage.error('Please select To Branch.');
+                    e.preventDefault();
+                    return false;
+                }
+                if (warehouseRequired('to') && !$('#to_warehouse_id').val()) {
+                    alertMessage.error('Please select To Warehouse.');
+                    e.preventDefault();
+                    return false;
+                }
+                if ($('#show_item tbody tr.item-row').length === 0) {
+                    alertMessage.error('Please add at least one item.');
+                    e.preventDefault();
+                    return false;
+                }
+                $('#subMitButton').prop('disabled', true);
             });
 
         });
@@ -532,16 +608,103 @@
             }
         }
 
-        // =====================================================
-        // ✅ Category change → branch check করে product list আনা
-        // =====================================================
-        function getProductList(cat_id) {
-            var from_branch_id = $('#from_branch_id').val();
-            if (!from_branch_id) {
+
+        function warehouseRequired(side) {
+            var branchId = $('#' + side + '_branch_id').val();
+            var map = (side === 'from') ? fromWarehouseMap : toWarehouseMap;
+            return !!(branchId && map[branchId] && map[branchId].length > 0);
+        }
+
+
+        function loadWarehouses(side) {
+            var branchId = $('#' + side + '_branch_id').val();
+            var map = (side === 'from') ? fromWarehouseMap : toWarehouseMap;
+            var list = (branchId && map[branchId]) ? map[branchId] : [];
+            var $sel = $('#' + side + '_warehouse_id');
+
+            $sel.empty();
+
+            if (!branchId) {
+                $sel.append('<option selected disabled value="">-- Select Branch First --</option>')
+                    .prop('disabled', true);
+            } else if (list.length === 0) {
+                $sel.append('<option selected value="">-- No warehouse (branch level) --</option>')
+                    .prop('disabled', true);
+            } else {
+                $sel.prop('disabled', false)
+                    .append('<option selected disabled value="">--Select Warehouse--</option>');
+                $.each(list, function(i, w) {
+                    $sel.append($('<option>').val(w.id).text(w.name));
+                });
+                if (list.length === 1) {
+                    $sel.val(list[0].id);
+                }
+            }
+
+            $sel.trigger('change');
+        }
+
+
+        function fromLocationReady() {
+            if (!$('#from_branch_id').val()) {
                 alertMessage.error('Please select From Branch first.');
+                return false;
+            }
+            if (warehouseRequired('from') && !$('#from_warehouse_id').val()) {
+                alertMessage.error('Please select From Warehouse first.');
+                return false;
+            }
+            return true;
+        }
+
+        function duplicateLocationCheck() {
+            var fromBranch = $('#from_branch_id').val();
+            var toBranch = $('#to_branch_id').val();
+            if (!fromBranch || !toBranch || fromBranch !== toBranch) {
+                return;
+            }
+
+            var fromWh = $('#from_warehouse_id').val() || '';
+            var toWh = $('#to_warehouse_id').val() || '';
+            if (fromWh !== toWh) {
+                return;
+            }
+
+
+            if (fromWh === '' && (warehouseRequired('from') || warehouseRequired('to'))) {
+                return;
+            }
+
+            if (fromWh !== '') {
+                alertMessage.error('From Warehouse and To Warehouse cannot be the same.');
+                $('#to_warehouse_id').val('').trigger('change');
+            } else {
+                alertMessage.error('From Branch and To Branch cannot be the same.');
+                $('#to_branch_id').val('').trigger('change');
+            }
+        }
+
+
+
+        function getProductList(cat_id) {
+
+            if (!cat_id) {
+                return;
+            }
+            // <<< END FIX
+
+            // >>> FIX: আগে শুধু From Branch দেখত, এখন warehouse ও দেখে
+            if (!fromLocationReady()) {
                 $('#form-field-select-3').val(null).trigger('change');
                 return;
             }
+            // <<< END FIX
+
+            var from_branch_id = $('#from_branch_id').val();
+            var from_warehouse_id = $('#from_warehouse_id').val() || ''; // >>> NEW
+
+            stockReqSeq++; // >>> NEW
+
             // Product + Type dropdown reset while loading
             $('#productID').empty().append('<option disabled selected>Loading...</option>');
             $('#purchaseType').val(''); // Added: 2026-08-27
@@ -558,6 +721,7 @@
                     "_token": "{{ csrf_token() }}",
                     cat_id: cat_id,
                     branch_id: from_branch_id,
+                    warehouse_id: from_warehouse_id // >>> NEW
                 },
                 success: function(data) {
                     $('#productID').empty();
@@ -567,14 +731,11 @@
             });
         }
 
-        // =====================================================
-        // ✅ Product change → শুধু Type dropdown reset করে;
-        // price/stock fetch হবে না যতক্ষণ না Type-ও সিলেক্ট হয়
-        // Modified: 2026-08-27 - price/stock lookup moved to onProductOrTypeChange()
-        // so both Product + Type are always considered together
-        // =====================================================
+
         function getUnitPrice(productId) {
             if (!productId) return;
+
+            stockReqSeq++; // >>> NEW: পুরনো product এর দেরিতে আসা response বাতিল
 
             $('#purchaseType').val(''); // নতুন প্রোডাক্ট বাছলে টাইপ আবার বেছে নিতে হবে
             $('#unitpice').val('');
@@ -583,14 +744,12 @@
             $('#total').val('');
         }
 
-        // =====================================================
-        // ✅ Product + Type দুটোই সিলেক্ট হলে price + stock fetch
-        // Added: 2026-08-27
-        // =====================================================
+
         function onProductOrTypeChange() {
             var productId = $('#productID').val();
             var purchaseType = $('#purchaseType').val();
             var from_branch_id = $('#from_branch_id').val();
+            var from_warehouse_id = $('#from_warehouse_id').val() || ''; // >>> NEW
 
             $('#unitpice').val('');
             $('#currentStock').val('');
@@ -598,10 +757,18 @@
             $('#total').val('');
 
             if (!productId || !purchaseType) {
-                return; // দুটোই সিলেক্ট না হওয়া পর্যন্ত কিছু করবে না
+                return;
             }
 
-            // Unit Price (product + branch + type wise)
+
+            if (!fromLocationReady()) {
+                $('#purchaseType').val('');
+                return;
+            }
+
+            var seq = ++stockReqSeq; // >>> NEW
+
+            // Unit Price (product + branch + warehouse + type wise)
             $.ajax({
                 url: "{{ route('InventorySetup.unitPiceForSale') }}",
                 type: "GET",
@@ -610,9 +777,12 @@
                     "_token": "{{ csrf_token() }}",
                     productId: productId,
                     branch_id: from_branch_id,
+                    warehouse_id: from_warehouse_id, // 
                     purchase_type: purchaseType
                 },
                 success: function(data) {
+                    if (seq !== stockReqSeq) return; // 
+
                     var parsed = (typeof data === 'string') ? JSON.parse(data) : data;
                     $('#unitpice').val(parsed.purchases_price);
 
@@ -623,7 +793,7 @@
                 }
             });
 
-            // Available Stock (product + branch + type wise)
+            // Available Stock (product + branch + warehouse + type wise)
             $.ajax({
                 url: "{{ route('InventorySetup.getProductStock') }}",
                 type: "GET",
@@ -632,29 +802,20 @@
                     "_token": "{{ csrf_token() }}",
                     productId: productId,
                     branch_id: from_branch_id,
+                    warehouse_id: from_warehouse_id,
                     purchase_type: purchaseType
                 },
                 success: function(data) {
+                    if (seq !== stockReqSeq) return;
                     var stock = parseFloat(data) || 0;
                     $('#currentStock').val(stock);
 
                     if (stock <= 0) {
                         alertMessage.error('No available stock for this product as ' + purchaseType +
-                            ' in the selected branch.');
+                            ' in the selected branch/warehouse.');
                     }
                 }
             });
-        }
-
-
-        function duplicateBranchCheck() {
-            var fromBranch = $('#from_branch_id').val();
-            var toBranch = $('#to_branch_id').val();
-            if (fromBranch && toBranch && fromBranch === toBranch) {
-                alertMessage.error('From Branch and To Branch cannot be the same.');
-                $('#from_branch_id').val('').trigger('change');
-                $('#to_branch_id').val('').trigger('change');
-            }
         }
     </script>
 @endsection

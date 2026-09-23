@@ -186,9 +186,9 @@
                     const body = document.getElementById('kpiDetailModalBody');
                     body.innerHTML = rows.length ?
                         `<ul class="list-group">${rows.map(r => `
-                                                                                                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                                                                                                        <span>${r.title}</span><span class="text-muted small">${r.subtitle}</span>
-                                                                                                                                    </li>`).join('')}</ul>` :
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>${r.title}</span><span class="text-muted small">${r.subtitle}</span>
+                                    </li>`).join('')}</ul>` :
                         `<div class="empty-state"><i class="bi bi-inbox"></i><p>No records found</p></div>`;
                 })
                 .catch(() => {
@@ -198,7 +198,6 @@
         }
 
         /* ---- Point 1: KPI Cards ---- */
-
 
         fetch(`${API_BASE}/kpis`).then(r => r.json()).then(k => {
             document.getElementById('primaryMetrics').innerHTML = [
@@ -263,20 +262,19 @@
                 `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load KPI data</p></div>`;
         });
 
-        /* ---- Point 2: Warehouse Distribution ---- */
         /* ---- Point 2: Warehouse & Branch Distribution ---- */
-        function renderDistribution(containerId, apiPath) {
+        function renderDistribution(containerId, apiPath, type) {
             fetch(`${API_BASE}/${apiPath}`).then(r => r.json()).then(data => {
                 const box = document.getElementById(containerId);
                 box.innerHTML = data.length ? `<div class="dept-grid">${data.map(d => {
             const color = d.present_percent >= 40 ? '#16a34a' : d.present_percent >= 15 ? '#f59e0b' : '#94a3b8';
-            return `<div class="dept-card dept-card-clickable" style="cursor:pointer" data-branch-id="${d.id}" title="${d.name}: ৳${Number(d.total).toLocaleString()}">
-                                    <div class="dept-circle" style="background:conic-gradient(${color} ${d.present_percent}%, #e5e7eb ${d.present_percent}% 100%);">
-                                        <div class="dept-circle-inner">${d.present_percent}%</div>
-                                    </div>
-                                    <div class="dept-card-name">${d.name}</div>
-                                    <div class="dept-card-sub">৳${Number(d.total).toLocaleString()}</div>
-                                </div>`;
+            return `<div class="dept-card dept-card-clickable" style="cursor:pointer" data-branch-id="${d.id}" data-type="${type}" title="${d.name}: ৳${Number(d.total).toLocaleString()}">
+                                <div class="dept-circle" style="background:conic-gradient(${color} ${d.present_percent}%, #e5e7eb ${d.present_percent}% 100%);">
+                                    <div class="dept-circle-inner">${d.present_percent}%</div>
+                                </div>
+                                <div class="dept-card-name">${d.name}</div>
+                                <div class="dept-card-sub">৳${Number(d.total).toLocaleString()}</div>
+                            </div>`;
         }).join('')}</div>` :
                     `<div class="empty-state"><i class="bi bi-building"></i><p>No data found</p></div>`;
 
@@ -290,21 +288,13 @@
         function bindBranchCardClicks(containerId) {
             document.querySelectorAll(`#${containerId} .dept-card-clickable`).forEach(el => {
                 el.addEventListener('click', () => {
-                    openBranchStockModal(el.dataset.branchId);
+                    openBranchStockModal(el.dataset.branchId, el.dataset.type);
                 });
             });
         }
 
-        renderDistribution('warehouseDistribution', 'warehouse-distribution');
-        renderDistribution('branchWiseDistribution', 'branch-distribution');
-
-        function bindBranchCardClicks() {
-            document.querySelectorAll('.dept-card-clickable').forEach(el => {
-                el.addEventListener('click', () => {
-                    openBranchStockModal(el.dataset.branchId);
-                });
-            });
-        }
+        renderDistribution('warehouseDistribution', 'warehouse-distribution', 'warehouse');
+        renderDistribution('branchWiseDistribution', 'branch-distribution', 'branch');
 
         let currentBranchRows = [];
         let filteredBranchRows = [];
@@ -312,12 +302,16 @@
         let currentPage = 1;
         const PAGE_SIZE = 100;
 
-        function openBranchStockModal(warehouseId) {
+        function openBranchStockModal(id, type = 'warehouse') {
             document.getElementById('branchStockModalBody').innerHTML =
                 `<div class="text-center text-muted py-3">Loading...</div>`;
             $('#branchStockModal').modal('show');
 
-            fetch(`${API_BASE}/warehouse-stock-details?warehouse_id=${warehouseId}`)
+            const endpoint = type === 'branch' ?
+                `${API_BASE}/branch-stock-details?branch_id=${id}` :
+                `${API_BASE}/warehouse-stock-details?warehouse_id=${id}`;
+
+            fetch(endpoint)
                 .then(r => r.json())
                 .then(data => {
                     currentBranchRows = data.rows;
@@ -400,14 +394,14 @@
                         </thead>
                         <tbody>
                             ${pageRows.map(r => `
-                                                                                                                                        <tr>
-                                                                                                                                            <td>${r.product_code}</td>
-                                                                                                                                            <td>${r.product}</td>
-                                                                                                                                            <td>${r.category}</td>
-                                                                                                                                            <td class="text-right">${r.qty}</td>
-                                                                                                                                            <td class="text-right">${Number(r.avg_price).toLocaleString()}</td>
-                                                                                                                                            <td class="text-right">${Number(r.total).toLocaleString()}</td>
-                                                                                                                                        </tr>`).join('')}
+                                        <tr>
+                                            <td>${r.product_code}</td>
+                                            <td>${r.product}</td>
+                                            <td>${r.category}</td>
+                                            <td class="text-right">${r.qty}</td>
+                                            <td class="text-right">${Number(r.avg_price).toLocaleString()}</td>
+                                            <td class="text-right">${Number(r.total).toLocaleString()}</td>
+                                        </tr>`).join('')}
                         </tbody>
                         <tfoot>
                             <tr>
@@ -501,14 +495,14 @@
                         </thead>
                         <tbody>
                             ${rows.map(r => `
-                                                                                                                                        <tr>
-                                                                                                                                            <td>${r.product_code}</td>
-                                                                                                                                            <td>${r.product}</td>
-                                                                                                                                            <td>${r.category}</td>
-                                                                                                                                            <td class="text-right">${r.qty}</td>
-                                                                                                                                            <td class="text-right">${Number(r.avg_price).toLocaleString()}</td>
-                                                                                                                                            <td class="text-right">${Number(r.total).toLocaleString()}</td>
-                                                                                                                                        </tr>`).join('')}
+                                        <tr>
+                                            <td>${r.product_code}</td>
+                                            <td>${r.product}</td>
+                                            <td>${r.category}</td>
+                                            <td class="text-right">${r.qty}</td>
+                                            <td class="text-right">${Number(r.avg_price).toLocaleString()}</td>
+                                            <td class="text-right">${Number(r.total).toLocaleString()}</td>
+                                        </tr>`).join('')}
                         </tbody>
                         <tfoot>
                             <tr><th colspan="5" class="text-right">Total</th><th class="text-right">৳ ${total.toLocaleString()}</th></tr>

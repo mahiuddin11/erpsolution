@@ -27,11 +27,22 @@
                 "orderable": true,
                 "orderable": false
             },
+            {
+                "data": "warehouse",
+                "orderable": true,
+                "orderable": false
+            },
 
             {
                 "data": "adjustment_type",
                 "orderable": true
             },
+
+            {
+                "data": "qty",
+                "orderable": true
+            },
+
             {
                 "data": "subtotal",
                 "orderable": true

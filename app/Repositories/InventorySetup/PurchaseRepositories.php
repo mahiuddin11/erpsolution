@@ -166,7 +166,7 @@ class PurchaseRepositories
 
         $columns = array(
             0 => 'id',
-            1 => 'invoice_no',
+            1 => 'invoice_no'
         );
 
         //  Permission
@@ -232,7 +232,8 @@ class PurchaseRepositories
             $nestedData['id'] = $start + $key + 1;
             $nestedData['invoice_no'] = $purchase->invoice_no;
             $nestedData['date'] = $purchase->date;
-            $nestedData['branch'] = $purchase->branch->name ?? 'N/A';
+            $nestedData['branch'] = $purchase->branch->name ?? '–';
+            $nestedData['warehouse'] = $purchase->warehouse->name ?? '–';
 
             $partyName = 'N/A';
 
@@ -535,6 +536,7 @@ class PurchaseRepositories
     public function store($request)
     {
 
+
         DB::beginTransaction();
         try {
 
@@ -551,14 +553,15 @@ class PurchaseRepositories
                 $invoice_no = 'PV' . str_pad($nextCode, 5, "0", STR_PAD_LEFT);
             }
 
-            $branch_id = $request->branch_id;
-            $request->branch_id = $request->sub_warehouse_id ?? $request->branch_id;
+            // $branch_id = $request->branch_id;
+            // $request->branch_id = $request->sub_warehouse_id ?? $request->branch_id;
             $purchase = new $this->purchases();
             $purchase->invoice_no =  $invoice_no ?? $request->invoice_no;
             $purchase->custom_invoice = $request->custom_invoice;
             $purchase->date = $request->date;
             $purchase->ledger_id = $request->ledger_id ?? 0;
             $purchase->branch_id = $request->branch_id ?? 0;
+            $purchase->warehouse_id = $request->sub_warehouse_id ?? 0;
             $purchase->supplier_id = $request->supplier_id ?? 0;
             $purchase->quantity = array_sum($request->qty);
             $purchase->purchase_type = 'Direct';
@@ -625,6 +628,7 @@ class PurchaseRepositories
                 $purchaseDetail->quantity = $qty[$i];
                 $purchaseDetail->purchasetype = $request->purchasetype[$i];
                 $purchaseDetail->branch_id = $request->branch_id ?? 0;
+                $purchaseDetail->warehouse_id = $request->sub_warehouse_id ?? 0;
                 $purchaseDetail->unit_price = $subtotal[$i];
                 $purchaseDetail->total_price = $grand_total[$i];
                 $purchaseDetail->purchases_id = $purchases_id;
@@ -637,6 +641,7 @@ class PurchaseRepositories
                 $stock->product_id = $proName[$i];
                 $stock->quantity = $qty[$i];
                 $stock->branch_id = $request->branch_id;
+                $stock->warehouse_id = $request->sub_warehouse_id;
                 $stock->unit_price = $subtotal[$i];
                 $stock->total_price = $grand_total[$i];
                 $stock->general_id = $purchases_id;
@@ -647,10 +652,10 @@ class PurchaseRepositories
                 $stock->warehouse_id = $request->sub_warehouse_id ?? null;
                 $stock->save();
 
-                $existingCheck = StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->where('type', "Branch")->first();
+                $existingCheck = StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('warehouse_id', $request->sub_warehouse_id)->where('purchasetype', $request->purchasetype[$i])->where('type', "Branch")->first();
                 if (!empty($existingCheck)) :
                     $newQty = $existingCheck->quantity + $qty[$i];
-                    StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->where('type', "Branch")
+                    StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('warehouse_id', $request->sub_warehouse_id)->where('purchasetype', $request->purchasetype[$i])->where('type', "Branch")
                         ->update([
                             'quantity' => $newQty,
                             'warehouse_id' => $request->sub_warehouse_id ?? null,
@@ -658,6 +663,7 @@ class PurchaseRepositories
                 else :
                     $stockSummary = new StockSummary();
                     $stockSummary->branch_id = $request->branch_id;
+                    $stockSummary->warehouse_id = $request->sub_warehouse_id;
                     $stockSummary->product_id = $proName[$i];
                     $stockSummary->purchasetype = $request->purchasetype[$i];
                     $stockSummary->quantity = $qty[$i];
@@ -675,7 +681,8 @@ class PurchaseRepositories
             $transactionPay['table_id'] = $purchases_id;
             $transactionPay['account_id'] = getAccountByUniqueID(22)->id; // ->purchase
             $transactionPay['type'] = 1;
-            $transactionPay['branch_id'] = $branch_id ?? 0;
+            $transactionPay['branch_id'] = $request->branch_id ?? null;
+            $transactionPay['warehouse_id'] = $request->sub_warehouse_id ?? null;
             $transactionPay['debit'] =  array_sum($request->total);
             $transactionPay['remark'] = $request->narration;
             $transactionPay['created_by'] = Auth::id();
@@ -688,7 +695,8 @@ class PurchaseRepositories
             $transaction['table_id'] = $purchases_id;
             $transaction['account_id'] = $request->ledger_id; // account payable
             $transaction['type'] = 1;
-            $transaction['branch_id'] = $branch_id ?? 0;
+            $transaction['branch_id'] = $request->branch_id ?? null;
+            $transaction['warehouse_id'] = $request->sub_warehouse_id ?? null;
             $transaction['credit'] = (array_sum($request->total));
             $transaction['remark'] = $request->narration;
             $transaction['created_by'] = Auth::id();
@@ -696,9 +704,27 @@ class PurchaseRepositories
             $transaction['created_at'] = $request->date;
             AccountTransaction::create($transaction);
 
+            // dd([
+            //     'REQUEST DATA' => $request->all(),
+            //     'PURCHASE' => $purchase,
+            //     'PURCHASE DETAIL' => $purchaseDetail,
+            //     'STOCK' => $stock,
+            //     'EXISTING CHECK' => $existingCheck,
+            //     'TRANSACTION PAY' => $transactionPay,
+            //     'TRANSACTION' => $transaction,
+            // ]);
+
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
+
+            // dd([
+            //     'ERROR MESSAGE' => $e->getMessage(),
+            //     'ERROR FILE' => $e->getFile(),
+            //     'ERROR LINE' => $e->getLine(),
+            //     'ERROR CODE' => $e->getCode(),
+            //     'STACK TRACE' => $e->getTraceAsString(),
+            // ]);
             redirect('inventory-purchase-create')->with('error', 'Something Wrong Please try again');
         }
         return $purchase;
@@ -2043,15 +2069,18 @@ class PurchaseRepositories
     public function update($request, $id)
     {
 
+
+
         DB::beginTransaction();
         try {
             $purchase = $this->purchases::findOrFail($id);
 
-            $branch_id = $request->branch_id; //new add
-            $request->branch_id = $request->sub_warehouse_id ?? $request->branch_id; //new add
+            // $branch_id = $request->branch_id; //new add
+            // $request->branch_id = $request->sub_warehouse_id ?? $request->branch_id; //new add
 
             $purchase->date = $request->date;
             $purchase->branch_id = $request->branch_id;
+            $purchase->warehouse_id = $request->sub_warehouse_id ?? null;
             $purchase->ledger_id = $request->ledger_id;
             $purchase->supplier_id = $request->supplier_id;
             $purchase->quantity = array_sum($request->qty);
@@ -2063,7 +2092,7 @@ class PurchaseRepositories
             $purchase->due_amount = $request->cart_due;
             $purchase->created_by = Auth::user()->id;
             $purchase->narration = $request->narration;
-            $purchase->warehouse_id = $request->sub_warehouse_id ?? null;
+
 
             if ($request->has('chart_of_account_id')) {
                 $purchase->chart_of_account_id = $request->chart_of_account_id;
@@ -2100,13 +2129,14 @@ class PurchaseRepositories
             for ($w = 0; $w < count($oldproName); $w++) {
                 // echo $oldproName[$i];
                 $mywhereCondition = array(
-                    'branch_id' => $request->old_branch_id,
+                    'branch_id' => $request->branch_id,
+                    'warehouse_id' => $request->sub_warehouse_id,
                     'product_id' => $oldproName[$w],
                     'type' => 'Branch',
                 );
 
                 $oldstockupdate = StockSummary::where($mywhereCondition)->first();
-                // dd($oldstockupdate);
+
 
                 DB::table('stock_summaries')
                     ->where($mywhereCondition)
@@ -2124,18 +2154,19 @@ class PurchaseRepositories
                 $purchaseDetail->quantity = $qty[$i];
                 $purchaseDetail->purchasetype = $request->purchasetype[$i];
                 $purchaseDetail->branch_id = $request->branch_id;
+                $purchaseDetail->warehouse_id = $request->sub_warehouse_id ?? null;
                 $purchaseDetail->unit_price = $subtotal[$i];
                 $purchaseDetail->total_price = $grand_total[$i];
                 $purchaseDetail->purchases_id = $purchases_id;
                 $purchaseDetail->date = $request->date;
                 $purchaseDetail->created_by = Auth::user()->id;
-                $purchaseDetail->warehouse_id = $request->sub_warehouse_id ?? null;
                 $purchaseDetail->save();
 
                 $stock = new Stock();
                 $stock->product_id = $proName[$i];
                 $stock->quantity = $qty[$i];
                 $stock->branch_id = $request->branch_id;
+                $stock->warehouse_id = $request->sub_warehouse_id ?? null;
                 $stock->unit_price = $subtotal[$i];
                 $stock->total_price = $grand_total[$i];
                 $stock->general_id = $purchases_id;
@@ -2145,11 +2176,11 @@ class PurchaseRepositories
                 $stock->warehouse_id = $request->sub_warehouse_id ?? null;
                 $stock->save();
 
-                $existingCheck = StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->where('type', 'Branch')->first();
+                $existingCheck = StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('warehouse_id', $request->sub_warehouse_id)->where('purchasetype', $request->purchasetype[$i])->where('type', 'Branch')->first();
 
                 if (!empty($existingCheck) && $existingCheck->quantity >= 0) :
                     $newQty = $existingCheck->quantity + $qty[$i];
-                    StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->where('type', 'Branch')
+                    StockSummary::where('product_id', $proName[$i])->where('branch_id', $request->branch_id)->where('warehouse_id', $request->sub_warehouse_id)->where('purchasetype', $request->purchasetype[$i])->where('type', 'Branch')
                         ->update([
                             'quantity' => $newQty,
                             'warehouse_id' => $request->sub_warehouse_id ?? null,
@@ -2157,11 +2188,11 @@ class PurchaseRepositories
                 else :
                     $stockSummary = new StockSummary();
                     $stockSummary->branch_id = $request->branch_id;
+                    $stockSummary->warehouse_id = $request->sub_warehouse_id ?? null;
                     $stockSummary->product_id = $proName[$i];
                     $stockSummary->purchasetype = $request->purchasetype[$i];
                     $stockSummary->quantity = $qty[$i];
                     $stockSummary->type = 'Branch';
-                    $stockSummary->warehouse_id = $request->sub_warehouse_id ?? null;
                     $stockSummary->save();
                 endif;
             }
@@ -2170,7 +2201,7 @@ class PurchaseRepositories
             AccountTransaction::where('table_id', $purchases_id)->where('type', 1)->delete();
 
             // $invoice = AccountTransaction::accountInvoice();
-            $invoice = (new AccountTransaction())->accountInvoice();
+            // $invoice = (new AccountTransaction())->accountInvoice();
 
             $transactionPay['payment_invoice'] = null;
             $transactionPay['invoice'] = $purchase->invoice_no;
@@ -2178,6 +2209,7 @@ class PurchaseRepositories
             $transactionPay['account_id'] = getAccountByUniqueID(22)->id; // ->purchase
             $transactionPay['type'] = 1;
             $transactionPay['branch_id'] = $request->branch_id ?? 0;
+            $transactionPay['warehouse_id'] = $request->sub_warehouse_id ?? null;
             $transactionPay['debit'] =  array_sum($request->total);
             $transactionPay['remark'] = $request->narration;
             $transactionPay['created_by'] = Auth::id();
@@ -2191,6 +2223,7 @@ class PurchaseRepositories
             $transaction['account_id'] = $request->ledger_id; // account payable
             $transaction['type'] = 1;
             $transaction['branch_id'] = $request->branch_id ?? 0;
+            $transaction['warehouse_id'] = $request->sub_warehouse_id ?? null;
             $transaction['credit'] = (array_sum($request->total));
             $transaction['remark'] = $request->narration;
             $transaction['created_by'] = Auth::id();
@@ -2293,10 +2326,12 @@ class PurchaseRepositories
                 //  Step 2: Stock Summary Reverse 
                 $mywhereCondition = [
                     'branch_id'    => $val->branch_id,
+                    'warehouse_id'    => $val->warehouse_id,
                     'product_id'   => $val->product_id,
                     'purchasetype' => $val->purchasetype,
                     'type'         => 'Branch',
                 ];
+
 
                 $oldStockSummary = StockSummary::where($mywhereCondition)->first();
 

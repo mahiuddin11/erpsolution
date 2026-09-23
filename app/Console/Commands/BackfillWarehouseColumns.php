@@ -12,26 +12,37 @@ class BackfillWarehouseColumns extends Command
                             {--force : Skip the confirmation prompt}';
 
     protected $description = 'Add warehouse_id + backup_branch_id to listed tables, then backfill: '
-        . 'backup_branch_id = old branch_id. For rows whose branch_id points to a warehouse-type '
-        . 'branches row (parent_id != 0) that is linked to a warehouses record, warehouse_id gets '
-        . 'set to that warehouse\'s id and branch_id gets rewritten to warehouses.branch_id '
-        . '(the real branch).';
+        . 'backup_branch_id = original branch_id (never overwritten once set). '
+        . 'From backup_branch_id we look up branches: warehouse_id = branches.warehouse_id, '
+        . 'and if the row is a warehouse-type branch (parent_id != 0) branch_id = branches.parent_id '
+        . '(the real branch). Safe to rerun: it always recalculates from backup_branch_id.';
 
     protected array $tables = [
-        // 'stocks',
-        // 'stock_summaries',
-        // 'purchases',
-        // 'purchases_details',
+        'account_transactions',
+        'dabit_vouchers',
+        'dabit_voucher_details',
+        'credit_vouchers',
+        'credit_voucher_details',
+        'stocks',
+        'product_opening_stocks',
+        'product_opening_stock_details',
+        'stock_ajdustments',
+        'stock_ajdustment_detailsts',
+        'stock_summaries',
         'sales',
         'sales__details',
-        // 'account_transactions',
-        // 'dabit_vouchers',
-        // 'dabit_voucher_details',
-        // 'projects',
-        // 'project_transfers',
-        // 'project_transfer_details',
-
+        'sale_returns',
+        'sale_return_details',
+        'purchases',
+        'purchases_details',
+        'project_transfers',
+        'project_transfer_details',
+        'journal_vouchers',
+        'journal_voucher_details',
     ];
+
+    /** Real branch id for a joined `branches b` row. */
+    private const TARGET_BRANCH = 'IF(COALESCE(b.parent_id, 0) != 0, b.parent_id, b.id)';
 
     public function handle()
     {
@@ -44,6 +55,14 @@ class BackfillWarehouseColumns extends Command
         }
 
         $this->info($dryRun ? 'DRY RUN — no database changes will be made.' : 'Starting warehouse column backfill...');
+
+        // Pre-flight: bad data in `branches` itself would break the mapping
+        $problems = $this->preflight();
+        if ($problems > 0 && !$dryRun) {
+            $this->error('Fix the branches data issues above and rerun.');
+            return self::FAILURE;
+        }
+
         $this->line('Tables to process: ' . implode(', ', $this->tables));
         $this->newLine();
 
@@ -53,7 +72,7 @@ class BackfillWarehouseColumns extends Command
         }
 
         $this->table(
-            ['Table', 'branch_id exists', 'warehouse_id', 'backup_branch_id', 'Rows to backup', 'Rows -> warehouse mapped'],
+            ['Table', 'branch_id exists', 'warehouse_id', 'backup_branch_id', 'Rows to backup', 'Rows to fix (branch/warehouse)'],
             collect($plan)->map(function ($p, $table) {
                 return [
                     $table,
@@ -94,7 +113,7 @@ class BackfillWarehouseColumns extends Command
                 $this->info("Done: {$tableName}");
             } catch (\Throwable $e) {
                 $this->error("Failed on {$tableName}: " . $e->getMessage());
-                $this->warn('Earlier tables in this run (if any) already committed and are unaffected. Fix the issue and rerun — already-processed rows/columns will be skipped automatically.');
+                $this->warn('Earlier tables in this run (if any) already committed and are unaffected. Fix the issue and rerun — the backfill recalculates from backup_branch_id, so rerunning is safe.');
                 return self::FAILURE;
             }
         }
@@ -103,6 +122,44 @@ class BackfillWarehouseColumns extends Command
         $this->info('All listed tables processed successfully.');
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Checks the `branches` table for data that would make the mapping wrong.
+     * Returns the number of problems found.
+     */
+    private function preflight(): int
+    {
+        $problems = 0;
+
+        // branches.warehouse_id pointing to a warehouse that doesn't exist -> FK error later
+        $orphanWarehouses = DB::table('branches as b')
+            ->leftJoin('warehouses as w', 'w.id', '=', 'b.warehouse_id')
+            ->whereNotNull('b.warehouse_id')
+            ->whereNull('w.id')
+            ->pluck('b.id');
+
+        if ($orphanWarehouses->isNotEmpty()) {
+            $problems++;
+            $this->error('branches.warehouse_id points to a missing warehouse. branches.id: ' . $orphanWarehouses->implode(', '));
+        }
+
+        // parent_id points to a missing branch, or to another warehouse-type branch (nested)
+        $badParents = DB::table('branches as b')
+            ->leftJoin('branches as p', 'p.id', '=', 'b.parent_id')
+            ->whereRaw('COALESCE(b.parent_id, 0) != 0')
+            ->where(function ($q) {
+                $q->whereNull('p.id')
+                    ->orWhereRaw('COALESCE(p.parent_id, 0) != 0');
+            })
+            ->pluck('b.id');
+
+        if ($badParents->isNotEmpty()) {
+            $problems++;
+            $this->error('branches.parent_id is missing or points to another warehouse-type branch. branches.id: ' . $badParents->implode(', '));
+        }
+
+        return $problems;
     }
 
     private function inspectTable(string $tableName): array
@@ -115,21 +172,33 @@ class BackfillWarehouseColumns extends Command
         $rowsToMap = 0;
 
         if ($hasBranchId) {
+
+            $backupQuery = DB::table($tableName . ' as t')
+                ->join('branches as b', 'b.id', '=', 't.branch_id');
+
             if ($hasBackupBranchId) {
-                $rowsToBackup = DB::table($tableName)->whereNull('backup_branch_id')->count();
-            } else {
-                $rowsToBackup = DB::table($tableName)->count();
+                $backupQuery->whereNull('t.backup_branch_id');
             }
 
-            // Chain: t.branch_id -> branches.id (parent_id != 0) -> branches.warehouse_id -> warehouses.id
-            $rowsToMap = DB::table($tableName . ' as t')
-                ->join('branches as b', function ($join) {
-                    $join->on('b.id', '=', 't.branch_id')
-                        ->where('b.parent_id', '!=', 0);
-                })
-                ->join('warehouses as w', 'w.id', '=', 'b.warehouse_id')
-                ->when($hasWarehouseId, fn($q) => $q->whereNull('t.warehouse_id'))
-                ->count();
+            $rowsToBackup = $backupQuery->count();
+
+            // Rows to fix: always calculated from the ORIGINAL branch id
+            // (backup_branch_id if already there, otherwise the current branch_id)
+            $src = $hasBackupBranchId ? 'COALESCE(t.backup_branch_id, t.branch_id)' : 't.branch_id';
+
+            $mapQuery = DB::table($tableName . ' as t')
+                ->join('branches as b', DB::raw($src), '=', 'b.id');
+
+            if ($hasWarehouseId) {
+                $mapQuery->whereRaw(
+                    '(NOT (t.warehouse_id <=> b.warehouse_id) OR NOT (t.branch_id <=> ' . self::TARGET_BRANCH . '))'
+                );
+            } else {
+                // warehouse_id column will be new, so every warehouse-type row changes
+                $mapQuery->whereRaw('(COALESCE(b.parent_id, 0) != 0 OR b.warehouse_id IS NOT NULL)');
+            }
+
+            $rowsToMap = $mapQuery->count();
         }
 
         return [
@@ -186,20 +255,18 @@ class BackfillWarehouseColumns extends Command
         DB::beginTransaction();
 
         try {
-            // Step 1: preserve branch_id for rows not yet backed up — but only
-            // for rows whose branch_id is a VALID branches.id. Rows with a
-            // corrupted branch_id (e.g. a project_id mistakenly stored there)
-            // are skipped here and left with backup_branch_id = NULL, so they
-            // don't violate the FK and can be fixed manually later.
+            // Step 1: preserve the original branch_id — only for rows not yet backed up,
+            // and only when branch_id is a VALID branches.id. Corrupted values are
+            // skipped (backup_branch_id stays NULL) so they don't violate the FK
+            // and can be fixed manually later. Existing backups are never overwritten.
             $backedUp = DB::update("
-            UPDATE `{$tableName}` t
-            INNER JOIN `branches` b ON b.id = t.branch_id
-            SET t.backup_branch_id = t.branch_id
-            WHERE t.backup_branch_id IS NULL
-        ");
+                UPDATE `{$tableName}` t
+                INNER JOIN `branches` b ON b.id = t.branch_id
+                SET t.backup_branch_id = t.branch_id
+                WHERE t.backup_branch_id IS NULL
+            ");
             $this->line("  backed up branch_id on {$backedUp} row(s)");
 
-            // Track + report how many rows were skipped due to invalid branch_id
             $skipped = DB::table($tableName . ' as t')
                 ->leftJoin('branches as b', 'b.id', '=', 't.branch_id')
                 ->whereNull('b.id')
@@ -210,20 +277,23 @@ class BackfillWarehouseColumns extends Command
                 $this->warn("  skipped {$skipped} row(s) with invalid/corrupted branch_id (no matching branches.id) — left untouched for manual fix");
             }
 
-            // Step 2: chain through branches -> warehouses using the preserved
-            // original value, set warehouse_id, rewrite branch_id to the real branch
+            // Step 2: always calculate from the ORIGINAL branch id (backup_branch_id).
+            //   warehouse_id = branches.warehouse_id
+            //   branch_id    = branches.parent_id if the row is warehouse-type
+            //                  (parent_id != 0), otherwise the branch itself.
+            // Only rows whose values would actually change are updated, so this also
+            // repairs rows written wrongly by the earlier version, and is safe to rerun.
+            $target = self::TARGET_BRANCH;
+
             $mapped = DB::update("
-            UPDATE `{$tableName}` t
-            INNER JOIN `branches` b
-                ON b.id = t.backup_branch_id
-                AND b.parent_id != 0
-            INNER JOIN `warehouses` w
-                ON w.id = b.warehouse_id
-            SET t.warehouse_id = w.id,
-                t.branch_id = w.branch_id
-            WHERE t.warehouse_id IS NULL
-        ");
-            $this->line("  mapped warehouse_id + rewrote branch_id on {$mapped} row(s)");
+                UPDATE `{$tableName}` t
+                INNER JOIN `branches` b ON b.id = t.backup_branch_id
+                SET t.warehouse_id = b.warehouse_id,
+                    t.branch_id = {$target}
+                WHERE NOT (t.warehouse_id <=> b.warehouse_id)
+                   OR NOT (t.branch_id <=> {$target})
+            ");
+            $this->line("  fixed warehouse_id/branch_id on {$mapped} row(s)");
 
             DB::commit();
         } catch (\Throwable $e) {

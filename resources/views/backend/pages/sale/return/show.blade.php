@@ -8,7 +8,7 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1 class="m-0">Sale Return</h1>
+                    <h1 class="m-0">Sale Return Aprove</h1>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
@@ -24,11 +24,47 @@
 
 @section('admin-content')
 
+    {{-- NEW: print styling — hides layout chrome and action buttons, shows a clean invoice-style header only when printing --}}
+    <style media="print">
+        .main-header,
+        .main-sidebar,
+        .content-header,
+        .no-print,
+        .card-tools,
+        footer.main-footer {
+            display: none !important;
+        }
+
+        .content-wrapper {
+            margin-left: 0 !important;
+        }
+
+        .card {
+            box-shadow: none !important;
+            border: none !important;
+        }
+
+        body {
+            background: #fff !important;
+        }
+
+        #printable-invoice-header {
+            display: block !important;
+        }
+    </style>
+
+    {{-- NEW: only visible when printing — a simple invoice-style letterhead --}}
+    <div id="printable-invoice-header" style="display:none; text-align:center; margin-bottom:20px;">
+        <h2 style="margin-bottom:0;">Water Technology BD Limited</h2>
+        <p style="margin-top:2px;">Sale Return Voucher</p>
+        <hr>
+    </div>
+
     @if (session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+        <div class="alert alert-success no-print">{{ session('success') }}</div>
     @endif
     @if (session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
+        <div class="alert alert-danger no-print">{{ session('error') }}</div>
     @endif
 
     <div class="row">
@@ -48,6 +84,12 @@
                         <span class="badge badge-{{ $statusColors[$saleReturn->status] ?? 'secondary' }} p-2">
                             {{ ucfirst($saleReturn->status) }}
                         </span>
+
+                        {{-- NEW: Print button — triggers window.print(), hidden itself when printing via .no-print --}}
+                        <button type="button" class="btn btn-sm btn-default no-print" onclick="window.print()"
+                            style="margin-left:8px;">
+                            <i class="fa fa-print"></i> Print
+                        </button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -83,10 +125,6 @@
                         <div class="col-md-2 col-sm-6 col-12 mb-2">
                             <strong>Return Type:</strong><br>
                             {{ ucfirst($saleReturn->return_type ?? '—') }}
-                        </div>
-                        <div class="col-md-2 col-sm-6 col-12 mb-2">
-                            <strong>Refund Method:</strong><br>
-                            {{ str_replace('_', ' ', ucfirst($saleReturn->refund_method ?? '—')) }}
                         </div>
                         @if ($saleReturn->status !== 'pending')
                             <div class="col-md-3 col-sm-6 col-12 mb-2">
@@ -157,7 +195,7 @@
                     @endif
 
                     @if ($canDecide)
-                        <div class="row">
+                        <div class="row no-print">
                             <div class="col-12">
                                 <hr>
                                 <h5>Decision</h5>

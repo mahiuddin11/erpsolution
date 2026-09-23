@@ -15,6 +15,7 @@ class AccountTransaction extends Model
         'type',
         'debit',
         'branch_id',
+        'warehouse_id',
         'credit',
         'remark',
         'table_id',

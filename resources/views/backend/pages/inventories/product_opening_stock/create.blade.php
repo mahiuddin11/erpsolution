@@ -62,11 +62,11 @@
                                 <input type="hidden" name="invoice_no" class="form-control" id=""
                                     value="{{ $invoice_no }}">
                             </div>
-                            <div class="col-md-3 mb-3">
+                            <div class="col-md-2 mb-3">
                                 <label>Date:</label>
                                 <div class="input-group date" id="reservationdate" data-target-input="nearest">
                                     <input type="text" name="date" data-toggle="datetimepicker"
-                                        value="{{ date('YYYY-mm-dd') }}" class="form-control datetimepicker-input"
+                                        value="{{ date('Y-m-d') }}" class="form-control datetimepicker-input"
                                         data-target="#reservationdate" />
                                     <div class="input-group-append" data-target="#reservationdate"
                                         data-toggle="datetimepicker">
@@ -78,7 +78,7 @@
                                 @enderror
                             </div>
 
-                            <div class="col-md-3 mb-3">
+                            <div class="col-md-2 mb-3">
                                 <label for="validationCustom01">Stock Center *:</label>
                                 <select class="form-control select2" id="cost_center">
                                     <option selected value="0">No Stock Center</option>
@@ -99,26 +99,23 @@
                                 <span class="error text-red text-bold"></span>
                             </div>
 
-                            {{-- <div class="col-md-4 mb-3" id="branch_div" style="display: none;">
+                            {{-- Branch (real branches only) --}}
+                            <div class="col-md-3 mb-3" id="branch_div" style="display: none;">
                                 <label for="validationCustom01">Branch *:</label>
                                 <select class="form-control select2" id="branch_id" name="branch_id">
-                                    <option selected value="0">--Select--</option>
+                                    <option selected value="0">--Select Branch--</option>
                                     @foreach ($branchs as $item)
                                         <option value="{{ $item->id }}">{{ $item->name }}</option>
                                     @endforeach
                                 </select>
                                 <span class="error text-red text-bold"></span>
-                            </div> --}}
+                            </div>
 
-                            <div class="col-md-4 mb-3" id="branch_div" style="display: none;">
-                                <label for="validationCustom01">Branch *:</label>
-                                <select class="form-control select2" id="branch_id" name="branch_id">
-                                    <option selected value="0">--Select Branch--</option>
-                                    @foreach ($formattedBranches as $item)
-                                        <option value="{{ $item->id }}">
-                                            {{ $item->display_name }}
-                                        </option>
-                                    @endforeach
+                            {{-- Warehouse (loaded by JS after a branch is selected) --}}
+                            <div class="col-md-3 mb-3" id="warehouse_div" style="display: none;">
+                                <label for="validationCustom01">Warehouse *:</label>
+                                <select class="form-control select2" id="warehouse_id" name="warehouse_id">
+                                    <option selected value="0">--Select Warehouse--</option>
                                 </select>
                                 <span class="error text-red text-bold"></span>
                             </div>
@@ -631,11 +628,12 @@
         $(document).on('change', "#cost_center", function() {
             var value = this.value;
 
-            // Hide both the project and branch divs initially
+            // Hide project, branch and warehouse divs initially
             $('#project_div').hide();
             $('#branch_div').hide();
+            $('#warehouse_div').hide();
 
-            // Reset selected options for both project and branch
+            // Reset selected options (branch change handler below also resets/hides the warehouse)
             $('#project_id').val('0').trigger('change'); // trigger change event if using select2
             $('#branch_id').val('0').trigger('change'); // trigger change event if using select2
 
@@ -647,6 +645,42 @@
             }
         });
 
+        // Branch selected -> fetch that branch's warehouses via API and show beside it
+        $(document).on('change', '#branch_id', function() {
+            var branchId = $(this).val();
+            var $wh = $('#warehouse_id');
+
+            $wh.empty().append('<option value="0">--Select Warehouse--</option>').val('0').trigger('change');
+
+            if (!branchId || branchId === '0') {
+                $('#warehouse_div').hide();
+                return;
+            }
+
+            $('#warehouse_div').show();
+
+            $.ajax({
+                url: "{{ route('inventorySetup.stockAdjustment.getWarehouseList') }}",
+                type: 'GET',
+                cache: false,
+                data: {
+                    branch_id: branchId
+                },
+                success: function(html) {
+                    // ignore stale response if branch was changed meanwhile
+                    if ($('#branch_id').val() !== branchId) {
+                        return;
+                    }
+                    // endpoint returns ready-made <option> HTML
+                    $wh.append(html);
+                    $wh.val('0').trigger('change');
+                },
+                error: function() {
+                    alert('Failed to load warehouses.');
+                }
+            });
+        });
+
         // Form submit event
         $(document).on('click', '#getsubmit', function(e) {
             e.preventDefault();
@@ -654,21 +688,22 @@
             var costCenter = $('#cost_center option:selected').val();
             var projectSelected = $('#project_id option:selected').val();
             var branchSelected = $('#branch_id option:selected').val();
+            var warehouseSelected = $('#warehouse_id').val();
 
 
             if (costCenter == 0) {
-                e.preventDefault(); // Prevent form submission
                 alert('Please select a Stock Center .');
                 return false;
             }
             // Validate based on the cost center selection
             if (costCenter === 'project' && projectSelected === '0') {
-                e.preventDefault(); // Prevent form submission
                 alert('Please select a project.');
                 return false;
             } else if (costCenter === 'branch' && branchSelected === '0') {
-                e.preventDefault(); // Prevent form submission
                 alert('Please select a branch.');
+                return false;
+            } else if (costCenter === 'branch' && (!warehouseSelected || warehouseSelected === '0')) {
+                alert('Please select a warehouse.');
                 return false;
             } else {
                 $('#getform').submit();

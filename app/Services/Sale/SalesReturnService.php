@@ -51,7 +51,7 @@ class SalesReturnService
 
     public function approve($id)
     {
-        dd('testa', $id);
+
 
         $saleReturn = SaleReturn::with(['sale', 'details.saleDetail'])->findOrFail($id);
 
@@ -64,19 +64,13 @@ class SalesReturnService
         try {
             $sale = $saleReturn->sale;
 
-            // Sale::branch_id already holds the resolved sub-warehouse-or-branch value
-            // (see Sale::store(): `$request->branch_id = $request->sub_warehouse_id ?? $request->branch_id;`
-            // before saving), so reusing it here sends the return to the exact same
-            // location the sale was fulfilled from — no separate fallback needed.
+
             $targetBranchId = $sale->branch_id;
 
             foreach ($saleReturn->details as $detail) {
 
                 if ($detail->condition === 'good') {
-                    // >>> NEW: restock only 'good' condition lines. Mirrors the exact
-                    // Stock insert pattern from Sale::store(), direction reversed
-                    // (this is stock coming back IN, logged with status 'Sale Return',
-                    // which is a valid value in your existing stocks.status enum).
+
                     $stock = new Stock();
                     $stock->product_id  = $detail->product_id;
                     $stock->quantity    = $detail->returned_qty;

@@ -145,6 +145,12 @@
             color: #155724;
         }
 
+        .badge-wh {
+            background: #e2e3f5;
+            color: #383d8f;
+            margin-left: 4px;
+        }
+
         .details-panel {
             background: #fff;
             border: 1px solid var(--tt-border);
@@ -281,8 +287,8 @@
             padding: 16px;
         }
 
-        /* Requisition থেকে remaining qty auto-load হওয়ার তথ্যমূলক নোট —
-                                                                                                                                                                   কোনো row lock করা হয় না, delete/qty-কমানো দুটোই চালু থাকে। */
+        /* Info note shown when remaining qty is auto-loaded from a requisition.
+               Rows are NOT locked: deleting a row or reducing qty stays possible. */
         .products-info-note {
             display: none;
             align-items: center;
@@ -547,6 +553,7 @@
                                 </ul>
                             </div>
                         @endif
+
                         {{-- ============ STEP 1: TRANSFER TYPE ============ --}}
                         <div class="section-title"><span class="step-num">1</span> Choose Transfer Type</div>
 
@@ -555,11 +562,12 @@
                                 <input type="radio" name="transfer_type" value="branch_to_project" checked>
                                 <div class="tt-icon"><i class="fas fa-warehouse"></i></div>
                                 <div class="tt-title">Branch / Warehouse &rarr; Project</div>
-                                <div class="tt-sub">Issue material from stock to a running project</div>
+                                <div class="tt-sub">Issue material from a warehouse to a running project</div>
                                 <div class="tt-flow"><i class="fas fa-building"></i> Branch/warehouse &nbsp;<i
                                         class="fas fa-long-arrow-alt-right"></i>&nbsp; <i
                                         class="fas fa-diagram-project"></i> Project</div>
                                 <span class="tt-badge badge-req"><i class="fas fa-file-alt"></i> Requisition required</span>
+                                <span class="tt-badge badge-wh"><i class="fas fa-warehouse"></i> Warehouse required</span>
                             </label>
 
                             <label class="transfer-type-card" data-type="project_to_project">
@@ -577,11 +585,12 @@
                                 <input type="radio" name="transfer_type" value="project_to_branch">
                                 <div class="tt-icon"><i class="fas fa-undo-alt"></i></div>
                                 <div class="tt-title">Project &rarr; Branch / Warehouse</div>
-                                <div class="tt-sub">Return unused material back to stock</div>
+                                <div class="tt-sub">Return unused material back to a warehouse</div>
                                 <div class="tt-flow"><i class="fas fa-diagram-project"></i> Project &nbsp;<i
                                         class="fas fa-long-arrow-alt-right"></i>&nbsp; <i class="fas fa-building"></i>
                                     Branch/warehouse</div>
                                 <span class="tt-badge badge-noreq"><i class="fas fa-check"></i> No requisition needed</span>
+                                <span class="tt-badge badge-wh"><i class="fas fa-warehouse"></i> Warehouse required</span>
                             </label>
                         </div>
 
@@ -601,8 +610,10 @@
                                 <div class="col-lg-2 col-md-4 col-sm-6 form-group">
                                     <label>Invoice / Reference No</label>
                                     <input type="text" class="form-control" value="{{ $transferCode ?? '' }}" readonly>
+                                    <small class="text-muted">Final number is assigned on save.</small>
                                 </div>
 
+                                {{-- Purchase requisition (branch_to_project, project_to_project) --}}
                                 <div class="col-lg-3 col-md-4 col-sm-6 form-group route-fields rf-requisition"
                                     data-rule="branch_to_project,project_to_project">
                                     <label>Purchase Requisition <span class="required-star">*</span></label>
@@ -617,55 +628,49 @@
                                         items.</small>
                                 </div>
 
+                                {{-- SOURCE branch + warehouse (branch_to_project) --}}
                                 <div class="col-lg-3 col-md-6 col-sm-6 form-group route-fields rf-source-branch"
                                     data-rule="branch_to_project">
                                     <label>Source Branch <span class="required-star">*</span></label>
-                                    <select class="form-control select2 branch-picker" data-target="from_branch_id"
-                                        data-rule="branch_to_project">
+                                    <select name="from_branch_id" class="form-control select2 branch-picker rf-input"
+                                        data-target="from_branch_id" data-rule="branch_to_project">
                                         <option value="">-- Select Branch --</option>
                                         @foreach ($branchs->where('parent_id', 0) as $branch)
                                             <option value="{{ $branch->id }}">{{ $branch->name }}</option>
                                         @endforeach
                                     </select>
-
-                                    <input type="hidden" name="from_branch_id" class="rf-input"
-                                        data-rule="branch_to_project">
                                 </div>
 
                                 <div class="col-lg-2 col-md-6 col-sm-6 form-group route-fields rf-source-warehouse"
                                     data-rule="branch_to_project">
-                                    <label>Warehouse <span class="text-muted">(optional)</span></label>
-                                    <div class="warehouse-wrap" data-target="from_branch_id" style="display:none">
-                                        <select class="form-control select2 warehouse-picker"
-                                            data-target="from_branch_id">
-                                            <option value="">-- Warehouse --</option>
-                                        </select>
-                                    </div>
+                                    <label>Warehouse <span class="required-star">*</span></label>
+                                    <select name="from_warehouse_id"
+                                        class="form-control select2 warehouse-picker rf-input"
+                                        data-target="from_branch_id" data-rule="branch_to_project">
+                                        <option value="">-- Select branch first --</option>
+                                    </select>
                                 </div>
 
+                                {{-- DESTINATION branch + warehouse (project_to_branch) --}}
                                 <div class="col-lg-3 col-md-6 col-sm-6 form-group route-fields rf-dest-branch"
                                     data-rule="project_to_branch">
                                     <label>Destination Branch <span class="required-star">*</span></label>
-                                    <select class="form-control select2 branch-picker" data-target="to_branch_id"
-                                        data-rule="project_to_branch">
+                                    <select name="to_branch_id" class="form-control select2 branch-picker rf-input"
+                                        data-target="to_branch_id" data-rule="project_to_branch">
                                         <option value="">-- Select Branch --</option>
                                         @foreach ($branchs->where('parent_id', 0) as $branch)
                                             <option value="{{ $branch->id }}">{{ $branch->name }}</option>
                                         @endforeach
                                     </select>
-
-                                    <input type="hidden" name="to_branch_id" class="rf-input"
-                                        data-rule="project_to_branch">
                                 </div>
 
                                 <div class="col-lg-2 col-md-6 col-sm-6 form-group route-fields rf-dest-warehouse"
                                     data-rule="project_to_branch">
-                                    <label>Warehouse <span class="text-muted">(optional)</span></label>
-                                    <div class="warehouse-wrap" data-target="to_branch_id" style="display:none">
-                                        <select class="form-control select2 warehouse-picker" data-target="to_branch_id">
-                                            <option value="">-- Warehouse --</option>
-                                        </select>
-                                    </div>
+                                    <label>Warehouse <span class="required-star">*</span></label>
+                                    <select name="to_warehouse_id" class="form-control select2 warehouse-picker rf-input"
+                                        data-target="to_branch_id" data-rule="project_to_branch">
+                                        <option value="">-- Select branch first --</option>
+                                    </select>
                                 </div>
                             </div>
 
@@ -733,7 +738,6 @@
                                                 Select branch above --</span>
                                         </div>
                                     </div>
-
                                 </div>
                             </div>
 
@@ -771,7 +775,7 @@
                                             <th style="width:12%">Purchase Type</th>
                                             <th style="width:12%">Available Stock</th>
                                             <th style="width:11%">Qty</th>
-                                            <th style="width:12%">Remaining</th> {{-- NEW --}}
+                                            <th style="width:12%">Remaining</th>
                                             <th style="width:6%"></th>
                                         </tr>
                                     </thead>
@@ -786,17 +790,8 @@
                                 No products added yet. Use "Add Product Row" to start.
                             </div>
 
-                            {{-- <div class="products-toolbar">
-                                <button type="button" class="btn btn-outline-primary btn-sm" id="addRowBtn">
-                                    <i class="fas fa-plus"></i> Add Product Row
-                                </button>
-                                <div class="products-summary">
-                                    <strong id="totalRowsText">1 row</strong> &middot;
-                                    Total qty: <strong id="totalQtyText">0</strong>
-                                </div>
-                            </div> --}}
-
                             <div class="products-toolbar">
+                                {{-- Manual "Add row" is only available for project -> branch (no requisition) --}}
                                 <button type="button" class="btn btn-outline-primary btn-sm" id="addRowBtn"
                                     style="display:none">
                                     <i class="fas fa-plus"></i> Add Product Row
@@ -814,7 +809,7 @@
                         <a href="{{ route('project.transferproject.index') }}" class="btn btn-default">
                             <i class="fas fa-arrow-left"></i> Cancel
                         </a>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
                             <i class="fas fa-save"></i> Submit Transfer
                         </button>
                     </div>
@@ -823,7 +818,7 @@
         </div>
     </div>
 
-    {{-- Hidden template row --}}
+    {{-- Hidden template row (outside the <form>, so it is never submitted) --}}
     <table style="display:none">
         <tbody id="rowTemplate">
             <tr>
@@ -853,7 +848,10 @@
                 <td data-label="Qty">
                     <input type="number" name="qty[]" min="0.01" step="0.01" class="form-control qty-input"
                         required>
+                    {{-- UI-only helper value. The server must re-read the remaining qty from pr_details. --}}
+                    <input type="hidden" name="requested_qty[]" value="">
                     <div class="stock-hint"></div>
+                    <span class="remaining-hint"></span>
                 </td>
                 <td data-label="Remaining" class="text-center">
                     <span class="remaining-display text-muted">-</span>
@@ -862,8 +860,6 @@
                     <i class="fas fa-trash text-danger remove-row-btn" title="Remove row" role="button"
                         tabindex="0"></i>
                 </td>
-                <input type="hidden" name="requested_qty[]" value="">
-
             </tr>
         </tbody>
     </table>
@@ -874,120 +870,49 @@
     <script>
         $(function() {
 
+            var routes = {
+                filterProduct: "{{ route('project.transferproject.filterproduct') }}",
+                availableStock: "{{ route('project.transferproject.availableStock') }}",
+                searchPr: "{{ route('project.transfer.searchprvoucher') }}",
+                getWarehouses: "{{ route('project.transferproject.getWarehouses') }}"
+            };
+
+            var rowCount = 0;
+            var prXhr = null; // in-flight requisition request
+            var reqLoadToken = 0; // invalidates an in-flight requisition load
+
+            /* ---------------- Helpers ---------------- */
+            function currentType() {
+                return $('input[name=transfer_type]:checked').val();
+            }
+
+            function round2(n) {
+                return Math.round((n + Number.EPSILON) * 100) / 100;
+            }
+
+            function notify(msg) {
+                if (typeof toastr !== 'undefined' && toastr.warning) {
+                    toastr.warning(msg);
+                } else {
+                    alert(msg);
+                }
+            }
+
+            // new Option() escapes text, so product / warehouse names can never inject HTML.
+            function fillSelect($sel, items, placeholder) {
+                $sel.empty().append(new Option(placeholder, '', true, true));
+                $.each(items, function(i, it) {
+                    $sel.append(new Option(it.name, it.id));
+                });
+            }
+
+            // The template row must not carry select2 markup (master layout may init it globally).
             $('#rowTemplate .select2').each(function() {
                 var $el = $(this);
                 if ($el.hasClass('select2-hidden-accessible')) {
                     $el.select2('destroy');
                 }
             });
-
-            function updateRemainingDisplay($row) {
-                var requested = parseFloat($row.find('input[name="requested_qty[]"]').val());
-                var $display = $row.find('.remaining-display');
-
-                if (!requested && requested !== 0) {
-                    $display.text('-').removeClass('text-danger').addClass('text-muted');
-                    return;
-                }
-
-                var qty = parseFloat($row.find('.qty-input').val()) || 0;
-                var remaining = requested - qty;
-
-                $display.text(remaining.toFixed(2)).removeClass('text-muted');
-
-                if (remaining < 0) {
-                    $display.removeClass('text-success').addClass('text-danger');
-                } else {
-                    $display.removeClass('text-danger').addClass('text-success');
-                }
-            }
-
-            /* ---------------- Transfer type switching ---------------- */
-            // function applyTransferType(type) {
-            //     $('.transfer-type-card').removeClass('active');
-            //     $('.transfer-type-card[data-type="' + type + '"]').addClass('active');
-
-            //     $('.route-fields').removeClass('show').hide();
-            //     $('.rf-input').prop('required', false);
-
-            //     $('.route-fields').each(function() {
-            //         var $field = $(this);
-            //         var input = $field.find('.rf-input');
-            //         var ruleAttr = input.length ? input.data('rule') : $field.data('rule');
-            //         var rules = (ruleAttr || '').toString().split(',');
-            //         if (rules.indexOf(type) !== -1) {
-            //             $field.addClass('show').show();
-            //             input.prop('required', true);
-            //         }
-            //     });
-
-            //     if (type !== 'branch_to_project' && type !== 'project_to_project') {
-            //         var $req = $('select[name=purchase_requisition]');
-            //         if ($req.val()) {
-            //             $req.val(null).trigger('change');
-            //         } else {
-            //             resetToSingleEmptyRow();
-            //         }
-            //     }
-
-            //     $('.branch-picker').each(function() {
-            //         var $bp = $(this);
-            //         var rule = ($bp.data('rule') || '').toString();
-            //         if (rule && rule !== type && $bp.val()) {
-            //             $bp.val(null).trigger('change');
-            //         }
-            //     });
-            // }
-
-            function applyTransferType(type) {
-                $('.transfer-type-card').removeClass('active');
-                $('.transfer-type-card[data-type="' + type + '"]').addClass('active');
-
-                $('.route-fields').removeClass('show').hide();
-                $('.rf-input').prop('required', false);
-
-                $('.route-fields').each(function() {
-                    var $field = $(this);
-                    var input = $field.find('.rf-input');
-                    var ruleAttr = input.length ? input.data('rule') : $field.data('rule');
-                    var rules = (ruleAttr || '').toString().split(',');
-                    if (rules.indexOf(type) !== -1) {
-                        $field.addClass('show').show();
-                        input.prop('required', true);
-                    }
-                });
-
-
-                $('#addRowBtn').toggle(type === 'project_to_branch');
-
-                if (type !== 'branch_to_project' && type !== 'project_to_project') {
-                    var $req = $('select[name=purchase_requisition]');
-                    if ($req.val()) {
-                        $req.val(null).trigger('change');
-                    } else {
-                        resetToSingleEmptyRow();
-                    }
-                }
-
-                $('.branch-picker').each(function() {
-                    var $bp = $(this);
-                    var rule = ($bp.data('rule') || '').toString();
-                    if (rule && rule !== type && $bp.val()) {
-                        $bp.val(null).trigger('change');
-                    }
-                });
-            }
-
-            $('input[name=transfer_type]').on('change', function() {
-                applyTransferType($(this).val());
-            });
-            $('.transfer-type-card').on('click', function() {
-                $(this).find('input[type=radio]').prop('checked', true).trigger('change');
-            });
-            applyTransferType($('input[name=transfer_type]:checked').val());
-
-            /* ---------------- Product rows ---------------- */
-            var rowCount = 0;
 
             function initSelect2(scope) {
                 scope.find('.select2').each(function() {
@@ -1002,6 +927,148 @@
                 });
             }
 
+            // Top-level selects (requisition, branch, warehouse, project)
+            initSelect2($('.details-panel'));
+
+            /* ---------------- Remaining / qty validation ---------------- */
+            function updateRemainingDisplay($row) {
+                var requested = parseFloat($row.find('input[name="requested_qty[]"]').val());
+                var $display = $row.find('.remaining-display');
+
+                if (!requested && requested !== 0) {
+                    $display.text('-').removeClass('text-danger text-success').addClass('text-muted');
+                    return;
+                }
+
+                var qty = parseFloat($row.find('.qty-input').val()) || 0;
+                var remaining = requested - qty;
+
+                $display.text(remaining.toFixed(2)).removeClass('text-muted');
+                if (remaining < 0) {
+                    $display.removeClass('text-success').addClass('text-danger');
+                } else {
+                    $display.removeClass('text-danger').addClass('text-success');
+                }
+            }
+
+            // Total qty entered for the same product + purchase type (duplicate rows share one stock pool).
+            function groupQty(productId, ptype) {
+                var total = 0;
+                $('#productRows tr').each(function() {
+                    var $r = $(this);
+                    if ($r.find('.product-select').val() === productId &&
+                        $r.find('.purchasetype-select').val() === ptype) {
+                        total += parseFloat($r.find('.qty-input').val()) || 0;
+                    }
+                });
+                return total;
+            }
+
+            function validateQty($row) {
+                var available = $row.data('available');
+                var qty = parseFloat($row.find('.qty-input').val()) || 0;
+                var requested = parseFloat($row.find('input[name="requested_qty[]"]').val()) || 0;
+                var productId = $row.find('.product-select').val();
+                var ptype = $row.find('.purchasetype-select').val();
+                var $hint = $row.find('.stock-hint');
+                var $remainingHint = $row.find('.remaining-hint');
+
+                if (requested > 0 && qty > requested) {
+                    $remainingHint.text('Only ' + requested +
+                            ' remaining in the requisition — you cannot enter more than this.')
+                        .css('color', '#dc3545');
+                } else {
+                    $remainingHint.text('');
+                }
+
+                if (available === undefined || !productId) {
+                    $hint.removeClass('ok low').text('');
+                    return;
+                }
+
+                var total = groupQty(productId, ptype);
+                if (total > available) {
+                    var dup = total > qty ? ' [combined qty of duplicate rows: ' + round2(total) + ']' : '';
+                    $hint.removeClass('ok').addClass('low').text(
+                        'No stock available (Available: ' + available + ')' + dup +
+                        '. Reduce the quantity or remove the row.'
+                    );
+                } else {
+                    $hint.removeClass('low').addClass('ok').text('OK');
+                }
+            }
+
+            function validateAllRows() {
+                $('#productRows tr').each(function() {
+                    validateQty($(this));
+                });
+            }
+
+            /* ---------------- Stock lookup (branch + warehouse, or project) ---------------- */
+            function currentFromKey() {
+                var type = currentType();
+                if (type === 'branch_to_project') {
+                    var b = $('select[name=from_branch_id]').val();
+                    var w = $('select[name=from_warehouse_id]').val();
+                    return {
+                        ok: !!(b && w),
+                        params: {
+                            source_type: 'branch',
+                            branch_id: b,
+                            warehouse_id: w
+                        }
+                    };
+                }
+                var p = $('select[name=from_project_id]').val();
+                return {
+                    ok: !!p,
+                    params: {
+                        source_type: 'project',
+                        project_id: p
+                    }
+                };
+            }
+
+            function checkStock($row) {
+                var productId = $row.find('.product-select').val();
+                var from = currentFromKey();
+
+                // always drop the previous value so a stale number can never be validated against
+                $row.removeData('available');
+
+                if (!productId || !from.ok) {
+                    $row.find('.stock-hint').removeClass('ok low').text('');
+                    $row.find('.stock-display').val(productId && !from.ok ? 'Select source first' : '-');
+                    return;
+                }
+
+                var seq = ($row.data('stockSeq') || 0) + 1;
+                $row.data('stockSeq', seq);
+                $row.find('.stock-display').val('Checking...');
+
+                $.get(routes.availableStock, $.extend({
+                        product_id: productId,
+                        purchase_type: $row.find('.purchasetype-select').val()
+                    }, from.params))
+                    .done(function(res) {
+                        if ($row.data('stockSeq') !== seq) return; // outdated response
+                        $row.find('.stock-display').val(res.quantity + ' ' + (res.unit || ''));
+                        $row.data('available', res.quantity);
+                        validateAllRows();
+                    })
+                    .fail(function() {
+                        if ($row.data('stockSeq') !== seq) return;
+                        $row.find('.stock-display').val('Error');
+                    });
+            }
+
+            function checkAllStocks() {
+                $('#productRows tr').each(function() {
+                    checkStock($(this));
+                });
+            }
+
+            /* ---------------- Product rows ---------------- */
             function renumberRows() {
                 $('#productRows tr').each(function(i) {
                     $(this).find('.row-index').text(i + 1);
@@ -1018,7 +1085,7 @@
 
                 $('#productCountBadge').text(rows + (rows === 1 ? ' item' : ' items'));
                 $('#totalRowsText').text(rows + (rows === 1 ? ' row' : ' rows'));
-                $('#totalQtyText').text(totalQty);
+                $('#totalQtyText').text(round2(totalQty));
 
                 $('#productTable, .products-toolbar').toggle(rows > 0);
                 $('#productsEmptyHint').toggle(rows === 0);
@@ -1032,21 +1099,23 @@
                 initSelect2($row);
                 renumberRows();
                 updateProductsSummary();
+                return $row;
             }
 
             $('#addRowBtn').on('click', addRow);
-            addRow();
-
 
             $('#productRows').on('click keypress', '.remove-row-btn', function(e) {
-                if (e.type === 'keypress' && e.which !== 13 && e.which !== 32) return;
+                if (e.type === 'keypress') {
+                    if (e.which !== 13 && e.which !== 32) return;
+                    e.preventDefault();
+                }
                 if ($('#productRows tr').length > 1) {
                     $(this).closest('tr').remove();
                     renumberRows();
                     updateProductsSummary();
+                    validateAllRows();
                 } else {
-                    toastr && toastr.warning ? toastr.warning('At least one product row is required.') :
-                        alert('At least one product row is required.');
+                    notify('At least one product row is required.');
                 }
             });
 
@@ -1055,124 +1124,67 @@
                 var categoryId = $(this).val();
                 var $productSelect = $row.find('.product-select');
 
-                $row.addClass('product-row-loading');
-                $productSelect.html('<option value="">Loading...</option>');
+                if (!categoryId) {
+                    fillSelect($productSelect, [], '-- Select category first --');
+                    $productSelect.trigger('change');
+                    return;
+                }
 
-                $.get("{{ route('project.transferproject.filterproduct') }}", {
+                $row.addClass('product-row-loading');
+                fillSelect($productSelect, [], 'Loading...');
+
+                $.get(routes.filterProduct, {
                         category_id: categoryId
                     })
                     .done(function(res) {
-                        var options = '<option value="">-- Select Product --</option>';
-                        $.each(res, function(i, p) {
-                            options += '<option value="' + p.id + '">' + p.name + '</option>';
-                        });
-                        $productSelect.html(options).trigger('change');
+                        fillSelect($productSelect, res, '-- Select Product --');
+                        $productSelect.trigger('change');
+                    })
+                    .fail(function() {
+                        fillSelect($productSelect, [], 'Could not load products');
+                        $productSelect.trigger('change');
                     })
                     .always(function() {
                         $row.removeClass('product-row-loading');
                     });
             });
 
-            function currentFromKey() {
-                var type = $('input[name=transfer_type]:checked').val();
-                if (type === 'branch_to_project') {
-                    return {
-                        type: 'branch',
-                        id: $('input[name=from_branch_id]').val()
-                    };
-                }
-                return {
-                    type: 'project',
-                    id: $('select[name=from_project_id]').val()
-                };
-            }
-
             $('#productRows').on('change', '.product-select, .purchasetype-select', function() {
                 var $row = $(this).closest('tr');
-                var productId = $row.find('.product-select').val();
-                var purchaseType = $row.find('.purchasetype-select').val();
-                var from = currentFromKey();
-
-                if (!productId || !from.id) {
-                    $row.find('.stock-display').val('-');
-                    return;
-                }
-
-                $row.find('.stock-display').val('Checking...');
-
-                $.get("{{ route('project.transferproject.availableStock') }}", {
-                    product_id: productId,
-                    source_type: from.type,
-                    source_id: from.id,
-                    purchase_type: purchaseType
-                }).done(function(res) {
-                    $row.find('.stock-display').val(res.quantity + ' ' + (res.unit || ''));
-                    $row.data('available', res.quantity);
-                    validateQty($row);
-                });
+                checkStock($row);
+                validateAllRows();
             });
-
-            // $('#productRows').on('input', '.qty-input', function() {
-            //     validateQty($(this).closest('tr'));
-            //     updateProductsSummary();
-            // });
-
-
-            function validateQty($row) {
-                var available = $row.data('available');
-                var qty = parseFloat($row.find('.qty-input').val()) || 0;
-                var requested = parseFloat($row.find('input[name="requested_qty[]"]').val()) || 0;
-                var $hint = $row.find('.stock-hint');
-                var $remainingHint = $row.find('.remaining-hint');
-
-
-                if (requested > 0 && qty > requested) {
-                    $remainingHint.text('Only ' + requested +
-                            ' remaining in the requisition — you cannot enter more than this.')
-                        .css('color', '#dc3545');
-                } else {
-                    $remainingHint.text('');
-                }
-
-                if (available === undefined) {
-                    $hint.text('');
-                    return;
-                }
-
-                if (qty > available) {
-                    $hint.removeClass('ok').addClass('low').text(
-                        'No stock available (Available: ' + available +
-                        '). Reduce the quantity or remove the row.'
-                    );
-                } else {
-                    $hint.removeClass('low').addClass('ok').text('OK');
-                }
-            }
 
             $('#productRows').on('input', '.qty-input', function() {
                 var $row = $(this).closest('tr');
-                validateQty($row);
-                updateRemainingDisplay($row); // NEW: রিয়েল-টাইম remaining আপডেট
+                updateRemainingDisplay($row);
+                validateAllRows(); // duplicate rows share one stock pool
                 updateProductsSummary();
             });
 
+            // Source changed (branch / warehouse / project / transfer type) -> re-check every row.
             $(document).on('change',
-                'input[name=from_branch_id], select[name=from_project_id], input[name=transfer_type]',
+                'select[name=from_branch_id], select[name=from_warehouse_id], select[name=from_project_id], input[name=transfer_type]',
                 function() {
-                    $('#productRows tr').each(function() {
-                        $(this).find('.product-select').trigger('change');
-                    });
+                    checkAllStocks();
                 });
 
             /* ---------------- Purchase Requisition -> auto-fill remaining products ---------------- */
+            function cancelRequisitionLoad() {
+                reqLoadToken++;
+                if (prXhr) {
+                    prXhr.abort();
+                    prXhr = null;
+                }
+            }
 
             function resetToSingleEmptyRow() {
+                cancelRequisitionLoad();
                 $('#productRows').empty();
                 rowCount = 0;
                 $('#productsInfoNote').removeClass('show');
                 addRow();
             }
-
 
             function parsePrDetailsHtml(html) {
                 var items = [];
@@ -1181,7 +1193,7 @@
                     var categoryId = $tr.find('input[name="category_nm[]"]').val();
                     var productId = $tr.find('input[name="product_nm[]"]').val();
                     var purchaseType = $tr.find('input[name="purchasetype[]"]').val();
-                    var qty = $tr.find('input[name="qty[]"]').val(); // = remaining_qty (backend)
+                    var qty = $tr.find('input[name="qty[]"]').val(); // remaining qty (backend)
                     var requestedQty = $tr.find('input[name="requested_qty[]"]').val();
                     if (categoryId && productId) {
                         items.push({
@@ -1196,24 +1208,18 @@
                 return items;
             }
 
-
+            // Always resolves (even when the product request fails) so one bad row can't stop the chain.
             function addRequisitionRow(item) {
-                rowCount++;
-                var $row = $('#rowTemplate tr').clone();
-                $('#productRows').append($row);
-                initSelect2($row);
+                var d = $.Deferred();
+                var $row = addRow();
 
                 $row.find('.category-select').val(item.category_id).trigger('change.select2');
 
-                return $.get("{{ route('project.transferproject.filterproduct') }}", {
+                $.get(routes.filterProduct, {
                         category_id: item.category_id
                     })
                     .done(function(res) {
-                        var options = '<option value="">-- Select Product --</option>';
-                        $.each(res, function(i, p) {
-                            options += '<option value="' + p.id + '">' + p.name + '</option>';
-                        });
-                        $row.find('.product-select').html(options);
+                        fillSelect($row.find('.product-select'), res, '-- Select Product --');
                         $row.find('.purchasetype-select').val(item.purchasetype);
 
                         var $qty = $row.find('.qty-input');
@@ -1225,20 +1231,32 @@
                         }
 
                         updateRemainingDisplay($row);
-
                         $row.find('.product-select').val(item.product_id).trigger('change');
+                    })
+                    .fail(function() {
+                        notify('Could not load products for one of the requisition rows.');
+                    })
+                    .always(function() {
+                        d.resolve();
                     });
+
+                return d.promise();
             }
 
             function loadRequisitionProducts(reqId) {
-                $.ajax({
-                        url: "{{ route('project.transfer.searchprvoucher') }}",
+                cancelRequisitionLoad();
+                var token = reqLoadToken;
+
+                prXhr = $.ajax({
+                        url: routes.searchPr,
                         data: {
                             id: reqId
                         },
                         dataType: 'json'
                     })
                     .done(function(res) {
+                        if (token !== reqLoadToken) return;
+
                         if (typeof res === 'string') {
                             try {
                                 res = JSON.parse(res);
@@ -1265,17 +1283,22 @@
                         var chain = $.Deferred().resolve();
                         $.each(items, function(i, item) {
                             chain = chain.then(function() {
+                                if (token !== reqLoadToken)
+                            return; // requisition changed meanwhile
                                 return addRequisitionRow(item);
                             });
                         });
                         chain.then(function() {
+                            if (token !== reqLoadToken) return;
                             renumberRows();
                             updateProductsSummary();
+                            validateAllRows();
                         });
 
                         $('#productsInfoNote').addClass('show');
                     })
                     .fail(function(xhr) {
+                        if (xhr.statusText === 'abort') return;
                         console.error('searchpr request failed:', xhr.status, xhr.responseText);
                         alert(
                             'Could not load products for the selected requisition (see console for details). Please add products manually.'
@@ -1292,10 +1315,137 @@
                 }
             });
 
+            /* ---------------- Transfer type switching ---------------- */
+            function applyTransferType(type) {
+                $('.transfer-type-card').removeClass('active');
+                $('.transfer-type-card[data-type="' + type + '"]').addClass('active');
+
+                // Show only the fields of this type. Fields of other types are DISABLED,
+                // so a stale value from a previous type is never posted.
+                $('.route-fields').each(function() {
+                    var $field = $(this);
+                    var $in = $field.find('.rf-input');
+                    var ruleAttr = $in.length ? $in.data('rule') : $field.data('rule');
+                    var on = (ruleAttr || '').toString().split(',').indexOf(type) !== -1;
+
+                    $field.toggleClass('show', on).toggle(on);
+                    $in.prop('required', on).prop('disabled', !on);
+                });
+
+                // Clear values of the fields that were just switched off
+                $('select.rf-input').not('[name=purchase_requisition]').each(function() {
+                    var $s = $(this);
+                    if ($s.prop('disabled') && $s.val()) {
+                        $s.val('').trigger('change'); // branch-picker change also resets its warehouse
+                    }
+                });
+
+                $('#addRowBtn').toggle(type === 'project_to_branch');
+
+                if (type !== 'branch_to_project' && type !== 'project_to_project') {
+                    var $req = $('select[name=purchase_requisition]');
+                    if ($req.val()) {
+                        $req.val(null).trigger('change'); // -> resetToSingleEmptyRow()
+                    } else {
+                        resetToSingleEmptyRow();
+                    }
+                }
+            }
+
+            // The <label> already toggles the radio natively, so no extra click handler is needed.
+            $('input[name=transfer_type]').on('change', function() {
+                applyTransferType($(this).val());
+            });
+
+            /* ---------------- Branch -> Warehouse cascading (warehouse is mandatory) ---------------- */
+            function branchPickerFor(target) {
+                return $('.branch-picker[data-target="' + target + '"]');
+            }
+
+            function warehousePickerFor(target) {
+                return $('.warehouse-picker[data-target="' + target + '"]');
+            }
+
+            function updateRouteLabel(target) {
+                var $b = branchPickerFor(target);
+                var $w = warehousePickerFor(target);
+                var b = $b.val() ? $b.find('option:selected').text() : '';
+                var w = $w.val() ? $w.find('option:selected').text() : '';
+                var text = (b && w) ? b + ' › ' + w : b;
+
+                $('.route-resolved-text[data-target="' + target + '"]')
+                    .text(text || '-- Select branch above --')
+                    .toggleClass('text-muted', !text);
+            }
+
+            $(document).on('change', '.branch-picker', function() {
+                var target = $(this).data('target');
+                var branchId = $(this).val();
+                var $wh = warehousePickerFor(target);
+
+                fillSelect($wh, [], '-- Select branch first --');
+                $wh.trigger('change'); // clears stock + route label
+                if (!branchId) return;
+
+                fillSelect($wh, [], 'Loading...');
+                $wh.trigger('change.select2');
+
+                $.get(routes.getWarehouses, {
+                        branch_id: branchId
+                    })
+                    .done(function(res) {
+                        if (!res.length) {
+                            fillSelect($wh, [], 'No warehouse under this branch');
+                            $wh.trigger('change.select2');
+                            alert(
+                                'This branch has no warehouse. Create a warehouse first, then make the transfer.');
+                            return;
+                        }
+                        fillSelect($wh, res, '-- Select Warehouse --');
+                        $wh.trigger('change.select2');
+                    })
+                    .fail(function() {
+                        fillSelect($wh, [], 'Could not load warehouses');
+                        $wh.trigger('change.select2');
+                    });
+            });
+
+            $(document).on('change', '.warehouse-picker', function() {
+                updateRouteLabel($(this).data('target'));
+            });
+
+            // keep the route label in sync when the branch changes too
+            $(document).on('change', '.branch-picker', function() {
+                updateRouteLabel($(this).data('target'));
+            });
+
             /* ---------------- Submit guard ---------------- */
+            var $submitBtn = $('#submitBtn');
+            var submitBtnHtml = $submitBtn.html();
+
             $('#transferForm').on('submit', function(e) {
-                var blocked = false;
+                var type = currentType();
+
+                function stop(msg) {
+                    e.preventDefault();
+                    alert(msg);
+                }
+
+                // Warehouse is mandatory for branch <-> project transfers
+                if (type === 'branch_to_project' && !$('select[name=from_warehouse_id]').val()) {
+                    return stop('Please select the source warehouse.');
+                }
+                if (type === 'project_to_branch' && !$('select[name=to_warehouse_id]').val()) {
+                    return stop('Please select the destination warehouse.');
+                }
+                if (type === 'project_to_project' &&
+                    $('select[name=from_project_id]').val() === $('select[name=to_project_id_b]').val()) {
+                    return stop('Source and destination project cannot be the same.');
+                }
+
+                var unverified = false;
                 var overRequested = false;
+                var pools = {}; // product|purchasetype -> {sum, available}
 
                 $('#productRows tr').each(function() {
                     var $row = $(this);
@@ -1303,110 +1453,56 @@
                     var qty = parseFloat($row.find('.qty-input').val()) || 0;
                     var requested = parseFloat($row.find('input[name="requested_qty[]"]').val()) ||
                         0;
+                    var key = $row.find('.product-select').val() + '|' + $row.find(
+                            '.purchasetype-select')
+                        .val();
 
-                    if (available !== undefined && qty > available) blocked = true;
+                    if (available === undefined) unverified = true;
                     if (requested > 0 && qty > requested) overRequested = true;
+
+                    pools[key] = pools[key] || {
+                        sum: 0,
+                        available: available
+                    };
+                    pools[key].sum += qty;
                 });
 
-                if (blocked) {
-                    e.preventDefault();
-                    alert(
-                        'One or more rows exceed available stock. Please reduce qty or remove the row before submitting.'
+                if (unverified) {
+                    return stop(
+                        'Available stock could not be verified for one or more rows. Wait for the stock check to finish, or re-select the product.'
                     );
-                    return;
-                }
-                if (overRequested) {
-                    e.preventDefault();
-                    alert(
-                        'One or more rows exceed the remaining requisition quantity. Please correct before submitting.'
-                    );
-                    return;
                 }
 
-                $(this).find('button[type=submit]').prop('disabled', true)
+                var blocked = false;
+                $.each(pools, function(k, p) {
+                    if (p.available !== undefined && p.sum > p.available) blocked = true;
+                });
+                if (blocked) {
+                    return stop(
+                        'One or more rows exceed available stock. Please reduce qty or remove the row before submitting.'
+                    );
+                }
+                if (overRequested) {
+                    return stop(
+                        'One or more rows exceed the remaining requisition quantity. Please correct before submitting.'
+                    );
+                }
+
+                $submitBtn.prop('disabled', true)
                     .html('<i class="fas fa-spinner fa-spin"></i> Submitting...');
             });
 
-        });
+            // Back/forward cache: never come back to a stuck "Submitting..." button
+            $(window).on('pageshow', function(e) {
+                if (e.originalEvent && e.originalEvent.persisted) {
+                    $submitBtn.prop('disabled', false).html(submitBtnHtml);
+                }
+            });
 
-
-        /* ---------------- Branch -> Warehouse cascading ---------------- */
-        function resolveRouteNode(target) {
-            return target === 'to_branch_id' ? $('.route-node-to') : $('.route-node-from');
-        }
-
-        function updateRouteLabel(target, text) {
-            var $node = resolveRouteNode(target);
-            $node.find('.route-node-selected').text(text ? '· ' + text : '');
-            var $resolved = $node.find('.route-resolved-text[data-target="' + target + '"]');
-            if ($resolved.length) {
-                $resolved.text(text || '-- Select branch above --')
-                    .toggleClass('text-muted', !text);
-            }
-        }
-
-        function branchPickerFor(target) {
-            return $('.branch-picker[data-target="' + target + '"]');
-        }
-
-        function warehouseWrapFor(target) {
-            return $('.warehouse-wrap[data-target="' + target + '"]');
-        }
-
-        function hiddenInputFor(target) {
-            return $('input[type=hidden][name="' + target + '"]');
-        }
-
-        $(document).on('change', '.branch-picker', function() {
-            var $picker = $(this);
-            var target = $picker.data('target');
-            var $wrap = warehouseWrapFor(target);
-            var $wh = $wrap.find('.warehouse-picker');
-            var $hidden = hiddenInputFor(target);
-            var branchId = $picker.val();
-            var branchTxt = $picker.find('option:selected').text();
-
-            $hidden.val(branchId).trigger('change');
-            updateRouteLabel(target, branchId ? branchTxt : '');
-
-            if (!branchId) {
-                $wrap.hide();
-                $wh.val(null).html('<option value="">-- Warehouse --</option>');
-                return;
-            }
-
-            $.get("{{ route('project.transferproject.getWarehouses') }}", {
-                    branch_id: branchId
-                })
-                .done(function(res) {
-                    if (res.length > 0) {
-                        var options = '<option value="">-- Warehouse --</option>';
-                        $.each(res, function(i, w) {
-                            options += '<option value="' + w.id + '">' + w.name + '</option>';
-                        });
-                        $wh.html(options).trigger('change.select2');
-                        $wrap.show();
-                    } else {
-                        $wrap.hide();
-                    }
-                });
-        });
-
-        $(document).on('change', '.warehouse-picker', function() {
-            var $picker = $(this);
-            var target = $picker.data('target');
-            var $hidden = hiddenInputFor(target);
-            var whId = $picker.val();
-            var whTxt = $picker.find('option:selected').text();
-            var branchTxt = branchPickerFor(target).find('option:selected').text();
-
-            if (whId) {
-                $hidden.val(whId).trigger('change');
-                updateRouteLabel(target, whTxt);
-            } else {
-                var branchId = branchPickerFor(target).val();
-                $hidden.val(branchId).trigger('change');
-                updateRouteLabel(target, branchTxt);
+            /* ---------------- Init ---------------- */
+            applyTransferType(currentType());
+            if (!$('#productRows tr').length) {
+                addRow();
             }
         });
     </script>

@@ -100,28 +100,20 @@
                             </div>
                             <div class="col-md-2 mb-3">
                                 <label for="validationCustom01">Branch * :</label>
-                                {{-- @php
-                                    $sub_branch = App\Models\Branch::find($saletlist->branch_id);
-                                @endphp
-                                <select class="form-control select2" id="branch_id" name="branch_id">
-                                    <option selected disabled value="">--Select Branch--</option>
-                                    @foreach ($branch as $key => $value)
-                                        <option value="{{ $value->id }}"
-                                            {{ $sub_branch->parent_id == $value->id ? 'selected' : '' }}>
-                                            {{ $value->branchCode . ' - ' . $value->name }}
-                                        </option>
-                                    @endforeach
-                                </select> --}}
-                                <select class="form-control select2" id="branch_id" name="branch_id"
-                                    onchange="getWarehousesByBranch(this.value)">
-                                    <option selected disabled value="">--Select Branch--</option>
+
+                                <!-- Select field is disabled so user cannot change it -->
+                                <select class="form-control select2" id="branch_id" disabled>
+                                    <option disabled value="">--Select Branch--</option>
                                     @foreach ($branch as $key => $value)
                                         <option value="{{ $value->id }}"
                                             {{ $selectedParentBranchId == $value->id ? 'selected' : '' }}>
-                                            {{ $value->branchCode . ' - ' . $value->name }}
+                                            {{ $value->name ?? '—' }} <!-- $value->branchCode . ' - ' . -->
                                         </option>
                                     @endforeach
                                 </select>
+
+                                <!-- Hidden field to submit the branch_id data -->
+                                <input type="hidden" name="branch_id" value="{{ $selectedParentBranchId }}">
 
                                 @error('branch_id')
                                     <span class="error text-red text-bold">{{ $message }}</span>
@@ -129,29 +121,25 @@
                             </div>
 
                             <div class="col-md-2 mb-3">
-                                <label for="validationCustom02">Sub-Warehouse * :</label>
-                                {{-- <select class="form-control select2" id="sub_warehouse_id" name="sub_warehouse_id">
-                                    <option selected disabled value="">--Select Sub-Warehouse--</option>
-                                    @foreach ($subWarehouses as $subWarehouse)
-                                        <option value="{{ $subWarehouse->id }}"
-                                            {{ $subWarehouse->id == $saletlist->branch_id ? 'selected' : '' }}>
-                                            {{ $subWarehouse->name }}
-                                        </option>
-                                    @endforeach
-                                </select> --}}
+                                <label for="validationCustom02">Warehouse * :</label>
 
-                                <select class="form-control select2" id="sub_warehouse_id" name="sub_warehouse_id">
-                                    <option selected disabled value="">--Select Sub-Warehouse--</option>
+
+                                <select class="form-control select2" id="warehouse_id" disabled>
+                                    <option disabled value="">--Select Sub-Warehouse--</option>
                                     @foreach ($subWarehouses as $subWarehouse)
                                         <option value="{{ $subWarehouse->id }}"
-                                            {{ $subWarehouse->id == $saletlist->branch_id ? 'selected' : '' }}>
-                                            {{ ($subWarehouse->warehouseCode ?? $subWarehouse->branchCode) . ' - ' . $subWarehouse->name }}
+                                            {{ $subWarehouse->id == $saletlist->warehouse_id ? 'selected' : '—' }}>
+                                            {{ $subWarehouse->name ?? '' }}
+                                            <!-- ($subWarehouse->warehouseCode ?? $subWarehouse->branchCode) . ' - ' . -->
                                         </option>
                                     @endforeach
                                 </select>
 
+                                <input type="hidden" name="warehouse_id" value="{{ $saletlist->warehouse_id }}">
+
                                 <input type="hidden" name="warehouse_source" id="warehouse_source"
                                     value="{{ $warehouseSource }}">
+
                                 <!-- Loading spinner -->
                                 <div id="loadingSpinner" style="display:none;">
                                     <img src="https://i.pinimg.com/originals/5c/87/9a/5c879ab8cba794923686df4b950f497b.gif"
@@ -161,6 +149,7 @@
                                     <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
+
 
                             {{-- <div class="col-md-2 mb-3">
                             <label for="validationCustom01">Customer * :</label>
@@ -578,7 +567,7 @@
                                                                                         value="{{ $value->id }}">
                                                                                         {{ $value->accountCode .
                                                                                             ' -
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                ' .
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ' .
                                                                                             $value->account_name }}
                                                                                     </option>
                                                                                 @endforeach
@@ -883,41 +872,42 @@
 
                     $("#show_item tbody").append('<tr class="new_item' + proId +
                         '">\n\
-                                                                                                                                                                                                                                                                                                                                    <td style="padding-left:15px;">' +
+                                                                                                                                                                                                                                                                                                                                                                        <td style="padding-left:15px;">' +
                         catName +
                         '<input type="hidden" name="catName[]" value="' +
                         catId +
                         '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                    <td align="right">' +
+                                                                                                                                                                                                                                                                                                                                                                        <td align="right">' +
                         proName +
                         '<input type="hidden" class="add_quantity" name="proName[]" value="' +
                         proId +
                         '"></td>\n\    \n\
-                                                            <td align="right">' +
+                                                                                                <td align="right">' +
                         purchasetypetext +
                         '<input type="hidden" class="add_quantity" name="purchasetype[]" value="' +
                         purchasetypeval +
                         '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                    <td align="right">' +
+                                                                                                                                                                                                                                                                                                                                                                        <td align="right">' +
                         qty +
                         '<input type="hidden" class="ttlqty" name="qty[]" value="' +
                         qty +
                         '"></td>\n\
-                                                                \n\    \n\\n\  <td align="right">' + vat +
+                                                                                                    \n\    \n\\n\  <td align="right">' +
+                        vat +
                         '<input type="hidden" class="ttlqty" name="vat[]" value="' + vat +
                         '"></td>\n\\n\                                                                                                                                                                                                                                                                  <td align="right">' +
                         unitprice +
                         '<input type="hidden" class="ttlunitprice unitparice" name="unitprice[]" value="' +
                         unitprice +
                         '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                    <td align="right">' +
+                                                                                                                                                                                                                                                                                                                                                                        <td align="right">' +
                         total +
                         '<input type="hidden" class="grandtotal" name="total[]" value="' +
                         total +
                         '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                    \n\
-                                                                                                                                                                                                                                                                                                                                    \n\
-                                                                                                                                                                                                                                                                                                                                    <td><a del_id="' +
+                                                                                                                                                                                                                                                                                                                                                                        \n\
+                                                                                                                                                                                                                                                                                                                                                                        \n\
+                                                                                                                                                                                                                                                                                                                                                                        <td><a del_id="' +
                         proId +
                         '" class="delete_item btn form-control btn-danger" href="javascript:;" title=""><i class="fa fa-times"></i></a></td></tr>'
                     );

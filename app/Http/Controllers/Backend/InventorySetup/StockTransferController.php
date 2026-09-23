@@ -14,9 +14,10 @@ use App\Models\PurchasesDetails;
 use App\Models\StockTransfer;
 use App\Models\Transfer;
 use App\Models\TransferDetails;
-use DB;
+
 use App\Services\InventorySetup\StockTransferService;
 use App\Transformers\StockTransferTransformer;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\ValifdationException;
 use Illuminate\Support\Facades\Validator;
@@ -87,59 +88,136 @@ class StockTransferController extends Controller
     //     return view('backend.pages.inventories.transfer.create', get_defined_vars());
     // }
 
+    // public function create()
+    // {
+    //     $title = 'Add New Transfer';
+    //     $user = auth()->user();
+
+    //     $category_info = Category::where('status', 'Active')->get();
+    //     $branchQuery = Branch::where('status', 'Active');
+    //     if ($user->branch_id !== null) {
+    //         $branchQuery = $branchQuery->where('id', $user->branch_id);
+    //     }
+    //     $branches = $branchQuery->orderBy('parent_id')->orderBy('name')->get();
+
+    //     $toBranches = Branch::where('status', 'Active')
+    //         ->orderBy('parent_id')
+    //         ->orderBy('name')
+    //         ->get();
+
+
+    //     $formattedBranches = $branches->map(function ($branch) use ($branches) {
+    //         $displayName = $branch->branchCode . ' - ' . $branch->name;
+
+    //         if (!empty($branch->parent_id) && $branch->parent_id > 0) {
+    //             $parent = $branches->where('id', $branch->parent_id)->first();
+    //             if ($parent) {
+    //                 $displayName .= " (" . $parent->name . ")";
+    //             }
+    //         }
+    //         $branch->display_name = $displayName;
+    //         return $branch;
+    //     });
+
+    //     // Display Name (To Branch)
+    //     $formattedToBranches = $toBranches->map(function ($branch) use ($toBranches) {
+    //         $displayName = $branch->branchCode . ' - ' . $branch->name;
+
+    //         if (!empty($branch->parent_id) && $branch->parent_id > 0) {
+    //             $parent = $toBranches->where('id', $branch->parent_id)->first();
+    //             if ($parent) {
+    //                 $displayName .= " (" . $parent->name . ")";
+    //             }
+    //         }
+    //         $branch->display_name = $displayName;
+    //         return $branch;
+    //     });
+
+    //     // Invoice Number
+    //     $stockTransferData = Transfer::latest('id')->first();
+    //     $stockTransfer = $stockTransferData ? $stockTransferData->id + 1 : 1;
+    //     $invoice_no = 'TV' . str_pad($stockTransfer, 5, "0", STR_PAD_LEFT);
+
+    //     return view('backend.pages.inventories.transfer.create', get_defined_vars());
+    // }
+
     public function create()
     {
         $title = 'Add New Transfer';
         $user = auth()->user();
 
         $category_info = Category::where('status', 'Active')->get();
-        $branchQuery = Branch::where('status', 'Active');
-        if ($user->branch_id !== null) {
-            $branchQuery = $branchQuery->where('id', $user->branch_id);
-        }
-        $branches = $branchQuery->orderBy('parent_id')->orderBy('name')->get();
 
-        $toBranches = Branch::where('status', 'Active')
-            ->orderBy('parent_id')
-            ->orderBy('name')
+        $realBranchQuery = Branch::where('status', 'Active')
+            ->where(function ($q) {
+                $q->whereNull('parent_id')->orWhere('parent_id', 0);
+            });
+
+        $branchQuery = clone $realBranchQuery;
+        $lockedWarehouseId = null;
+
+        if ($user->branch_id !== null) {
+            $userBranch = Branch::find($user->branch_id);
+
+            if ($userBranch && !empty($userBranch->parent_id) && $userBranch->parent_id > 0) {
+
+                $realBranchId = $userBranch->parent_id;
+                $lockedWarehouseId = $userBranch->warehouse_id;
+            } else {
+                $realBranchId = $user->branch_id;
+            }
+
+            $branchQuery = $branchQuery->where('id', $realBranchId);
+        }
+
+        $branches = $branchQuery->orderBy('name')->get();
+        $toBranches = (clone $realBranchQuery)->orderBy('name')->get();
+
+
+        $formattedBranches = $branches->map(function ($branch) {
+            $branch->display_name = $branch->branchCode . ' - ' . $branch->name;
+            return $branch;
+        });
+
+        $formattedToBranches = $toBranches->map(function ($branch) {
+            $branch->display_name = $branch->branchCode . ' - ' . $branch->name;
+            return $branch;
+        });
+
+        $warehouseRows = DB::table('branches as b')
+            ->join('warehouses as w', 'w.id', '=', 'b.warehouse_id')
+            ->where('b.status', 'Active')
+            ->select(
+                'w.id as warehouse_id',
+                'w.name as warehouse_name',
+                DB::raw('IF(COALESCE(b.parent_id, 0) != 0, b.parent_id, b.id) as real_branch_id')
+            )
+            ->orderBy('w.name')
             ->get();
 
+        $toWarehousesByBranch = $warehouseRows
+            ->groupBy('real_branch_id')
+            ->map(function ($rows) {
+                return $rows->unique('warehouse_id')
+                    ->map(function ($r) {
+                        return ['id' => $r->warehouse_id, 'name' => $r->warehouse_name];
+                    })
+                    ->values();
+            });
 
-        $formattedBranches = $branches->map(function ($branch) use ($branches) {
-            $displayName = $branch->branchCode . ' - ' . $branch->name;
+        $fromWarehousesByBranch = $toWarehousesByBranch;
+        if ($lockedWarehouseId) {
+            $fromWarehousesByBranch = $toWarehousesByBranch->map(function ($list) use ($lockedWarehouseId) {
+                return $list->where('id', $lockedWarehouseId)->values();
+            });
+        }
 
-            if (!empty($branch->parent_id) && $branch->parent_id > 0) {
-                $parent = $branches->where('id', $branch->parent_id)->first();
-                if ($parent) {
-                    $displayName .= " (" . $parent->name . ")";
-                }
-            }
-            $branch->display_name = $displayName;
-            return $branch;
-        });
-
-        // Display Name (To Branch)
-        $formattedToBranches = $toBranches->map(function ($branch) use ($toBranches) {
-            $displayName = $branch->branchCode . ' - ' . $branch->name;
-
-            if (!empty($branch->parent_id) && $branch->parent_id > 0) {
-                $parent = $toBranches->where('id', $branch->parent_id)->first();
-                if ($parent) {
-                    $displayName .= " (" . $parent->name . ")";
-                }
-            }
-            $branch->display_name = $displayName;
-            return $branch;
-        });
-
-        // Invoice Number
         $stockTransferData = Transfer::latest('id')->first();
         $stockTransfer = $stockTransferData ? $stockTransferData->id + 1 : 1;
         $invoice_no = 'TV' . str_pad($stockTransfer, 5, "0", STR_PAD_LEFT);
 
         return view('backend.pages.inventories.transfer.create', get_defined_vars());
     }
-
 
     public function show(Request $request, $id)
     {
@@ -149,6 +227,23 @@ class StockTransferController extends Controller
         return view('backend.pages.inventories.transfer.invoice', get_defined_vars());
     }
 
+    // public function approval($id)
+    // {
+    //     if (!is_numeric($id)) {
+    //         session()->flash('error', 'Edit id must be numeric!!');
+    //         return redirect()->back();
+    //     }
+    //     $editInfo = $this->systemService->details($id);
+    //     if (!$editInfo) {
+    //         session()->flash('error', 'Edit info is invalid!!');
+    //         return redirect()->back();
+    //     }
+    //     $transfer = $this->systemService->getAllList();
+    //     $category_info = Category::get()->where('status', 'Active');
+    //     $branch = Branch::get()->where('status', 'Active');
+    //     $title = 'Approved Edit';
+    //     return view('backend.pages.inventories.transfer.approval', get_defined_vars());
+    // }
     public function approval($id)
     {
         if (!is_numeric($id)) {
@@ -164,8 +259,17 @@ class StockTransferController extends Controller
         $category_info = Category::get()->where('status', 'Active');
         $branch = Branch::get()->where('status', 'Active');
         $title = 'Approved Edit';
+
+
+        $warehouseIds = array_filter([$editInfo->from_warehouse_id, $editInfo->to_warehouse_id]);
+        $warehouseNames = empty($warehouseIds)
+            ? collect()
+            : DB::table('warehouses')->whereIn('id', $warehouseIds)->pluck('name', 'id');
+
+
         return view('backend.pages.inventories.transfer.approval', get_defined_vars());
     }
+
 
     public function getProductListTransfer(Request $request)
     {
@@ -218,7 +322,6 @@ class StockTransferController extends Controller
      */
     public function store(Request $request)
     {
-
         try {
             $this->validate($request, $this->systemService->storeValidation($request));
         } catch (ValidationException $e) {
@@ -234,30 +337,122 @@ class StockTransferController extends Controller
      * @param $slug
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
+    // public function edit($id)
+    // {
+    //     if (!is_numeric($id)) {
+    //         session()->flash('error', 'Edit id must be numeric!!');
+    //         return redirect()->back();
+    //     }
+    //     $editInfo = $this->systemService->details($id);
+    //     if (!$editInfo) {
+    //         session()->flash('error', 'Edit info is invalid!!');
+    //         return redirect()->back();
+    //     }
+    //     $transfer = $this->systemService->getAllList();
+
+    //     $title = 'Approved Edit';
+    //     $tobranch = Branch::get()->where('status', 'Active');
+    //     $user = auth()->user();
+    //     $branch = Branch::where('status', 'Active');
+    //     if ($user->branch_id !== null) {
+    //         $branch = $branch->where('id', $user->branch_id);
+    //     }
+    //     $branch = $branch->get();
+    //     $category_info = Category::get()->where('status', 'Active');
+    //     $transfe = Transfer::find($id);
+    //     $transfeDetails = TransferDetails::where('transfer_id', $id)->get();
+    //     return view('backend.pages.inventories.transfer.edit', get_defined_vars());
+    // }
+
     public function edit($id)
     {
         if (!is_numeric($id)) {
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
         }
+
         $editInfo = $this->systemService->details($id);
         if (!$editInfo) {
             session()->flash('error', 'Edit info is invalid!!');
             return redirect()->back();
         }
-        $transfer = $this->systemService->getAllList();
+
+        $transfe = Transfer::find($id);
+        if (!$transfe) {
+            session()->flash('error', 'Transfer not found!!');
+            return redirect()->back();
+        }
 
         $title = 'Approved Edit';
-        $tobranch = Branch::get()->where('status', 'Active');
         $user = auth()->user();
-        $branch = Branch::where('status', 'Active');
-        if ($user->branch_id !== null) {
-            $branch = $branch->where('id', $user->branch_id);
-        }
-        $branch = $branch->get();
-        $category_info = Category::get()->where('status', 'Active');
-        $transfe = Transfer::find($id);
+
+        $category_info = Category::where('status', 'Active')->get();
         $transfeDetails = TransferDetails::where('transfer_id', $id)->get();
+
+      
+        $realBranchQuery = Branch::where('status', 'Active')
+            ->where(function ($q) {
+                $q->whereNull('parent_id')->orWhere('parent_id', 0);
+            });
+
+        $branchQuery = clone $realBranchQuery;
+        $lockedWarehouseId = null;
+
+        if ($user->branch_id !== null) {
+            $userBranch = Branch::find($user->branch_id);
+
+            if ($userBranch && !empty($userBranch->parent_id) && $userBranch->parent_id > 0) {
+                $realBranchId = $userBranch->parent_id;
+                $lockedWarehouseId = $userBranch->warehouse_id;
+            } else {
+                $realBranchId = $user->branch_id;
+            }
+
+            $branchQuery = $branchQuery->where('id', $realBranchId);
+        }
+
+        $branches = $branchQuery->orderBy('name')->get();
+        $toBranches = (clone $realBranchQuery)->orderBy('name')->get();
+
+        $formattedBranches = $branches->map(function ($branch) {
+            $branch->display_name = $branch->branchCode . ' - ' . $branch->name;
+            return $branch;
+        });
+
+        $formattedToBranches = $toBranches->map(function ($branch) {
+            $branch->display_name = $branch->branchCode . ' - ' . $branch->name;
+            return $branch;
+        });
+
+        // ---------- branch-wise warehouse map ----------
+        $warehouseRows = DB::table('branches as b')
+            ->join('warehouses as w', 'w.id', '=', 'b.warehouse_id')
+            ->where('b.status', 'Active')
+            ->select(
+                'w.id as warehouse_id',
+                'w.name as warehouse_name',
+                DB::raw('IF(COALESCE(b.parent_id, 0) != 0, b.parent_id, b.id) as real_branch_id')
+            )
+            ->orderBy('w.name')
+            ->get();
+
+        $toWarehousesByBranch = $warehouseRows
+            ->groupBy('real_branch_id')
+            ->map(function ($rows) {
+                return $rows->unique('warehouse_id')
+                    ->map(function ($r) {
+                        return ['id' => $r->warehouse_id, 'name' => $r->warehouse_name];
+                    })
+                    ->values();
+            });
+
+        $fromWarehousesByBranch = $toWarehousesByBranch;
+        if ($lockedWarehouseId) {
+            $fromWarehousesByBranch = $toWarehousesByBranch->map(function ($list) use ($lockedWarehouseId) {
+                return $list->where('id', $lockedWarehouseId)->values();
+            });
+        }
+
         return view('backend.pages.inventories.transfer.edit', get_defined_vars());
     }
 

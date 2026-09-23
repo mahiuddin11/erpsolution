@@ -8,6 +8,30 @@
         .bootstrap-switch-large {
             width: 200px;
         }
+
+        {{-- >>> NEW: print/PDF responsive fix --}} @media print {
+            @page {
+                size: landscape;
+                margin: 8mm;
+            }
+
+            #datatablexcel {
+                font-size: 10px;
+                width: 100% !important;
+            }
+
+            .table-responsive {
+                overflow-x: visible !important;
+            }
+
+            .badge {
+                border: 1px solid #999;
+                color: #000 !important;
+                background: none !important;
+            }
+        }
+
+        {{-- <<< END NEW --}}
     </style>
 @endsection
 
@@ -56,8 +80,13 @@
                                 <div class="form-group">
                                     <label>Type </label>
                                     <select class="form-control select2" name="type" id="typeSelect">
-                                        <option {{ $type == 'Branch' ? 'selected' : '' }} value="Branch">Warehouse</option>
-                                        <option {{ $type == 'Project' ? 'selected' : '' }} value="Project">Project</option>
+                                        <option value="all"
+                                            {{ !isset($type) || $type == '' || $type == 'all' ? 'selected' : '' }}>
+                                            All</option>
+                                        <option value="Branch" {{ $type == 'Branch' ? 'selected' : '' }}>Warehouse
+                                        </option>
+                                        <option value="Project" {{ $type == 'Project' ? 'selected' : '' }}>Project
+                                        </option>
                                     </select>
                                 </div>
                             </div>
@@ -119,7 +148,38 @@
                                     <label>Ledger </label>
                                     <select class="form-control select2 supid" name="ledger_id" id="ledger_id">
                                         <option value="all">All</option>
-                                        <x-account :setAccounts="$ledgers" :selectVal="$supplier_id" />
+                                        <x-account :setAccounts="$ledgers" :selectVal="$ledger_id" />
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>Supplier </label>
+                                    <select class="form-control select2" name="supplier_id" id="supplier_id">
+                                        <option value="all" selected>All Suppliers</option>
+                                        @foreach ($supplier as $key => $value)
+                                            <option {{ $supplier_id == $value->id ? 'selected' : '' }}
+                                                value="{{ $value->id }}">
+
+                                                {{ $value->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>Purchase Type </label>
+                                    <select class="form-control select2" name="purchasetype" id="purchasetypeSelect">
+                                        <option value="all"
+                                            {{ !isset($purchasetype) || $purchasetype == 'all' || $purchasetype == '' ? 'selected' : '' }}>
+                                            All</option>
+                                        <option value="local"
+                                            {{ isset($purchasetype) && $purchasetype == 'local' ? 'selected' : '' }}>
+                                            Local</option>
+                                        <option value="imported"
+                                            {{ isset($purchasetype) && $purchasetype == 'imported' ? 'selected' : '' }}>
+                                            Imported</option>
                                     </select>
                                 </div>
                             </div>
@@ -139,7 +199,7 @@
         @php
             // dd($purchaseDetails);
         @endphp
-        @if (isset($purchaseDetails) && !empty($purchaseDetails))
+        @if (isset($purchaseDetails) && !empty($purchaseDetails) && $purchaseDetails->count() > 0)
             <div class="col-md-12">
                 <div class="card card-default">
                     <div class="card-header no-print">
@@ -172,6 +232,63 @@
                                             </td>
                                         </tr>
                                     </table>
+
+                                    @php
+                                        $totalPurchases = $purchaseDetails->pluck('purchases_id')->unique()->count();
+                                        $totalQty = $purchaseDetails->sum('quantity');
+                                        $totalAmount = $purchaseDetails->sum('total_price');
+                                        $localQty = $purchaseDetails->where('purchasetype', 'local')->sum('quantity');
+                                        $importedQty = $purchaseDetails
+                                            ->where('purchasetype', 'imported')
+                                            ->sum('quantity');
+                                    @endphp
+                                    <div class="row no-print mb-3">
+                                        <div class="col-md-4">
+                                            <div class="info-box">
+                                                <span class="info-box-icon bg-info"><i
+                                                        class="fa fa-file-invoice"></i></span>
+                                                <div class="info-box-content">
+                                                    <span class="info-box-text">Total Purchases</span>
+                                                    <span class="info-box-number">{{ $totalPurchases }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="info-box">
+                                                <span class="info-box-icon bg-success"><i class="fa fa-boxes"></i></span>
+                                                <div class="info-box-content">
+                                                    <span class="info-box-text">Total Quantity</span>
+                                                    <span class="info-box-number">{{ $totalQty }}
+                                                        <small>(Local: {{ $localQty }}, Imported:
+                                                            {{ $importedQty }})</small>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="info-box">
+                                                <span class="info-box-icon bg-warning"><i
+                                                        class="fa fa-money-bill"></i></span>
+                                                <div class="info-box-content">
+                                                    <span class="info-box-text">Total Purchase Amount</span>
+                                                    <span
+                                                        class="info-box-number">{{ number_format($totalAmount, 2) }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {{-- <div class="col-md-3">
+                                            <div class="info-box">
+                                                <span class="info-box-icon bg-secondary"><i
+                                                        class="fa fa-truck"></i></span>
+                                                <div class="info-box-content">
+                                                    <span class="info-box-text">Suppliers Involved</span>
+                                                    <span
+                                                        class="info-box-number">{{ $purchaseDetails->pluck('supplier_id')->unique()->count() }}</span>
+                                                </div>
+                                            </div>
+                                        </div> --}}
+                                    </div>
+
                                     <div class="table-responsive">
                                         <table id="datatablexcel"
                                             class="display table-hover table table-bordered table-striped">
@@ -179,15 +296,14 @@
                                                 <tr>
                                                     <th>SL</th>
                                                     <th>Date</th>
-                                                    <th>Purchase</th>
-                                                    @if ($request->type == 'Branch')
-                                                        <th>Branch</th>
-                                                    @else
-                                                        <th>Project</th>
-                                                    @endif
+                                                    <th>Invoice</th>
+                                                    <th>Warehouse/project</th>
                                                     <th>Supplier</th>
-                                                    <th>Total Quantity</th>
-                                                    <th>Purchase Price</th>
+                                                    <th>Product</th>
+                                                    <th>Type</th>
+                                                    <th>Quantity</th>
+                                                    <th>Unit Price</th>
+                                                    <th>Total Price</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -195,59 +311,57 @@
                                                     $ttlQty = 0;
                                                     $grandTotal = 0;
                                                 @endphp
-                                                @foreach ($purchaseDetails as $key => $item)
-                                                    <tr class="clickable-row" data-target="#details-{{ $key }}">
+                                                @foreach ($purchaseDetails as $key => $detail)
+                                                    <tr>
                                                         <td>{{ $key + 1 }}</td>
-                                                        <td>{{ $item->date }}</td>
-                                                        <td>{{ $item->invoice_no }}</td>
-                                                        @if ($request->type == 'Branch')
-                                                            <td>{{ $item->branch->branchCode . ' - ' . $item->branch->name }}
-                                                            </td>
-                                                        @else
-                                                            <td>{{ $item->project->name ?? '' }}</td>
-                                                        @endif
-                                                        <td>{{ $item->supplier->account_name ?? '' }}</td>
-                                                        <td>{{ $item->details->sum('quantity') }}</td>
-                                                        <td>{{ $item->grand_total }}</td>
-                                                        @php
-                                                            $ttlQty += $item->details->sum('quantity');
-                                                            $grandTotal += $item->grand_total;
-                                                        @endphp
-                                                    </tr>
-                                                    <!-- Details Row (Hidden Initially) -->
-                                                    <tr id="details-{{ $key }}" class="suddetails"
-                                                        style="display: none">
-                                                        <td colspan="7">
-                                                            <strong>Purchase Details:</strong>
-                                                            <table class="table table-bordered">
-                                                                <thead>
-                                                                    <tr>
-                                                                        <th>Product</th>
-                                                                        <th>Quantity</th>
-                                                                        <th>Price</th>
-                                                                        <th>Total</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    @foreach ($item->details as $detail)
-                                                                        <tr>
-                                                                            <td>{{ $detail->product->getRawOriginal("name") ?? '' }}</td>
-                                                                            <td>{{ $detail->quantity }}</td>
-                                                                            <td>{{ $detail->unit_price }}</td>
-                                                                            <td>{{ $detail->total_price }}</td>
-                                                                        </tr>
-                                                                    @endforeach
-                                                                </tbody>
-                                                            </table>
+                                                        <td>{{ $detail->date }}</td>
+                                                        <td>{{ $detail->purchase->invoice_no ?? '' }}</td>
+                                                        <td>
+                                                            @if (optional($detail->purchase)->type == 'Branch')
+                                                                {{ optional($detail->purchase->branch)->branchCode }}
+                                                                {{ optional($detail->purchase->branch)->name }}
+                                                            @else
+                                                                {{ optional($detail->purchase->project)->name }}
+                                                            @endif
                                                         </td>
+
+                                                        <td>
+                                                            @if (!empty($detail->ledger_id) && $detail->ledger_id != 0)
+                                                                {{ $detail->ledger->account_name ?? 'N/A' }}
+                                                            @elseif (!empty($detail->supplier_id) && $detail->supplier_id != 0)
+                                                                {{ $detail->supplier->name ?? 'N/A' }}
+                                                            @else
+                                                                N/A
+                                                            @endif
+                                                        </td>
+
+                                                        <td>{{ $detail->product->getRawOriginal('name') ?? '' }}</td>
+                                                        <td>
+                                                            @if ($detail->purchasetype == 'imported')
+                                                                <span class="badge badge-info">Imported</span>
+                                                            @elseif ($detail->purchasetype == 'local')
+                                                                <span class="badge badge-secondary">Local</span>
+                                                            @else
+                                                                {{ $detail->purchasetype }}
+                                                            @endif
+                                                        </td>
+                                                        <td>{{ $detail->quantity }}</td>
+                                                        <td>{{ number_format($detail->unit_price, 2) }}</td>
+                                                        <td>{{ number_format($detail->total_price, 2) }}</td>
+                                                        @php
+                                                            $ttlQty += $detail->quantity;
+                                                            $grandTotal += $detail->total_price;
+                                                        @endphp
                                                     </tr>
                                                 @endforeach
                                             </tbody>
                                             <tfoot>
                                                 <tr>
-                                                    <th colspan="5" style="text-align: right">Total:</th>
+                                                    <th colspan="7" style="text-align: right">Total:</th>
                                                     <th style="text-align: left;">{{ $ttlQty ?? '' }}</th>
-                                                    <th style="text-align: left;">{{ $grandTotal ?? '' }}</th>
+                                                    <th></th>
+                                                    <th style="text-align: left;">{{ number_format($grandTotal ?? 0, 2) }}
+                                                    </th>
                                                 </tr>
                                             </tfoot>
                                         </table>
@@ -302,38 +416,22 @@
     @include('backend.pages.reports.excel')
     <script>
         $(document).ready(function() {
-            $(".clickable-row").click(function() {
-                let target = $(this).data("target");
-
-                if ($(target).is(":visible")) {
-                    // If the clicked row's details are already visible, hide it
-                    $(target).hide();
-                } else {
-                    // Hide all details first, then show only the clicked one
-                    $(".suddetails").hide();
-                    $(target).show();
-                }
-            });
-        });
-    </script>
-
-    <script>
-        $(document).ready(function() {
             function toggleFields() {
                 let selectedType = $("#typeSelect").val();
                 if (selectedType === "Branch") {
                     $("#branchSelect").show();
                     $("#projectSelect").hide();
-                } else {
+                } else if (selectedType === "Project") {
                     $("#branchSelect").hide();
                     $("#projectSelect").show();
+                } else {
+                    $("#branchSelect").hide();
+                    $("#projectSelect").hide();
                 }
             }
 
-            // Run function on page load to set initial state
             toggleFields();
 
-            // Run function when "Type" is changed
             $("#typeSelect").on("change", function() {
                 toggleFields();
             });

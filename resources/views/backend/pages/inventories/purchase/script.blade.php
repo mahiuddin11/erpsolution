@@ -25,7 +25,12 @@
             {
                 "data": "branch",
                 "orderable": true,
-                "orderable": false
+
+            },
+            {
+                "data": "warehouse",
+                "orderable": true,
+
             },
             {
                 "data": "supplier",

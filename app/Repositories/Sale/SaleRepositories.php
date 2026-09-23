@@ -116,7 +116,8 @@ class SaleRepositories
                 $nestedData['invoice_no'] = $esale->invoice_no;
                 $nestedData['po_invoice'] = $esale->po_invoice;
                 $nestedData['date'] = $esale->date;
-                $nestedData['branch_id'] = $esale->branch->branchCode . ' - ' . $esale->branch->name;
+                $nestedData['branch_id'] =  $esale->branch->name ?? '—';
+                $nestedData['warehouse_id'] = $esale->Warehouse->name ?? '—';
                 $nestedData['customer_id'] = $esale->customer->account_name ?? "";
                 $nestedData['sales_person_id'] = $esale->salesPerson->name ?? 'Not Assigned';
                 $nestedData['qty'] = $esale->qty;
@@ -185,7 +186,7 @@ class SaleRepositories
 
     public function store($request)
     {
-        // dd('sales repo', $request->all());
+
 
         DB::beginTransaction();
         try {
@@ -203,8 +204,7 @@ class SaleRepositories
             }
 
             $finalprice = (array_sum($request->total) + $request->carrying_cost + $request->labor_bill) - $request->discount;
-            $accountbranch = $request->branch_id ?? 0;
-            $request->branch_id = $request->sub_warehouse_id ?? $request->branch_id;
+
 
             $esale = new $this->Sale();
             $esale->invoice_no = $invoice_no ?? $request->invoice_no;
@@ -214,6 +214,7 @@ class SaleRepositories
             $esale->po_date = $request->po_date;
             // $esale->account_id = $request->account_id ? $request->account_id : '';
             $esale->branch_id =  $request->branch_id;
+            $esale->warehouse_id =  $request->warehouse_id ?? null;
             $esale->ledger_id = $request->ledger_id;
             $esale->customer_id = $request->customer_id ?? 0;
             $esale->payment_type = $request->payment_type;
@@ -261,6 +262,7 @@ class SaleRepositories
                 // $esaleDetail->gas_qty = $gas_qty[$i] ?? 0;
                 $esaleDetail->category_id = $category_id[$i];
                 $esaleDetail->branch_id = $request->branch_id;
+                $esaleDetail->warehouse_id = $request->warehouse_id ?? null;
                 $esaleDetail->rate = $subtotal[$i];
                 $esaleDetail->vat = $vat[$i];
                 $esaleDetail->price = $grand_total[$i];
@@ -272,6 +274,7 @@ class SaleRepositories
                 $stock->product_id = $proName[$i];
                 $stock->quantity = $qty[$i];
                 $stock->branch_id = $request->branch_id;
+                $stock->warehouse_id = $request->warehouse_id ?? null;
                 $stock->unit_price = $subtotal[$i];
                 $stock->total_price = $grand_total[$i];
                 $stock->general_id = $Sale_id;
@@ -280,10 +283,10 @@ class SaleRepositories
                 $stock->status = 'Sale';
                 $stock->save();
 
-                $existingCheck = StockSummary::where('product_id', $proName[$i])->where('type', "Branch")->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->first();
+                $existingCheck = StockSummary::where('product_id', $proName[$i])->where('type', "Branch")->where('branch_id', $request->branch_id)->where('warehouse_id', $request->warehouse_id)->where('purchasetype', $request->purchasetype[$i])->first();
                 if (!empty($existingCheck->quantity) && $existingCheck->quantity > 0) :
                     $newQty = $existingCheck->quantity - $qty[$i];
-                    StockSummary::where('product_id', $proName[$i])->where('type', "Branch")->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->update(array('quantity' => $newQty));
+                    StockSummary::where('product_id', $proName[$i])->where('type', "Branch")->where('branch_id', $request->branch_id)->where('warehouse_id', $request->warehouse_id)->where('purchasetype', $request->purchasetype[$i])->update(array('quantity' => $newQty));
                 endif;
             }
 
@@ -293,19 +296,24 @@ class SaleRepositories
             $transaction['table_id'] = $Sale_id;
             $transaction['account_id'] = getAccountByUniqueID(18)->id; // sale
             $transaction['type'] = 2;
-            $transaction['branch_id'] = $accountbranch;
+            $transaction['branch_id'] = $request->branch_id ?? null;
+            $transaction['warehouse_id'] = $request->warehouse_id ?? null;
             $transaction['credit'] = $finalprice;
             $transaction['remark'] = $request->narration;
             $transaction['created_by'] = Auth::id();
             $transaction['created_at'] = $request->date;
             AccountTransaction::create($transaction);
 
+
+
+
             // $transactionPay['payment_invoice'] = $request->invoice_no;
             $transactionPay['invoice'] = $request->invoice_no;
             $transactionPay['table_id'] = $Sale_id;
             $transactionPay['account_id'] = $request->ledger_id; // Account Receivable;
             $transactionPay['type'] = 2;
-            $transactionPay['branch_id'] = $accountbranch;
+            $transactionPay['branch_id'] = $request->branch_id ?? null;
+            $transactionPay['warehouse_id'] = $request->warehouse_id ?? null;
             $transactionPay['debit'] =  $finalprice;
             $transactionPay['remark'] = $request->narration;
             $transactionPay['created_by'] = Auth::id();
@@ -326,6 +334,7 @@ class SaleRepositories
                 $transection->debit = array_sum($request->total) - $request->discount;
                 $transection->save();
             }
+
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
@@ -337,11 +346,13 @@ class SaleRepositories
     public function update($request, $id)
     {
 
+
+
         DB::beginTransaction();
         try {
             $finalprice = (array_sum($request->price) + $request->carrying_cost + $request->labor_bill) - $request->discount;
-            $mailbranhc = $request->branch_id;
-            $request->branch_id = $request->sub_warehouse_id ?? $request->branch_id;
+            // $mailbranhc = $request->branch_id;
+            // $request->branch_id = $request->sub_warehouse_id ?? $request->branch_id;
 
             $esale = $this->Sale::find($id);
             $esale->invoice_no = $request->invoice_no;
@@ -349,6 +360,7 @@ class SaleRepositories
             $esale->po_date = $request->po_date;
             $esale->po_invoice = $request->po_invoice;
             $esale->branch_id = $request->branch_id;
+            $esale->warehouse_id = $request->warehouse_id ?? null;
             $esale->carrying_cost = $request->carrying_cost;
             $esale->labor_bill = $request->labor_bill;
             $esale->ledger_id = $request->ledger_id;
@@ -373,9 +385,9 @@ class SaleRepositories
             $qty = $request->qty;
             $slDetails = sales_Details::where('sale_id', $id)->get();
             foreach ($slDetails as $slDetail) {
-                $quantitys =  StockSummary::where('product_id', $slDetail->product_id)->where('type', "Branch")->where('branch_id', $slDetail->branch_id)->where('purchasetype', $slDetail->purchasetype)->pluck('quantity')->first();
+                $quantitys =  StockSummary::where('product_id', $slDetail->product_id)->where('type', "Branch")->where('branch_id', $slDetail->branch_id)->where('warehouse_id', $slDetail->warehouse_id)->where('purchasetype', $slDetail->purchasetype)->pluck('quantity')->first();
                 $stocksum['quantity'] = abs($quantitys + $slDetail->qty);
-                StockSummary::where('product_id', $slDetail->product_id)->where('type', "Branch")->where('branch_id', $slDetail->branch_id)->where('purchasetype', $slDetail->purchasetype)->update($stocksum);
+                StockSummary::where('product_id', $slDetail->product_id)->where('type', "Branch")->where('branch_id', $slDetail->branch_id)->where('warehouse_id', $slDetail->warehouse_id)->where('purchasetype', $slDetail->purchasetype)->update($stocksum);
             }
             Stock::where('general_id', $id)->Where('status', 'Sale')->forceDelete();
             sales_Details::where('sale_id', $id)->delete();
@@ -393,6 +405,7 @@ class SaleRepositories
                 $esaleDetail->gas_qty = $gas_qty[$i] ?? 0;
                 $esaleDetail->category_id = $category_id[$i];
                 $esaleDetail->branch_id = $request->branch_id;
+                $esaleDetail->warehouse_id = $request->warehouse_id;
                 $esaleDetail->rate = $subtotal[$i];
                 $esaleDetail->price = $grand_total[$i];
                 $esaleDetail->Sale_id = $Sale_id;
@@ -403,6 +416,7 @@ class SaleRepositories
                 $stock->product_id = $proName[$i];
                 $stock->quantity = $qty[$i];
                 $stock->branch_id = $request->branch_id;
+                $stock->warehouse_id = $request->warehouse_id;
                 $stock->unit_price = $subtotal[$i];
                 $stock->total_price = $grand_total[$i];
                 $stock->general_id = $Sale_id;
@@ -410,10 +424,10 @@ class SaleRepositories
                 $stock->status = 'Sale';
                 $stock->save();
 
-                $existingCheck = StockSummary::where('product_id', $proName[$i])->where('type', "Branch")->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->first();
+                $existingCheck = StockSummary::where('product_id', $proName[$i])->where('type', "Branch")->where('branch_id', $request->branch_id)->where('warehouse_id', $request->warehouse_id)->where('purchasetype', $request->purchasetype[$i])->first();
                 if (!empty($existingCheck->quantity) && $existingCheck->quantity > 0) :
                     $newQty = $existingCheck->quantity - $qty[$i];
-                    StockSummary::where('product_id', $proName[$i])->where('type', "Branch")->where('branch_id', $request->branch_id)->where('purchasetype', $request->purchasetype[$i])->update(array('quantity' => $newQty));
+                    StockSummary::where('product_id', $proName[$i])->where('type', "Branch")->where('branch_id', $request->branch_id)->where('warehouse_id', $request->warehouse_id)->where('purchasetype', $request->purchasetype[$i])->update(array('quantity' => $newQty));
                 endif;
             }
 
@@ -426,7 +440,8 @@ class SaleRepositories
             $transaction['table_id'] = $Sale_id;
             $transaction['account_id'] = getAccountByUniqueID(18)->id; // sale
             $transaction['type'] = 2;
-            $transaction['branch_id'] = $mailbranhc;
+            $transaction['branch_id'] = $request->branch_id;
+            $transaction['warehouse_id'] = $request->warehouse_id ?? null;
             $transaction['credit'] = $finalprice;
             $transaction['remark'] = $request->narration;
             $transaction['created_by'] = Auth::id();
@@ -437,7 +452,8 @@ class SaleRepositories
             $transactionPay['table_id'] = $Sale_id;
             $transactionPay['account_id'] = $request->ledger_id; // Account Receivable;
             $transactionPay['type'] = 2;
-            $transactionPay['branch_id'] = $mailbranhc;
+            $transactionPay['branch_id'] = $request->branch_id;
+            $transactionPay['warehouse_id'] = $request->warehouse_id ?? null;
             $transactionPay['debit'] =  $finalprice;
             $transactionPay['remark'] = $request->narration;
             $transactionPay['created_by'] = Auth::id();

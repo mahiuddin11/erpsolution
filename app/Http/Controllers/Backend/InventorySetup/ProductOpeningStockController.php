@@ -14,6 +14,7 @@ use App\Models\ProductOpeningStock;
 use App\Models\Project;
 use App\Models\Transection;
 use App\Models\StockAjdustment;
+use App\Models\Warehouse;
 use App\Services\InventorySetup\ProductOpeningStockService;
 use App\Transformers\StockAdjustmentTransformer;
 use Illuminate\Validation\ValidationException;
@@ -92,10 +93,7 @@ class ProductOpeningStockController extends Controller
         $user          = auth()->user();
 
         //  Branch List with Parent Name
-        $branchs = Branch::where('status', 'Active')
-            ->orderBy('parent_id')
-            ->orderBy('name')
-            ->get();
+        $branchs = Branch::where('status', 'Active')->where('parent_id',0)->get();
 
         // Branch  Parent 
         $formattedBranches = $branchs->map(function ($branch) use ($branchs) {
@@ -154,13 +152,52 @@ class ProductOpeningStockController extends Controller
      * @param $slug
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
+    // public function edit($id)
+    // {
+    //     if (!is_numeric($id)) {
+    //         session()->flash('error', 'Edit id must be numeric!!');
+    //         return redirect()->back();
+    //     }
+
+    //     $editInfo = $this->systemService->details($id)->load('details');
+
+    //     if (!$editInfo) {
+    //         session()->flash('error', 'Edit info is invalid!!');
+    //         return redirect()->back();
+    //     }
+    //     $user = auth()->user();
+    //     $purchase = $this->systemService->getAllList();
+    //     $category_info = Category::get()->where('status', 'Active');
+    //     $supplier = Supplier::get()->where('status', 'Active');
+
+    //     $branchs = Branch::where('status', 'Active');
+    //     if ($user->branch_id !== null) {
+    //         $branchs = $branchs->where('id', $user->branch_id);
+    //     }
+    //     $branchs = $branchs->get();
+
+    //     $projects = Project::get();
+
+    //     $title = 'Edit Stock Ajdustment';
+    //     $accounts = ChartOfAccount::get();
+
+    //     $account_id = $editInfo->chart_of_account_id;
+    //     $debit = Transection::where('account_id', '=', $account_id)->sum('debit');
+    //     $credit = Transection::where('account_id', '=', $account_id)->sum('credit');
+
+    //     $remainingBalance = $debit - $credit;
+
+    //     return view('backend.pages.inventories.product_opening_stock.edit', get_defined_vars());
+    // }
+
+    
     public function edit($id)
     {
         if (!is_numeric($id)) {
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
         }
-
+ 
         $editInfo = $this->systemService->details($id)->load('details');
 
         if (!$editInfo) {
@@ -171,24 +208,41 @@ class ProductOpeningStockController extends Controller
         $purchase = $this->systemService->getAllList();
         $category_info = Category::get()->where('status', 'Active');
         $supplier = Supplier::get()->where('status', 'Active');
-
-        $branchs = Branch::where('status', 'Active');
+ 
+        // change: real branches only (parent_id = 0 / null); user branch restriction kept as it was
+        $branchs = Branch::where('status', 'Active')
+            ->where(function ($q) {
+                $q->whereNull('parent_id')->orWhere('parent_id', 0);
+            });
         if ($user->branch_id !== null) {
             $branchs = $branchs->where('id', $user->branch_id);
         }
         $branchs = $branchs->get();
-
+ 
+      
+        $warehouses = collect();
+        if (!empty($editInfo->branch_id)) {
+            $warehouses = Warehouse::where('branch_id', $editInfo->branch_id)
+                ->where(function ($q) use ($editInfo) {
+                    $q->where('status', 'Active');
+                    if (!empty($editInfo->warehouse_id)) {
+                        $q->orWhere('id', $editInfo->warehouse_id);
+                    }
+                })
+                ->get();
+        }
+ 
         $projects = Project::get();
-
-        $title = 'Edit Stock Ajdustment';
+ 
+        $title = 'Edit Product Opening Stock'; // change: was 'Edit Stock Ajdustment'
         $accounts = ChartOfAccount::get();
-
+ 
         $account_id = $editInfo->chart_of_account_id;
         $debit = Transection::where('account_id', '=', $account_id)->sum('debit');
         $credit = Transection::where('account_id', '=', $account_id)->sum('credit');
-
+ 
         $remainingBalance = $debit - $credit;
-
+ 
         return view('backend.pages.inventories.product_opening_stock.edit', get_defined_vars());
     }
 

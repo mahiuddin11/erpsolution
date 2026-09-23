@@ -154,7 +154,7 @@
                             </div>
 
                             <div class="col-md-2 col-sm-6 col-12 mb-3">
-                                <label for="validationCustom02">Sub-Warehouse * :</label>
+                                <label for="validationCustom02">Warehouse * :</label>
                                 <select class="form-control select2" id="sub_warehouse_id" name="sub_warehouse_id">
                                     <option selected disabled value="">--Select Branch First--</option>
                                 </select>

@@ -34,6 +34,10 @@
                 "orderable": true
             },
             {
+                "data": "warehouse_id",
+                "orderable": true
+            },
+            {
                 "data": "customer_id",
                 "orderable": true
             },

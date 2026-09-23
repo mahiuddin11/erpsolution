@@ -27,6 +27,10 @@ class Purchases extends Model
         return $this->belongsTo(Branch::class, 'branch_id', 'id');
     }
 
+    public function warehouse()
+    {
+        return $this->belongsTo(Warehouse::class, 'warehouse_id', 'id');
+    }
 
     public function supplier()
     {

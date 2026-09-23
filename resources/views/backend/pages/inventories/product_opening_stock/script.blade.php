@@ -19,6 +19,14 @@
                 "orderable": true
             },
             {
+                "data": "branch",
+                "orderable": true
+            },
+            {
+                "data": "warehosue",
+                "orderable": true
+            },
+            {
                 "data": "created_by",
                 "orderable": true
             },

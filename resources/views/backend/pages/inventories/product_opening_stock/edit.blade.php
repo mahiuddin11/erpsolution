@@ -14,7 +14,8 @@
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('home') }}">Dashboard</a></li>
                         @if (helper::roleAccess('inventorySetup.productOS.index'))
-                            <li class="breadcrumb-item"><a href="{{ route('inventorySetup.productOS.index') }}">Product Opening Stock List</a>
+                            <li class="breadcrumb-item"><a href="{{ route('inventorySetup.productOS.index') }}">Product
+                                    Opening Stock List</a>
                             </li>
                         @endif
                         <li class="breadcrumb-item active"><span>Edit Product Opening Stock</span></li>
@@ -49,7 +50,8 @@
                 </div>
                 <!-- /.card-header -->
                 <div class="card-body">
-                    <form class="needs-validation" method="POST"
+                    {{-- change: added id="getform" for the submit validation --}}
+                    <form class="needs-validation" id="getform" method="POST"
                         action="{{ route('inventorySetup.productOS.update', $editInfo->id) }}" novalidate>
                         @csrf
                         <div class="form-row">
@@ -60,11 +62,13 @@
                                     value="{{ $editInfo->invoice_no }} ">
                             </div>
                             <div class="col-md-2 mb-3">
-                                <label>Date * :</label>
+                                {{-- change: Carbon::parse() had no argument (always showed today) -> now parses the saved date; duplicate label removed --}}
                                 @php
-                                    $date = $editInfo->date ? \Carbon\Carbon::parse()->format('Y-m-d') : '';
+                                    $date = $editInfo->date
+                                        ? \Carbon\Carbon::parse($editInfo->date)->format('Y-m-d')
+                                        : '';
                                 @endphp
-                                <label>Date:</label>
+                                <label>Date * :</label>
                                 <div class="input-group date" id="reservationdate" data-target-input="nearest">
                                     <input type="text" name="date" data-toggle="datetimepicker"
                                         value="{{ $date }}" class="form-control datetimepicker-input"
@@ -78,12 +82,15 @@
                                     <span class=" error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <label for="validationCustom01">Cost Center *:</label>
-                                <select class="form-control select2" disabled id="cost_center">
-                                    <option value="0">No Cost Center</option>
+
+                            {{-- change: Stock Center (was a disabled "Cost Center", col-md-4) -> enabled, same as create --}}
+                            <div class="col-md-2 mb-3">
+                                <label for="validationCustom01">Stock Center *:</label>
+                                <select class="form-control select2" id="cost_center">
+                                    <option value="0">No Stock Center</option>
                                     <option {{ $editInfo->project_id ? 'selected' : '' }} value="project">Project</option>
-                                    <option {{ $editInfo->branch_id ? 'selected' : '' }} value="branch">Branch</option>
+                                    <option {{ !$editInfo->project_id && $editInfo->branch_id ? 'selected' : '' }}
+                                        value="branch">Branch</option>
                                 </select>
                                 <span class="error text-red text-bold"></span>
                             </div>
@@ -101,15 +108,31 @@
                                 </select>
                                 <span class="error text-red text-bold"></span>
                             </div>
-                            <div class="col-md-4 mb-3" id="branch_div" style="display: none;">
+
+                            {{-- change: branch col-md-4 -> col-md-3 so branch + warehouse fit in one row --}}
+                            <div class="col-md-3 mb-3" id="branch_div" style="display: none;">
                                 <label for="validationCustom01">Branch *:</label>
                                 <select class="form-control select2" id="branch_id" name="branch_id">
-                                    <option value="0">--Select--</option>
-                                    <!-- Add branch options here -->
+                                    <option value="0">--Select Branch--</option>
                                     @foreach ($branchs as $branch)
                                         <option value="{{ $branch->id }}"
                                             {{ $editInfo->branch_id == $branch->id ? 'selected' : '' }}>
                                             {{ $branch->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <span class="error text-red text-bold"></span>
+                            </div>
+
+                            {{-- add new: Warehouse select beside branch; saved warehouse preselected, reloaded by API when branch changes --}}
+                            <div class="col-md-3 mb-3" id="warehouse_div" style="display: none;">
+                                <label for="validationCustom01">Warehouse *:</label>
+                                <select class="form-control select2" id="warehouse_id" name="warehouse_id">
+                                    <option value="0">--Select Warehouse--</option>
+                                    @foreach ($warehouses as $warehouse)
+                                        <option value="{{ $warehouse->id }}"
+                                            {{ ($editInfo->warehouse_id ?? null) == $warehouse->id ? 'selected' : '' }}>
+                                            {{ $warehouse->name }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -277,11 +300,14 @@
                                 </table>
                             </div>
                         </div>
-                        {{-- <div class="form-group">
-                            <button class="btn btn-info" type="submit">
-                                <i class="fa fa-save"></i>&nbsp;Save
+
+                        {{-- change: Save button was commented out (the form had no way to submit). Now validates first, like create.
+                             If the button was intentionally disabled, comment this block again. --}}
+                        <div class="form-group float-right">
+                            <button class="btn btn-info" id="getsubmit" type="button">
+                                <i class="fa fa-save"></i>&nbsp; &nbsp; Save
                             </button>
-                        </div> --}}
+                        </div>
                     </form>
                 </div>
             </div>
@@ -368,11 +394,12 @@
                     return false;
                 } else {
                     var total = qty * unitprice;
+                    // change: removed the stray "s" that was after the purchase type </td>
                     const row = `
                     <tr class="new_item${proId}">
                         <td style="padding-left:15px;">${catName}<input type="hidden" name="catName[]" value="${catId}"></td>
                         <td class="text-right">${proName}<input type="hidden" class="add_quantity" name="proName[]" value="${proId}"></td>
-                          <td class="text-right">${purchasetypetext}<input type="hidden" name="purchasetype[]" value="${purchasetypeval}"></td>s
+                        <td class="text-right">${purchasetypetext}<input type="hidden" name="purchasetype[]" value="${purchasetypeval}"></td>
                         <td class="text-right">${qty}<input type="hidden" class="ttlqty" name="qty[]" value="${qty}"></td>
                         <td class="text-right">${unitprice}<input type="hidden" class="ttlunitprice" name="unitprice[]" value="${unitprice}">
                         </td>
@@ -652,32 +679,143 @@
         }
 
 
-        $(document).ready(function() {
-            // Function to handle showing/hiding based on the cost center value
-            function toggleCostCenterFields(value) {
-                $('#project_div').hide();
-                $('#branch_div').hide();
+        // =====================================================================
+        // change: Stock Center / Branch / Warehouse logic (create-blade behavior).
+        //
+        // WHY the previous versions did nothing when Stock Center was changed:
+        // this inline script runs while the page is still being parsed, so a top-level
+        // $(document).on(...) is registered on whichever jQuery exists AT THAT MOMENT. The layout
+        // loads jQuery/select2 again later, and select2 fires 'change' through ITS jQuery copy,
+        // which never sees handlers registered on the earlier copy. (The saved values still showed
+        // on load because that code ran inside a ready callback.)
+        // FIX: everything is bound inside init(), which runs after all layout scripts have loaded
+        // and resolves window.jQuery at that point. Set DEBUG = true to log to the browser console.
+        // =====================================================================
+        (function() {
+            var DEBUG = false;
 
-                // Clear selections when switching
-                // $('#project_id').val('0').trigger('change');
-                // $('#branch_id').val('0').trigger('change');
+            function init() {
+                var $ = window.jQuery; // resolved now, after every layout script is loaded
 
-                if (value === 'project') {
-                    $('#project_div').show();
-                } else if (value === 'branch') {
-                    $('#branch_div').show();
+                function log() {
+                    if (DEBUG && window.console) {
+                        console.log.apply(console, ['[OpeningStock]'].concat([].slice.call(arguments)));
+                    }
                 }
+
+                // warehouse select is visible only when Stock Center = Branch AND a branch is selected
+                function syncWarehouseDiv() {
+                    var show = $('#cost_center').val() === 'branch' && ($('#branch_id').val() || '0') !== '0';
+                    $('#warehouse_div').toggle(show);
+                    log('syncWarehouseDiv ->', show);
+                }
+
+                // project select for Project, branch select for Branch, nothing for "No Stock Center"
+                function toggleCostCenterFields(value) {
+                    $('#project_div').toggle(value === 'project');
+                    $('#branch_div').toggle(value === 'branch');
+                    syncWarehouseDiv();
+                    log('toggleCostCenterFields ->', value);
+                }
+
+                function resetWarehouseOptions() {
+                    $('#warehouse_id').empty()
+                        .append('<option value="0">--Select Warehouse--</option>')
+                        .val('0').trigger('change');
+                }
+
+                // fetch the branch's warehouses from the existing getWarehouseList API
+                function loadWarehouses(branchId) {
+                    resetWarehouseOptions();
+
+                    if (!branchId || branchId === '0') {
+                        return;
+                    }
+
+                    $.ajax({
+                        url: "{{ route('inventorySetup.stockAdjustment.getWarehouseList') }}",
+                        type: 'GET',
+                        cache: false,
+                        data: {
+                            branch_id: branchId
+                        },
+                        success: function(html) {
+                            // ignore stale response if the branch was changed meanwhile
+                            if ($('#branch_id').val() !== branchId) {
+                                return;
+                            }
+                            // rebuild the list so a repeated response can never duplicate options
+                            resetWarehouseOptions();
+                            $('#warehouse_id').append(html).val('0').trigger('change');
+                            log('warehouses loaded for branch', branchId);
+                        },
+                        error: function() {
+                            alert('Failed to load warehouses.');
+                        }
+                    });
+                }
+
+                // page load: saved stock center / branch / warehouse stay selected (nothing is reset)
+                toggleCostCenterFields($('#cost_center').val());
+
+                // remove any previous binding of ours, then bind once
+                $(document).off('.osStock');
+
+                // Stock Center changed -> reset everything first, then show only the relevant select
+                $(document).on('change.osStock', '#cost_center', function() {
+                    var value = $(this).val();
+                    log('cost_center changed ->', value);
+
+                    $('#project_id').val('0').trigger('change');
+                    $('#branch_id').val('0').trigger('change');
+                    resetWarehouseOptions();
+
+                    toggleCostCenterFields(value); // last, so the final visibility is authoritative
+                });
+
+                // Branch changed -> load its warehouses and show the warehouse select beside it
+                $(document).on('change.osStock', '#branch_id', function() {
+                    var branchId = $(this).val();
+                    log('branch changed ->', branchId);
+
+                    loadWarehouses(branchId);
+                    syncWarehouseDiv();
+                });
+
+                // add new: submit validation (same rules as create)
+                $(document).on('click.osStock', '#getsubmit', function(e) {
+                    e.preventDefault();
+
+                    var costCenter = $('#cost_center option:selected').val();
+                    var projectSelected = $('#project_id option:selected').val();
+                    var branchSelected = $('#branch_id option:selected').val();
+                    var warehouseSelected = $('#warehouse_id').val();
+
+                    if (costCenter == 0) {
+                        alert('Please select a Stock Center .');
+                        return false;
+                    }
+                    if (costCenter === 'project' && projectSelected === '0') {
+                        alert('Please select a project.');
+                        return false;
+                    } else if (costCenter === 'branch' && branchSelected === '0') {
+                        alert('Please select a branch.');
+                        return false;
+                    } else if (costCenter === 'branch' && (!warehouseSelected || warehouseSelected === '0')) {
+                        alert('Please select a warehouse.');
+                        return false;
+                    } else {
+                        $('#getform').submit();
+                    }
+                });
             }
 
-            // Initial check when the page loads
-            var initialValue = $('#cost_center').val();
-            toggleCostCenterFields(initialValue);
-
-            // Event listener for change
-            $(document).on('change', "#cost_center", function() {
-                var value = this.value;
-                toggleCostCenterFields(value);
-            });
-        });
+            // run after the whole page (and every layout script) has been parsed
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
     </script>
 @endsection

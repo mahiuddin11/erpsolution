@@ -197,41 +197,6 @@ class StoreDashboardApiController extends Controller
 
         return response()->json($rows);
     }
-    public function branchDistribution()
-    {
-        $priceByProduct = $this->avgPriceByProduct();
-
-        $branchIds = $this->branchQuery()->pluck('id');
-
-        $rows = StockSummary::where('type', 'Branch')
-            ->whereIn('branch_id', $branchIds)
-            ->select('branch_id', 'product_id', DB::raw('SUM(quantity) as qty'))
-            ->groupBy('branch_id', 'product_id')
-            ->having('qty', '>', 0)
-            ->get();
-
-        $valueByBranch = [];
-        foreach ($rows as $r) {
-            $avgPrice = $priceByProduct[$r->product_id] ?? 0;
-            $value = round($avgPrice * $r->qty, 2);
-            $valueByBranch[$r->branch_id] = ($valueByBranch[$r->branch_id] ?? 0) + $value;
-        }
-
-        $grandTotal = array_sum($valueByBranch);
-
-        $data = $this->branchQuery()->where('status', 'Active')->get(['id', 'name'])
-            ->map(function ($b) use ($valueByBranch, $grandTotal) {
-                $val = $valueByBranch[$b->id] ?? 0;
-                return [
-                    'id'              => $b->id,
-                    'name'            => $b->name,
-                    'total'           => round($val, 2),
-                    'present_percent' => $grandTotal > 0 ? round(($val / $grandTotal) * 100, 1) : 0,
-                ];
-            });
-
-        return response()->json($data);
-    }
 
     public function warehouseDistribution()
     {
@@ -240,18 +205,23 @@ class StoreDashboardApiController extends Controller
 
         $warehouseIds = $this->warehouseQuery()->pluck('id');
 
+     
+
         $rows = StockSummary::where('type', 'Branch')
-            ->whereIn('branch_id', $warehouseIds)
-            ->select('branch_id', 'product_id', DB::raw('SUM(quantity) as qty'))
-            ->groupBy('branch_id', 'product_id')
+            ->whereIn('warehouse_id', $warehouseIds)
+            ->select('warehouse_id', 'product_id', DB::raw('SUM(quantity) as qty'))
+            ->groupBy('warehouse_id', 'product_id')
             ->having('qty', '>', 0)
             ->get();
 
+    
+
         $valueByWarehouse = [];
         foreach ($rows as $r) {
+            
             $avgPrice = $priceByProduct[$r->product_id] ?? 0;
             $value = round($avgPrice * $r->qty, 2);
-            $valueByWarehouse[$r->branch_id] = ($valueByWarehouse[$r->branch_id] ?? 0) + $value;
+            $valueByWarehouse[$r->warehouse_id] = ($valueByWarehouse[$r->warehouse_id] ?? 0) + $value;
         }
 
         $grandTotal = array_sum($valueByWarehouse);
@@ -270,6 +240,84 @@ class StoreDashboardApiController extends Controller
         return response()->json($data);
     }
 
+    // public function branchDistribution()
+    // {
+    //     $priceByProduct = $this->avgPriceByProduct();
+
+    //     $branchIds = $this->branchQuery()->pluck('id');
+
+    //     $rows = StockSummary::where('type', 'Branch')
+    //         ->whereIn('branch_id', $branchIds)
+    //         ->select('branch_id', 'product_id', DB::raw('SUM(quantity) as qty'))
+    //         ->groupBy('branch_id', 'product_id')
+    //         ->having('qty', '>', 0)
+    //         ->get();
+
+    //     $valueByBranch = [];
+    //     foreach ($rows as $r) {
+    //         $avgPrice = $priceByProduct[$r->product_id] ?? 0;
+    //         $value = round($avgPrice * $r->qty, 2);
+    //         $valueByBranch[$r->branch_id] = ($valueByBranch[$r->branch_id] ?? 0) + $value;
+    //     }
+
+    //     $grandTotal = array_sum($valueByBranch);
+
+    //     $data = $this->branchQuery()->where('status', 'Active')->get(['id', 'name'])
+    //         ->map(function ($b) use ($valueByBranch, $grandTotal) {
+    //             $val = $valueByBranch[$b->id] ?? 0;
+    //             return [
+    //                 'id'              => $b->id,
+    //                 'name'            => $b->name,
+    //                 'total'           => round($val, 2),
+    //                 'present_percent' => $grandTotal > 0 ? round(($val / $grandTotal) * 100, 1) : 0,
+    //             ];
+    //         });
+
+    //     return response()->json($data);
+    // }
+
+            
+        public function branchDistribution()
+        {
+            $priceByProduct = $this->avgPriceByProduct();
+
+            $branchIds = $this->branchQuery()->pluck('id');
+
+            $rows = StockSummary::where('type', 'Branch')
+                ->whereIn('branch_id', $branchIds)
+                ->where(function ($q) {
+                    $q->whereNull('warehouse_id')
+                    ->orWhere('warehouse_id', 0);
+                })
+                ->select('branch_id', 'product_id', DB::raw('SUM(quantity) as qty'))
+                ->groupBy('branch_id', 'product_id')
+                ->having('qty', '>', 0)
+                ->get();
+
+            $valueByBranch = [];
+            foreach ($rows as $r) {
+                $avgPrice = $priceByProduct[$r->product_id] ?? 0;
+                $value = round($avgPrice * $r->qty, 2);
+                $valueByBranch[$r->branch_id] = ($valueByBranch[$r->branch_id] ?? 0) + $value;
+            }
+
+            $grandTotal = array_sum($valueByBranch);
+
+            $data = $this->branchQuery()->where('status', 'Active')->get(['id', 'name'])
+                ->map(function ($b) use ($valueByBranch, $grandTotal) {
+                    $val = $valueByBranch[$b->id] ?? 0;
+                    return [
+                        'id'              => $b->id,
+                        'name'            => $b->name,
+                        'total'           => round($val, 2),
+                        'present_percent' => $grandTotal > 0 ? round(($val / $grandTotal) * 100, 1) : 0,
+                    ];
+                });
+
+            return response()->json($data);
+        }
+
+
     public function warehouseStockDetails(Request $request)
     {
         $warehouseId = $request->input('warehouse_id');
@@ -277,7 +325,7 @@ class StoreDashboardApiController extends Controller
         $priceByProduct = $this->avgPriceByProduct();
 
         $rows = StockSummary::with('products.category')
-            ->where('branch_id', $warehouseId)
+            ->where('warehouse_id', $warehouseId)
             ->where('type', 'Branch')
             ->select('product_id', DB::raw('SUM(quantity) as qty'))
             ->groupBy('product_id')
@@ -308,6 +356,47 @@ class StoreDashboardApiController extends Controller
         ]);
     }
 
+    public function branchStockDetails(Request $request)
+{
+    $branchId = $request->input('branch_id');
+
+    $priceByProduct = $this->avgPriceByProduct();
+
+    $rows = StockSummary::with('products.category')
+        ->where('branch_id', $branchId)
+        ->where('type', 'Branch')
+        ->where(function ($q) {
+            $q->whereNull('warehouse_id')
+              ->orWhere('warehouse_id', 0);
+        })
+        ->select('product_id', DB::raw('SUM(quantity) as qty'))
+        ->groupBy('product_id')
+        ->having('qty', '>', 0)
+        ->get()
+        ->map(function ($r) use ($priceByProduct) {
+            $avgPrice = $priceByProduct[$r->product_id] ?? 0;
+            $total    = round($avgPrice * $r->qty, 2);
+            return [
+                'product'      => optional($r->products)->getRawOriginal('name') ?? 'N/A',
+                'product_code' => optional($r->products)->getRawOriginal('productCode') ?? '',
+                'category'     => optional(optional($r->products)->category)->name ?? 'N/A',
+                'qty'          => $r->qty,
+                'avg_price'    => round($avgPrice, 2),
+                'total'        => $total,
+            ];
+        })
+        ->sortByDesc('total')
+        ->values();
+
+    $branchName = optional($this->branchQuery()->find($branchId))->name ?? 'N/A';
+    $grandTotal = round($rows->sum('total'), 2);
+
+    return response()->json([
+        'warehouse_name' => $branchName, 
+        'rows'           => $rows,
+        'grand_total'    => $grandTotal,
+    ]);
+}
 
     public function quickActions()
     {

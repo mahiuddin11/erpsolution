@@ -21,6 +21,11 @@ class StockAjdustment extends Model
     {
         return $this->belongsTo(Branch::class, 'branch_id', 'id');
     }
+    public function warehouse()
+    {
+        return $this->belongsTo(Warehouse::class, 'warehouse_id', 'id');
+    }
+
     public function details()
     {
         return $this->hasMany(StockAjdustmentDetailst::class, 'purchases_id', 'id');

@@ -375,18 +375,84 @@ class SaleController extends Controller
      * @param $slug
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
+    // public function edit($id)
+    // {
+    //     if (!is_numeric($id)) {
+    //         session()->flash('error', 'Edit id must be numeric!!');
+    //         return redirect()->back();
+    //     }
+    //     $editInfo = $this->systemService->details($id);
+    //     $transection = Transection::where('type', 10)->orWhere('payment_id', $id)->first();
+    //     if (!$editInfo) {
+    //         session()->flash('error', 'Edit info is invalid!!');
+    //         return redirect()->back();
+    //     }
+    //     $title = 'Add New Sale';
+    //     $ledgers = ChartOfAccount::whereIn('id', [getAccountByUniqueID(5)->id, getAccountByUniqueID(16)->id])->get();
+    //     $category_info = Category::get()->where('status', 'Active');
+    //     $customer = Customer::get()->where('status', 'Active');
+    //     $user = auth()->user();
+    //     $customerGroup = CustomerGroup::all();
+
+    //     $branch = Branch::where("parent_id", 0)->where('status', 'Active');
+    //     if ($user->branch_id) {
+    //         $branch = $branch->where('id', $user->branch_id);
+    //     }
+    //     $branch = $branch->get();
+
+    //     if ($user->type == "Admin" || !$user->branch_id) {
+    //         $account = ChartOfAccount::get()->where('status', 'Active');
+    //     } elseif ($user->type == "Admin" || $user->branch_id) {
+    //         $account = ChartOfAccount::get()->where('status', 'Active')->where('branch_id', $user->branch_id);
+    //     }
+    //     $employees = Employee::where('status', 'Active')
+    //         ->where('employee_status', 'present')
+    //         ->select('id', 'name', 'id_card')
+    //         ->get();
+    //     // $saletlist = Sale::findOrFail($id);
+    //     // $subWarehouses = Branch::where("parent_id", "!=", 0)->where('status', 'Active')->get();
+
+    //     $saletlist = Sale::findOrFail($id);
+    //     $selectedWarehouse = Warehouse::find($saletlist->branch_id);
+
+
+    //     if ($selectedWarehouse) {
+    //         $warehouseSource = 'new';
+    //         $selectedParentBranchId = $selectedWarehouse->branch_id;
+    //         $Warehouses = Warehouse::where('branch_id', $selectedParentBranchId)
+    //             ->where('status', 'Active')
+    //             ->get();
+    //     } else {
+    //         $warehouseSource = 'old';
+    //         $selectedSubBranch = Branch::find($saletlist->branch_id);
+    //         $selectedParentBranchId = $selectedSubBranch->parent_id ?? null;
+    //         $Warehouses = Branch::where('parent_id', $selectedParentBranchId)
+    //             ->where('status', 'Active')
+    //             ->get();
+    //     }
+
+    //     $saledetails = sales_Details::where('sale_id', $id)->get();
+
+    //     dd($saledetails,  $Warehouses);
+
+    //     return view('backend.pages.sale.edit', get_defined_vars());
+    // }
+
     public function edit($id)
     {
         if (!is_numeric($id)) {
             session()->flash('error', 'Edit id must be numeric!!');
             return redirect()->back();
         }
+
         $editInfo = $this->systemService->details($id);
         $transection = Transection::where('type', 10)->orWhere('payment_id', $id)->first();
+
         if (!$editInfo) {
             session()->flash('error', 'Edit info is invalid!!');
             return redirect()->back();
         }
+
         $title = 'Add New Sale';
         $ledgers = ChartOfAccount::whereIn('id', [getAccountByUniqueID(5)->id, getAccountByUniqueID(16)->id])->get();
         $category_info = Category::get()->where('status', 'Active');
@@ -405,19 +471,22 @@ class SaleController extends Controller
         } elseif ($user->type == "Admin" || $user->branch_id) {
             $account = ChartOfAccount::get()->where('status', 'Active')->where('branch_id', $user->branch_id);
         }
+
         $employees = Employee::where('status', 'Active')
             ->where('employee_status', 'present')
             ->select('id', 'name', 'id_card')
             ->get();
-        // $saletlist = Sale::findOrFail($id);
-        // $subWarehouses = Branch::where("parent_id", "!=", 0)->where('status', 'Active')->get();
 
         $saletlist = Sale::findOrFail($id);
-        $selectedWarehouse = Warehouse::find($saletlist->branch_id);
+
+
+        $selectedWarehouse = Warehouse::find($saletlist->warehouse_id);
 
         if ($selectedWarehouse) {
             $warehouseSource = 'new';
             $selectedParentBranchId = $selectedWarehouse->branch_id;
+
+
             $subWarehouses = Warehouse::where('branch_id', $selectedParentBranchId)
                 ->where('status', 'Active')
                 ->get();
@@ -425,12 +494,15 @@ class SaleController extends Controller
             $warehouseSource = 'old';
             $selectedSubBranch = Branch::find($saletlist->branch_id);
             $selectedParentBranchId = $selectedSubBranch->parent_id ?? null;
+
+
             $subWarehouses = Branch::where('parent_id', $selectedParentBranchId)
                 ->where('status', 'Active')
                 ->get();
         }
 
         $saledetails = sales_Details::where('sale_id', $id)->get();
+
         return view('backend.pages.sale.edit', get_defined_vars());
     }
 
@@ -567,11 +639,29 @@ class SaleController extends Controller
         echo json_encode(array('purchases_price' => $productPrice->purchases_price, 'sale_price' => $productPrice->sale_price));
     }
 
+    // function getProductStock(Request $request)
+    // {
+
+    //     $product_id = $request->productId;
+    //     $productStock = StockSummary::get()->where('product_id', $product_id)->whereIn('branch_id', [$request->sub_branch_id])->where('type', 'Branch')->where('purchasetype', $request->type)->first();
+    //     // dd($request->branch_id,$request->sub_branch_id,$product_id,$request->type);
+    //     if (!empty($productStock->quantity) && $productStock->quantity > 0) :
+    //         echo $productStock->quantity;
+    //     endif;
+    // }
+
     function getProductStock(Request $request)
     {
+
         $product_id = $request->productId;
-        $productStock = StockSummary::get()->where('product_id', $product_id)->whereIn('branch_id', [$request->sub_branch_id])->where('type', 'Branch')->where('purchasetype', $request->type)->first();
-        // dd($request->branch_id,$request->sub_branch_id,$product_id,$request->type);
+
+        $productStock = StockSummary::where('product_id', $product_id)
+            ->where('branch_id', $request->branch_id)
+            ->where('warehouse_id', $request->warehouseId)
+            ->where('type', 'Branch')
+            ->where('purchasetype', $request->type)
+            ->first();
+
         if (!empty($productStock->quantity) && $productStock->quantity > 0) :
             echo $productStock->quantity;
         endif;

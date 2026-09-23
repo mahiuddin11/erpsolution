@@ -33,7 +33,7 @@
         <div class="col-md-12">
             <div class="card card-default">
                 <div class="card-header">
-                    <h3 class="card-title">Edit</h3>
+                    <h3 class="card-title">Edit Purchase</h3>
                     <div class="card-tools">
                         @if (helper::roleAccess('inventorySetup.category.index'))
                             <a class="btn btn-default" href="{{ route('inventorySetup.purchase.index') }}"><i
@@ -151,9 +151,9 @@
                             </div>
 
                             <div class="col-md-2 mb-3">
-                                <label for="validationCustom02">Sub-Warehouse * :</label>
+                                <label for="validationCustom02">Warehouse * :</label>
                                 <select class="form-control select2" id="sub_warehouse_id_display" disabled>
-                                    <option selected disabled value="">--Select Sub-Warehouse--</option>
+                                    <option selected disabled value="">--Select Warehouse--</option>
                                     @foreach ($subWarehouses as $subWarehouse)
                                         <option value="{{ $subWarehouse->id }}"
                                             {{ $subWarehouse->id == $selectedWarehouseId ? 'selected' : '' }}>
@@ -165,7 +165,7 @@
                                 <input type="hidden" name="sub_warehouse_id" value="{{ $selectedWarehouseId }}">
                                 <input type="hidden" name="warehouse_source" value="{{ $warehouseSource }}">
                                 <input type="hidden" name="old_branch_id" value="{{ $editInfo->branch_id }}">
-                                {{-- <<< END NEW --}}
+
                                 @error('sub_warehouse_id')
                                     <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror

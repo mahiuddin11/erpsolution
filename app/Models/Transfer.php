@@ -24,10 +24,22 @@ class Transfer extends Model
     {
         return $this->belongsTo(Branch::class, 'from_branch_id', 'id');
     }
+
+    public function fromWarehouse()
+    {
+        return $this->belongsTo(Warehouse::class, 'from_warehouse_id', 'id');
+    }
+
     public function tobranch()
     {
         return $this->belongsTo(Branch::class, 'to_branch_id', 'id');
     }
+
+    public function toWarehouse()
+    {
+        return $this->belongsTo(Warehouse::class, 'to_warehouse_id', 'id');
+    }
+
 
     public function customer()
     {

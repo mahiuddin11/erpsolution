@@ -8,12 +8,10 @@
         .bootstrap-switch-large {
             width: 200px;
         }
-
     </style>
 @endsection
 
 @section('navbar-content')
-
     <div class="content-header">
         <div class="container-fluid">
             <div class="row mb-2">
@@ -70,12 +68,11 @@
                                     <th>Invoice No</th>
                                     <th>Date</th>
                                     <th>Branch</th>
-
+                                    <th>Warehouse</th>
                                     <th>Adjustment Type</th>
+                                    <th>Qty</th>
                                     <th>Subtotal</th>
-
                                     <th>Grand Total</th>
-
                                     <th>Status</th>
                                     <th>Action</th>
 
@@ -90,10 +87,10 @@
                                     <th>Invoice No</th>
                                     <th>Date</th>
                                     <th>Branch</th>
-
+                                    <th>Warehouse</th>
                                     <th>Adjustment Type</th>
+                                    <th>Qty</th>
                                     <th>Subtotal</th>
-
                                     <th>Grand Total</th>
                                     <th>Status</th>
                                     <th>Action</th>

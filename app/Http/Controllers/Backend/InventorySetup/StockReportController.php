@@ -54,40 +54,88 @@ class StockReportController extends Controller
     //     return view('backend.pages.reports.index', get_defined_vars());
     // }
 
-    public function index(Request $request)
-    {
-        $title = 'Stock Summary';
-        $companyInfo = Company::latest('id')->first();
+    // public function index(Request $request)
+    // {
+    //     $title = 'Stock Summary';
+    //     $companyInfo = Company::latest('id')->first();
 
-        // Modified: 2026-07-20 - removed dead/overwritten $currentSrock query (was unused, extra DB hit)
-        $currentSrock = StockSummary::orderBy('stock_summaries.id', 'desc')
-            ->select('stock_summaries.*', 'stock_summaries.quantity as stock_qty')
-            ->orderBy('stock_summaries.product_id', 'asc');
+       
+    //     $currentSrock = StockSummary::orderBy('stock_summaries.id', 'desc')
+    //         ->select('stock_summaries.*', 'stock_summaries.quantity as stock_qty')
+    //         ->orderBy('stock_summaries.product_id', 'asc');
 
-        if ($request->method() == "POST") {
-            if ($request->category_id != "all") {
-                $productid = Product::where('category_id', $request->category_id)->pluck('id');
-                $currentSrock = $currentSrock->whereIn('product_id', $productid);
-            }
+      
+
+    //     if ($request->method() == "POST") {
+    //         if ($request->category_id != "all") {
+    //             $productid = Product::where('category_id', $request->category_id)->pluck('id');
+    //             $currentSrock = $currentSrock->whereIn('product_id', $productid);
+    //         }
+    //     }
+
+    //     $currentSrock = $currentSrock->get();  
+
+    //     $categorys = Category::get();
+
+
+    //     return view('backend.pages.reports.index', get_defined_vars());
+    // }
+    
+public function index(Request $request)
+{
+    $title = 'Stock Summary';
+    $companyInfo = Company::latest('id')->first();
+
+   
+    $currentSrock = StockSummary::with(['products.brand', 'products.category', 'branch', 'warehouse'])
+        ->select('stock_summaries.*', 'stock_summaries.quantity as stock_qty')
+        ->orderBy('stock_summaries.id', 'desc')
+        ->orderBy('stock_summaries.product_id', 'asc');
+
+    if ($request->method() == "POST") {
+        if ($request->category_id != "all") {
+            $productid = Product::where('category_id', $request->category_id)->pluck('id');
+            $currentSrock = $currentSrock->whereIn('product_id', $productid);
         }
-
-        $currentSrock = $currentSrock->get();
-        $categorys = Category::get();
-
-
-        return view('backend.pages.reports.index', get_defined_vars());
     }
 
+    $currentSrock = $currentSrock->get();
+
+   
+    $productIds = $currentSrock->pluck('product_id')->unique();
+
+    $purchase = PurchasesDetails::whereIn('product_id', $productIds)
+        ->selectRaw('product_id, SUM(unit_price) as s, COUNT(unit_price) as c')
+        ->groupBy('product_id')->get()->keyBy('product_id');
+
+    $opening = ProductOpeningStockDetails::whereIn('product_id', $productIds)
+        ->selectRaw('product_id, SUM(unit_price) as s, COUNT(unit_price) as c')
+        ->groupBy('product_id')->get()->keyBy('product_id');
+
+    $avgPrices = [];
+    foreach ($productIds as $pid) {
+        $sum = ($purchase[$pid]->s ?? 0) + ($opening[$pid]->s ?? 0);
+        $cnt = ($purchase[$pid]->c ?? 0) + ($opening[$pid]->c ?? 0);
+        $avgPrices[$pid] = $cnt ? $sum / $cnt : 0;
+    }
+   
+
+    $categorys = Category::get();
+
+    return view('backend.pages.reports.index', get_defined_vars());
+}
 
 
     public function productLedgerModal(Request $request)
     {
 
 
+   
 
         $product_id = $request->product_id;
         $purchase_type = $request->purchase_type ?? 'all';
         $branch_id  = $request->branch_id ?? 'all';
+        $warehouse_id  = $request->warehouse_id ?? 'all';
         $from_date  = $request->from_date ?? '';
         $to_date    = $request->to_date   ?? '';
 
@@ -103,9 +151,11 @@ class StockReportController extends Controller
         $datas = $this->getProductLedger->getProductLedgerData(
             $product_id,
             $branch_id,
+           
             $from_date,
             $to_date,
-            $purchase_type
+            $purchase_type,
+             $warehouse_id
         );
 
 

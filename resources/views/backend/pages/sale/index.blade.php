@@ -64,6 +64,7 @@
                                     <th>Po invoice</th>
                                     <th>Date</th>
                                     <th>Branch</th>
+                                    <th>Warehouse</th>
                                     <th>Customer</th>
                                     <th>Sales Representative</th>
                                     <th>Quantity</th>
@@ -85,6 +86,7 @@
                                     <th>Po invoice</th>
                                     <th>Date</th>
                                     <th>Branch</th>
+                                    <th>Warehouse</th>
                                     <th>Customer</th>
                                     <th>Sales Representative</th>
                                     <th>Quantity</th>

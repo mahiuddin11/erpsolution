@@ -187,6 +187,7 @@ class SaleReturnRepositories
 
     public function store($request)
     {
+
         DB::beginTransaction();
 
         try {

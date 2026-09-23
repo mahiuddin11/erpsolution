@@ -14,6 +14,7 @@ use App\Models\Company;
 use App\Models\Transection;
 use App\Models\StockAjdustment;
 use App\Models\StockAjdustmentDetailst;
+use App\Models\Warehouse;
 use App\Services\InventorySetup\StockAdjustmentService;
 use App\Transformers\StockAdjustmentTransformer;
 use Illuminate\Validation\ValidationException;
@@ -87,6 +88,46 @@ class StockAjdustmentController extends Controller
     // }
 
 
+    // public function create()
+    // {
+    //     $title = 'Add New Stock Adjustment';
+
+    //     $category_info = Category::where('status', 'Active')->get();
+    //     $supplier      = Supplier::where('status', 'Active')->get();
+    //     $user          = auth()->user();
+
+    //     // Branch Query
+    //     $branchQuery = Branch::where('status', 'Active');
+
+    //     if ($user->branch_id !== null) {
+    //         $branchQuery = $branchQuery->where('id', $user->branch_id);
+    //     }
+
+    //     $branches = $branchQuery->orderBy('parent_id')->orderBy('name')->get();
+
+    //     // Parent Branch Display Logic
+    //     $formattedBranches = $branches->map(function ($branch) use ($branches) {
+    //         $displayName = $branch->branchCode . ' - ' . $branch->name;
+
+    //         if (!empty($branch->parent_id) && $branch->parent_id > 0) {
+    //             $parent = $branches->where('id', $branch->parent_id)->first();
+    //             if ($parent) {
+    //                 $displayName .= " (" . $parent->name . ")";
+    //             }
+    //         }
+
+    //         $branch->display_name = $displayName;
+    //         return $branch;
+    //     });
+
+    //     // Invoice Number
+    //     $purchaseLastData = StockAjdustment::latest('id')->first();
+    //     $purchaseData = $purchaseLastData ? $purchaseLastData->id + 1 : 1;
+    //     $invoice_no = 'SA' . str_pad($purchaseData, 5, "0", STR_PAD_LEFT);
+
+    //     return view('backend.pages.inventories.stockAdjustment.create', get_defined_vars());
+    // }
+
     public function create()
     {
         $title = 'Add New Stock Adjustment';
@@ -95,31 +136,17 @@ class StockAjdustmentController extends Controller
         $supplier      = Supplier::where('status', 'Active')->get();
         $user          = auth()->user();
 
-        // Branch Query
         $branchQuery = Branch::where('status', 'Active');
 
         if ($user->branch_id !== null) {
             $branchQuery = $branchQuery->where('id', $user->branch_id);
         }
 
-        $branches = $branchQuery->orderBy('parent_id')->orderBy('name')->get();
 
-        // Parent Branch Display Logic
-        $formattedBranches = $branches->map(function ($branch) use ($branches) {
-            $displayName = $branch->branchCode . ' - ' . $branch->name;
 
-            if (!empty($branch->parent_id) && $branch->parent_id > 0) {
-                $parent = $branches->where('id', $branch->parent_id)->first();
-                if ($parent) {
-                    $displayName .= " (" . $parent->name . ")";
-                }
-            }
+        $branches = Branch::where('parent_id', 0)->get();
+        $warehouses = Warehouse::where('status', 'Active')->get();
 
-            $branch->display_name = $displayName;
-            return $branch;
-        });
-
-        // Invoice Number
         $purchaseLastData = StockAjdustment::latest('id')->first();
         $purchaseData = $purchaseLastData ? $purchaseLastData->id + 1 : 1;
         $invoice_no = 'SA' . str_pad($purchaseData, 5, "0", STR_PAD_LEFT);
@@ -195,6 +222,44 @@ class StockAjdustmentController extends Controller
     //     return view('backend.pages.inventories.stockAdjustment.edit', get_defined_vars());
     // }
 
+    // public function edit($id)
+    // {
+    //     if (!is_numeric($id)) {
+    //         session()->flash('error', 'Edit id must be numeric!!');
+    //         return redirect()->back();
+    //     }
+
+    //     // Fix: nested relation (product, product->category) shoho load kora hocche,
+    //     // nahole blade e $detail->product->category->name null ashe
+    //     $editInfo = $this->systemService->details($id)->load('details.product.category');
+
+    //     if (!$editInfo) {
+    //         session()->flash('error', 'Edit info is invalid!!');
+    //         return redirect()->back();
+    //     }
+
+    //     $user = auth()->user();
+    //     $purchase = $this->systemService->getAllList();
+    //     $category_info = Category::get()->where('status', 'Active');
+    //     $supplier = Supplier::get()->where('status', 'Active');
+
+    //     $branch = Branch::where('status', 'Active');
+    //     if ($user->branch_id !== null) {
+    //         $branch = $branch->where('id', $user->branch_id);
+    //     }
+    //     $branch = $branch->get();
+
+    //     $title = 'Edit Stock Ajdustment';
+    //     $accounts = ChartOfAccount::get();
+
+    //     $account_id = $editInfo->chart_of_account_id;
+    //     $debit = Transection::where('account_id', '=', $account_id)->sum('debit');
+    //     $credit = Transection::where('account_id', '=', $account_id)->sum('credit');
+
+    //     $remainingBalance = $debit - $credit;
+
+    //     return view('backend.pages.inventories.stockAdjustment.edit', get_defined_vars());
+    // }
     public function edit($id)
     {
         if (!is_numeric($id)) {
@@ -202,38 +267,28 @@ class StockAjdustmentController extends Controller
             return redirect()->back();
         }
 
-        // Fix: nested relation (product, product->category) shoho load kora hocche,
-        // nahole blade e $detail->product->category->name null ashe
-        $editInfo = $this->systemService->details($id)->load('details.product.category');
+        $editInfo = $this->systemService->details($id);
 
         if (!$editInfo) {
             session()->flash('error', 'Edit info is invalid!!');
             return redirect()->back();
         }
 
+        $editInfo->load('details.product.category');
+
         $user = auth()->user();
-        $purchase = $this->systemService->getAllList();
-        $category_info = Category::get()->where('status', 'Active');
-        $supplier = Supplier::get()->where('status', 'Active');
 
-        $branch = Branch::where('status', 'Active');
-        if ($user->branch_id !== null) {
-            $branch = $branch->where('id', $user->branch_id);
-        }
-        $branch = $branch->get();
+        $category_info = Category::where('status', 'Active')->get();
 
-        $title = 'Edit Stock Ajdustment';
-        $accounts = ChartOfAccount::get();
+        $branch = Branch::where('status', 'Active')
+            ->where('parent_id', 0)
+            ->when($user->branch_id !== null, fn($q) => $q->where('id', $user->branch_id))
+            ->get();
 
-        $account_id = $editInfo->chart_of_account_id;
-        $debit = Transection::where('account_id', '=', $account_id)->sum('debit');
-        $credit = Transection::where('account_id', '=', $account_id)->sum('credit');
-
-        $remainingBalance = $debit - $credit;
+        $title = 'Edit Stock Adjustment';
 
         return view('backend.pages.inventories.stockAdjustment.edit', get_defined_vars());
     }
-
 
     // public function approval($id)
     // {
@@ -265,6 +320,36 @@ class StockAjdustmentController extends Controller
     //     return view('backend.pages.inventories.stockAdjustment.approve', get_defined_vars());
     // }
 
+    // public function approval($id)
+    // {
+    //     if (!is_numeric($id)) {
+    //         session()->flash('error', 'Edit id must be numeric!!');
+    //         return redirect()->back();
+    //     }
+
+    //     // Fix: nested relation (product, product->category) shoho load kora hocche
+    //     $editInfo = $this->systemService->details($id)->load('details.product.category');
+
+    //     if (!$editInfo) {
+    //         session()->flash('error', 'Edit info is invalid!!');
+    //         return redirect()->back();
+    //     }
+
+    //     $purchase = $this->systemService->getAllList();
+    //     $category_info = Category::get()->where('status', 'Active');
+    //     $supplier = Supplier::get()->where('status', 'Active');
+    //     $branch = Branch::get()->where('status', 'Active');
+    //     $title = 'Edit Stock Ajdustment';
+    //     $accounts = ChartOfAccount::get();
+
+    //     $account_id = $editInfo->chart_of_account_id;
+    //     $debit = Transection::where('account_id', '=', $account_id)->sum('debit');
+    //     $credit = Transection::where('account_id', '=', $account_id)->sum('credit');
+
+    //     $remainingBalance = $debit - $credit;
+
+    //     return view('backend.pages.inventories.stockAdjustment.approve', get_defined_vars());
+    // }
     public function approval($id)
     {
         if (!is_numeric($id)) {
@@ -272,30 +357,21 @@ class StockAjdustmentController extends Controller
             return redirect()->back();
         }
 
-        // Fix: nested relation (product, product->category) shoho load kora hocche
-        $editInfo = $this->systemService->details($id)->load('details.product.category');
+        $editInfo = $this->systemService->details($id);
 
         if (!$editInfo) {
             session()->flash('error', 'Edit info is invalid!!');
             return redirect()->back();
         }
 
-        $purchase = $this->systemService->getAllList();
-        $category_info = Category::get()->where('status', 'Active');
-        $supplier = Supplier::get()->where('status', 'Active');
-        $branch = Branch::get()->where('status', 'Active');
-        $title = 'Edit Stock Ajdustment';
-        $accounts = ChartOfAccount::get();
+        $editInfo->load('details.product.category');
 
-        $account_id = $editInfo->chart_of_account_id;
-        $debit = Transection::where('account_id', '=', $account_id)->sum('debit');
-        $credit = Transection::where('account_id', '=', $account_id)->sum('credit');
-
-        $remainingBalance = $debit - $credit;
+        $category_info = Category::where('status', 'Active')->get();
+        $branch        = Branch::where('status', 'Active')->where('parent_id', 0)->get();
+        $title         = 'Approve Stock Adjustment';
 
         return view('backend.pages.inventories.stockAdjustment.approve', get_defined_vars());
     }
-
 
     /**
      * @param Request $request
@@ -432,5 +508,19 @@ class StockAjdustmentController extends Controller
             $html .= "<option value='' selected disabled>--No Account Available--</option>";
         }
         return $html;
+    }
+
+    public function getWarehouseList(Request $request)
+    {
+        $warehouses = Warehouse::where('branch_id', $request->branch_id)
+            ->where('status', 'Active')
+            ->get();
+
+        $output = '';
+        foreach ($warehouses as $warehouse) {
+            $output .= '<option value="' . $warehouse->id . '">' . $warehouse->name . '</option>';
+        }
+
+        return $output;
     }
 }

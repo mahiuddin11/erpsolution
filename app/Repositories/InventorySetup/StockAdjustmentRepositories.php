@@ -90,8 +90,10 @@ class StockAdjustmentRepositories
                 $nestedData['id'] = $key + 1;
                 $nestedData['invoice_no'] = $purchase->invoice_no;
                 $nestedData['date'] = $purchase->date;
-                $nestedData['branch'] = $purchase->branch->name ?? 'N/A';
+                $nestedData['branch'] = $purchase->branch->name ?? '—';
+                $nestedData['warehouse'] = $purchase->warehouse->name ?? '—';
                 $nestedData['adjustment_type'] = $purchase->adjustment_type;
+                $nestedData['qty'] = $purchase->approval_qty ?? $purchase->quantity;
                 $nestedData['subtotal'] = $purchase->subtotal;
                 $nestedData['grand_total'] = $purchase->grand_total;
                 $nestedData['status'] = "<b>$purchase->status</b>";
@@ -142,12 +144,14 @@ class StockAdjustmentRepositories
 
     public function store($request)
     {
+
         DB::beginTransaction();
         try {
             $StockAjdustment = new $this->StockAjdustment();
             $StockAjdustment->invoice_no = $request->invoice_no;
             $StockAjdustment->date = $request->date;
             $StockAjdustment->branch_id = $request->branch_id;
+            $StockAjdustment->warehouse_id = $request->warehouse_id;
             $StockAjdustment->quantity = array_sum($request->qty);
             $StockAjdustment->subtotal = array_sum($request->unitprice);
             $StockAjdustment->grand_total = array_sum($request->total);
@@ -171,6 +175,7 @@ class StockAdjustmentRepositories
                 $purchaseDetail->category_id = $category_id[$i];
                 $purchaseDetail->quantity = $qty[$i];
                 $purchaseDetail->branch_id = $request->branch_id;
+                $purchaseDetail->warehouse_id = $request->warehouse_id;
                 $purchaseDetail->unit_price = $subtotal[$i];
                 $purchaseDetail->purchase_type = $purchaseType[$i] ?? '';
                 $purchaseDetail->total_price = $grand_total[$i];
@@ -204,6 +209,7 @@ class StockAdjustmentRepositories
 
     public function update($request, $id)
     {
+
         DB::beginTransaction();
         try {
             $purchase = $this->StockAjdustment::findOrFail($id);
@@ -211,7 +217,7 @@ class StockAdjustmentRepositories
             // $purchase->invoice_no = $request->invoice_no;
             $purchase->date = $request->date;
             $purchase->branch_id = $request->branch_id;
-
+            $purchase->warehouse_id = $request->warehouse_id;
             $purchase->quantity = array_sum($request->qty);
             $purchase->subtotal = array_sum($request->unitprice);
             $purchase->grand_total = array_sum($request->total);
@@ -238,6 +244,7 @@ class StockAdjustmentRepositories
                 $purchaseDetail->quantity = $qty[$i];
                 $purchaseDetail->category_id = $category_id[$i];
                 $purchaseDetail->branch_id = $request->branch_id;
+                $purchaseDetail->warehouse_id = $request->warehouse_id;
                 $purchaseDetail->unit_price = $subtotal[$i];
                 $purchaseDetail->total_price = $grand_total[$i];
                 $purchaseDetail->purchases_id = $purchases_id;
@@ -656,6 +663,9 @@ class StockAdjustmentRepositories
 
     public function storeapproval($request, $id)
     {
+
+
+
         if ($request->adjustment_type == 'Lost') {
             $adjustment_type = 'Loss';
         } else {
@@ -672,6 +682,7 @@ class StockAdjustmentRepositories
             // ==================== Main Record Update ====================
             $StockAjdustment->date            = $request->date;
             $StockAjdustment->branch_id       = $request->branch_id;
+            $StockAjdustment->warehouse_id       = $request->warehouse_id;
             $StockAjdustment->quantity        = array_sum($request->qty);
             $StockAjdustment->approval_qty    = array_sum($request->qty);
             $StockAjdustment->subtotal        = array_sum($request->unitprice);
@@ -706,6 +717,7 @@ class StockAdjustmentRepositories
                 $purchaseDetail->category_id   = $category_id[$i];
                 $purchaseDetail->purchase_type = $itemPurchaseType;
                 $purchaseDetail->branch_id     = $request->branch_id;
+                $purchaseDetail->warehouse_id  = $request->warehouse_id;
                 $purchaseDetail->unit_price    = $subtotal[$i];
                 $purchaseDetail->total_price   = $grand_total[$i];
                 $purchaseDetail->purchases_id  = $StockAjdustment_id;
@@ -720,6 +732,7 @@ class StockAdjustmentRepositories
                 $stock->general_id    = $StockAjdustment_id;
                 $stock->date          = $StockAjdustment->date;
                 $stock->branch_id     = $request->branch_id;
+                $stock->warehouse_id  = $request->warehouse_id;
                 $stock->invoice_no    = $StockAjdustment->invoice_no;
                 $stock->product_id    = $proName[$i];
                 $stock->unit_price    = $subtotal[$i];
@@ -733,6 +746,7 @@ class StockAdjustmentRepositories
                 $summary = StockSummary::firstOrNew([
                     'product_id'   => $proName[$i],
                     'branch_id'    => $request->branch_id,
+                    'warehouse_id'    => $request->warehouse_id,
                     'type'         => 'Branch',
                     'purchasetype' => $itemPurchaseType,
                 ]);
@@ -914,6 +928,8 @@ class StockAdjustmentRepositories
                     $summary = StockSummary::where([
                         'product_id' => $item->product_id,
                         'branch_id'  => $item->branch_id,
+                        'warehouse_id'  => $item->warehouse_id,
+                        'purchasetype' => $item->purchase_type,
                         'type'       => 'Branch',
                     ])->first();
 

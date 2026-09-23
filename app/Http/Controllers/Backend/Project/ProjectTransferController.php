@@ -159,6 +159,8 @@ class ProjectTransferController extends Controller
     //     return view('backend.pages.inventories.project_transfer.edit', get_defined_vars());
     // }
 
+
+
     public function edit($id)
     {
         if (!is_numeric($id)) {
@@ -172,38 +174,49 @@ class ProjectTransferController extends Controller
             return redirect()->back();
         }
 
-        $details = ProjectTransferDetails::where('project_transfer_id', $id)->get();
+        $details = ProjectTransferDetails::with('product')
+            ->where('project_transfer_id', $id)
+            ->get();
 
+        /* ---------- per-line max = live PR remaining + this line's own qty ---------- */
         $lineMax = [];
         if ($editInfo->purchase_requisition_id) {
+            $prDetails = PrDetails::where('pr_id', $editInfo->purchase_requisition_id)->get();
+            $byKey     = $prDetails->keyBy(fn($p) => $p->product_id . '|' . $p->purchasetype);
+            $byProduct = $prDetails->keyBy('product_id');
+
             foreach ($details as $d) {
-                if ($d->requested_qty !== null) {
-                    $prDetail = PrDetails::where('pr_id', $editInfo->purchase_requisition_id)
-                        ->where('product_id', $d->product_id)
-                        ->first();
-
-                    $liveRemaining = $prDetail
-                        ? ($prDetail->remaining_qty !== null ? (float) $prDetail->remaining_qty : (float) $prDetail->qty)
-                        : 0;
-
-                    $lineMax[$d->id] = $liveRemaining + (float) $d->qty;
+                if ($d->requested_qty === null) {
+                    continue; // manually added line, no requisition cap
                 }
+
+                $prDetail = $byKey->get($d->product_id . '|' . $d->purchasetype)
+                    ?? $byProduct->get($d->product_id);
+
+                $liveRemaining = $prDetail
+                    ? ($prDetail->remaining_qty !== null ? (float) $prDetail->remaining_qty : (float) $prDetail->qty)
+                    : 0;
+
+                $lineMax[$d->id] = $liveRemaining + (float) $d->qty;
             }
         }
 
-        $title = 'Edit Project Transfer';
+        $title         = 'Edit Project Transfer';
         $category_info = Category::where('status', 'Active')->get();
 
-        $purchaserequisitions = PurchaseRequisition::where('status', 'Accepted')
-            ->orWhere('id', $editInfo->purchase_requisition_id)
-            ->get();
+        // the requisition select is disabled on edit, so the current one is enough
+        $purchaserequisitions = PurchaseRequisition::where('id', $editInfo->purchase_requisition_id)->get();
 
-
+        /* ---------- items of the same requisition that are not on this transfer yet ---------- */
         $remainingPrProducts = collect();
-        if ($editInfo->purchase_requisition_id && in_array($editInfo->transfer_type, ['branch_to_project', 'project_to_project'])) {
+        if (
+            $editInfo->purchase_requisition_id
+            && in_array($editInfo->transfer_type, ['branch_to_project', 'project_to_project'])
+        ) {
             $usedProductIds = $details->pluck('product_id')->all();
 
-            $remainingPrProducts = PrDetails::where('pr_id', $editInfo->purchase_requisition_id)
+            $remainingPrProducts = PrDetails::with('product')
+                ->where('pr_id', $editInfo->purchase_requisition_id)
                 ->whereNotIn('product_id', $usedProductIds)
                 ->where(function ($q) {
                     $q->where('remaining_qty', '>', 0)->orWhereNull('remaining_qty');
@@ -221,13 +234,40 @@ class ProjectTransferController extends Controller
                 ->values();
         }
 
-        $suppliers = Supplier::where('status', 'Active')->get();
-        $projects  = Project::where('condition', 'One Going')->get();
-        $branchs   = Branch::get();
+        // keep the projects already on this transfer even if they are no longer "One Going"
+        $projects = Project::where('condition', 'One Going')
+            ->orWhereIn('id', array_filter([$editInfo->project_id, $editInfo->to_project_id]))
+            ->get();
+
+        $branchs = Branch::get();
+
+        /* ---------- branch + warehouse of the branch side of this transfer ---------- */
+        // The blade reads these as arrays: $sourceResolved['branch_id'] / ['warehouse_id'].
+        $empty          = ['branch_id' => null, 'warehouse_id' => null];
+        $sourceResolved = $empty;
+        $destResolved   = $empty;
+
+        $side = [
+            'branch_id'    => $editInfo->branch_id,      // real branch
+            'warehouse_id' => $editInfo->warehouse_id,   // warehouse
+        ];
+
+        if ($editInfo->transfer_type === 'branch_to_project') {
+            $sourceResolved = $side;
+        } elseif ($editInfo->transfer_type === 'project_to_branch') {
+            $destResolved = $side;
+        }
+
+        $sourceWarehouses = $sourceResolved['branch_id']
+            ? $branchs->where('parent_id', $sourceResolved['branch_id'])->values()
+            : collect();
+
+        $destWarehouses = $destResolved['branch_id']
+            ? $branchs->where('parent_id', $destResolved['branch_id'])->values()
+            : collect();
 
         return view('backend.pages.inventories.project_transfer.edit', get_defined_vars());
     }
-
 
     public function searchpr(Request $request)
     {
@@ -267,6 +307,8 @@ class ProjectTransferController extends Controller
         session()->flash('success', 'Data successfully updated!!');
         return redirect()->route('project.transferproject.index');
     }
+
+
     /**
      * @param $slug
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
@@ -324,31 +366,46 @@ class ProjectTransferController extends Controller
 
     public function availableStock(Request $request)
     {
-        $type = $request->source_type === 'project' ? 'Project' : 'Branch';
+        $type = $request->source_type === 'project'
+            ? 'Project'
+            : 'Branch';
 
-        $query = StockSummary::where([
-            'branch_id'  => $request->source_id,
-            'product_id' => $request->product_id,
-            'type'       => $type,
-        ]);
+        if ($type === 'Branch') {
 
-        if ($request->filled('purchase_type')) {
-            $query->where('purchasetype', $request->purchase_type);
+            $query = StockSummary::where([
+                'branch_id'    => $request->branch_id,
+                'warehouse_id' => $request->warehouse_id,
+                'product_id'   => $request->product_id,
+                'type'         => 'Branch',
+            ]);
+        } else {
+
+            $query = StockSummary::where([
+                'branch_id'    => $request->project_id ?? $request->branch_id,
+                'project_id' => $request->project_id,
+                'product_id' => $request->product_id,
+                'type'       => 'Project',
+            ]);
+
+            if ($request->filled('purchase_type')) {
+                $query->where('purchasetype', $request->purchase_type);
+            }
         }
-
 
         $qty = $query->value('quantity');
 
-        return response()->json(['quantity' => (float) ($qty ?? 0)]);
+        return response()->json([
+            'quantity' => (float) ($qty ?? 0),
+        ]);
     }
+
+
 
     public function getWarehouses(Request $request)
     {
         $warehouses = Branch::where('parent_id', $request->branch_id)
             ->get(['id', 'name']);
 
-
-        // dd($warehouses);
         return response()->json($warehouses);
     }
 }

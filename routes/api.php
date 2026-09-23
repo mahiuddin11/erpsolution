@@ -38,6 +38,7 @@ Route::middleware('auth')->prefix('store-dashboard')->group(function () {
     Route::get('recent-transactions', [StoreDashboardApiController::class, 'recentTransactions']);
     Route::get('warehouse-distribution', [StoreDashboardApiController::class, 'warehouseDistribution']);
     Route::get('warehouse-stock-details', [StoreDashboardApiController::class, 'warehouseStockDetails']);
+    Route::get('branch-stock-details', [StoreDashboardApiController::class, 'branchStockDetails']);
     Route::get('warehouse-options', [StoreDashboardApiController::class, 'warehouseOptions']);
     Route::get('branch-distribution', [StoreDashboardApiController::class, 'branchDistribution']);
 });

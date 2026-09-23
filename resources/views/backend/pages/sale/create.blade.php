@@ -155,14 +155,14 @@
                             </div>
 
                             <div class="col-md-2 col-sm-6 col-12 mb-3">
-                                <label for="validationCustom02">Sub-Warehouse * :</label>
-                                <select class="form-control select2" id="sub_warehouse_id" name="sub_warehouse_id">
+                                <label for="validationCustom02">Warehouse * :</label>
+                                <select class="form-control select2" id="warehouse_id" name="warehouse_id">
                                     <option selected disabled value="">--Select Branch First--</option>
                                 </select>
 
                                 <input type="hidden" name="warehouse_source" id="warehouse_source" value="">
 
-                                @error('sub_warehouse_id')
+                                @error('warehouse_id')
                                     <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -841,7 +841,7 @@
                     branch_id: branch_id
                 },
                 success: function(response) {
-                    let $warehouseSelect = $('#sub_warehouse_id');
+                    let $warehouseSelect = $('#warehouse_id');
 
                     $warehouseSelect.select2('destroy');
 
@@ -1183,11 +1183,51 @@
             }
         };
 
+        // function getUnitPrice(v) {
+
+        //     let branch_id = $('#branch_id option:selected').val();
+        //     let warehouseId = $('#warehouse_id option:selected').val();
+        //     let purchasetype = $('.purchasetype option:selected').val();
+        //     let productId = $('#productID option:selected').val();
+        //     $.ajax({
+        //         "url": "{{ route('sale.sale.saleunitPrice') }}",
+        //         "type": "GET",
+        //         cache: false,
+        //         data: {
+        //             "_token": "{{ csrf_token() }}",
+        //             'productId': productId,
+        //         },
+        //         success: function(data) {
+        //             console.log(data);
+        //             $("#unitpice").val(data.sale_price);
+        //             $(".purchaseprice").html("Last PP :" + data.lastPurchasePrice);
+
+        //         }
+        //     });
+
+        //     $.ajax({
+        //         "url": "{{ route('sale.sale.getProductStock') }}",
+        //         "type": "GET",
+        //         cache: false,
+        //         data: {
+        //             "_token": "{{ csrf_token() }}",
+        //             productId: productId,
+        //             type: purchasetype,
+        //             branch_id: branch_id,
+        //             warehouseId: warehouseId,
+
+        //         },
+        //         success: function(data) {
+        //             $("#currentStock").val(data);
+        //         }
+        //     });
+        // }
+
+
         function getUnitPrice(v) {
-            let branch_id = $('#branch_id option:selected').val();
-            let sub_branch_id = $('#sub_warehouse_id option:selected').val();
-            let purchasetype = $('.purchasetype option:selected').val();
+
             let productId = $('#productID option:selected').val();
+
             $.ajax({
                 "url": "{{ route('sale.sale.saleunitPrice') }}",
                 "type": "GET",
@@ -1204,6 +1244,29 @@
                 }
             });
 
+
+            getProductStockData();
+        }
+
+        function getProductStockData() {
+
+            let branch_id = $('#branch_id option:selected').val();
+            let warehouseId = $('#warehouse_id option:selected').val();
+            let purchasetype = $('.purchasetype option:selected').val();
+            let productId = $('#productID option:selected').val();
+
+
+            if (!productId) {
+                return;
+            }
+
+
+            if (!warehouseId) {
+                alertMessage.error('Please Select Warehouse first to check stock.');
+                $('#currentStock').val('');
+                return;
+            }
+
             $.ajax({
                 "url": "{{ route('sale.sale.getProductStock') }}",
                 "type": "GET",
@@ -1213,8 +1276,7 @@
                     productId: productId,
                     type: purchasetype,
                     branch_id: branch_id,
-                    sub_branch_id: sub_branch_id,
-
+                    warehouseId: warehouseId,
                 },
                 success: function(data) {
                     $("#currentStock").val(data);

@@ -12,6 +12,8 @@ class StockSummary extends Model
     protected $fillable = [
         'product_id',
         'branch_id',
+        'warehouse_id',
+        'project_id',
         'type',
         'quantity',
     ];
@@ -28,6 +30,11 @@ class StockSummary extends Model
 
     public function project()
     {
-        return $this->belongsTo(Project::class, 'branch_id', 'id');
+        return $this->belongsTo(Project::class, 'project_id', 'id');
+    }
+
+    public function warehouse()
+    {
+        return $this->belongsTo(Warehouse::class, 'warehouse_id', 'id');
     }
 }

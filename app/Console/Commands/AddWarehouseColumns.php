@@ -16,23 +16,27 @@ class AddWarehouseColumns extends Command
         . 'use warehouse:backfill-columns separately to populate these columns.';
 
     protected array $tables = [
-
-
+        'account_transactions',
+        'dabit_vouchers',
+        'dabit_voucher_details',
+        'credit_vouchers',
+        'credit_voucher_details',
         'stocks',
-        'stock_summaries',
+        'product_opening_stocks',
+        'product_opening_stock_details',
         'stock_ajdustments',
         'stock_ajdustment_detailsts',
-        'project_transfers',
-        'project_transfer_details',
-        'purchases',
-        'purchases_details',
+        'stock_summaries',
         'sales',
         'sales__details',
-        // 'account_transactions',
-        // 'dabit_vouchers',
-        // 'dabit_voucher_details',
-        // 'projects',
-
+        'sale_returns',
+        'sale_return_details',
+        'purchases',
+        'purchases_details',
+        'project_transfers',
+        'project_transfer_details',
+        'journal_vouchers',
+        'journal_voucher_details',
     ];
 
     public function handle()
@@ -149,10 +153,7 @@ class AddWarehouseColumns extends Command
         return (bool) $row;
     }
 
-    /**
-     * DDL ONLY — adds missing columns as NULL. No UPDATE statements anywhere
-     * in this class; existing row data is never touched.
-     */
+
     private function ensureColumns(string $tableName, array $info): void
     {
         if (!$info['has_warehouse_id']) {

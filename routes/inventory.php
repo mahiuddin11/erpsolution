@@ -268,6 +268,8 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
 
         Route::post('/inventory-purchase-update/{id}', [PurchaseController::class, 'update'])->name('inventorySetup.purchase.update');
         Route::get('/inventory-purchase-delete/{id}', [PurchaseController::class, 'destroy'])->name('inventorySetup.purchase.destroy');
+
+
         Route::get('/inventory-purchase-status/{id}/{status}', [PurchaseController::class, 'statusUpdate'])->name('inventorySetup.purchase.status');
         Route::get('/getProductList', [PurchaseController::class, 'getProductList'])->name('inventorySetup.purchase.getProductList');
         Route::get('/unitPrice', [PurchaseController::class, 'unitPrice'])->name('inventorySetup.purchase.unitPice');
@@ -297,6 +299,8 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/getProductListforadjust', [StockAjdustmentController::class, 'getProductListforadjust'])->name('inventorySetup.stockAdjustment.getProductListforadjust');
         Route::get('/unitPriceforadjust', [StockAjdustmentController::class, 'unitPriceforadjust'])->name('inventorySetup.stockAdjustment.unitPriceforadjust');
         Route::get('/accountsforadjust', [StockAjdustmentController::class, 'accountsforadjust'])->name('inventorySetup.stockAdjustment.accountsforadjust');
+
+        Route::get('/get-warehouse-list', [StockAjdustmentController::class, 'getWarehouseList'])->name('inventorySetup.stockAdjustment.getWarehouseList');
         //stock adjustment crud operation end
 
 
