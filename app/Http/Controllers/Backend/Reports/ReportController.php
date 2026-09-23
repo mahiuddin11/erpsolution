@@ -211,125 +211,247 @@ class ReportController extends Controller
     //     return view('backend.pages.reports.purchase', get_defined_vars());
     // }
 
-    public function purchase(Request $request)
-    {
-        $branch_id = '';
-        $product_id = '';
-        $ledger_id = '';
-        $supplier_id = '';
-        $project_id = '';
-        $type = '';
-        $purchasetype = '';
+    // public function purchase(Request $request)
+    // {
+    //     $branch_id = '';
+    //     $product_id = '';
+    //     $ledger_id = '';
+    //     $supplier_id = '';
+    //     $project_id = '';
+    //     $type = '';
+    //     $purchasetype = '';
 
-        $purchaseDetails = collect();
+    //     $purchaseDetails = collect();
 
-        if ($request->method() == 'POST') {
+    //     if ($request->method() == 'POST') {
 
+    //         $datas = explode('-', $request->dateRange);
+    //         $from_date = date('Y-m-d', strtotime($datas[0]));
+    //         $to_date = date('Y-m-d', strtotime($datas[1]));
+
+    //         $branch_id = $request->branch_id;
+    //         $product_id = $request->product_id;
+    //         $ledger_id = $request->ledger_id;
+    //         $supplier_id = $request->supplier_id;
+    //         $project_id = $request->project_id;
+    //         $type = $request->type;
+    //         $purchasetype = $request->purchasetype;
+
+
+    //         $purchaseDetails = PurchasesDetails::select([
+    //             'id',
+    //             'purchases_id',
+    //             'product_id',
+    //             'supplier_id',
+    //             'ledger_id',
+    //             'branch_id',
+    //             'project_id',
+    //             'date',
+    //             'unit_price',
+    //             'total_price',
+    //             'quantity',
+    //             'purchasetype',
+    //         ])
+    //             ->with([
+    //                 'product' => function ($q) {
+    //                     $q->select('id', 'name', 'status');
+    //                 },
+    //                 'supplier' => function ($q) {
+    //                     $q->select('id', 'name', 'status');
+    //                 },
+    //                 'ledger' => function ($q) {
+
+    //                     $q->select('id', 'account_name', 'accountable_type')
+    //                         ->whereIn('accountable_type', [
+    //                             'App\\Models\\Supplier',
+    //                             'App\\Models\\Customer'
+    //                         ]);
+    //                 },
+    //                 'purchase' => function ($q) {
+    //                     $q->select('id', 'invoice_no', 'type', 'branch_id', 'project_id');
+    //                 },
+    //                 'purchase.branch' => function ($q) {
+    //                     $q->select('id', 'branchCode', 'name');
+    //                 },
+    //                 'purchase.project' => function ($q) {
+    //                     $q->select('id', 'name', 'status');
+    //                 },
+    //             ])
+    //             ->whereBetween('date', [$from_date, $to_date]);
+
+
+    //         if (!empty($type) && $type != 'all') {
+    //             $purchaseDetails = $purchaseDetails->whereHas('purchase', function ($q) use ($type) {
+    //                 $q->where('type', $type);
+    //             });
+
+    //             if ($type == 'Branch') {
+    //                 if ($branch_id != 'all') {
+    //                     $purchaseDetails = $purchaseDetails->where('branch_id', $branch_id);
+    //                 }
+    //             } elseif ($type == 'Project') {
+    //                 if ($project_id != 'all') {
+    //                     $purchaseDetails = $purchaseDetails->where('project_id', $project_id);
+    //                 }
+    //             }
+    //         }
+
+    //         if ($ledger_id != 'all') {
+    //             $purchaseDetails = $purchaseDetails->where('ledger_id', $ledger_id);
+    //         }
+
+    //         if ($supplier_id != 'all') {
+    //             $purchaseDetails = $purchaseDetails->where('supplier_id', $supplier_id);
+    //         }
+
+    //         if ($product_id != 'all') {
+    //             $purchaseDetails = $purchaseDetails->where('product_id', $product_id);
+    //         }
+
+    //         if (!empty($purchasetype) && $purchasetype != 'all') {
+    //             $purchaseDetails = $purchaseDetails->where('purchasetype', $purchasetype);
+    //         }
+
+    //         $purchaseDetails = $purchaseDetails->orderBy('date')->get();
+    //     }
+
+    //     $title = 'Purchase Report';
+    //     $companyInfo = Company::latest('id')->first();
+    //     $ledgers = ChartOfAccount::select('id', 'account_name', 'accountCode')->whereIn('accountable_type', [
+    //         'App\\Models\\Supplier',
+    //         'App\\Models\\Customer'
+    //     ])->get();
+
+
+    //     $projects = Project::select('id', 'name', 'status')->get();
+    //     $branch = Branch::where('status', 'Active')->where('parent_id', "!=", 0)->select('id', 'branchCode', 'name')->get();
+    //     $supplier = Supplier::where('status', 'Active')->select('id', 'name', 'status')->get();
+    //     $product = Product::where('status', 'Active')->select('id', 'productCode', 'name', 'status')->get();
+
+    //     return view('backend.pages.reports.purchase', get_defined_vars());
+    // }
+
+public function purchase(Request $request)
+{
+    $title = 'Purchase Summary';
+    $companyInfo = Company::latest('id')->first();
+
+    $branch_id = $request->branch_id ?? 'all';
+    $product_id = $request->product_id ?? 'all';
+    $ledger_id = $request->ledger_id ?? 'all';
+    $supplier_id = $request->supplier_id ?? 'all';
+    $project_id = $request->project_id ?? 'all';
+    $type = $request->type ?? 'all';
+    $purchasetype = $request->purchasetype ?? 'all';
+    $perPage = $request->perPage ?? 50;
+    $from_date = null;
+    $to_date = null;
+
+    $purchaseQuery = PurchasesDetails::select([
+            'id',
+            'purchases_id',
+            'product_id',
+            'supplier_id',
+            'ledger_id',
+            'branch_id',
+            'project_id',
+            'date',
+            'unit_price',
+            'total_price',
+            'quantity',
+            'purchasetype',
+        ])
+        ->with([
+            'product:id,name,status',
+            'supplier:id,name,status',
+            'ledger:id,account_name,accountable_type',
+            'purchase' => function ($q) {
+                $q->select('id', 'invoice_no', 'type', 'branch_id', 'project_id', 'warehouse_id', 'ledger_id', 'supplier_id');
+            },
+            'purchase.branch:id,branchCode,name',
+            'purchase.warehouse:id,name',
+            'purchase.project:id,name,status',
+            'purchase.ledger:id,account_name,accountable_type',
+            'purchase.supplier:id,name,status',
+        ])
+        ->orderBy('date', 'desc')
+        ->orderBy('id', 'desc');
+
+    if ($request->method() == 'POST' || $request->has('dateRange')) {
+        if (!empty($request->dateRange)) {
             $datas = explode('-', $request->dateRange);
-            $from_date = date('Y-m-d', strtotime($datas[0]));
-            $to_date = date('Y-m-d', strtotime($datas[1]));
-
-            $branch_id = $request->branch_id;
-            $product_id = $request->product_id;
-            $ledger_id = $request->ledger_id;
-            $supplier_id = $request->supplier_id;
-            $project_id = $request->project_id;
-            $type = $request->type;
-            $purchasetype = $request->purchasetype;
-
-
-            $purchaseDetails = PurchasesDetails::select([
-                'id',
-                'purchases_id',
-                'product_id',
-                'supplier_id',
-                'ledger_id',
-                'branch_id',
-                'project_id',
-                'date',
-                'unit_price',
-                'total_price',
-                'quantity',
-                'purchasetype',
-            ])
-                ->with([
-                    'product' => function ($q) {
-                        $q->select('id', 'name', 'status');
-                    },
-                    'supplier' => function ($q) {
-                        $q->select('id', 'name', 'status');
-                    },
-                    'ledger' => function ($q) {
-
-                        $q->select('id', 'account_name', 'accountable_type')
-                            ->whereIn('accountable_type', [
-                                'App\\Models\\Supplier',
-                                'App\\Models\\Customer'
-                            ]);
-                    },
-                    'purchase' => function ($q) {
-                        $q->select('id', 'invoice_no', 'type', 'branch_id', 'project_id');
-                    },
-                    'purchase.branch' => function ($q) {
-                        $q->select('id', 'branchCode', 'name');
-                    },
-                    'purchase.project' => function ($q) {
-                        $q->select('id', 'name', 'status');
-                    },
-                ])
-                ->whereBetween('date', [$from_date, $to_date]);
-
-
-            if (!empty($type) && $type != 'all') {
-                $purchaseDetails = $purchaseDetails->whereHas('purchase', function ($q) use ($type) {
-                    $q->where('type', $type);
-                });
-
-                if ($type == 'Branch') {
-                    if ($branch_id != 'all') {
-                        $purchaseDetails = $purchaseDetails->where('branch_id', $branch_id);
-                    }
-                } elseif ($type == 'Project') {
-                    if ($project_id != 'all') {
-                        $purchaseDetails = $purchaseDetails->where('project_id', $project_id);
-                    }
-                }
+            if (count($datas) == 2) {
+                $from_date = date('Y-m-d', strtotime(trim($datas[0])));
+                $to_date = date('Y-m-d', strtotime(trim($datas[1])));
+                $purchaseQuery->whereBetween('date', [$from_date, $to_date]);
             }
-
-            if ($ledger_id != 'all') {
-                $purchaseDetails = $purchaseDetails->where('ledger_id', $ledger_id);
-            }
-
-            if ($supplier_id != 'all') {
-                $purchaseDetails = $purchaseDetails->where('supplier_id', $supplier_id);
-            }
-
-            if ($product_id != 'all') {
-                $purchaseDetails = $purchaseDetails->where('product_id', $product_id);
-            }
-
-            if (!empty($purchasetype) && $purchasetype != 'all') {
-                $purchaseDetails = $purchaseDetails->where('purchasetype', $purchasetype);
-            }
-
-            $purchaseDetails = $purchaseDetails->orderBy('date')->get();
         }
 
-        $title = 'Purchase Report';
-        $companyInfo = Company::latest('id')->first();
-        $ledgers = ChartOfAccount::select('id', 'account_name', 'accountCode')->whereIn('accountable_type', [
-            'App\\Models\\Supplier',
-            'App\\Models\\Customer'
-        ])->get();
+        if ($type != 'all' && !empty($type)) {
+            $purchaseQuery->whereHas('purchase', function ($q) use ($type) {
+                $q->where('type', $type);
+            });
 
+            if ($type == 'Branch' && $branch_id != 'all') {
+                $purchaseQuery->where('branch_id', $branch_id);
+            } elseif ($type == 'Project' && $project_id != 'all') {
+                $purchaseQuery->where('project_id', $project_id);
+            }
+        }
 
-        $projects = Project::select('id', 'name', 'status')->get();
-        $branch = Branch::where('status', 'Active')->where('parent_id', "!=", 0)->select('id', 'branchCode', 'name')->get();
-        $supplier = Supplier::where('status', 'Active')->select('id', 'name', 'status')->get();
-        $product = Product::where('status', 'Active')->select('id', 'productCode', 'name', 'status')->get();
+        if ($ledger_id != 'all') {
+            $purchaseQuery->where(function($q) use ($ledger_id) {
+                $q->where('ledger_id', $ledger_id)
+                  ->orWhereHas('purchase', function($subQ) use ($ledger_id) {
+                      $subQ->where('ledger_id', $ledger_id);
+                  });
+            });
+        }
 
-        return view('backend.pages.reports.purchase', get_defined_vars());
+        if ($supplier_id != 'all') {
+            $purchaseQuery->where(function($q) use ($supplier_id) {
+                $q->where('supplier_id', $supplier_id)
+                  ->orWhereHas('purchase', function($subQ) use ($supplier_id) {
+                      $subQ->where('supplier_id', $supplier_id);
+                  });
+            });
+        }
+
+        if ($product_id != 'all') {
+            $purchaseQuery->where('product_id', $product_id);
+        }
+
+        if ($purchasetype != 'all') {
+            $purchaseQuery->where('purchasetype', $purchasetype);
+        }
     }
+
+    if ($perPage === 'all') {
+        $totalCount = $purchaseQuery->count();
+        $perPage = $totalCount > 0 ? $totalCount : 1;
+    }
+
+    $purchaseDetails = $purchaseQuery->paginate((int)$perPage)->appends($request->all());
+
+    $projects = Project::select('id', 'name', 'status')->get();
+    $branch = Branch::where('status', 'Active')->where('parent_id', "!=", 0)->select('id', 'branchCode', 'name')->get();
+    $supplier = Supplier::where('status', 'Active')->select('id', 'name', 'status')->get();
+
+    return view('backend.pages.reports.purchase', get_defined_vars());
+}
+
+public function getReportFilterData()
+{
+    $products = Product::where('status', 'Active')->select('id', 'productCode', 'name')->get();
+    $ledgers = ChartOfAccount::select('id', 'account_name', 'accountCode')
+        ->whereIn('accountable_type', ['App\\Models\\Supplier', 'App\\Models\\Customer'])
+        ->get();
+
+    return response()->json([
+        'products' => $products,
+        'ledgers' => $ledgers
+    ]);
+}
 
     public function empSalary(Request $request)
     {

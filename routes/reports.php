@@ -17,9 +17,9 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::any('/report.production.production', [ReportController::class, 'production'])->name('report.production.production');
         Route::any('/report-sale-sale', [ReportController::class, 'sale'])->name('report.sale.sale');
         Route::any('/report-transfer-transfer', [ReportController::class, 'transfer'])->name('report.transfer.transfer');
-
         Route::any('/report-project-project', [ReportController::class, 'project'])->name('report.project.project');
         Route::any('/report-project-projectex', [ReportController::class, 'projectexpence'])->name('report.projectexpence.projectex');
+        Route::get('/reports/purchase-filter-data', [ReportController::class, 'getReportFilterData'])->name('report.purchase.filter.data');
 
         Route::any('/report-employee-salary', 'ReportController@empSalary')->name('report.employee.salary');
         Route::any('/report-expense-expense', 'ReportController@expense')->name('report.expense.expense');
