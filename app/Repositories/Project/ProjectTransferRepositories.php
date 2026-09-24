@@ -2037,4 +2037,6 @@ private function lastPurchasePrice($productId, $branchId = null , $ptype)
 
         return $warehouse->id ?? null;
     }
+
+ 
 }

@@ -1731,30 +1731,214 @@ class PurchaseRepositories
 
 
 
-    public function pvupdate($request, $id)
+    // public function pvupdate($request, $id)
+    // {
+    //     // dd($request->all());
+    //     DB::beginTransaction();
+    //     try {
+    //         $purchase =  $this->purchases::find($id);
+    //         $purchase->date = $request->date;
+    //         $purchase->purchase_order_id = $request->purchase_order_id;
+    //         $purchase->project_id = $request->project_id;
+    //         $purchase->supplier_id = $request->supplier_id;
+    //         $purchase->quantity = array_sum($request->qty);
+    //         $purchase->purchase_type = 'Manual';
+    //         $purchase->subtotal = array_sum($request->unitprice);
+    //         $purchase->grand_total = array_sum($request->total);
+    //         $purchase->status = 'Close';
+    //         $purchase->payment_type = $request->payment_type;
+    //         $purchase->discount = $request->discount;
+    //         $purchase->paid_amount = $request->paid_amount + $request->advance_payment; // payment and advance pay addition
+    //         $purchase->due_amount = $request->cart_due;
+    //         $purchase->updated_by = Auth::user()->id;
+    //         $purchase->narration = $request->narration;
+
+    //         if ($request->has('chart_of_account_id')) {
+    //             $purchase->chart_of_account_id = $request->chart_of_account_id;
+    //         }
+    //         if ($request->has('account_number')) {
+    //             $purchase->account_number = $request->account_number;
+    //         }
+    //         if ($request->has('check_number')) {
+    //             $purchase->check_number = $request->check_number;
+    //         }
+    //         if ($request->has('bank')) {
+    //             $purchase->bank = $request->bank;
+    //         }
+    //         if ($request->has('bank_branch')) {
+    //             $purchase->bank_branch = $request->bank_branch;
+    //         }
+    //         if ($request->has('input_net_total')) {
+    //             $purchase->net_total = $request->input_net_total;
+    //         }
+    //         $purchase->save();
+    //         $purchases_id = $purchase->id;
+
+    //         $category_id = $request->category_nm;
+    //         $proName = $request->product_nm;
+    //         $subtotal = $request->unitprice;
+    //         $grand_total = $request->total;
+    //         $qty = $request->qty;
+
+    //         PurchasesDetails::where('purchases_id', $id)->forceDelete();
+
+    //         for ($i = 0; $i < count($category_id); $i++) {
+    //             $purchaseDetail = new PurchasesDetails();
+    //             $purchaseDetail->product_id = $proName[$i];
+    //             $purchaseDetail->category_id = $category_id[$i];
+    //             $purchaseDetail->quantity = $qty[$i];
+    //             $purchaseDetail->purchasetype = $request->purchasetype[$i];
+    //             $purchaseDetail->project_id = $request->project_id;
+    //             $purchaseDetail->unit_price = $subtotal[$i];
+    //             $purchaseDetail->total_price = $grand_total[$i];
+    //             $purchaseDetail->purchases_id = $purchases_id;
+    //             $purchaseDetail->date = $request->date;
+    //             $purchaseDetail->updated_by = Auth::user()->id;
+    //             $purchaseDetail->save();
+    //         }
+
+    //         supplierLedger::where('purchase_id', $purchases_id)->delete();
+    //         AccountTransaction::where('type', 1)->where('table_id', $purchases_id)->delete();
+    //         if ($request->payment_type == 'cash' || $request->payment_type == 'check') {
+    //             $supplierLedger = new SupplierLedger();
+    //             $supplierLedger->date = $request->date;
+    //             $supplierLedger->purchase_id = $purchases_id;
+    //             $supplierLedger->supplier_id = $request->supplier_id;
+    //             $supplierLedger->branch_id =  $request->branch_id ?? 0;
+    //             $supplierLedger->account_id =  $request->chart_of_account_id;
+    //             $supplierLedger->payment_type = $request->payment_type;
+    //             $supplierLedger->debit = array_sum($request->total);
+    //             $supplierLedger->created_by = Auth::user()->id;
+    //             $supplierLedger->save();
+
+    //             $supplierLedger = new SupplierLedger();
+    //             $supplierLedger->date = $request->date;
+    //             $supplierLedger->purchase_id = $purchases_id;
+    //             $supplierLedger->supplier_id = $request->supplier_id;
+    //             $supplierLedger->branch_id =  $request->branch_id ?? 0;
+    //             $supplierLedger->account_id =  $request->chart_of_account_id;
+    //             $supplierLedger->payment_type = $request->payment_type;
+    //             $supplierLedger->credit = $request->paid_amount;
+    //             $supplierLedger->created_by = Auth::user()->id;
+    //             $supplierLedger->save();
+
+    //             // $invoice = AccountTransaction::accountInvoice();
+    //             $invoice = (new AccountTransaction())->accountInvoice();
+    //             $transactionPay['invoice'] = $invoice;
+    //             $transactionPay['table_id'] = $purchases_id;
+    //             $transactionPay['account_id'] = 7; // ->purchase
+    //             $transactionPay['type'] = 1;
+    //             $transactionPay['branch_id'] = $request->branch_id ?? 0;
+    //             $transactionPay['debit'] =  array_sum($request->total);
+    //             $transactionPay['remark'] = $request->narration;
+    //             $transactionPay['created_by'] = Auth::id();
+    //             $transactionPay['supplier_id'] = $request->supplier_id;
+    //             AccountTransaction::create($transactionPay);
+
+    //             $transaction['invoice'] = $invoice;
+    //             $transaction['table_id'] = $purchases_id;
+    //             $transaction['account_id'] = $request->chart_of_account_id;
+    //             $transaction['type'] = 1;
+    //             $transaction['branch_id'] = $request->branch_id ?? 0;
+    //             $transaction['credit'] = $request->paid_amount;
+    //             $transaction['remark'] = $request->narration;
+    //             $transaction['supplier_id'] = $request->supplier_id;
+    //             $transaction['created_by'] = Auth::id();
+    //             AccountTransaction::create($transaction);
+    //         } else {
+
+    //             $supplierLedger = new SupplierLedger();
+    //             $supplierLedger->date = $request->date;
+    //             $supplierLedger->purchase_id = $purchases_id;
+    //             $supplierLedger->supplier_id = $request->supplier_id;
+    //             $supplierLedger->branch_id =  $request->branch_id ?? 0;
+    //             $supplierLedger->account_id =  $request->chart_of_account_id;
+    //             $supplierLedger->payment_type = $request->payment_type;
+    //             $supplierLedger->debit = array_sum($request->total);
+    //             $supplierLedger->updated_by = Auth::user()->id;
+    //             $supplierLedger->save();
+
+    //             // $invoice = AccountTransaction::accountInvoice();
+    //             $invoice = (new AccountTransaction())->accountInvoice();
+
+    //             $transactionPay['invoice'] = $invoice;
+    //             $transactionPay['table_id'] = $purchases_id;
+    //             $transactionPay['account_id'] = 7; // ->purchase
+    //             $transactionPay['type'] = 1;
+    //             $transactionPay['branch_id'] = $request->branch_id ?? 0;
+    //             $transactionPay['debit'] =  array_sum($request->total);
+    //             $transactionPay['remark'] = $request->narration;
+    //             $transactionPay['created_by'] = Auth::id();
+    //             $transactionPay['supplier_id'] = $request->supplier_id;
+    //             $transactionPay['created_at'] = $request->date;
+    //             AccountTransaction::create($transactionPay);
+
+    //             $transaction['invoice'] = $invoice;
+    //             $transaction['table_id'] = $purchases_id;
+    //             $transaction['account_id'] = 14; // account payable
+    //             $transaction['type'] = 1;
+    //             $transaction['branch_id'] = $request->branch_id ?? 0;
+    //             $transaction['credit'] = array_sum($request->total);
+    //             $transaction['remark'] = $request->narration;
+    //             $transaction['created_by'] = Auth::id();
+    //             $transaction['supplier_id'] = $request->supplier_id;
+    //             $transaction['created_at'] = $request->date;
+    //             AccountTransaction::create($transaction);
+    //         }
+
+
+    //         if ($request->payment_type == 'cash') {
+    //             $transection['date'] = $request->date;
+    //             $transection['account_id'] = $request->chart_of_account_id;
+    //             $transection['payment_id'] = $purchases_id;
+    //             $transection['branch_id'] = $request->branch_id;
+    //             $transection['type'] =  11;
+    //             $transection['note'] = $request->note;
+    //             $transection['amount'] =  array_sum($request->total) - $request->discount;
+    //             $transection['credit'] = array_sum($request->total) - $request->discount;
+    //             Transection::where('payment_id', $purchases_id)->where('type', 11)->update($transection);
+    //         }
+
+    //         DB::commit();
+    //     } catch (\Exception $e) {
+    //         DB::rollback();
+    //         redirect('inventory-purchase-create')->with('error', 'Something Wrong Please try again');
+    //     }
+    //     return $purchase;
+    // }
+
+
+      public function pvupdate($request, $id)
     {
         // dd($request->all());
         DB::beginTransaction();
         try {
             $purchase =  $this->purchases::find($id);
+ 
+            $oldPurchaseData = $purchase->toArray(); // activity log-এর জন্য পুরোনো ডাটা
+ 
             $purchase->date = $request->date;
             $purchase->purchase_order_id = $request->purchase_order_id;
             $purchase->project_id = $request->project_id;
-            $purchase->supplier_id = $request->supplier_id;
+            $purchase->supplier_id = $request->supplier_id ?? 0; // store-এর মতো
             $purchase->quantity = array_sum($request->qty);
             $purchase->purchase_type = 'Manual';
             $purchase->subtotal = array_sum($request->unitprice);
             $purchase->grand_total = array_sum($request->total);
-            $purchase->status = 'Close';
+            $purchase->status = 'Close'; // 
             $purchase->payment_type = $request->payment_type;
             $purchase->discount = $request->discount;
-            $purchase->paid_amount = $request->paid_amount + $request->advance_payment; // payment and advance pay addition
+            $purchase->paid_amount = ($request->paid_amount ?? 0) + ($request->advance_payment ?? 0); // payment and advance pay addition
             $purchase->due_amount = $request->cart_due;
             $purchase->updated_by = Auth::user()->id;
             $purchase->narration = $request->narration;
-
+ 
             if ($request->has('chart_of_account_id')) {
                 $purchase->chart_of_account_id = $request->chart_of_account_id;
+            }
+            // Edit page-এ cash হলে select-এর name="accounts" থাকে (form field name বদলানো হয়নি), তাই এখানে সেটিও ধরা হলো
+            elseif ($request->filled('accounts')) {
+                $purchase->chart_of_account_id = $request->accounts;
             }
             if ($request->has('account_number')) {
                 $purchase->account_number = $request->account_number;
@@ -1773,32 +1957,185 @@ class PurchaseRepositories
             }
             $purchase->save();
             $purchases_id = $purchase->id;
-
+ 
+           
+            activity_log(
+                'update',
+                'menual_purchase',
+                $purchase->toArray(),
+                $oldPurchaseData,
+                "Menual Purchase updated (Invoice: {$purchase->invoice_no}) — Total: {$purchase->grand_total}, Payment: {$request->payment_type}"
+            );
+           
+ 
             $category_id = $request->category_nm;
             $proName = $request->product_nm;
             $subtotal = $request->unitprice;
             $grand_total = $request->total;
             $qty = $request->qty;
-
+ 
+        
+            $supplier_nm = $request->supplier_nm ?? [];
+            $ledger_nm   = $request->ledger_nm   ?? [];
+ 
+            // delete-এর আগে পুরোনো detail রেখে দেওয়া হলো — supplier_id, ledger_id, created_by, created_at ফিরিয়ে আনার জন্য
+            $oldDetails = PurchasesDetails::where('purchases_id', $id)->get()->keyBy('product_id');
+ 
+            $partyTotals = [];
+            
+ 
             PurchasesDetails::where('purchases_id', $id)->forceDelete();
-
+ 
             for ($i = 0; $i < count($category_id); $i++) {
+ 
+               
+                $old        = $oldDetails->get($proName[$i]);
+                $supplierId = !empty($supplier_nm[$i]) ? $supplier_nm[$i] : ($old->supplier_id ?? 0);
+                $ledgerId   = !empty($ledger_nm[$i])   ? $ledger_nm[$i]   : ($old->ledger_id   ?? 0);
+            
+ 
                 $purchaseDetail = new PurchasesDetails();
                 $purchaseDetail->product_id = $proName[$i];
                 $purchaseDetail->category_id = $category_id[$i];
                 $purchaseDetail->quantity = $qty[$i];
-                $purchaseDetail->purchasetype = $request->purchasetype[$i];
+          
+                if (isset($request->purchasetype[$i])) { // store-এর মতো isset চেক
+                    $purchaseDetail->purchasetype = $request->purchasetype[$i];
+                }
+                
                 $purchaseDetail->project_id = $request->project_id;
                 $purchaseDetail->unit_price = $subtotal[$i];
                 $purchaseDetail->total_price = $grand_total[$i];
                 $purchaseDetail->purchases_id = $purchases_id;
                 $purchaseDetail->date = $request->date;
                 $purchaseDetail->updated_by = Auth::user()->id;
+ 
+             
+                $purchaseDetail->supplier_id = $supplierId;
+                $purchaseDetail->ledger_id   = $ledgerId;
+                $purchaseDetail->created_by  = $old->created_by ?? Auth::id();
+                if ($old && $old->created_at) {
+                    $purchaseDetail->created_at = $old->created_at;
+                }
+                
+ 
                 $purchaseDetail->save();
+ 
+               
+                $amount = $grand_total[$i];
+ 
+                if (!empty($supplierId)) {
+ 
+                    $supplier  = Supplier::find($supplierId);
+                    $accountId = $supplier->account_id ?? ($supplier->account->id ?? 0);
+ 
+                    if ($accountId) {
+                        $key = 'supplier_' . $supplierId;
+ 
+                        if (isset($partyTotals[$key])) {
+                            $partyTotals[$key]['amount'] += $amount;
+                        } else {
+                            $partyTotals[$key] = [
+                                'account_id'  => $accountId,
+                                'supplier_id' => $supplierId,
+                                'ledger_id'   => null,
+                                'amount'      => $amount,
+                            ];
+                        }
+                    }
+                } elseif (!empty($ledgerId)) {
+ 
+                    $key = 'ledger_' . $ledgerId;
+ 
+                    if (isset($partyTotals[$key])) {
+                        $partyTotals[$key]['amount'] += $amount;
+                    } else {
+                        $partyTotals[$key] = [
+                            'account_id'  => $ledgerId,
+                            'supplier_id' => null,
+                            'ledger_id'   => $ledgerId,
+                            'amount'      => $amount,
+                        ];
+                    }
+                }
+                
             }
-
+ 
             supplierLedger::where('purchase_id', $purchases_id)->delete();
+           
             AccountTransaction::where('type', 1)->where('table_id', $purchases_id)->delete();
+ 
+           
+            foreach ($partyTotals as $key => $party) {
+ 
+                if (empty($party['amount']) || $party['amount'] <= 0) continue;
+ 
+                $ledger = ChartOfAccount::where('id', $party['account_id'])->first();
+                if (!$ledger) continue;
+ 
+                $supId = null;
+                $cusId = null;
+                $partyType = null;
+ 
+                // Party Type Detection
+                if (!empty($party['supplier_id'])) {
+                    $supId = $party['supplier_id'];
+                    $partyType = 'supplier';
+                } elseif ($ledger->accountable_type == 'App\Models\Supplier') {
+                    $supId = $ledger->accountable_id;
+                    $partyType = 'supplier';
+                } elseif ($ledger->accountable_type == 'App\Models\Customer') {
+                    $cusId = $ledger->accountable_id;
+                    $partyType = 'customer';
+                }
+ 
+                $invoice = $purchase->invoice_no;
+ 
+                // ---- DEBIT: Purchase A/C ----
+                AccountTransaction::updateOrCreate(
+                    [
+                        'invoice'         => $invoice,
+                        'table_id'        => $purchases_id,
+                        'account_id'      => getAccountByUniqueID(22)->id, // Purchase Account
+                        'project_id'      => $request->project_id,
+                        'supplier_id'     => $supId ?? '',
+                        'customer_id'     => $cusId ?? '',
+                    ],
+                    [
+                        'type'        => 1,
+                        'branch_id'   => $request->branch_id ?? 0,
+                        'debit'       => $party['amount'],
+                        'remark'      => $request->narration,
+                        'created_at'  => $request->date,
+                        'created_by'  => Auth::id(),
+                        'party_type'  => $partyType,
+                    ]
+                );
+ 
+                // ---- CREDIT: Party A/C (Supplier or Customer) ----
+                AccountTransaction::updateOrCreate(
+                    [
+                        'invoice'         => $invoice,
+                        'table_id'        => $purchases_id,
+                        'account_id'      => $party['account_id'],
+                        'project_id'      => $request->project_id,
+                        'supplier_id'     => $supId ?? '',
+                        'customer_id'     => $cusId ?? '',
+                    ],
+                    [
+                        'type'        => 1,
+                        'branch_id'   => $request->branch_id ?? 0,
+                        'credit'      => $party['amount'],
+                        'remark'      => $request->narration,
+                        'created_at'  => $request->date,
+                        'created_by'  => Auth::id(),
+                        'party_type'  => $partyType,
+                    ]
+                );
+            }
+            // <<< END FIX
+ 
+            /* ===== OLD (replaced by the FIX block above) =====
             if ($request->payment_type == 'cash' || $request->payment_type == 'check') {
                 $supplierLedger = new SupplierLedger();
                 $supplierLedger->date = $request->date;
@@ -1810,7 +2147,7 @@ class PurchaseRepositories
                 $supplierLedger->debit = array_sum($request->total);
                 $supplierLedger->created_by = Auth::user()->id;
                 $supplierLedger->save();
-
+ 
                 $supplierLedger = new SupplierLedger();
                 $supplierLedger->date = $request->date;
                 $supplierLedger->purchase_id = $purchases_id;
@@ -1821,7 +2158,7 @@ class PurchaseRepositories
                 $supplierLedger->credit = $request->paid_amount;
                 $supplierLedger->created_by = Auth::user()->id;
                 $supplierLedger->save();
-
+ 
                 // $invoice = AccountTransaction::accountInvoice();
                 $invoice = (new AccountTransaction())->accountInvoice();
                 $transactionPay['invoice'] = $invoice;
@@ -1834,7 +2171,7 @@ class PurchaseRepositories
                 $transactionPay['created_by'] = Auth::id();
                 $transactionPay['supplier_id'] = $request->supplier_id;
                 AccountTransaction::create($transactionPay);
-
+ 
                 $transaction['invoice'] = $invoice;
                 $transaction['table_id'] = $purchases_id;
                 $transaction['account_id'] = $request->chart_of_account_id;
@@ -1846,7 +2183,7 @@ class PurchaseRepositories
                 $transaction['created_by'] = Auth::id();
                 AccountTransaction::create($transaction);
             } else {
-
+ 
                 $supplierLedger = new SupplierLedger();
                 $supplierLedger->date = $request->date;
                 $supplierLedger->purchase_id = $purchases_id;
@@ -1857,10 +2194,10 @@ class PurchaseRepositories
                 $supplierLedger->debit = array_sum($request->total);
                 $supplierLedger->updated_by = Auth::user()->id;
                 $supplierLedger->save();
-
+ 
                 // $invoice = AccountTransaction::accountInvoice();
                 $invoice = (new AccountTransaction())->accountInvoice();
-
+ 
                 $transactionPay['invoice'] = $invoice;
                 $transactionPay['table_id'] = $purchases_id;
                 $transactionPay['account_id'] = 7; // ->purchase
@@ -1872,7 +2209,7 @@ class PurchaseRepositories
                 $transactionPay['supplier_id'] = $request->supplier_id;
                 $transactionPay['created_at'] = $request->date;
                 AccountTransaction::create($transactionPay);
-
+ 
                 $transaction['invoice'] = $invoice;
                 $transaction['table_id'] = $purchases_id;
                 $transaction['account_id'] = 14; // account payable
@@ -1885,24 +2222,36 @@ class PurchaseRepositories
                 $transaction['created_at'] = $request->date;
                 AccountTransaction::create($transaction);
             }
-
-
+            ===== END OLD ===== */
+ 
+            // >>> FIX
+            // Cash payment Transection — store-এর মতোই। আগে শুধু update() ছিল, তাই due→cash করলে কিছুই তৈরি হতো না,
+            // আর cash→due করলে পুরোনোটি থেকে যেত।
             if ($request->payment_type == 'cash') {
-                $transection['date'] = $request->date;
-                $transection['account_id'] = $request->chart_of_account_id;
-                $transection['payment_id'] = $purchases_id;
-                $transection['branch_id'] = $request->branch_id;
-                $transection['type'] =  11;
-                $transection['note'] = $request->note;
-                $transection['amount'] =  array_sum($request->total) - $request->discount;
-                $transection['credit'] = array_sum($request->total) - $request->discount;
-                Transection::where('payment_id', $purchases_id)->where('type', 11)->update($transection);
+                $cashAmount = array_sum($request->total) - ($request->discount ?? 0);
+ 
+                $transection = Transection::where('payment_id', $purchases_id)->where('type', 11)->first() ?? new Transection();
+                $transection->date       = $request->date;
+                $transection->account_id = $request->chart_of_account_id ?? $request->accounts ?? $purchase->chart_of_account_id;
+                $transection->payment_id = $purchases_id;
+                $transection->branch_id  = $request->supplier_id ?? 0; // TODO-CONFIRM: store-এও branch_id-তে supplier_id বসানো হয়
+                $transection->type       = 11;
+                $transection->note       = $request->note ?? $request->narration;
+                $transection->amount     = $cashAmount;
+                $transection->credit     = $cashAmount;
+                $transection->save();
+            } else {
+                Transection::where('payment_id', $purchases_id)->where('type', 11)->delete();
             }
-
+            
+ 
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
-            redirect('inventory-purchase-create')->with('error', 'Something Wrong Please try again');
+           
+            \Log::error('pvupdate failed: ' . $e->getMessage(), ['line' => $e->getLine(), 'file' => $e->getFile()]);
+            return redirect()->back()->with('error', 'Something Wrong Please try again');
+           
         }
         return $purchase;
     }

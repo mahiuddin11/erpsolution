@@ -162,8 +162,8 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::post('/inventory-purchase-pvstore', [PurchaseController::class, 'pvstore'])->name('inventorySetup.purchase.pvstore');
 
         Route::get('/inventory-purchase-pvedit/{id}', [PurchaseController::class, 'pvedit'])->name('inventorySetup.purchase.pvedit');
-        Route::post('/inventory-purchase-pvupdate/{id}', 'PurchaseController@pvupdate')->name('inventorySetup.purchase.pvupdate');
-        Route::get('/inventory-purchase-pvdelete/{id}', 'PurchaseController@destroy')->name('inventorySetup.purchase.pvdestroy');
+        Route::post('/inventory-purchase-pvupdate/{id}', [PurchaseController::class, 'pvupdate'])->name('inventorySetup.purchase.pvupdate');
+        Route::get('/inventory-purchase-pvdelete/{id}', [PurchaseController::class, 'destroy'])->name('inventorySetup.purchase.pvdestroy');
 
         Route::get('/inventorySetup.purchase.pvinvoice/{id}', [PurchaseController::class, 'pvinvoice'])->name('inventorySetup.purchase.pvinvoice');
         //purchase  crud operation end

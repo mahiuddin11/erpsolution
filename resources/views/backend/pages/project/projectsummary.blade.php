@@ -616,17 +616,13 @@
                                     <div class="txn-list" id="txn-list">
                                         @forelse ($firstPageTransactions as $row)
                                             @php
-                                                $isTransferIn = false;
-                                                if ($row['type'] === 'transfer') {
-                                                    $descLower = strtolower($row['desc'] ?? '');
-                                                    $isTransferIn =
-                                                        str_contains($descLower, 'inward') ||
-                                                        str_contains($descLower, 'received') ||
-                                                        str_contains($descLower, 'branch_to_project') ||
-                                                        str_contains($descLower, 'branch to project');
-                                                }
+                                                // [FIX] Controller theke aasha is_inward flag (Modal-er moto logic)
+                                                $isTransferIn =
+                                                    $row['type'] === 'transfer' && !empty($row['is_inward']);
                                             @endphp
-                                            <div class="txn-row" data-type="{{ $row['type'] }}">
+                                            {{-- [FIX] Transfer row-te sobuj (IN) / lal (OUT) bam border --}}
+                                            <div class="txn-row" data-type="{{ $row['type'] }}"
+                                                @if ($row['type'] === 'transfer') style="border-left:3px solid {{ $isTransferIn ? '#28a745' : '#dc3545' }};" @endif>
                                                 <div class="txn-icon">
                                                     @switch($row['type'])
                                                         @case('requisition')
@@ -681,7 +677,13 @@
                                                         @endif
                                                     </div>
                                                     <div class="txn-meta">{{ $row['date'] }} &middot;
-                                                        {{ $row['invoice'] }}</div>
+                                                        {{ $row['invoice'] }}
+                                                        {{-- [FIX] Transfer Type (BRANCH TO PROJECT / PROJECT TO PROJECT ...) --}}
+                                                        @if ($row['type'] === 'transfer' && !empty($row['transfer_type']))
+                                                            &middot; <span
+                                                                class="text-uppercase font-weight-bold">{{ $row['transfer_type'] }}</span>
+                                                        @endif
+                                                    </div>
                                                 </div>
 
                                                 <div class="text-right">
@@ -1476,12 +1478,13 @@
                         let amountClass = '';
                         let transferBadge = '';
                         let amountPrefix = '';
+                        let transferTypeHtml = '';
 
                         if (row.type === 'transfer') {
-                            const descText = (row.desc || '').toLowerCase();
-                            const isIncoming = descText.includes('inward') || descText.includes('received') || descText
-                                .includes('branch_to_project') || descText.includes('branch to project') || descText
-                                .includes('+');
+                            // [FIX] Controller theke aasha is_inward flag (Blade-er sathe hubohu ek)
+                            const isIncoming = row.is_inward === true;
+
+                            div.style.borderLeft = '3px solid ' + (isIncoming ? '#28a745' : '#dc3545');
 
                             if (isIncoming) {
                                 iconHtml =
@@ -1497,6 +1500,12 @@
                                     ' <span class="badge badge-danger ml-1" style="font-size: 10px;">OUT (Sent)</span>';
                                 amountClass = 'text-danger font-weight-bold';
                                 amountPrefix = '-';
+                            }
+
+                            if (row.transfer_type) {
+                                transferTypeHtml =
+                                    ' &middot; <span class="text-uppercase font-weight-bold">' + row.transfer_type +
+                                    '</span>';
                             }
                         } else if (row.type === 'grn') {
                             iconHtml = '<i class="fa fa-box text-success"></i>';
@@ -1525,7 +1534,7 @@
                         <div class="txn-icon">${iconHtml}</div>
                         <div class="txn-main">
                             <div class="txn-desc">${row.desc}${transferBadge}</div>
-                            <div class="txn-meta">${row.date} &middot; ${row.invoice}</div>
+                            <div class="txn-meta">${row.date} &middot; ${row.invoice}${transferTypeHtml}</div>
                         </div>
                         <div class="text-right">
                             ${amountHtml}

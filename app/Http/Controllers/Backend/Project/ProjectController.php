@@ -507,50 +507,272 @@ class ProjectController extends Controller
     //     return view('backend.pages.project.projectsummary', get_defined_vars());
     // }
 
-    public function show($id)
+    // public function show($id)
+    // {
+    //     $title = 'Project Report';
+    //     $project_id = $id ?? '';
+    //     $projectDetails = null;
+
+    //     $summary = [
+    //         'productAmount'         => 0,
+
+    //         // --- Estimate (input-based) ---
+    //         'budget'                => 0,   // Contract Value
+    //         'estimateCost'          => 0,   // NEW input
+    //         'estimateProfit'        => 0,   // Derived: Budget - Estimate Cost
+
+    //         // --- Actual Cost to date (bill-based) ---
+    //         'ttlexpdir'             => 0,
+    //         'ttlexpind'             => 0,
+    //         'actualCost'            => 0,   // Direct + Indirect Expense + Product Consumption
+
+    //         // --- POC (Percentage of Completion) ---
+    //         'completePercent'       => 0,   // uncapped, Actual Cost / Estimate Cost * 100
+    //         'completePercentBar'    => 0,   // capped at 100
+    //         'incompletePercent'     => 100,
+    //         'recognizedRevenue'     => 0,   // Budget * %Complete
+    //         'recognizedProfit'      => 0,   // EstimateProfit * %Complete (was currentProfit)
+
+    //         // --- Actual / Cash basis ---
+    //         'ttlexpdirinc'          => 0,
+    //         'ttlexpindrinc'         => 0,
+    //         'actualIncome'          => 0,   // Direct + Indirect Income + ProjectMoney
+    //         'actualProfit'          => 0,   // ActualIncome - ActualCost
+
+    //         // --- Legacy aliases ---
+    //         'currentIncome'         => 0,
+    //         'totalExpense'          => 0,
+    //         'totalIncome'           => 0,
+    //         'totalProfit'           => 0,
+    //         'currentProfit'         => 0,
+
+    //         // --- Warnings / Flags ---
+    //         'isOverEstimate'        => false,
+    //         'overEstimateAmount'    => 0,
+    //         'isExpectedLoss'        => false,
+
+    //         // --- Counts ---
+    //         'countRequisition'      => 0,
+    //         'countOrder'            => 0,
+    //         'countVoucher'          => 0,
+    //         'countGrn'              => 0,
+    //         'countTransfer'         => 0,
+    //     ];
+
+    //     // --- Document counts ---
+    //     $summary['countRequisition'] = PurchaseRequisition::where('project_id', $project_id)->count();
+    //     $summary['countOrder']       = PurchaseOrder::where('project_id', $project_id)->count();
+    //     $summary['countVoucher']     = Purchases::where('project_id', $project_id)->count();
+    //     $summary['countGrn']         = Grn::where('project_id', $project_id)->count();
+    //     $summary['countTransfer']    = ProjectTransfer::where('project_id', $project_id)->orWhere('to_project_id', $project_id)->count();
+
+    //     // --- Full records kept for modals ---
+    //     $purchaseRequisitions = PurchaseRequisition::with('details')->where('project_id', $project_id)->get();
+    //     $purchaseOrders       = PurchaseOrder::with('details')->where('project_id', $project_id)->get();
+    //     $purchaseVouchers     = Purchases::with('details')->where('project_id', $project_id)->get();
+
+    //     $projectDetails = Project::query()
+    //         ->leftJoin('users', 'users.id', '=', 'projects.manager_id')
+    //         ->leftJoin('customers', 'customers.id', '=', 'projects.customer_id')
+    //         ->leftJoin('chart_of_accounts', 'chart_of_accounts.id', '=', 'projects.ledger_id')
+    //         ->where('projects.id', $project_id)
+    //         ->first([
+    //             'projects.id',
+    //             'projects.ledger_id',
+    //             'users.name as aname',
+    //             'users.phone as aphone',
+    //             'projects.budget',
+    //             'projects.estimate_cost',
+    //             'projects.start_date',
+    //             'projects.condition',
+    //             'projects.closing',
+    //             'projects.end_date',
+    //             'projects.name as pname',
+    //             'projects.address',
+    //             'projects.projectCode',
+    //             DB::raw('COALESCE(chart_of_accounts.account_name, customers.name) as client_name'),
+    //         ]);
+
+    //     if (!$projectDetails) {
+    //         return Redirect::back()->withErrors(['msg' => 'Project not found!']);
+    //     }
+
+    //     // --- Aggregator: first page of unified transaction feed ---
+    //     $aggregator = new ProjectTransactionAggregator($project_id, $projectDetails->ledger_id);
+    //     $firstPage  = $aggregator->getPaginated(1, 20);
+    //     $firstPageTransactions = $firstPage['data'];
+    //     $firstPageTransactions = $this->applyTransferDirection($firstPageTransactions, $project_id);
+    //     $firstPageHasMore      = $firstPage['has_more'];
+
+    //     // --- Existing per-category data 
+    //     $productgoodreceive = Grn::with('details.product')->where('project_id', $project_id)->get();
+        
+    //     $projectTransfer    = ProjectTransfer::with('details.product')
+    //         ->where('project_id', $project_id)
+    //         ->orWhere('to_project_id', $project_id)
+    //         ->get();
+
+           
+
+    //     $projectMoney       = ProjectMoney::where('project_id', $project_id)->sum('credit')
+    //         - ProjectMoney::where('project_id', $project_id)->sum('debit');
+
+    //     $directIncome = AccountTransaction::with('account')
+    //         ->where('account_id', $projectDetails->ledger_id)
+    //         ->where('project_id', $project_id)
+    //         ->whereNotNull('credit')
+    //         ->get();
+
+    //     $indirectIncome   = AccountTransaction::with('account')->whereIn('account_id', getOldAccount(25)->pluck('id'))->where('project_id', $project_id)->get();
+    //     $directExpenses   = AccountTransaction::with('account')->whereIn('account_id', getOldAccount(20)->pluck('id'))->where('project_id', $project_id)->get();
+    //     $indirectExpenses = AccountTransaction::with('account')->whereIn('account_id', getOldAccount(21)->pluck('id'))->where('project_id', $project_id)->get();
+
+    //     // --- Product consumption: GRN ---
+    //     foreach ($productgoodreceive as $val) {
+    //         foreach ($val->details as $eachuse) {
+    //             $summary['productAmount'] += ($eachuse->unit_price ?? 0) * ($eachuse->qty ?? 0);
+    //         }
+    //     }
+
+    //     // --- Product consumption: Transfer (Correct Inward / Outward Logic) ---
+    //     $productIds = $projectTransfer->flatMap(fn($val) => $val->details->pluck('product_id'))->unique();
+    //     $latestPurchasePrices = PurchasesDetails::whereIn('product_id', $productIds)
+    //         ->orderByDesc('id')->get()->groupBy('product_id')
+    //         ->map(fn($rows) => $rows->first()->unit_price ?? 0);
+
+    //     foreach ($projectTransfer as $val) {
+          
+    //         foreach ($val->details as $eachuse) {
+    //             $unitPrice = $latestPurchasePrices[$eachuse->product_id] ?? ($eachuse->unit_price ?? 0);
+    //             $totalItemPrice = $unitPrice * ($eachuse->qty ?? 0);
+
+    //             $isInward = ($val->to_project_id == $project_id) || ($val->transfer_type == 'branch_to_project' && $val->project_id == $project_id);
+    //             $isOutward = ($val->project_id == $project_id) && in_array($val->transfer_type, ['project_to_project', 'project_to_branch']);
+                
+               
+
+    //             if ($isInward) {
+    //                 $summary['productAmount'] += $totalItemPrice;
+    //             }
+
+    //             if ($isOutward) {
+    //                 $summary['productAmount'] -= $totalItemPrice;
+    //             }
+    //         }
+    //     }
+
+    //     $summary['ttlexpdirinc']  = (float) $directIncome->sum('credit');
+    //     $summary['ttlexpindrinc'] = (float) $indirectIncome->sum('credit');
+    //     $summary['ttlexpdir']     = (float) $directExpenses->sum('debit');
+    //     $summary['ttlexpind']     = (float) $indirectExpenses->sum('debit');
+
+    //     // =========================================================
+    //     // 1. ESTIMATE 
+    //     // =========================================================
+    //     $summary['budget']        = (float) ($projectDetails->budget ?? 0);
+    //     $summary['estimateCost']   = (float) ($projectDetails->estimate_cost ?? 0);
+    //     $summary['estimateProfit']  = $summary['budget'] - $summary['estimateCost'];
+
+    //     // =========================================================
+    //     // 2. ACTUAL COST TO DATE 
+    //     // =========================================================
+    //     $summary['actualCost'] = $summary['ttlexpdir'] + $summary['ttlexpind'] + $summary['productAmount'];
+    //     $summary['totalExpense'] = $summary['actualCost']; 
+
+    //     // =========================================================
+    //     // 3. WARNING — Actual Cost over Estimate Cost 
+    //     // =========================================================
+    //     if ($summary['estimateCost'] > 0 && $summary['actualCost'] > $summary['estimateCost']) {
+    //         $summary['isOverEstimate']     = true;
+    //         $summary['overEstimateAmount'] = $summary['actualCost'] - $summary['estimateCost'];
+    //     }
+
+    //     // =========================================================
+    //     // 4. PERCENTAGE OF COMPLETION 
+    //     // =========================================================
+    //     if ($summary['estimateCost'] > 0) {
+    //         $summary['completePercent'] = round(($summary['actualCost'] / $summary['estimateCost']) * 100, 2);
+    //     } elseif ($summary['actualCost'] > 0) {
+    //         $summary['completePercent'] = 100; 
+    //     }
+
+    //     $summary['completePercent']    = max(0, $summary['completePercent']);
+    //     $summary['completePercentBar'] = min(100, $summary['completePercent']);
+    //     $summary['incompletePercent']  = max(0, 100 - $summary['completePercentBar']);
+
+    //     // =========================================================
+    //     // 5. RECOGNIZED 
+    //     // =========================================================
+    //     $summary['recognizedRevenue'] = ($summary['budget'] * $summary['completePercentBar']) / 100;
+
+    //     if ($summary['estimateProfit'] < 0) {
+    //         $summary['isExpectedLoss']  = true;
+    //         $summary['recognizedProfit'] = $summary['estimateProfit']; 
+    //     } else {
+    //         $summary['recognizedProfit'] = ($summary['estimateProfit'] * $summary['completePercentBar']) / 100;
+    //     }
+    //     $summary['currentProfit'] = $summary['recognizedProfit']; 
+
+    //     // =========================================================
+    //     // 6. ACTUAL (cash / realized basis) 
+    //     // =========================================================
+    //     $summary['actualIncome'] = $summary['ttlexpdirinc'] + $summary['ttlexpindrinc'] + (float) $projectMoney;
+    //     $summary['actualProfit'] = $summary['actualIncome'] - $summary['actualCost'];
+
+    //     $summary['currentIncome'] = $summary['actualIncome'];
+    //     $summary['totalIncome']   = $summary['budget'] + $summary['ttlexpdirinc'] + $summary['ttlexpindrinc'];
+    //     $summary['totalProfit']   = $summary['actualProfit'];
+    //     $summary['isOverBudget'] = $summary['isOverEstimate']; 
+
+    //     $companyInfo = Company::latest('id')->first();
+    //     $project = Project::where('status', 'Active')->orderBy('name')->get();
+
+    //     return view('backend.pages.project.projectsummary', get_defined_vars());
+    // }
+ public function show($id)
     {
         $title = 'Project Report';
         $project_id = $id ?? '';
         $projectDetails = null;
-
+ 
         $summary = [
             'productAmount'         => 0,
-
+ 
             // --- Estimate (input-based) ---
             'budget'                => 0,   // Contract Value
             'estimateCost'          => 0,   // NEW input
             'estimateProfit'        => 0,   // Derived: Budget - Estimate Cost
-
+ 
             // --- Actual Cost to date (bill-based) ---
             'ttlexpdir'             => 0,
             'ttlexpind'             => 0,
             'actualCost'            => 0,   // Direct + Indirect Expense + Product Consumption
-
+ 
             // --- POC (Percentage of Completion) ---
             'completePercent'       => 0,   // uncapped, Actual Cost / Estimate Cost * 100
             'completePercentBar'    => 0,   // capped at 100
             'incompletePercent'     => 100,
             'recognizedRevenue'     => 0,   // Budget * %Complete
             'recognizedProfit'      => 0,   // EstimateProfit * %Complete (was currentProfit)
-
+ 
             // --- Actual / Cash basis ---
             'ttlexpdirinc'          => 0,
             'ttlexpindrinc'         => 0,
             'actualIncome'          => 0,   // Direct + Indirect Income + ProjectMoney
             'actualProfit'          => 0,   // ActualIncome - ActualCost
-
+ 
             // --- Legacy aliases ---
             'currentIncome'         => 0,
             'totalExpense'          => 0,
             'totalIncome'           => 0,
             'totalProfit'           => 0,
             'currentProfit'         => 0,
-
+ 
             // --- Warnings / Flags ---
             'isOverEstimate'        => false,
             'overEstimateAmount'    => 0,
             'isExpectedLoss'        => false,
-
+ 
             // --- Counts ---
             'countRequisition'      => 0,
             'countOrder'            => 0,
@@ -558,19 +780,19 @@ class ProjectController extends Controller
             'countGrn'              => 0,
             'countTransfer'         => 0,
         ];
-
+ 
         // --- Document counts ---
         $summary['countRequisition'] = PurchaseRequisition::where('project_id', $project_id)->count();
         $summary['countOrder']       = PurchaseOrder::where('project_id', $project_id)->count();
         $summary['countVoucher']     = Purchases::where('project_id', $project_id)->count();
         $summary['countGrn']         = Grn::where('project_id', $project_id)->count();
         $summary['countTransfer']    = ProjectTransfer::where('project_id', $project_id)->orWhere('to_project_id', $project_id)->count();
-
+ 
         // --- Full records kept for modals ---
         $purchaseRequisitions = PurchaseRequisition::with('details')->where('project_id', $project_id)->get();
         $purchaseOrders       = PurchaseOrder::with('details')->where('project_id', $project_id)->get();
         $purchaseVouchers     = Purchases::with('details')->where('project_id', $project_id)->get();
-
+ 
         $projectDetails = Project::query()
             ->leftJoin('users', 'users.id', '=', 'projects.manager_id')
             ->leftJoin('customers', 'customers.id', '=', 'projects.customer_id')
@@ -592,142 +814,189 @@ class ProjectController extends Controller
                 'projects.projectCode',
                 DB::raw('COALESCE(chart_of_accounts.account_name, customers.name) as client_name'),
             ]);
-
+ 
         if (!$projectDetails) {
             return Redirect::back()->withErrors(['msg' => 'Project not found!']);
         }
-
+ 
         // --- Aggregator: first page of unified transaction feed ---
         $aggregator = new ProjectTransactionAggregator($project_id, $projectDetails->ledger_id);
         $firstPage  = $aggregator->getPaginated(1, 20);
         $firstPageTransactions = $firstPage['data'];
         $firstPageHasMore      = $firstPage['has_more'];
-
-        // --- Existing per-category data 
+ 
+        // [FIX] Transfer row-gulote IN / OUT dik ebong Transfer Type jog kora (Modal-er moto logic)
+        $firstPageTransactions = $this->applyTransferDirection($firstPageTransactions, $project_id);
+ 
+        // --- Existing per-category data
         $productgoodreceive = Grn::with('details.product')->where('project_id', $project_id)->get();
-        
+ 
         $projectTransfer    = ProjectTransfer::with('details.product')
             ->where('project_id', $project_id)
             ->orWhere('to_project_id', $project_id)
             ->get();
-
-           
-
+ 
         $projectMoney       = ProjectMoney::where('project_id', $project_id)->sum('credit')
             - ProjectMoney::where('project_id', $project_id)->sum('debit');
-
+ 
         $directIncome = AccountTransaction::with('account')
             ->where('account_id', $projectDetails->ledger_id)
             ->where('project_id', $project_id)
             ->whereNotNull('credit')
             ->get();
-
+ 
         $indirectIncome   = AccountTransaction::with('account')->whereIn('account_id', getOldAccount(25)->pluck('id'))->where('project_id', $project_id)->get();
         $directExpenses   = AccountTransaction::with('account')->whereIn('account_id', getOldAccount(20)->pluck('id'))->where('project_id', $project_id)->get();
         $indirectExpenses = AccountTransaction::with('account')->whereIn('account_id', getOldAccount(21)->pluck('id'))->where('project_id', $project_id)->get();
-
+ 
         // --- Product consumption: GRN ---
         foreach ($productgoodreceive as $val) {
             foreach ($val->details as $eachuse) {
                 $summary['productAmount'] += ($eachuse->unit_price ?? 0) * ($eachuse->qty ?? 0);
             }
         }
-
+ 
         // --- Product consumption: Transfer (Correct Inward / Outward Logic) ---
         $productIds = $projectTransfer->flatMap(fn($val) => $val->details->pluck('product_id'))->unique();
         $latestPurchasePrices = PurchasesDetails::whereIn('product_id', $productIds)
             ->orderByDesc('id')->get()->groupBy('product_id')
             ->map(fn($rows) => $rows->first()->unit_price ?? 0);
-
+ 
         foreach ($projectTransfer as $val) {
-          
+ 
             foreach ($val->details as $eachuse) {
                 $unitPrice = $latestPurchasePrices[$eachuse->product_id] ?? ($eachuse->unit_price ?? 0);
                 $totalItemPrice = $unitPrice * ($eachuse->qty ?? 0);
-
+ 
                 $isInward = ($val->to_project_id == $project_id) || ($val->transfer_type == 'branch_to_project' && $val->project_id == $project_id);
                 $isOutward = ($val->project_id == $project_id) && in_array($val->transfer_type, ['project_to_project', 'project_to_branch']);
-                
-               
-
+ 
                 if ($isInward) {
                     $summary['productAmount'] += $totalItemPrice;
                 }
-
+ 
                 if ($isOutward) {
                     $summary['productAmount'] -= $totalItemPrice;
                 }
             }
         }
-
+ 
         $summary['ttlexpdirinc']  = (float) $directIncome->sum('credit');
         $summary['ttlexpindrinc'] = (float) $indirectIncome->sum('credit');
         $summary['ttlexpdir']     = (float) $directExpenses->sum('debit');
         $summary['ttlexpind']     = (float) $indirectExpenses->sum('debit');
-
+ 
         // =========================================================
-        // 1. ESTIMATE 
+        // 1. ESTIMATE
         // =========================================================
         $summary['budget']        = (float) ($projectDetails->budget ?? 0);
         $summary['estimateCost']   = (float) ($projectDetails->estimate_cost ?? 0);
         $summary['estimateProfit']  = $summary['budget'] - $summary['estimateCost'];
-
+ 
         // =========================================================
-        // 2. ACTUAL COST TO DATE 
+        // 2. ACTUAL COST TO DATE
         // =========================================================
         $summary['actualCost'] = $summary['ttlexpdir'] + $summary['ttlexpind'] + $summary['productAmount'];
-        $summary['totalExpense'] = $summary['actualCost']; 
-
+        $summary['totalExpense'] = $summary['actualCost'];
+ 
         // =========================================================
-        // 3. WARNING — Actual Cost over Estimate Cost 
+        // 3. WARNING — Actual Cost over Estimate Cost
         // =========================================================
         if ($summary['estimateCost'] > 0 && $summary['actualCost'] > $summary['estimateCost']) {
             $summary['isOverEstimate']     = true;
             $summary['overEstimateAmount'] = $summary['actualCost'] - $summary['estimateCost'];
         }
-
+ 
         // =========================================================
-        // 4. PERCENTAGE OF COMPLETION 
+        // 4. PERCENTAGE OF COMPLETION
         // =========================================================
         if ($summary['estimateCost'] > 0) {
             $summary['completePercent'] = round(($summary['actualCost'] / $summary['estimateCost']) * 100, 2);
         } elseif ($summary['actualCost'] > 0) {
-            $summary['completePercent'] = 100; 
+            $summary['completePercent'] = 100;
         }
-
+ 
         $summary['completePercent']    = max(0, $summary['completePercent']);
         $summary['completePercentBar'] = min(100, $summary['completePercent']);
         $summary['incompletePercent']  = max(0, 100 - $summary['completePercentBar']);
-
+ 
         // =========================================================
-        // 5. RECOGNIZED 
+        // 5. RECOGNIZED
         // =========================================================
         $summary['recognizedRevenue'] = ($summary['budget'] * $summary['completePercentBar']) / 100;
-
+ 
         if ($summary['estimateProfit'] < 0) {
             $summary['isExpectedLoss']  = true;
-            $summary['recognizedProfit'] = $summary['estimateProfit']; 
+            $summary['recognizedProfit'] = $summary['estimateProfit'];
         } else {
             $summary['recognizedProfit'] = ($summary['estimateProfit'] * $summary['completePercentBar']) / 100;
         }
-        $summary['currentProfit'] = $summary['recognizedProfit']; 
-
+        $summary['currentProfit'] = $summary['recognizedProfit'];
+ 
         // =========================================================
-        // 6. ACTUAL (cash / realized basis) 
+        // 6. ACTUAL (cash / realized basis)
         // =========================================================
         $summary['actualIncome'] = $summary['ttlexpdirinc'] + $summary['ttlexpindrinc'] + (float) $projectMoney;
         $summary['actualProfit'] = $summary['actualIncome'] - $summary['actualCost'];
-
+ 
         $summary['currentIncome'] = $summary['actualIncome'];
         $summary['totalIncome']   = $summary['budget'] + $summary['ttlexpdirinc'] + $summary['ttlexpindrinc'];
         $summary['totalProfit']   = $summary['actualProfit'];
-        $summary['isOverBudget'] = $summary['isOverEstimate']; 
-
+        $summary['isOverBudget'] = $summary['isOverEstimate'];
+ 
         $companyInfo = Company::latest('id')->first();
         $project = Project::where('status', 'Active')->orderBy('name')->get();
-
+ 
         return view('backend.pages.project.projectsummary', get_defined_vars());
     }
+ 
+   
+    private function applyTransferDirection($rows, $projectId): array
+    {
+        $rows = collect($rows)->all();
+ 
+        $invoices = collect($rows)
+            ->where('type', 'transfer')
+            ->pluck('invoice')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+ 
+        if (empty($invoices)) {
+            return $rows;
+        }
+ 
+        $map = ProjectTransfer::where(function ($q) use ($projectId) {
+                $q->where('project_id', $projectId)
+                  ->orWhere('to_project_id', $projectId);
+            })
+            ->whereIn('invoice_no', $invoices)
+            ->get(['invoice_no', 'project_id', 'to_project_id', 'transfer_type'])
+            ->mapWithKeys(function ($t) use ($projectId) {
+                // Modal-er hubohu ekoi logic
+                $isInward = ($t->to_project_id == $projectId)
+                    || ($t->transfer_type == 'branch_to_project' && $t->project_id == $projectId);
+ 
+                return [$t->invoice_no => [
+                    'is_inward'     => $isInward,
+                    'transfer_type' => strtoupper(str_replace('_', ' ', $t->transfer_type)),
+                ]];
+            })
+            ->all();
+ 
+        foreach ($rows as &$row) {
+            if (($row['type'] ?? null) === 'transfer') {
+                $info = $map[$row['invoice']] ?? null;
+                $row['is_inward']     = $info['is_inward'] ?? false;
+                $row['transfer_type'] = $info['transfer_type'] ?? '';
+            }
+        }
+        unset($row);
+ 
+        return $rows;
+    }
+
 
     public function billStor(Request $request)
     {

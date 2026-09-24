@@ -377,7 +377,9 @@ class ProjectTransferController extends Controller
 
     public function availableStock(Request $request)
     {
-        $type = $request->source_type === 'project'
+   
+    
+    $type = $request->source_type === 'project'
             ? 'Project'
             : 'Branch';
 
@@ -404,6 +406,7 @@ class ProjectTransferController extends Controller
 
         $qty = $query->value('quantity');
 
+             
         return response()->json([
             'quantity' => (float) ($qty ?? 0),
         ]);

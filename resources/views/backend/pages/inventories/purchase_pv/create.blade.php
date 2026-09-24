@@ -149,54 +149,13 @@
                                     </tr>
                                 </thead>
                                 <tbody id="main-table">
-                                    {{-- <tr>
-                                        <td>
-                                            <select onchange="getProductList(this.value)"
-                                                class="select2 form-control catName reset" id="form-field-select-3"
-                                                data-placeholder="Search Category">
-                                                <option disabled selected>---Select Category---</option>
-                                                <?php
-                                            foreach ($category_info as $eachInfo) :
-                                                ?>
-                                                <option catName="{{ $eachInfo->name }}" value="{{ $eachInfo->id }}">
-                                                    {{ $eachInfo->name }}</option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <select class="select2 form-control proName reset" id="productID"
-                                                data-placeholder="Search Product" onchange="getUnitPrice(this.value)">
-                                                <option disabled selected>---Select Product---</option>
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <input type="number" step="any"
-                                                class="form-control text-right qty reset_qty" placeholder="Qty"
-                                                min="0">
-                                        </td>
-                                        <td>
-                                            <input type="number" step="any" min="0" id="unitprice"
-                                                class="form-control text-right unitprice reset_unitprice"
-                                                placeholder="Unit Price">
-                                        </td>
-                                        <td>
-                                            <input type="number" step="any" readonly
-                                                class="form-control text-right total reset_total" id="total"
-                                                placeholder="Total">
-                                        </td>
-                                        <td>
-                                            <a id="add_item" class="btn btn-info" style="white-space: nowrap"
-                                                href="javascript:;" title="Add Item">
-                                                <i class="fa fa-plus"></i>
-                                                Add Item
-                                            </a>
-                                        </td>
-                                    </tr> --}}
+
 
                                 </tbody>
                                 <tfoot>
 
                                     <tr>
+                                        <td colspan="2"></td>
                                         <td class="text-right"><strong>Sub-Total(BDT)</strong></td>
                                         <td class="text-right"><strong class=""></strong></td>
                                         <td class="
@@ -205,7 +164,7 @@
                                         </td>
                                         <td class="text-right"><strong class="ttlunitprice"></strong></td>
                                         <td class="text-right"><strong class="grandtotal"></strong></td>
-                                        <td class="text-right"><strong class=""></strong></td>
+
                                     </tr>
                                 </tfoot>
                             </table>
@@ -336,53 +295,49 @@
             })
 
 
+            // Footer: total quantity (2 decimal, no rounding)
             var findqtyamoun = function() {
                 var ttlqty = 0;
-                $.each($('.ttlqty'), function() {
-                    console.log($(this).val());
-                    qty = number_format($(this).val());
-                    ttlqty += qty;
+                $.each($('input.ttlqty'), function() {
+                    ttlqty += number_format($(this).val());
                 });
-                $('.ttlqty').text(number_format(ttlqty));
-
+                $('strong.ttlqty').text(fmt2(ttlqty));
             };
 
             $('.discount').on('input', function() {
                 findgrandtottal();
             })
 
+            // Footer: unit price sum (2 decimal, no rounding)
             var findunitamount = function() {
                 var ttlunitprice = 0;
-                $.each($('.ttlunitprice'), function() {
-                    unitprice = number_format($(this).val());
-                    ttlunitprice += unitprice;
+                $.each($('input.ttlunitprice'), function() {
+                    ttlunitprice += number_format($(this).val());
                 });
-                $('.ttlunitprice').text(number_format(ttlunitprice));
+                $('strong.ttlunitprice').text(fmt2(ttlunitprice));
             };
 
             var findgrandtottal = function() {
                 var grandtotal = 0;
 
                 $.each($('.total'), function(index, item) {
-
-                    total = number_format($(item).val());
-                    grandtotal += total;
+                    grandtotal += number_format($(item).val());
                 });
-                let findAdvPayment = $('.advance_payment').val();
-                let getAdvancepay = grandtotal - findAdvPayment;
-                $('.advPay').text(getAdvancepay);
-                // let vatE = $('.vat');
+                grandtotal = number_format(grandtotal);
+
+                let findAdvPayment = number_format($('.advance_payment').val());
+                let getAdvancepay = number_format(grandtotal - findAdvPayment);
+                $('.advPay').text(fmt2(getAdvancepay));
+
                 let discountE = $('.discount');
                 let paidAmountE = $('.paid_amount');
 
-                let vat = 0; //number_format(vatE.val());
+                let vat = 0;
                 let discount = number_format(discountE.val());
 
                 let paidAmount = number_format(paidAmountE.val());
 
-                //calculate discount
                 let cal_vat = percentageCalculate(grandtotal, vat);
-
 
                 let cal_grandtotal = grandTotalCalculate(getAdvancepay, discount, cal_vat);
 
@@ -391,19 +346,19 @@
                 let cart_net_total = $('.cart_net_total');
                 let cart_due = $('.cart_due');
 
-                $('.grandtotal').text(number_format(grandtotal));
-                cart_net_total.text(cal_grandtotal);
-                cart_due.text(cal_due);
+                $('.grandtotal').text(fmt2(grandtotal));
+                cart_net_total.text(fmt2(cal_grandtotal));
+                cart_due.text(fmt2(cal_due));
                 let paid_amount = $('.paid_amount');
 
-                let paymenttypes = $('.payment_type').val();
-                if (paymenttypes.toLowerCase() == 'cash' || paymenttypes.toLowerCase() == 'check') {
-                    paid_amount.val(cal_grandtotal);
+                let paymenttypes = ($('.payment_type').val() || '').toLowerCase();
+                if (paymenttypes == 'cash' || paymenttypes == 'check') {
+                    paid_amount.val(fmt2(cal_grandtotal));
                 }
 
-                $('.input_vat').val(cal_vat);
-                $('.input_net_total').val(cal_grandtotal);
-                $('.input_due').val(cal_due);
+                $('.input_vat').val(fmt2(cal_vat));
+                $('.input_net_total').val(fmt2(cal_grandtotal));
+                $('.input_due').val(fmt2(cal_due));
 
 
             };
@@ -443,7 +398,6 @@
                 let seaschproduct = $('#productID option:selected')[0].getAttribute("value");
                 let tbody = $('tbody').find(".new_item" + seaschproduct).length;
                 let tbody2 = $('tbody').find("new_item" + seaschproduct);
-                console.log(tbody);
 
                 if (tbody > 0) {
                     alertMessage.error('This product already exist');
@@ -456,7 +410,7 @@
                     alertMessage.error('Quantity cannot be empty');
                     return false;
                 } else {
-                    var total = qty * unitprice;
+                    var total = number_format(qty * unitprice);
 
                     var grandtotal = 0;
 
@@ -466,13 +420,13 @@
                         grandtotal += totaltt;
                     });
 
-                    let accountAmountCheck = total + grandtotal;
+                    let accountAmountCheck = number_format(total + grandtotal);
 
                     let paymenttypes = $('.payment_type').val();
 
                     if (paymenttypes != null) {
                         if (paymenttypes.toLowerCase() == 'cash') {
-                            var balance = $('.balance').val();
+                            var balance = number_format($('.balance').val());
                             var account = $('.accounts').val();
                             if (account != null) {
                                 if (accountAmountCheck >= balance) {
@@ -508,11 +462,11 @@
                         <td style="padding-left:15px;">${catName}<input type="hidden" name="category_nm[]" value="${catId}"></td>
                         <td class="text-right">${proName}<input type="hidden" class="add_quantity" name="product_nm[]" value="${proId}"></td>
                     
-                        <td class="text-right"><input type="number" class="ttlqty qnty form-control" name="qty[]" value="${qty}"></td>
-                        <td class="text-right">${unitprice}<input type="hidden" class="ttlunitprice unitprice" id="unitprice" name="unitprice[]" value="${unitprice}">
+                        <td class="text-right"><input type="number" step="any" class="ttlqty qnty form-control" name="qty[]" value="${fmt2(qty)}"></td>
+                        <td class="text-right">${fmt2(unitprice)}<input type="hidden" class="ttlunitprice unitprice" name="unitprice[]" value="${fmt2(unitprice)}">
                         </td>
                         <td class="text-right">
-                            <input type="text" class="total form-control checktotal" readonly name="total[]" value="${total}">
+                            <input type="text" class="total form-control checktotal" readonly name="total[]" value="${fmt2(total)}">
                         </td>
                         <td>
                             <a del_id="${proId}" class="delete_item btn form-control btn-danger" href="javascript:;" title="">
@@ -535,12 +489,6 @@
             });
 
             $(document).on('click', '.delete_item', function() {
-                // if (confirm("Are you sure?")) {
-                //     $(this).parents('tr').remove();
-                //     findqtyamoun();
-                //     findunitamount();
-                //     findgrandtottal();
-                // }
                 let deleteitem = () => {
                     $(this).parents('tr').remove();
                     findqtyamoun();
@@ -590,7 +538,7 @@
 
                 let total = number_format(unitPrice * qty);
 
-                parent.find('.total').val(number_format(total));
+                parent.find('.total').val(fmt2(total));
 
             });
 
@@ -608,7 +556,7 @@
                 let qty = number_format(parent.find('.qty').val());
 
                 let total = number_format(unitprice * qty);
-                parent.find('.total').val(number_format(total));
+                parent.find('.total').val(fmt2(total));
                 findqtyamoun();
                 findunitamount();
                 findgrandtottal();
@@ -628,15 +576,15 @@
 
                 let total = number_format(unitPrice * qty);
 
-                parent.find('.total').val(number_format(total));
+                parent.find('.total').val(fmt2(total));
                 findqtyamoun();
                 findunitamount();
                 findgrandtottal();
             });
 
             $(document).on('input', '.input-checker', function() {
-                var grandtotal = $('.grandtotal').text();
-                grandtotal = Number(grandtotal);
+                // .grandtotal একাধিক জায়গায় আছে (footer + summary), তাই শুধু প্রথমটি নেওয়া হলো
+                var grandtotal = Number($('.grandtotal').first().text());
 
                 if (isNaN(grandtotal) || grandtotal < 1) {
                     alertMessage.error('Please Add some item first.');
@@ -675,7 +623,6 @@
             $(document).on('keyup', '.paid_amount', function() {
                 let paidAmount = number_format($(this).val());
                 let balance = number_format($('.balance').val());
-                console.log(balance)
                 let paymentType = $('.payment_type').val();
 
                 if (paymentType.toLowerCase() == 'cash' && balance < paidAmount) {
@@ -708,9 +655,27 @@
             return number_format(amount * disc * .01);
         }
 
+        /**
+         * দশমিকের পর ২ ডিজিট পর্যন্ত কেটে (truncate) Number রিটার্ন করে — কখনো round up/down করে না।
+         * toFixed(decimal + 4) শুধু floating-point noise (যেমন 1.15*100 = 114.99999999) ঠিক করার জন্য।
+         * উদাহরণ: 10.999 => 10.99, 5.5 => 5.5, 3.456 => 3.45
+         */
         function number_format(number, decimal = 2) {
-            number = Number(number);
-            return Number(parseFloat(number).toFixed(decimal));
+            let n = Number(number);
+            if (!isFinite(n)) {
+                return 0;
+            }
+            let sign = n < 0 ? '-' : '';
+            let parts = Math.abs(n).toFixed(decimal + 4).split('.');
+            return Number(sign + parts[0] + '.' + parts[1].substring(0, decimal));
+        }
+
+        /**
+         * দেখানোর জন্য: সবসময় দশমিকের পর ঠিক ২ ডিজিটের String রিটার্ন করে (round ছাড়া)।
+         * উদাহরণ: 100 => "100.00", 5.5 => "5.50", 10.999 => "10.99"
+         */
+        function fmt2(number) {
+            return number_format(number).toFixed(2);
         }
 
         function getProductList(cat_id) {
@@ -749,7 +714,7 @@
                     productId: productId
                 },
                 success: function(data) {
-                    $("#unitprice").val(data);
+                    $("#unitprice").val(fmt2(data));
                 }
             });
         }
@@ -829,11 +794,10 @@
                 "type": "GET",
                 cache: false,
                 data: {
-                    // "_token": "{{ csrf_token() }}",
                     account_id: account_id
                 },
                 success: function(data) {
-                    $('.balance').val(data);
+                    $('.balance').val(fmt2(data));
                 }
             });
 

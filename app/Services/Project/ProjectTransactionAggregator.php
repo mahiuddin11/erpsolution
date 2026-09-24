@@ -163,8 +163,11 @@ class ProjectTransactionAggregator
     {
 
         $transfers = ProjectTransfer::with('details.product')
-            ->where('project_id', $this->projectId)
-            ->get();
+        ->where(function ($q) {
+            $q->where('project_id', $this->projectId)
+              ->orWhere('to_project_id', $this->projectId);
+        })
+        ->get();
 
         $productIds = $transfers->flatMap(function ($val) {
             return $val->details->pluck('product_id');
@@ -185,6 +188,9 @@ class ProjectTransactionAggregator
             });
             $itemCount = $val->details->count();
 
+             $isInward = ($val->to_project_id == $this->projectId)
+            || ($val->transfer_type == 'branch_to_project' && $val->project_id == $this->projectId);
+
             return [
                 'date'   => $val->order_date,
                 'type'   => 'transfer',
@@ -193,6 +199,8 @@ class ProjectTransactionAggregator
                 'amount' => (float) $amount,
                 'status' => 'Posted',
                 'id'     => $val->id,
+                'is_inward'     => $isInward,
+               'transfer_type' => strtoupper(str_replace('_', ' ', $val->transfer_type)),
             ];
         });
     }
