@@ -514,7 +514,7 @@ class HrmDashboardApiController extends Controller
             $query->where('employee_id', $user->employee_id);
         }
 
-        $data = $query->latest('apply_date')->take(10)->get()->map(fn($l) => [
+        $data = $query->latest('apply_date')->take(100)->get()->map(fn($l) => [
             'id'            => $l->id,
             'employee_name' => $l->employee->name ?? 'N/A',
             'leave_type'    => $l->reason ?? 'Leave',

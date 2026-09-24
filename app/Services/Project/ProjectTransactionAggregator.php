@@ -197,52 +197,48 @@ class ProjectTransactionAggregator
         });
     }
 
-    protected function mapExpenses()
-    {
+   protected function mapExpenses()
+{
+    $direct = AccountTransaction::with('account')
+        ->whereIn('account_id', getOldAccount(20)->pluck('id'))
+        ->where('project_id', $this->projectId)
+        ->get()
+        ->toBase()
+        ->map(fn($row) => $this->formatAccountTxn($row, 'expense', 'Direct', $row->debit));
+
+    $indirect = AccountTransaction::with('account')
+        ->whereIn('account_id', getOldAccount(21)->pluck('id'))
+        ->where('project_id', $this->projectId)
+        ->get()
+        ->toBase()
+        ->map(fn($row) => $this->formatAccountTxn($row, 'expense', 'Indirect', $row->debit));
+
+    return $direct->merge($indirect);
+}
+
+
+   protected function mapIncome()
+{
+    $direct = collect();
+    if ($this->ledgerId) {
         $direct = AccountTransaction::with('account')
-            ->whereIn('account_id', getOldAccount(20)->pluck('id'))
+            ->where('account_id', $this->ledgerId)
             ->where('project_id', $this->projectId)
+            ->whereNotNull('credit')
             ->get()
-            ->map(function ($row) {
-                return $this->formatAccountTxn($row, 'expense', 'Direct', $row->debit);
-            });
-
-        $indirect = AccountTransaction::with('account')
-            ->whereIn('account_id', getOldAccount(21)->pluck('id'))
-            ->where('project_id', $this->projectId)
-            ->get()
-            ->map(function ($row) {
-                return $this->formatAccountTxn($row, 'expense', 'Indirect', $row->debit);
-            });
-
-        return $direct->merge($indirect);
+            ->toBase()
+            ->map(fn($row) => $this->formatAccountTxn($row, 'income', 'Direct', $row->credit));
     }
 
-    protected function mapIncome()
-    {
+    $indirect = AccountTransaction::with('account')
+        ->whereIn('account_id', getOldAccount(25)->pluck('id'))
+        ->where('project_id', $this->projectId)
+        ->get()
+        ->toBase()
+        ->map(fn($row) => $this->formatAccountTxn($row, 'income', 'Indirect', $row->credit));
 
-        $direct = collect();
-        if ($this->ledgerId) {
-            $direct = AccountTransaction::with('account')
-                ->where('account_id', $this->ledgerId)
-                ->where('project_id', $this->projectId)
-                ->whereNotNull('credit')
-                ->get()
-                ->map(function ($row) {
-                    return $this->formatAccountTxn($row, 'income', 'Direct', $row->credit);
-                });
-        }
-
-        $indirect = AccountTransaction::with('account')
-            ->whereIn('account_id', getOldAccount(25)->pluck('id'))
-            ->where('project_id', $this->projectId)
-            ->get()
-            ->map(function ($row) {
-                return $this->formatAccountTxn($row, 'income', 'Indirect', $row->credit);
-            });
-
-        return $direct->merge($indirect);
-    }
+    return $direct->merge($indirect);
+}
 
     protected function mapProjectMoney()
     {

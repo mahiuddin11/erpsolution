@@ -117,28 +117,33 @@ class ProjectTransferController extends Controller
         return view('backend.pages.inventories.project_transfer.invoice', get_defined_vars());
     }
 
-    public function store(Request $request)
-    {
-        try {
-            $this->validate($request, $this->systemService->storeValidation($request));
-        } catch (ValidationException $e) {
-            session()->flash('error', 'Validation error !!');
-            return redirect()->back()->withErrors($e->errors())->withInput();
-        }
-
-        $businessError = $this->systemService->storeBusinessRules($request);
-
-        if ($businessError) {
-            session()->flash('error', $businessError);
-            return redirect()->back()->withInput();
-        }
-
-        $result =  $this->systemService->store($request);
-
-
-        session()->flash('success', 'Data successfully save!!');
-        return redirect()->route('project.transferproject.index');
+  public function store(Request $request)
+{
+    try {
+        $this->validate($request, $this->systemService->storeValidation($request));
+    } catch (ValidationException $e) {
+        session()->flash('error', 'Validation error !!');
+        return redirect()->back()->withErrors($e->errors())->withInput();
     }
+ 
+    $businessError = $this->systemService->storeBusinessRules($request);
+ 
+    if ($businessError) {
+        session()->flash('error', $businessError);
+        return redirect()->back()->withInput();
+    }
+ 
+    $result = $this->systemService->store($request);
+ 
+    // FIXED: repo fail korle null return kore (ar error flash kore rakhe).
+    // Age ekhane sobsomoy "success" flash hoto, tai data save na hoileo success dekhato.
+    if (!$result) {
+        return redirect()->back()->withInput();
+    }
+ 
+    session()->flash('success', 'Data successfully save!!');
+    return redirect()->route('project.transferproject.index');
+}
 
     // public function edit($id)
     // {
@@ -285,28 +290,34 @@ class ProjectTransferController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function update(Request $request, $id)
-    {
-        if (!is_numeric($id)) {
-            session()->flash('error', 'Edit id must be numeric!!');
-            return redirect()->back();
-        }
-        $editInfo = $this->systemService->details($id);
-        if (!$editInfo) {
-            session()->flash('error', 'Edit info is invalid!!');
-            return redirect()->back();
-        }
-        try {
-            $this->validate($request, $this->systemService->updateValidation($request, $id));
-        } catch (ValidationException $e) {
-            session()->flash('error', 'Validation error !!');
-            // dd($e->getMessage(), $e->getFile(), $e->getLine());
-            return redirect()->back()->withErrors($e->errors())->withInput();
-        }
-        $this->systemService->update($request, $id);
-        session()->flash('success', 'Data successfully updated!!');
-        return redirect()->route('project.transferproject.index');
+ public function update(Request $request, $id)
+{
+    if (!is_numeric($id)) {
+        session()->flash('error', 'Edit id must be numeric!!');
+        return redirect()->back();
     }
+    $editInfo = $this->systemService->details($id);
+    if (!$editInfo) {
+        session()->flash('error', 'Edit info is invalid!!');
+        return redirect()->back();
+    }
+    try {
+        $this->validate($request, $this->systemService->updateValidation($request, $id));
+    } catch (ValidationException $e) {
+        session()->flash('error', 'Validation error !!');
+        return redirect()->back()->withErrors($e->errors())->withInput();
+    }
+ 
+    $result = $this->systemService->update($request, $id);
+ 
+    // FIXED: repo fail korle null return kore (error flash kore rakhe)
+    if (!$result) {
+        return redirect()->back()->withInput();
+    }
+ 
+    session()->flash('success', 'Data successfully updated!!');
+    return redirect()->route('project.transferproject.index');
+}
 
 
     /**
@@ -381,7 +392,6 @@ class ProjectTransferController extends Controller
         } else {
 
             $query = StockSummary::where([
-                'branch_id'    => $request->project_id ?? $request->branch_id,
                 'project_id' => $request->project_id,
                 'product_id' => $request->product_id,
                 'type'       => 'Project',

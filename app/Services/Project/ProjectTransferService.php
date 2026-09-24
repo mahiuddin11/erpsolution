@@ -89,33 +89,33 @@ class ProjectTransferService
     //     ];
     // }
 
-    public function storeValidation($request)
-    {
-        return [
-            'transfer_type'         => 'required|in:branch_to_project,project_to_project,project_to_branch',
-            'date'                  => 'required|date',
-            'category_nm'           => 'required|array|min:1',
-            'product_nm'            => 'required|array|min:1',
-            'qty'                   => 'required|array|min:1',
-            'qty.*'                 => 'required|numeric|min:1',
-
-            // branch_to_project ONLY
-            'from_branch_id'        => 'nullable|required_if:transfer_type,branch_to_project',
-            'to_project_id_a'       => 'nullable|required_if:transfer_type,branch_to_project',
-            'purchase_requisition'  => 'nullable|required_if:transfer_type,branch_to_project',
-
-            // project_to_project / project_to_branch
-            'from_project_id'       => 'nullable|required_if:transfer_type,project_to_project,project_to_branch',
-
-            // project_to_project ONLY (+ same-project block)
-            // FIX: 'nullable' added so this rule only actually validates when the field has a value
-            'to_project_id_b'       => 'nullable|required_if:transfer_type,project_to_project|different:from_project_id',
-
-            // project_to_branch ONLY
-            'to_branch_id'          => 'nullable|required_if:transfer_type,project_to_branch',
-        ];
-    }
-
+  public function storeValidation($request)
+{
+    return [
+        'transfer_type'         => 'required|in:branch_to_project,project_to_project,project_to_branch',
+        'date'                  => 'required|date',
+        'category_nm'           => 'required|array|min:1',
+        'product_nm'            => 'required|array|min:1',
+        'qty'                   => 'required|array|min:1',
+        'qty.*'                 => 'required|numeric|min:0.01',   // blade step=0.01, tai min:1 na
+ 
+        // branch_to_project ONLY
+        'from_branch_id'        => 'nullable|required_if:transfer_type,branch_to_project',
+        'from_warehouse_id'     => 'nullable|required_if:transfer_type,branch_to_project',
+        'to_project_id_a'       => 'nullable|required_if:transfer_type,branch_to_project',
+        'purchase_requisition'  => 'nullable|required_if:transfer_type,branch_to_project',
+ 
+        // project_to_project / project_to_branch
+        'from_project_id'       => 'nullable|required_if:transfer_type,project_to_project,project_to_branch',
+ 
+        // project_to_project ONLY
+        'to_project_id_b'       => 'nullable|required_if:transfer_type,project_to_project|different:from_project_id',
+ 
+        // project_to_branch ONLY
+        'to_branch_id'          => 'nullable|required_if:transfer_type,project_to_branch',
+        'to_warehouse_id'       => 'nullable|required_if:transfer_type,project_to_branch',
+    ];
+}
     public function hasRemainingItems($prId)
     {
         return PrDetails::where('pr_id', $prId)
@@ -127,78 +127,87 @@ class ProjectTransferService
     }
 
     public function storeBusinessRules($request)
-    {
-        $type = $request->transfer_type;
-
-        // ---- requisition must belong to the destination project ----
-        if ($type === 'branch_to_project') {
-            $requisition = PurchaseRequisition::find($request->purchase_requisition);
-            if (!$requisition || (int) $requisition->project_id !== (int) $request->to_project_id_a) {
-                return 'The selected requisition is not for this project. Select the correct Requisition.';
-            }
+{
+    $type = $request->transfer_type;
+ 
+    // ---- requisition must belong to the destination project ----
+    if ($type === 'branch_to_project') {
+        $requisition = PurchaseRequisition::find($request->purchase_requisition);
+        if (!$requisition || (int) $requisition->project_id !== (int) $request->to_project_id_a) {
+            return 'The selected requisition is not for this project. Select the correct Requisition.';
         }
-
-        // ---- stock availability check (purchasetype-aware) ----
-        $product  = $request->product_nm;
-
-        $qty      = $request->qty;
-        $purchase = $request->purchasetype;
-
-
-        for ($i = 0; $i < count($product); $i++) {
-            $purchaseType = $purchase[$i] ?? 'local';
-
-            if ($type === 'branch_to_project') {
-                $sourceId   = $request->from_branch_id;
-                $sourceType = 'Branch';
-            } else {
-                $sourceId   = $request->from_project_id;
-                $sourceType = 'Project';
-            }
-
-            $available = StockSummary::where([
-                'branch_id'    => $sourceId,
-                'product_id'   => $product[$i],
-                'type'         => $sourceType,
-                'purchasetype' => $purchaseType,
-            ])->value('quantity') ?? 0;
-
-            if ($qty[$i] > $available) {
-                return 'Adequate ' . $purchaseType . ' Out of stock. Available: ' . $available . ' (Product row ' . ($i + 1) . ')';
-            }
-        }
-
-        return null;
     }
+ 
+    // ---- stock availability (product + purchasetype pool) ----
+    $products = $request->product_nm ?? [];
+    $qtys     = $request->qty ?? [];
+    $ptypes   = $request->purchasetype ?? [];
+ 
+    $pools = [];
+    foreach ($products as $i => $productId) {
+        $ptype = $ptypes[$i] ?? 'local';
+        $key   = $productId . '|' . $ptype;
+ 
+        if (!isset($pools[$key])) {
+            $pools[$key] = ['product_id' => $productId, 'purchasetype' => $ptype, 'qty' => 0, 'row' => $i + 1];
+        }
+        $pools[$key]['qty'] += (float) ($qtys[$i] ?? 0);
+    }
+ 
+    foreach ($pools as $pool) {
+        $query = StockSummary::where('product_id', $pool['product_id'])
+            ->where('purchasetype', $pool['purchasetype']);
+ 
+        if ($type === 'branch_to_project') {
+            $query->where('type', 'Branch')
+                ->where('branch_id', $request->from_branch_id)
+                ->where('warehouse_id', $request->from_warehouse_id);
+        } else { // project_to_project, project_to_branch
+            $query->where('type', 'Project')
+                ->where('project_id', $request->from_project_id)
+                ->where('branch_id', 0);
+        }
+ 
+        $available = (float) $query->sum('quantity');
+ 
+        if ($pool['qty'] > $available) {
+            return 'Insufficient ' . $pool['purchasetype'] . ' stock. Available: ' . $available
+                . ', requested: ' . $pool['qty'] . ' (Product row ' . $pool['row'] . ')';
+        }
+    }
+ 
+    return null;
+}
 
     /**
      * @param $id
      * @return array
      */
-    public function updateValidation($request, $id)
-    {
-        return [
-            'date'                  => 'required|date',
-            'category_nm'           => 'required|array|min:1',
-            'product_nm'            => 'required|array|min:1',
-            'qty'                   => 'required|array|min:1',
-            'qty.*'                 => 'required|numeric|min:0.01',
-
-            // branch_to_project ONLY
-            'from_branch_id'        => 'nullable|required_if:transfer_type,branch_to_project',
-            'to_project_id_a'       => 'nullable|required_if:transfer_type,branch_to_project',
-            'purchase_requisition'  => 'nullable|required_if:transfer_type,branch_to_project',
-
-            // project_to_project / project_to_branch
-            'from_project_id'       => 'nullable|required_if:transfer_type,project_to_project,project_to_branch',
-
-            // project_to_project ONLY (+ same-project block)
-            'to_project_id_b'       => 'nullable|required_if:transfer_type,project_to_project|different:from_project_id',
-
-            // project_to_branch ONLY
-            'to_branch_id'          => 'nullable|required_if:transfer_type,project_to_branch',
-        ];
-    }
+ public function updateValidation($request, $id)
+{
+    return [
+        'date'                  => 'required|date',
+        'category_nm'           => 'required|array|min:1',
+        'product_nm'            => 'required|array|min:1',
+        'qty'                   => 'required|array|min:1',
+        'qty.*'                 => 'required|numeric|min:0.01',
+ 
+        // branch_to_project ONLY
+        'from_branch_id'        => 'nullable|required_if:transfer_type,branch_to_project',
+        'to_project_id_a'       => 'nullable|required_if:transfer_type,branch_to_project',
+        'purchase_requisition'  => 'nullable|required_if:transfer_type,branch_to_project',
+ 
+        // project_to_project / project_to_branch
+        'from_project_id'       => 'nullable|required_if:transfer_type,project_to_project,project_to_branch',
+ 
+        // project_to_project ONLY
+        'to_project_id_b'       => 'nullable|required_if:transfer_type,project_to_project|different:from_project_id',
+ 
+        // project_to_branch ONLY
+        'to_branch_id'          => 'nullable|required_if:transfer_type,project_to_branch',
+        'to_warehouse_id'       => 'nullable|required_if:transfer_type,project_to_branch',
+    ];
+}
 
 
     public function approveValidation($request, $id)

@@ -615,6 +615,17 @@
 
                                     <div class="txn-list" id="txn-list">
                                         @forelse ($firstPageTransactions as $row)
+                                            @php
+                                                $isTransferIn = false;
+                                                if ($row['type'] === 'transfer') {
+                                                    $descLower = strtolower($row['desc'] ?? '');
+                                                    $isTransferIn =
+                                                        str_contains($descLower, 'inward') ||
+                                                        str_contains($descLower, 'received') ||
+                                                        str_contains($descLower, 'branch_to_project') ||
+                                                        str_contains($descLower, 'branch to project');
+                                                }
+                                            @endphp
                                             <div class="txn-row" data-type="{{ $row['type'] }}">
                                                 <div class="txn-icon">
                                                     @switch($row['type'])
@@ -635,7 +646,15 @@
                                                         @break
 
                                                         @case('transfer')
-                                                            <i class="fa fa-exchange-alt text-warning"></i>
+                                                            @if ($isTransferIn)
+                                                                <span class="badge badge-success p-1" title="Inward (Received)"><i
+                                                                        class="fa fa-arrow-circle-down text-white"
+                                                                        style="transform: rotate(35deg);"></i></span>
+                                                            @else
+                                                                <span class="badge badge-danger p-1" title="Outward (Sent)"><i
+                                                                        class="fa fa-arrow-circle-up text-white"
+                                                                        style="transform: rotate(35deg);"></i></span>
+                                                            @endif
                                                         @break
 
                                                         @case('income')
@@ -649,7 +668,18 @@
                                                 </div>
 
                                                 <div class="txn-main">
-                                                    <div class="txn-desc">{{ $row['desc'] }}</div>
+                                                    <div class="txn-desc">
+                                                        {{ $row['desc'] }}
+                                                        @if ($row['type'] === 'transfer')
+                                                            @if ($isTransferIn)
+                                                                <span class="badge badge-success ml-1"
+                                                                    style="font-size: 10px;">IN (Received)</span>
+                                                            @else
+                                                                <span class="badge badge-danger ml-1"
+                                                                    style="font-size: 10px;">OUT (Sent)</span>
+                                                            @endif
+                                                        @endif
+                                                    </div>
                                                     <div class="txn-meta">{{ $row['date'] }} &middot;
                                                         {{ $row['invoice'] }}</div>
                                                 </div>
@@ -661,19 +691,12 @@
                                                         </div>
                                                     @else
                                                         <div
-                                                            class="txn-amount {{ in_array($row['type'], ['income', 'money']) ? 'income' : '' }}">
-                                                            {{ in_array($row['type'], ['income', 'money']) ? '+' : '' }}{{ number_format($row['amount'], 2) }}
+                                                            class="txn-amount {{ in_array($row['type'], ['income', 'money']) || ($row['type'] === 'transfer' && $isTransferIn) ? 'text-success' : ($row['type'] === 'transfer' ? 'text-danger' : '') }}">
+                                                            {{ $row['type'] === 'income' || $row['type'] === 'money' || ($row['type'] === 'transfer' && $isTransferIn) ? '+' : ($row['type'] === 'transfer' ? '-' : '') }}{{ number_format($row['amount'], 2) }}
                                                         </div>
                                                     @endif
                                                     <div class="txn-status">{{ $row['status'] }}</div>
                                                 </div>
-                                                {{-- <div class="text-right">
-                                                    <div
-                                                        class="txn-amount {{ in_array($row['type'], ['income', 'money']) ? 'income' : '' }}">
-                                                        {{ in_array($row['type'], ['income', 'money']) ? '+' : '' }}{{ number_format($row['amount'], 2) }}
-                                                    </div>
-                                                    <div class="txn-status">{{ $row['status'] }}</div>
-                                                </div> --}}
                                             </div>
                                             @empty
                                                 <div class="empty-state"><i class="fa fa-inbox"></i> No transactions
@@ -776,72 +799,6 @@
                                 </p>
                             @endif
 
-                            {{-- <div class="col-md-12">
-                                <div class="txn-panel mb-3">
-                                    <div class="d-flex justify-content-between align-items-center p-2 no-print"
-                                        style="background:#f8f9fa; border-bottom:1px solid #e9ecef;">
-                                        <span style="font-size:13px; font-weight:600; padding-left:6px;"><i
-                                                class="fa fa-file-invoice-dollar"></i> Project Bills</span>
-                                        <button class="btn btn-sm btn-primary" data-toggle="modal"
-                                            data-target="#modalCreateBill">
-                                            <i class="fa fa-plus"></i> Create Bill
-                                        </button>
-                                    </div>
-
-                                    <div class="txn-tabs no-print" id="billTabs">
-                                        <button class="txn-tab-btn active" data-status="all">All</button>
-                                        <button class="txn-tab-btn" data-status="Draft">Draft</button>
-                                        <button class="txn-tab-btn" data-status="Submitted">Submitted</button>
-                                        <button class="txn-tab-btn" data-status="Approved">Approved</button>
-                                        <button class="txn-tab-btn" data-status="Paid">Paid</button>
-                                    </div>
-
-                                    <div class="txn-list" id="bill-list">
-                                        <div class="empty-state"><i class="fa fa-spinner fa-spin"></i> Loading bills...</div>
-                                    </div>
-                                </div>
-                            </div> --}}
-
-                            {{-- ============ Create Bill Modal ============ --}}
-                            {{-- <div class="modal fade" id="modalCreateBill" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Create Bill
-                                                <small>{{ $projectDetails->projectCode }}</small>
-                                            </h5>
-                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <form id="formCreateBill">
-                                                <input type="hidden" name="project_id" value="{{ $projectDetails->id }}">
-                                                <div class="form-group">
-                                                    <label>Milestone / Description</label>
-                                                    <input type="text" name="milestone_name" class="form-control"
-                                                        placeholder="e.g. Foundation completion 25%">
-                                                </div>
-                                                <div class="form-group">
-                                                    <label>Billing Date</label>
-                                                    <input type="date" name="billing_date" class="form-control"
-                                                        value="{{ date('Y-m-d') }}" required>
-                                                </div>
-                                                <div class="form-group">
-                                                    <label>Amount</label>
-                                                    <input type="number" step="0.01" name="amount" class="form-control"
-                                                        required>
-                                                </div>
-                                            </form>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                                            <button class="btn btn-primary" id="btnSaveBill">Save Bill</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div> --}}
-
-
-
                             <div class="row mt-4">
                                 <div class="col-md-4">
                                     <p>Prepared By: _____________<br>Date: ____________________</p>
@@ -857,16 +814,12 @@
                                 you will be satisfied by our services.
                             </div>
                         </div>
-
-
-
-
                     </div>
                 @else
                     <div class="no-project-card no-print">
                         <i class="fa fa-folder-open"></i>
                         <h5>No Project Selected</h5>
-                        <p>Report দেখতে হলে উপরের Filter থেকে একটি Project সিলেক্ট করে "Generate Report" চাপুন।</p>
+                        <p>Report dekhte hole uporer Filter theke ekti Project select kore "Generate Report" chapun.</p>
                     </div>
                 @endif
             </div>
@@ -952,8 +905,7 @@
                         <div class="modal-footer">
                             <button class="btn btn-default"
                                 onclick="printModalTable('tblEstimateProfit','Estimate Breakdown')"><i
-                                    class="fa fa-print"></i>
-                                Print</button>
+                                    class="fa fa-print"></i> Print</button>
                             <button class="btn btn-success"
                                 onclick="exportModalTableToExcel('tblEstimateProfit','estimate_breakdown')"><i
                                     class="fa fa-file-excel"></i> Excel</button>
@@ -1056,7 +1008,7 @@
                                             </tr>
                                         @endforeach
                                         <tr>
-                                            <td colspan="3">Product Consumption (GRN + Transfer)</td>
+                                            <td colspan="3">Product Consumption (GRN + Transfer Net)</td>
                                             <td class="amount-cell">{{ number_format($summary['productAmount'], 2) }}
                                             </td>
                                         </tr>
@@ -1074,8 +1026,7 @@
                         </div>
                         <div class="modal-footer">
                             <button class="btn btn-default" onclick="printModalTable('tblCurrentExpense','Actual Cost')"><i
-                                    class="fa fa-print"></i>
-                                Print</button>
+                                    class="fa fa-print"></i> Print</button>
                             <button class="btn btn-success"
                                 onclick="exportModalTableToExcel('tblCurrentExpense','actual_cost')"><i
                                     class="fa fa-file-excel"></i> Excel</button>
@@ -1415,42 +1366,75 @@
                 </div>
             </div>
 
-            {{-- ============ Transfer Modal ============ --}}
+            {{-- ============ Transfer Modal (Updated with Icons & Badges) ============ --}}
             <div class="modal fade" id="modalTransfer" tabindex="-1">
                 <div class="modal-dialog modal-lg modal-dialog-scrollable">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title">Transfer <small>{{ $projectDetails->projectCode }}</small></h5>
+                            <h5 class="modal-title"><i class="fa fa-exchange-alt text-warning mr-1"></i> Transfer Records
+                                <small>{{ $projectDetails->projectCode }}</small>
+                            </h5>
                             <button type="button" class="close" data-dismiss="modal">&times;</button>
                         </div>
                         <div class="modal-body">
                             @if ($projectTransfer->isNotEmpty())
-                                <table class="table table-bordered table-sm" id="tblTransfer">
+                                <table class="table table-bordered table-sm align-middle" id="tblTransfer">
                                     <thead>
                                         <tr>
                                             <th>Date</th>
                                             <th>Invoice</th>
+                                            <th>Transfer Direction (In / Out)</th>
+                                            <th>Type</th>
                                             <th>Items</th>
+                                            <th class="amount-cell">Amount</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($projectTransfer as $val)
+                                            @php
+                                                $isInward =
+                                                    $val->to_project_id == $projectDetails->id ||
+                                                    ($val->transfer_type == 'branch_to_project' &&
+                                                        $val->project_id == $projectDetails->id);
+                                            @endphp
                                             <tr>
                                                 <td>{{ $val->order_date }}</td>
                                                 <td>{{ $val->invoice_no }}</td>
+                                                <td>
+                                                    @if ($isInward)
+                                                        <span class="badge badge-success px-2 py-1" style="font-size: 11px;">
+                                                            <i class="fa fa-arrow-circle-down text-white mr-1"></i> IN
+                                                            (Received / Inward)
+                                                        </span>
+                                                    @else
+                                                        <span class="badge badge-danger px-2 py-1" style="font-size: 11px;">
+                                                            <i class="fa fa-arrow-circle-up text-white mr-1"></i> OUT (Sent /
+                                                            Outward)
+                                                        </span>
+                                                    @endif
+                                                </td>
+                                                <td><small
+                                                        class="text-muted text-uppercase font-weight-bold">{{ str_replace('_', ' ', $val->transfer_type) }}</small>
+                                                </td>
                                                 <td>{{ $val->details->count() }} item(s)</td>
+                                                <td
+                                                    class="amount-cell font-weight-bold {{ $isInward ? 'text-success' : 'text-danger' }}">
+                                                    {{ $isInward ? '+' : '-' }}
+                                                    {{ number_format($val->details->sum(fn($d) => ($d->qty ?? 0) * ($d->unit_price ?? 0)), 2) }}
+                                                </td>
                                             </tr>
                                         @endforeach
                                     </tbody>
                                 </table>
                             @else
-                                <div class="empty-state"><i class="fa fa-inbox"></i> No transfer found.</div>
+                                <div class="empty-state"><i class="fa fa-inbox"></i> No transfer records found.</div>
                             @endif
                         </div>
                         <div class="modal-footer">
-                            <button class="btn btn-default" onclick="printModalTable('tblTransfer','Transfer')"><i
+                            <button class="btn btn-default" onclick="printModalTable('tblTransfer','Transfer Records')"><i
                                     class="fa fa-print"></i> Print</button>
-                            <button class="btn btn-success" onclick="exportModalTableToExcel('tblTransfer','transfer')"><i
+                            <button class="btn btn-success"
+                                onclick="exportModalTableToExcel('tblTransfer','transfer_records')"><i
                                     class="fa fa-file-excel"></i> Excel</button>
                             <button class="btn btn-secondary" data-dismiss="modal">Close</button>
                         </div>
@@ -1483,77 +1467,71 @@
                     let isLoading = false;
                     let activeType = 'all';
 
-                    const iconMap = {
-                        requisition: {
-                            icon: 'fa-file-alt',
-                            cls: 'text-primary'
-                        },
-                        order: {
-                            icon: 'fa-file-invoice',
-                            cls: 'text-info'
-                        },
-                        purchase: {
-                            icon: 'fa-file-invoice',
-                            cls: 'text-info'
-                        },
-                        voucher: {
-                            icon: 'fa-file-invoice',
-                            cls: 'text-info'
-                        },
-                        grn: {
-                            icon: 'fa-box',
-                            cls: 'text-success'
-                        },
-                        transfer: {
-                            icon: 'fa-exchange-alt',
-                            cls: 'text-warning'
-                        },
-                        income: {
-                            icon: 'fa-arrow-down',
-                            cls: 'txn-cash-in'
-                        },
-                        money: {
-                            icon: 'fa-arrow-down',
-                            cls: 'txn-cash-in'
-                        },
-                        expense: {
-                            icon: 'fa-arrow-up',
-                            cls: 'txn-cash-out'
-                        },
-                    };
-
                     function renderRow(row) {
                         const div = document.createElement('div');
                         div.className = 'txn-row';
                         div.dataset.type = row.type;
 
-                        const isIncomeLike = row.type === 'income' || row.type === 'money';
-                        const isRequisition = row.type === 'requisition';
-                        const meta = iconMap[row.type] || {
-                            icon: 'fa-file',
-                            cls: ''
-                        };
+                        let iconHtml = '<i class="fa fa-file text-secondary"></i>';
+                        let amountClass = '';
+                        let transferBadge = '';
+                        let amountPrefix = '';
+
+                        if (row.type === 'transfer') {
+                            const descText = (row.desc || '').toLowerCase();
+                            const isIncoming = descText.includes('inward') || descText.includes('received') || descText
+                                .includes('branch_to_project') || descText.includes('branch to project') || descText
+                                .includes('+');
+
+                            if (isIncoming) {
+                                iconHtml =
+                                    '<span class="badge badge-success p-1"><i class="fa fa-arrow-circle-down text-white"></i></span>';
+                                transferBadge =
+                                    ' <span class="badge badge-success ml-1" style="font-size: 10px;">IN (Received)</span>';
+                                amountClass = 'text-success font-weight-bold';
+                                amountPrefix = '+';
+                            } else {
+                                iconHtml =
+                                    '<span class="badge badge-danger p-1"><i class="fa fa-arrow-circle-up text-white"></i></span>';
+                                transferBadge =
+                                    ' <span class="badge badge-danger ml-1" style="font-size: 10px;">OUT (Sent)</span>';
+                                amountClass = 'text-danger font-weight-bold';
+                                amountPrefix = '-';
+                            }
+                        } else if (row.type === 'grn') {
+                            iconHtml = '<i class="fa fa-box text-success"></i>';
+                        } else if (row.type === 'income' || row.type === 'money') {
+                            iconHtml = '<i class="fa fa-arrow-down txn-cash-in"></i>';
+                            amountClass = 'income';
+                            amountPrefix = '+';
+                        } else if (row.type === 'expense') {
+                            iconHtml = '<i class="fa fa-arrow-up txn-cash-out"></i>';
+                        } else if (row.type === 'requisition') {
+                            iconHtml = '<i class="fa fa-file-alt text-primary"></i>';
+                        } else {
+                            iconHtml = '<i class="fa fa-file-invoice text-info"></i>';
+                        }
 
                         let amountHtml;
-                        if (isRequisition) {
+                        if (row.type === 'requisition') {
                             amountHtml =
                                 `<div class="txn-amount">${Number(row.amount).toLocaleString(undefined, {maximumFractionDigits: 0})} <small style="font-weight:400;">QTY</small></div>`;
                         } else {
                             amountHtml =
-                                `<div class="txn-amount ${isIncomeLike ? 'income' : ''}">${isIncomeLike ? '+' : ''}${Number(row.amount).toLocaleString(undefined, {minimumFractionDigits: 2})}</div>`;
+                                `<div class="txn-amount ${amountClass}">${amountPrefix}${Number(row.amount).toLocaleString(undefined, {minimumFractionDigits: 2})}</div>`;
                         }
 
                         div.innerHTML = `
-        <div class="txn-icon"><i class="fa ${meta.icon} ${meta.cls}"></i></div>
-        <div class="txn-main">
-            <div class="txn-desc">${row.desc}</div>
-            <div class="txn-meta">${row.date} &middot; ${row.invoice}</div>
-        </div>
-        <div class="text-right">
-            ${amountHtml}
-            <div class="txn-status">${row.status}</div>
-        </div>
-    `;
+                        <div class="txn-icon">${iconHtml}</div>
+                        <div class="txn-main">
+                            <div class="txn-desc">${row.desc}${transferBadge}</div>
+                            <div class="txn-meta">${row.date} &middot; ${row.invoice}</div>
+                        </div>
+                        <div class="text-right">
+                            ${amountHtml}
+                            <div class="txn-status">${row.status}</div>
+                        </div>
+                    `;
                         return div;
                     }
 
@@ -1622,6 +1600,7 @@
                     'th,td{border:1px solid #333;padding:6px 8px;}' +
                     'th{background:#f1f1f1;text-align:left;}' +
                     '.amount-cell{text-align:right;}' +
+                    '(.badge){padding:3px 6px;border-radius:3px;font-size:11px;}' +
                     '</style></head><body>' +
                     '<h3>' + title + '</h3>' + tableHtml +
                     '</body></html>'
@@ -1634,7 +1613,7 @@
                 }, 300);
             }
 
-            // Exports the modal's table as an Excel-readable .xls file (no external library needed)
+            // Exports the modal's table as an Excel-readable .xls file
             function exportModalTableToExcel(tableId, filename) {
                 var tableHtml = document.getElementById(tableId).outerHTML;
                 var template =
@@ -1654,136 +1633,5 @@
                 document.body.removeChild(link);
             }
         </script>
-
-        {{-- <script>
-            (function() {
-                const projectId = {{ $projectDetails->id }};
-                const listEl = document.getElementById('bill-list');
-                let activeStatus = 'all';
-
-                const statusColor = {
-                    Draft: 'secondary',
-                    Submitted: 'info',
-                    Approved: 'warning',
-                    Paid: 'success'
-                };
-
-                const nextAction = {
-                    Draft: {
-                        label: 'Submit',
-                        next: 'Submitted'
-                    },
-                    Submitted: {
-                        label: 'Approve',
-                        next: 'Approved'
-                    },
-                    Approved: {
-                        label: 'Mark Paid',
-                        next: 'Paid'
-                    },
-                };
-
-                const billUrl = "{{ route('project.bill.feed', ['id' => $projectDetails->id]) }}";
-
-                function renderBill(bill) {
-                    const action = nextAction[bill.status];
-                    const div = document.createElement('div');
-                    div.className = 'txn-row';
-                    div.dataset.status = bill.status;
-                    div.innerHTML = `
-            <div class="txn-icon"><i class="fa fa-file-invoice-dollar text-${statusColor[bill.status]}"></i></div>
-            <div class="txn-main">
-                <div class="txn-desc">${bill.milestone_name || 'Bill'} — ${bill.invoice_no}</div>
-                <div class="txn-meta">${bill.billing_date} &middot; <span class="badge badge-${statusColor[bill.status]}">${bill.status}</span></div>
-            </div>
-            <div class="text-right">
-                <div class="txn-amount">${Number(bill.amount).toLocaleString(undefined,{minimumFractionDigits:2})}</div>
-                ${action ? `<button class="btn btn-xs btn-outline-${statusColor[action.next]} btn-advance" data-id="${bill.id}" data-next="${action.next}" style="margin-top:4px; font-size:11px;">${action.label}</button>` : ''}
-            </div>
-        `;
-                    return div;
-                }
-
-
-                function loadBills() {
-                    listEl.innerHTML = '<div class="empty-state"><i class="fa fa-spinner fa-spin"></i> Loading...</div>';
-                    fetch(billUrl)
-                        .then(res => res.json())
-                        .then(json => {
-                            listEl.innerHTML = '';
-                            const filtered = activeStatus === 'all' ? json.data : json.data.filter(b => b.status ===
-                                activeStatus);
-                            if (filtered.length === 0) {
-                                listEl.innerHTML =
-                                    '<div class="empty-state"><i class="fa fa-inbox"></i> No bills found.</div>';
-                                return;
-                            }
-                            filtered.forEach(b => listEl.appendChild(renderBill(b)));
-                        });
-                }
-
-                document.querySelectorAll('#billTabs .txn-tab-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        document.querySelectorAll('#billTabs .txn-tab-btn').forEach(b => b.classList.remove(
-                            'active'));
-                        btn.classList.add('active');
-                        activeStatus = btn.dataset.status;
-                        loadBills();
-                    });
-                });
-
-                listEl.addEventListener('click', function(e) {
-                    if (e.target.classList.contains('btn-advance')) {
-                        const id = e.target.dataset.id;
-                        const next = e.target.dataset.next;
-                        if (!confirm(`Status "${next}" এ পরিবর্তন করবেন?`)) return;
-
-                        fetch(billUrl, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                },
-                                body: JSON.stringify({
-                                    status: next
-                                })
-                            })
-                            .then(res => res.json())
-                            .then(json => {
-                                if (!json.success) {
-                                    alert(json.message || 'Error');
-                                    return;
-                                }
-                                loadBills();
-                            });
-                    }
-                });
-
-                document.getElementById('btnSaveBill').addEventListener('click', function() {
-                    const form = document.getElementById('formCreateBill');
-                    const formData = new FormData(form);
-                    const payload = Object.fromEntries(formData.entries());
-
-                    fetch("{{ route('project.bill.store') }}", {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            },
-                            body: JSON.stringify(payload)
-                        })
-                        .then(res => res.json())
-                        .then(json => {
-                            if (json.success) {
-                                $('#modalCreateBill').modal('hide');
-                                form.reset();
-                                loadBills();
-                            }
-                        });
-                });
-
-                loadBills();
-            })();
-        </script> --}}
         @include('backend.pages.reports.excel')
     @endsection

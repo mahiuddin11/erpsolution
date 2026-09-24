@@ -288,7 +288,7 @@
         }
 
         /* Info note shown when remaining qty is auto-loaded from a requisition.
-               Rows are NOT locked: deleting a row or reducing qty stays possible. */
+                   Rows are NOT locked: deleting a row or reducing qty stays possible. */
         .products-info-note {
             display: none;
             align-items: center;
@@ -1284,7 +1284,7 @@
                         $.each(items, function(i, item) {
                             chain = chain.then(function() {
                                 if (token !== reqLoadToken)
-                            return; // requisition changed meanwhile
+                                    return; // requisition changed meanwhile
                                 return addRequisitionRow(item);
                             });
                         });
@@ -1398,7 +1398,8 @@
                             fillSelect($wh, [], 'No warehouse under this branch');
                             $wh.trigger('change.select2');
                             alert(
-                                'This branch has no warehouse. Create a warehouse first, then make the transfer.');
+                                'This branch has no warehouse. Create a warehouse first, then make the transfer.'
+                                );
                             return;
                         }
                         fillSelect($wh, res, '-- Select Warehouse --');
