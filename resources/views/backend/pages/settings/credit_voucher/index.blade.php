@@ -73,7 +73,7 @@
                                     <th>SL</th>
                                     <th>Voucher no</th>
                                     <th>Amount</th>
-                                    <th>Project</th>
+                                    <th>Branch/Project</th>
                                     <th>Approved By</th>
                                     <th>Admin Viewer</th>
                                     <th>Update By</th>
@@ -90,7 +90,7 @@
                                     <th>SL</th>
                                     <th>Voucher no</th>
                                     <th>Amount</th>
-                                    <th>Project</th>
+                                    <th>Branch/Project</th>
                                     <th>Approved By</th>
                                     <th>Admin Viewer</th>
                                     <th>Update By</th>

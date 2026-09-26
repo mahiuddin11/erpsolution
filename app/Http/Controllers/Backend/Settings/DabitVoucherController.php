@@ -66,7 +66,10 @@ class DabitVoucherController extends Controller
     public function create()
     {
         $title = 'Add New Debit Voucher';
-        $branches = Branch::get()->where('status', 'Active');
+        
+        
+        $branches = Branch::where('status', 'Active')->where('parent_id', 0)->get();
+       
         $creditaccountheas = ChartOfAccount::whereIn('id', [16, 17])->get();
         $accounts = ChartOfAccount::where('parent_id', 0)->get();
         $dabitvoucher = DabitVoucher::get();
@@ -91,6 +94,8 @@ class DabitVoucherController extends Controller
      */
     public function store(Request $request)
     {
+
+    // dd($request->all());
 
         try {
             $this->validate($request, $this->systemService->storeValidation($request));

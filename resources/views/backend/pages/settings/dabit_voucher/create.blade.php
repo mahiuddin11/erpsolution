@@ -228,6 +228,7 @@
                 e.preventDefault();
                 let creditamount = 0;
                 let debitamount = 0;
+                let hasError = false;
 
                 $('input[name="credit[]"]').each(function() {
                     creditamount += Number($(this).val());
@@ -236,6 +237,32 @@
                 $('input[name="debit[]"]').each(function() {
                     debitamount += Number($(this).val());
                 })
+
+                // Cost Center mandatory check
+                $('#main-table tr').each(function() {
+                    let $costCenterType = $(this).find('select.cost_center_type');
+                    if ($costCenterType.length) {
+                        let type = $costCenterType.val();
+                        if (!type) {
+                            $(this).find('.cost-center-error').text('Cost Center is required');
+                            hasError = true;
+                        } else {
+                            $(this).find('.cost-center-error').text('');
+                            let $target = type === 'branch' ? $(this).find('.branch-section') : $(
+                                this).find('.project-section');
+                            if (!$target.val()) {
+                                $(this).find('.cost-center-error').text(type === 'branch' ?
+                                    'Branch is required' : 'Project is required');
+                                hasError = true;
+                            }
+                        }
+                    }
+                });
+
+                if (hasError) {
+                    alert('Please select Cost Center (Branch/Project) for all rows');
+                    return false;
+                }
 
                 if (creditamount != debitamount) {
                     alert('Debit and Credit Amount Not Same');
@@ -306,41 +333,42 @@
               <input type="hidden" value="${account_id}" name="account_id[]">
             </div>
            ${!is_bank ? `
-                                                                <div class="mr-3">
-                                                                  <select name="cost_center_type[]" class="form-control form-control-sm cost_center_type">
-                                                                    <option value="">Select</option>
-                                                                    <option value="branch">Branch</option>
-                                                                    <option value="project">Project</option>
-                                                                  </select>
-                                                                </div>
+                                                                                    <div class="mr-3">
+                                                                                      <select name="cost_center_type[]" class="form-control form-control-sm cost_center_type">
+                                                                                        <option value="">Select</option>
+                                                                                        <option value="branch">Branch</option>
+                                                                                        <option value="project">Project</option>
+                                                                                      </select>
+                                                                                      <span class="error text-red text-bold cost-center-error"></span>
+                                                                                    </div>
 
-                                                                <div class="d-none">
-                                                                  <select name="branch_id[]" class="form-control select2 form-control-sm branch-section " style="min-width: 150px;">
-                                                                    <option value="">Select Branch</option>
-                                                                    @foreach ($branches as $branch)
-                                                                      <option value="{{ $branch->id }}">{{ $branch->name }}</option>
-                                                                    @endforeach
-                                                                  </select>
-                                                                </div>
+                                                                                    <div class="d-none">
+                                                                                      <select name="branch_id[]" class="form-control select2 form-control-sm branch-section " style="min-width: 150px;">
+                                                                                        <option value="">Select Branch</option>
+                                                                                        @foreach ($branches as $branch)
+                                                                                          <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                                                                        @endforeach
+                                                                                      </select>
+                                                                                    </div>
 
-                                                                <div class="d-none">
-                                                                  <select name="project_id[]" class="form-control select2 form-control-sm project-section " style="min-width: 150px;">
-                                                                    <option value="">Select Project</option>
-                                                                    @foreach ($projects as $project)
-                                                                      <option value="{{ $project->id }}">{{ $project->name }}</option>
-                                                                    @endforeach
-                                                                  </select>
-                                                                </div>` : `
-                                                                  <input type="hidden" name="project_id[]"/>
-                                                                  <input type="hidden" name="branch_id[]"/>
-                                                                  <input type="hidden" name="cost_center_type[]"/>
-                                                                   <div class="mt-3 ml-3">
-                                                                      <input type="text" class="form-control" placeholder="Voucher Number" name="voucher_number[${rowCount}]"/>
-                                                                   </div>
-                                                                   <div class="mt-3">
-                                                                      <input type="date" class="form-control" placeholder="Voucher Date" name="voucher_date[${rowCount}]"/>
-                                                                   </div>
-                                                                ` }
+                                                                                    <div class="d-none">
+                                                                                      <select name="project_id[]" class="form-control select2 form-control-sm project-section " style="min-width: 150px;">
+                                                                                        <option value="">Select Project</option>
+                                                                                        @foreach ($projects as $project)
+                                                                                          <option value="{{ $project->id }}">{{ $project->name }}</option>
+                                                                                        @endforeach
+                                                                                      </select>
+                                                                                    </div>` : `
+                                                                                      <input type="hidden" name="project_id[]"/>
+                                                                                      <input type="hidden" name="branch_id[]"/>
+                                                                                      <input type="hidden" name="cost_center_type[]"/>
+                                                                                       <div class="mt-3 ml-3">
+                                                                                          <input type="text" class="form-control" placeholder="Voucher Number" name="voucher_number[${rowCount}]"/>
+                                                                                       </div>
+                                                                                       <div class="mt-3">
+                                                                                          <input type="date" class="form-control" placeholder="Voucher Date" name="voucher_date[${rowCount}]"/>
+                                                                                       </div>
+                                                                                    ` }
 
        </div>
      </td>

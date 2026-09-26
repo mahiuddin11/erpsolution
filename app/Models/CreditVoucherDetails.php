@@ -13,4 +13,11 @@ class CreditVoucherDetails extends Model
     {
         return $this->belongsTo(ChartOfAccount::class, 'account_id');
     }
+
+    function branch(){
+        return $this->belongsTo(Branch::class, 'branch_id');
+    }
+    function project(){
+        return $this->belongsTo(Project::class, 'project_id');
+    }
 }

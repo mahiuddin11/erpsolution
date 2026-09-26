@@ -63,7 +63,7 @@
                                     <th>SL</th>
                                     <th>Voucher no</th>
                                     <th>Amount</th>
-                                    <th>Project</th>
+                                    <th>Branch/Project</th>
                                     <th>Update By</th>
                                     <th>Date</th>
                                     <th>Note</th>
@@ -78,7 +78,7 @@
                                     <th>SL</th>
                                     <th>Voucher no</th>
                                     <th>Amount</th>
-                                    <th>Project</th>
+                                    <th>Branch/Project</th>
                                     <th>Update By</th>
                                     <th>Date</th>
                                     <th>Note</th>

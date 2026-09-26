@@ -67,46 +67,6 @@
                                     id="invoice_no" value="{{ $invoice_no }}" oninput="removeSpaces(this)">
                             </div>
 
-                            {{-- <div class="col-md-4 mb-3">
-                                <label for="validationCustom01">Debit Account Head * :</label>
-                                <select class="form-control select2" name="credit_account_id" id="credit_account_id">
-                                    <option selected disabled value="">--Select--</option>
-                                    <x-account :setAccounts="$creditaccountheas" />
-                                    <option value="5">Due</option>
-                                </select>
-                                <span class="error text-red text-bold"></span>
-                            </div> --}}
-                            {{-- <div class="col-md-4 mb-3">
-                                <label for="validationCustom01">Cost Center *:</label>
-                                <select class="form-control select2" id="cost_center">
-                                    <option selected value="0">No Cost Center</option>
-                                    <option value="project">Project</option>
-                                    <option value="branch">Branch</option>
-                                </select>
-                                <span class="error text-red text-bold"></span>
-                            </div>
-
-                            <div class="col-md-4 mb-3" id="project_div" style="display: none;">
-                                <label for="validationCustom01">Project *:</label>
-                                <select class="form-control select2" id="project_id" name="project_id">
-                                    <option selected value="0">--Select--</option>
-                                    @foreach ($projects as $item)
-                                        <option value="{{ $item->id }}">{{ $item->name }}</option>
-                                    @endforeach
-                                </select>
-                                <span class="error text-red text-bold"></span>
-                            </div>
-
-                            <div class="col-md-4 mb-3" id="branch_div" style="display: none;">
-                                <label for="validationCustom01">Branch *:</label>
-                                <select class="form-control select2" id="branch_id" name="branch_id">
-                                    <option selected value="0">--Select--</option>
-                                    @foreach ($branchs as $item)
-                                        <option value="{{ $item->id }}">{{ $item->name }}</option>
-                                    @endforeach
-                                </select>
-                                <span class="error text-red text-bold"></span>
-                            </div> --}}
 
                             <div class="col-md-4 mb-3">
                                 <label>Date:</label>
@@ -251,6 +211,7 @@
                 e.preventDefault();
                 let creditamount = 0;
                 let debitamount = 0;
+                let hasError = false;
 
                 $('input[name="credit[]"]').each(function() {
                     creditamount += Number($(this).val());
@@ -259,6 +220,32 @@
                 $('input[name="debit[]"]').each(function() {
                     debitamount += Number($(this).val());
                 })
+
+                // Cost Center mandatory check
+                $('#main-table tr').each(function() {
+                    let $costCenterType = $(this).find('select.cost_center_type');
+                    if ($costCenterType.length) {
+                        let type = $costCenterType.val();
+                        if (!type) {
+                            $(this).find('.cost-center-error').text('Cost Center is required');
+                            hasError = true;
+                        } else {
+                            $(this).find('.cost-center-error').text('');
+                            let $target = type === 'branch' ? $(this).find('.branch-section') : $(
+                                this).find('.project-section');
+                            if (!$target.val()) {
+                                $(this).find('.cost-center-error').text(type === 'branch' ?
+                                    'Branch is required' : 'Project is required');
+                                hasError = true;
+                            }
+                        }
+                    }
+                });
+
+                if (hasError) {
+                    alert('Please select Cost Center (Branch/Project) for all rows');
+                    return false;
+                }
 
                 if (creditamount != debitamount) {
                     alert('Credit and Debit Amount Not Same');
@@ -444,6 +431,7 @@
       <option value="branch">Branch</option>
       <option value="project">Project</option>
     </select>
+<span class="error text-red text-bold cost-center-error"></span>
   </div>
 
   <div class="d-none">

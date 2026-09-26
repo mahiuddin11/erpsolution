@@ -72,7 +72,7 @@ class CreditVoucherController extends Controller
     public function create()
     {
         $title = 'Add New Receive Voucher';
-        $branches = Branch::get()->where('status', 'Active');
+        $branches = Branch::where('status', 'Active')->where('parent_id', 0)->get();
         $creditaccountheas = ChartOfAccount::whereIn('id', [16, 17])->get();
         $accounts = ChartOfAccount::where('parent_id', 0)->get();
         $creditvoucher = CreditVoucher::get();
@@ -83,7 +83,6 @@ class CreditVoucherController extends Controller
         else :
             $creditvoucherData = 1;
         endif;
-        $branchs = Branch::get();
 
         $invoice_no = 'CV' . str_pad($creditvoucherData, 5, "0", STR_PAD_LEFT);
         $projects = Project::all();

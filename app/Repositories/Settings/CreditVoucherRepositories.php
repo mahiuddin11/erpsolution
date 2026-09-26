@@ -92,7 +92,9 @@ class CreditVoucherRepositories
                 $nestedData['id'] = $key + 1;
                 $nestedData['voucher_no'] = $item->voucher_no;
                 $nestedData['amount'] = $item->details->sum("debit") ?? "N/A";
-                $nestedData['project_id'] = $item->project->name ?? "N/A";
+                $branchNames = $item->details->pluck('branch.name')->filter()->unique()->implode(', ');
+                $projectNames = $item->details->pluck('project.name')->filter()->unique()->implode(', ');
+                $nestedData['branch'] = $branchNames ?: ($projectNames ?: "-");
                 $nestedData['approved_by'] = $item->user->name ?? "Admin still not view";
                 $nestedData['viewed'] = $item->viewed == 1 ? "Viewed" : "N/A";
                 $nestedData['updated_by'] = $item->updatedBy->name ?? "N/A";
@@ -146,6 +148,9 @@ class CreditVoucherRepositories
 
     public function store($request)
     {
+
+   
+
         DB::beginTransaction();
         try {
 

@@ -94,7 +94,10 @@ class JournalVoucherRepositories
                 $nestedData['id'] = $key + 1;
                 $nestedData['voucher_no'] = $item->voucher_no;
                 $nestedData['amount'] = $item->details->sum("debit") ?? "N/A";
-                $nestedData['project_id'] = $item->project->name ?? "N/A";
+                $branchNames = $item->details->pluck('branch.name')->filter()->unique()->implode(', ');
+                $projectNames = $item->details->pluck('project.name')->filter()->unique()->implode(', ');
+                $nestedData['branch'] = $branchNames ?: ($projectNames ?: "-");
+
                 $nestedData['updated_by'] = $item->updatedBy->name ?? "N/A";
                 $nestedData['date'] = $item->date ?? "N/A";
                 $nestedData['note'] = $item->note ?? "N/A";
@@ -141,7 +144,7 @@ class JournalVoucherRepositories
 
     public function store($request)
     {
-        // dd($request->all());
+        
         try {
             DB::beginTransaction();
             $creditvoucherLastData = JournalVoucher::latest('id')->first();

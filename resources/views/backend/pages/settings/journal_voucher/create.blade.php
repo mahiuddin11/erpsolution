@@ -230,6 +230,7 @@
       <option value="branch">Branch</option>
       <option value="project">Project</option>
     </select>
+     <span class="error text-red text-bold cost-center-error"></span>
   </div>
 
   <div class="d-none">
@@ -365,6 +366,7 @@
             e.preventDefault();
             let creditamount = 0;
             let debitamount = 0;
+            let hasError = false;
 
             $('input[name="credit[]"]').each(function() {
                 creditamount += Number($(this).val());
@@ -373,6 +375,33 @@
             $('input[name="debit[]"]').each(function() {
                 debitamount += Number($(this).val());
             })
+
+            // Cost Center mandatory check
+            $('#main-table tr').each(function() {
+                let $costCenterType = $(this).find('select.cost_center_type');
+                if ($costCenterType.length) {
+                    let type = $costCenterType.val();
+                    if (!type) {
+                        $(this).find('.cost-center-error').text('Cost Center is required');
+                        hasError = true;
+                    } else {
+                        $(this).find('.cost-center-error').text('');
+                        let $target = type === 'branch' ? $(this).find('.branch-section') : $(this).find(
+                            '.project-section');
+                        if (!$target.val()) {
+                            $(this).find('.cost-center-error').text(type === 'branch' ?
+                                'Branch is required' : 'Project is required');
+                            hasError = true;
+                        }
+                    }
+                }
+            });
+
+            if (hasError) {
+                alert('Please select Cost Center (Branch/Project) for all rows');
+                return false;
+            }
+
 
             if (creditamount != debitamount) {
                 alert('Debit and Credit Amount Not Same');

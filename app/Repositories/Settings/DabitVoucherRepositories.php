@@ -83,11 +83,16 @@ class DabitVoucherRepositories
         $data = array();
         if ($dabitvoucher) {
             foreach ($dabitvoucher as $key => $item) {
+
+            // dd($item);
+
                 $nestedData['id'] = $key + 1;
                 $nestedData['voucher_no'] = $item->voucher_no;
                 // $nestedData['amount'] = $item->details->sum("debit") ?? "N/A";
                 $nestedData['amount'] = number_format($item->details->sum("debit"), 2) ?? "N/A";
-                $nestedData['project_id'] = $item->project->name ?? "N/A";
+                $branchNames = $item->details->pluck('branch.name')->filter()->unique()->implode(', ');
+                $projectNames = $item->details->pluck('project.name')->filter()->unique()->implode(', ');
+                $nestedData['branch'] = $branchNames ?: ($projectNames ?: "-");
                 $nestedData['approved_by'] = $item->user->name  ?? "Admin still not view";
                 $nestedData['viewed'] = $item->viewed == 1 ? "Viewed" : "N/A";
                 $nestedData['updated_by'] = $item->updatedBy->name ?? "N/A";
@@ -145,7 +150,6 @@ class DabitVoucherRepositories
     public function store($request)
     {
 
-   
         try {
             DB::beginTransaction();
 
@@ -159,8 +163,8 @@ class DabitVoucherRepositories
 
             $dabitvoucher = new DabitVoucher();
             $dabitvoucher->voucher_no = $invoice_no;
-            // $dabitvoucher->branch_id = $request->branch_id ?? 0;
-            // $dabitvoucher->project_id = $request->project_id;
+            // $dabitvoucher->branch_id = $request->branch_id ?? null;
+            // $dabitvoucher->project_id = $request->project_id ?? null;
             $dabitvoucher->supplier_id = $request->supplier_id;
             $dabitvoucher->customer_id = $request->customer_id;
             $dabitvoucher->employee_id = $request->employee_id;

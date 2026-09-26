@@ -23,7 +23,7 @@
                 "orderable": true
             },
             {
-                "data": "project_id",
+                "data": "branch",
                 "orderable": true
             },
             {
