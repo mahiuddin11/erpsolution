@@ -1936,7 +1936,7 @@ class PurchaseRepositories
             if ($request->has('chart_of_account_id')) {
                 $purchase->chart_of_account_id = $request->chart_of_account_id;
             }
-            // Edit page-এ cash হলে select-এর name="accounts" থাকে (form field name বদলানো হয়নি), তাই এখানে সেটিও ধরা হলো
+          
             elseif ($request->filled('accounts')) {
                 $purchase->chart_of_account_id = $request->accounts;
             }
