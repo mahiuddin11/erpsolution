@@ -76,8 +76,10 @@
                 <div class="card-header no-print">
                     <h3 class="card-title">Group Ledger</h3>
                     <a onclick="window.print()" target="_blank" class="btn btn-default float-right my-2 no-print"><i
-                            class="fas fa-print"></i>
-                        Print</a>
+                            class="fas fa-print"></i>Print</a>
+                    <button type="button" id="exportExcelBtn" class="btn btn-success float-right my-2 no-print mr-2">
+                        <i class="fas fa-file-excel"></i> Excel
+                    </button>
                     <div id="tableActions" class=" float-right my-2 no-print"></div>
                 </div>
 
@@ -193,8 +195,11 @@
     </div>
 @endsection
 @section('scripts')
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
         $(document).ready(function() {
+
+            let currentLedgerData = null; // stores last loaded data for excel export
 
             // select2 initialize
             $('.select2').select2();
@@ -212,8 +217,10 @@
                     if (parent_id == '') {
                         $('#selected-account-name').text('-- Select a Group --');
                         $('#ledger-table-body').html(`
-            <tr><td colspan="6" class="text-center text-muted">No sub-groups or ledgers found</td></tr>
-        `);
+    <tr>
+        <td colspan="6" class="text-center text-muted">No sub-groups or ledgers found</td>
+    </tr>
+    `);
                         return;
                     }
 
@@ -233,17 +240,19 @@
                         success: function(data) {
                             if (data.length > 0) {
                                 let html = `
-                    <div class="col-md-3 col-sm-6 mb-2 dynamic-group">
-                        <label>Select Sub Group</label>
-                        <select class="form-control select2 sub_group" name="account_id">
-                            <option value="">-- Select Sub Group --</option>`;
+    <div class="col-md-3 col-sm-6 mb-2 dynamic-group">
+        <label>Select Sub Group</label>
+        <select class="form-control select2 sub_group" name="account_id">
+            <option value="">-- Select Sub Group --</option>`;
 
                                 data.forEach(function(item) {
                                     html +=
                                         `<option value="${item.id}">${item.accountCode} - ${item.account_name}</option>`;
                                 });
 
-                                html += `</select></div>`;
+                                html += `
+        </select>
+    </div>`;
                                 $('#group-select-wrapper').append(html);
                                 $('.select2').select2();
                             }
@@ -273,10 +282,12 @@
                 let end_date = $('input[name="end_date"]').val();
 
                 $('#ledger-table-body').html(`
-            <tr><td colspan="6" class="text-center">
-                <i class="fas fa-spinner fa-spin"></i> Loading...
-            </td></tr>
-        `);
+    <tr>
+        <td colspan="6" class="text-center">
+            <i class="fas fa-spinner fa-spin"></i> Loading...
+        </td>
+    </tr>
+    `);
 
                 $.ajax({
                     url: "{{ route('group-ledger-data') }}",
@@ -287,10 +298,14 @@
                         end_date: end_date
                     },
                     success: function(data) {
+                        currentLedgerData = data; // save for excel export
+
                         if (data.subLedgers.length === 0) {
                             $('#ledger-table-body').html(`
-                        <tr><td colspan="6" class="text-center text-muted">No sub-groups or ledgers found</td></tr>
-                    `);
+    <tr>
+        <td colspan="6" class="text-center text-muted">No sub-groups or ledgers found</td>
+    </tr>
+    `);
                             return;
                         }
 
@@ -299,32 +314,34 @@
                             let closingClass = sub.closing_balance >= 0 ? 'text-success' :
                                 'text-danger';
                             rows += `
-                    <tr>
-                        <td>${sub.account_name}</td>
-                        <td>${sub.accountCode ?? sub.account_code ?? ''}</td>
-                        <td class="text-right">${formatNumber(sub.opening_balance)}</td>
-                        <td class="text-right">${formatNumber(sub.period_debit)}</td>
-                        <td class="text-right">${formatNumber(sub.period_credit)}</td>
-                        <td class="text-right fw-bold ${closingClass}">${formatNumber(sub.closing_balance)}</td>
-                    </tr>`;
+    <tr>
+        <td>${sub.account_name}</td>
+        <td>${sub.accountCode ?? sub.account_code ?? ''}</td>
+        <td class="text-right">${formatNumber(sub.opening_balance)}</td>
+        <td class="text-right">${formatNumber(sub.period_debit)}</td>
+        <td class="text-right">${formatNumber(sub.period_credit)}</td>
+        <td class="text-right fw-bold ${closingClass}">${formatNumber(sub.closing_balance)}</td>
+    </tr>`;
                         });
 
                         // Summary row
                         rows += `
-                <tr class="table-active fw-bold">
-                    <td colspan="2"><strong>Group Total</strong></td>
-                    <td class="text-right"><strong>${formatNumber(data.summary.total_opening_blance)}</strong></td>
-                    <td class="text-right"><strong>${formatNumber(data.summary.total_debit)}</strong></td>
-                    <td class="text-right"><strong>${formatNumber(data.summary.total_credit)}</strong></td>
-                    <td class="text-right"><strong>${formatNumber(data.summary.total_debit - data.summary.total_credit)}</strong></td>
-                </tr>`;
+    <tr class="table-active fw-bold">
+        <td colspan="2"><strong>Group Total</strong></td>
+        <td class="text-right"><strong>${formatNumber(data.summary.total_opening_blance)}</strong></td>
+        <td class="text-right"><strong>${formatNumber(data.summary.total_debit)}</strong></td>
+        <td class="text-right"><strong>${formatNumber(data.summary.total_credit)}</strong></td>
+        <td class="text-right"><strong>${formatNumber(data.summary.total_debit - data.summary.total_credit)}</strong></td>
+    </tr>`;
 
                         $('#ledger-table-body').html(rows);
                     },
                     error: function() {
                         $('#ledger-table-body').html(`
-                    <tr><td colspan="6" class="text-center text-danger">Something went wrong!</td></tr>
-                `);
+    <tr>
+        <td colspan="6" class="text-center text-danger">Something went wrong!</td>
+    </tr>
+    `);
                     }
                 });
             }
@@ -334,6 +351,143 @@
                 num = parseFloat(num) || 0;
                 return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
             }
+
+            $('#exportExcelBtn').on('click', function() {
+                if (!currentLedgerData || !currentLedgerData.subLedgers || currentLedgerData.subLedgers
+                    .length === 0) {
+                    alert(
+                        'অনুগ্রহ করে প্রথমে একটি Group সিলেক্ট করুন এবং ডেটা লোড হওয়া পর্যন্ত অপেক্ষা করুন'
+                    );
+                    return;
+                }
+
+                let accountName = $('#selected-account-name').text().trim() || 'Group Ledger';
+                let startDate = $('input[name="start_date"]').val() || $('#display-start-date').text();
+                let endDate = $('input[name="end_date"]').val() || $('#display-end-date').text();
+
+                // ── Build sheet data as array-of-arrays ──
+                let aoa = [];
+                aoa.push([accountName]);
+                aoa.push(['From Date: ' + startDate, '', 'To Date: ' + endDate]);
+                aoa.push([]); // blank spacer row
+                aoa.push(['Ledger Name', 'Code', 'Opening Balance', 'Debit (Period)', 'Credit (Period)',
+                    'Closing Balance'
+                ]);
+
+                currentLedgerData.subLedgers.forEach(function(sub) {
+                    aoa.push([
+                        sub.account_name,
+                        sub.accountCode ?? sub.account_code ?? '',
+                        Number(sub.opening_balance) || 0,
+                        Number(sub.period_debit) || 0,
+                        Number(sub.period_credit) || 0,
+                        Number(sub.closing_balance) || 0
+                    ]);
+                });
+
+                let s = currentLedgerData.summary;
+                aoa.push([
+                    'Group Total', '',
+                    Number(s.total_opening_blance) || 0,
+                    Number(s.total_debit) || 0,
+                    Number(s.total_credit) || 0,
+                    (Number(s.total_debit) || 0) - (Number(s.total_credit) || 0)
+                ]);
+
+                let ws = XLSX.utils.aoa_to_sheet(aoa);
+
+                // ── Merge title & date rows across all 6 columns ──
+                ws['!merges'] = [{
+                        s: {
+                            r: 0,
+                            c: 0
+                        },
+                        e: {
+                            r: 0,
+                            c: 5
+                        }
+                    }, // title row
+                    {
+                        s: {
+                            r: 1,
+                            c: 0
+                        },
+                        e: {
+                            r: 1,
+                            c: 1
+                        }
+                    }, // from date
+                    {
+                        s: {
+                            r: 1,
+                            c: 2
+                        },
+                        e: {
+                            r: 1,
+                            c: 5
+                        }
+                    } // to date
+                ];
+
+                // ── Column widths ──
+                ws['!cols'] = [{
+                        wch: 28
+                    }, // Ledger Name
+                    {
+                        wch: 12
+                    }, // Code
+                    {
+                        wch: 16
+                    }, // Opening Balance
+                    {
+                        wch: 16
+                    }, // Debit
+                    {
+                        wch: 16
+                    }, // Credit
+                    {
+                        wch: 16
+                    } // Closing Balance
+                ];
+
+                // ── Number format + bold header/total row ──
+                let headerRowIdx = 3; // 0-indexed row of "Ledger Name..." header
+                let totalRowIdx = aoa.length - 1;
+                let range = XLSX.utils.decode_range(ws['!ref']);
+
+                for (let R = range.s.r; R <= range.e.r; R++) {
+                    for (let C = range.s.c; C <= range.e.c; C++) {
+                        let cellRef = XLSX.utils.encode_cell({
+                            r: R,
+                            c: C
+                        });
+                        let cell = ws[cellRef];
+                        if (!cell) continue;
+
+                        // Bold: title, header row, total row
+                        if (R === 0 || R === headerRowIdx || R === totalRowIdx) {
+                            cell.s = cell.s || {};
+                            cell.s.font = {
+                                bold: true
+                            };
+                        }
+
+                        // Number format for the 4 numeric columns (C, D, E, F => index 2..5)
+                        if (R > headerRowIdx && C >= 2 && C <= 5 && typeof cell.v === 'number') {
+                            cell.z = '#,##0.00';
+                        }
+                    }
+                }
+
+                let wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Ledger');
+
+                let fileName = accountName.replace(/[^a-zA-Z0-9]/g, '_') + '_' +
+                    (startDate || '').replace(/[^0-9]/g, '') + '_to_' +
+                    (endDate || '').replace(/[^0-9]/g, '') + '.xlsx';
+
+                XLSX.writeFile(wb, fileName);
+            });
 
         });
     </script>
