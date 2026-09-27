@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
-// >>> NEW
+
 class BackfillTransferWarehouseColumns extends Command
 {
     protected $signature = 'warehouse:backfill-transfers

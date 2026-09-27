@@ -164,6 +164,8 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //Salary attendance crud operation end
         Route::any('/hrm-attendance-newemployee', [AttendanceLogController::class, 'newemployee'])->name('hrm.employee.newemployee');
         Route::any('hrm-attendance-log-data', [AttendanceLogController::class, 'attandanceLog'])->name('hrm.attendancelog.log');
+        Route::get('presence-absence-report', [AttendanceLogController::class, 'presenceAbsenceReport'])->name('hrm.attendancelog.presence-absence-report');
+        Route::get('presence-absence-report-data', [AttendanceLogController::class, 'presenceAbsenceReportData'])->name('hrm.attendancelog.presence-absence-report-data');
     });
 
     //Holiday Setup

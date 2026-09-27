@@ -360,6 +360,7 @@ class HrmDashboardApiController extends Controller
             ['key' => 'create_resign',    'label' => 'Create Resignation',  'icon' => 'bi-graph-down-arrow',  'route' => 'hrm.resignation.create'],
             ['key' => 'create_holiday',   'label' => 'Create Holiday',      'icon' => 'bi-calendar2-week',    'route' => 'hrm.holiday.index'],
             ['key' => 'create_warning',   'label' => 'Create Warning',      'icon' => 'bi-exclamation-triangle', 'route' => 'hrm.warning.create'],
+            ['key' => 'attendance_reports',   'label' => 'Attendance Report','icon' => 'bi-person-check', 'route' => 'hrm.attendancelog.presence-absence-report'],
         ];
 
         $allowed = collect($actions)->filter(function ($action) {

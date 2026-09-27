@@ -472,6 +472,16 @@ $parent_menu = array(
                 )
             ),
 
+              (object) array(
+                'label' => 'Attendance Report',
+                'route' => null,
+                'uniqueName' => "AttendancReport",
+                'icon' => 'fa fa-th-large',
+                'parent_id' => null,
+                'childMenu' => (object) array(
+                    (object) array('label' => 'Attendance Report', 'route' => 'hrm.attendancelog.presence-absence-report', 'icon' => 'bi-person-check', 'navigate_status' => 1),
+                )
+            ),
 
             (object) array(
                 'label' => 'Attendance Log',
@@ -483,6 +493,7 @@ $parent_menu = array(
                     (object) array('label' => 'Attendance Log', 'route' => 'hrm.attendancelog.index', 'icon' => 'fa fa-dashboard', 'navigate_status' => 1),
                 )
             ),
+          
 
             (object) array(
                 'label' => 'Holiday Setup',

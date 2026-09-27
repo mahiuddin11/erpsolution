@@ -304,4 +304,158 @@ class AttendanceLogController extends Controller
             'initials'  => $initials,
         ];
     }
+
+
+            public function presenceAbsenceReport(Request $request)
+            {
+                $title = 'Presence and Absence Report';
+
+                $start = $request->start_date ?? now()->startOfWeek(Carbon::SUNDAY)->toDateString();
+                $end   = $request->end_date   ?? now()->endOfWeek(Carbon::SATURDAY)->toDateString();
+
+                $employees = Employee::select('id', 'id_card', 'name')
+                    ->where('employee_status', 'present')
+                    ->orderBy('name', 'asc')
+                    ->get();
+
+                return view('backend.pages.hrm.attendance.attendance-log.presence-absence-report', compact('title', 'start', 'end', 'employees'));
+            }
+
+            public function presenceAbsenceReportData(Request $request)
+            {
+                $start = $request->start_date ?? now()->startOfWeek(Carbon::SUNDAY)->toDateString();
+                $end   = $request->end_date   ?? now()->endOfWeek(Carbon::SATURDAY)->toDateString();
+
+                if ($end < $start) {
+                    $end = $start;
+                }
+
+                $holidays = Holiday::getHolidaySet($start, $end);
+                $holidaySet = collect($holidays)
+                    ->mapWithKeys(fn($v, $k) => [Carbon::parse($k)->toDateString() => true])
+                    ->toArray();
+
+                $approvedLeaves = [];
+                $leaveApps = LeaveApplication::where('status', 'approved')
+                    ->where(function ($q) use ($start, $end) {
+                        $q->whereBetween('apply_date', [$start, $end])
+                            ->orWhereBetween('end_date', [$start, $end]);
+                    })->get();
+
+                foreach ($leaveApps as $leave) {
+                    $period = CarbonPeriod::create($leave->apply_date, $leave->end_date);
+                    foreach ($period as $d) {
+                        $approvedLeaves[$leave->employee_id . '_' . $d->toDateString()] = true;
+                    }
+                }
+
+                $employeesQuery = Employee::select('id', 'id_card', 'name')
+                    ->where('employee_status', 'present');
+
+                if ($request->employee_id && $request->employee_id != 'all') {
+                    $employeesQuery->where('id', $request->employee_id);
+                }
+
+                $employees = $employeesQuery->orderBy('id_card', 'asc')->get();
+
+                $attendances = Attendance::whereBetween('date', [$start, $end])
+                    ->get()
+                    ->groupBy(fn($item) => $item->emplyee_id . '_' . Carbon::parse($item->date)->toDateString());
+
+                $period = CarbonPeriod::create($start, $end);
+                $totalDays = iterator_count(CarbonPeriod::create($start, $end));
+
+                $report = [];
+                $sl = 1;
+
+                foreach ($employees as $emp) {
+
+                    $presence      = 0;
+                    $absence       = 0;
+                    $leave         = 0;
+                    $holidayTotal  = 0;
+                    $holidayDuty   = 0;
+
+                    $workedMinutes   = 0;
+                    $incompleteDays  = [];
+
+                    foreach ($period as $date) {
+                        $dateStr   = $date->toDateString();
+                        $key       = $emp->id . '_' . $dateStr;
+                        $isFriday  = $date->isFriday();
+                        $isHoliday = isset($holidaySet[$dateStr]);
+                        $isLeave   = isset($approvedLeaves[$key]);
+                        $row       = $attendances[$key][0] ?? null;
+
+                        $hasCheckIn  = $row && $row->sign_in;
+                        $hasCheckOut = $row && $row->sign_out;
+
+                        if ($hasCheckIn && $hasCheckOut) {
+                            $in  = Carbon::parse($row->sign_in);
+                            $out = Carbon::parse($row->sign_out);
+                            if ($out->gt($in)) {
+                                $workedMinutes += $in->diffInMinutes($out);
+                            }
+                        } elseif ($hasCheckIn && !$hasCheckOut) {
+                            $incompleteDays[] = Carbon::parse($dateStr)->format('d M');
+                        }
+
+                        if ($isFriday || $isHoliday) {
+                            $holidayTotal++;
+                            if ($hasCheckIn) {
+                                $presence++;
+                                $holidayDuty++;
+                            }
+                            continue;
+                        }
+
+                        if ($isLeave) {
+                            $leave++;
+                            continue;
+                        }
+
+                        if ($hasCheckIn) {
+                            $presence++;
+                        } else {
+                            $absence++;
+                        }
+                    }
+
+                    $note = $holidayDuty > 0 ? $holidayDuty . ' day(s) worked on Friday/Holiday' : '';
+
+                    $expectedMinutes = $presence * 8 * 60;
+                    $workedHoursStr   = floor($workedMinutes / 60) . 'h ' . ($workedMinutes % 60) . 'm';
+                    $expectedHoursStr = floor($expectedMinutes / 60) . 'h ' . ($expectedMinutes % 60) . 'm';
+
+                    $diffMinutes = $workedMinutes - $expectedMinutes;
+                    $diffSign    = $diffMinutes >= 0 ? '+' : '-';
+                    $diffAbs     = abs($diffMinutes);
+                    $diffStr     = $diffSign . floor($diffAbs / 60) . 'h ' . ($diffAbs % 60) . 'm';
+
+                    $report[] = [
+                        'sl'              => $sl++,
+                        'empId'           => $emp->id_card,
+                        'name'            => $emp->name,
+                        'presence'        => $presence,
+                        'absence'         => $absence,
+                        'leave'           => $leave,
+                        'holidays'        => $holidayTotal,
+                        'holidayDuty'     => $holidayDuty,
+                        'expectedHours'   => $expectedHoursStr,
+                        'workedHours'     => $workedHoursStr,
+                        'hoursDiff'       => $diffStr,
+                        'incompleteDays'  => implode(', ', $incompleteDays),
+                        'incompleteCount' => count($incompleteDays),
+                        'note'            => $note,
+                    ];
+                }
+
+                return response()->json([
+                    'status'    => true,
+                    'start'     => $start,
+                    'end'       => $end,
+                    'totalDays' => $totalDays,
+                    'result'    => $report,
+                ]);
+            }
 }

@@ -899,7 +899,7 @@
             }
 
             /* ── Print header top bar ──
-                                                                           To change header border color: edit border-bottom value below */
+                                                                                                   To change header border color: edit border-bottom value below */
             .print-ph-top {
                 display: flex !important;
                 justify-content: space-between;
@@ -949,8 +949,8 @@
             }
 
             /* ── Summary line (replaces dashboard cards) ──
-                                                                           To change the header background color: edit print-ph-top border-bottom color
-                                                                           To change summary text colors: edit .ps-present, .ps-late, .ps-absent strong colors below */
+                                                                                                   To change the header background color: edit print-ph-top border-bottom color
+                                                                                                   To change summary text colors: edit .ps-present, .ps-late, .ps-absent strong colors below */
             .print-summary-line {
                 display: flex !important;
                 align-items: center;
@@ -994,7 +994,7 @@
             /* ▲ ─────────────────────────────────────────── ▲ */
 
             /* ── Table header color note ──
-                                                                           To change table header background: edit the background value below */
+                                                                                                   To change table header background: edit the background value below */
             #attendanceTable {
                 font-size: 9.5px !important;
                 width: 100%;
@@ -1195,8 +1195,12 @@
 
             {{-- FILTER PANEL --}}
             <div class="filter-panel">
-                <div class="filter-panel-header">
-                    <i class="bi bi-funnel-fill me-2"></i>Search &amp; Filter Attendance
+                <div class="filter-panel-header d-flex align-items-center justify-content-between">
+                    <div><i class="bi bi-funnel-fill me-2"></i>Search &amp; Filter Attendance</div>
+                    <button type="button" class="btn btn-sm btn-light" id="btnPresenceReport"
+                        style="font-size:12px; font-weight:600; padding:5px 12px;">
+                        <i class="bi bi-file-earmark-bar-graph me-1"></i>Report
+                    </button>
                 </div>
                 <div class="filter-panel-body">
                     <div class="row g-3 align-items-end">
@@ -1453,6 +1457,15 @@
 
             /* 9. Fetch today's table data */
             fetchData(todayStr, todayStr);
+
+
+            $('#btnPresenceReport').on('click', function() {
+                const s = $('#startDate').val();
+                const e = $('#endDate').val();
+                const url = "{{ route('hrm.attendancelog.presence-absence-report') }}" +
+                    `?start_date=${s}&end_date=${e}`;
+                window.open(url, '_blank');
+            });
         });
 
         /* ═══════════════════════════════════════════════════
