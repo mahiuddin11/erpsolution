@@ -101,55 +101,55 @@
                             <div class="col-md-2 mb-3">
                                 <label for="validationCustom01">Branch * :</label>
 
-                                <!-- Select field is disabled so user cannot change it -->
                                 <select class="form-control select2" id="branch_id" disabled>
                                     <option disabled value="">--Select Branch--</option>
                                     @foreach ($branch as $key => $value)
                                         <option value="{{ $value->id }}"
-                                            {{ $selectedParentBranchId == $value->id ? 'selected' : '' }}>
-                                            {{ $value->name ?? '—' }} <!-- $value->branchCode . ' - ' . -->
+                                            {{ $saletlist->branch_id == $value->id ? 'selected' : '' }}>
+                                            {{ $value->name ?? '—' }}
                                         </option>
                                     @endforeach
                                 </select>
 
-                                <!-- Hidden field to submit the branch_id data -->
-                                <input type="hidden" name="branch_id" value="{{ $selectedParentBranchId }}">
+                                <input type="hidden" name="branch_id" value="{{ $saletlist->branch_id }}">
 
                                 @error('branch_id')
                                     <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
 
+                            {{-- CHANGED: warehouse — branch-er under filter bad; edit() er shob $Warehouse theke
+                                 sale voucher-e create kora warehouse_id selected thakbe --}}
+                            @php
+                                $hasWarehouse = !empty($saletlist->warehouse_id);
+                            @endphp
+
                             <div class="col-md-2 mb-3">
                                 <label for="validationCustom02">Warehouse * :</label>
 
-
-                                <select class="form-control select2" id="warehouse_id" disabled>
-                                    <option disabled value="">--Select Sub-Warehouse--</option>
-                                    @foreach ($subWarehouses as $subWarehouse)
-                                        <option value="{{ $subWarehouse->id }}"
-                                            {{ $subWarehouse->id == $saletlist->warehouse_id ? 'selected' : '—' }}>
-                                            {{ $subWarehouse->name ?? '' }}
-                                            <!-- ($subWarehouse->warehouseCode ?? $subWarehouse->branchCode) . ' - ' . -->
+                                <select class="form-control select2" id="warehouse_id"
+                                    @if ($hasWarehouse) disabled @else name="warehouse_id" required @endif>
+                                    <option disabled value="" {{ $hasWarehouse ? '' : 'selected' }}>--Select
+                                        Warehouse--</option>
+                                    @foreach ($Warehouse as $w)
+                                        <option value="{{ $w->id }}"
+                                            {{ $saletlist->warehouse_id == $w->id ? 'selected' : '' }}>
+                                            {{ $w->name ?? '' }}
                                         </option>
                                     @endforeach
                                 </select>
 
-                                <input type="hidden" name="warehouse_id" value="{{ $saletlist->warehouse_id }}">
+                                {{-- voucher-e warehouse thakle: select disabled, tai hidden input diye POST hobe --}}
+                                @if ($hasWarehouse)
+                                    <input type="hidden" name="warehouse_id" value="{{ $saletlist->warehouse_id }}">
+                                @endif
 
-                                <input type="hidden" name="warehouse_source" id="warehouse_source"
-                                    value="{{ $warehouseSource }}">
+                                <input type="hidden" name="warehouse_source" id="warehouse_source" value="new">
 
-                                <!-- Loading spinner -->
-                                <div id="loadingSpinner" style="display:none;">
-                                    <img src="https://i.pinimg.com/originals/5c/87/9a/5c879ab8cba794923686df4b950f497b.gif"
-                                        alt="Loading..." width="10%" />
-                                </div>
-                                @error('sub_warehouse_id')
+                                @error('warehouse_id')
                                     <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
-
 
                             {{-- <div class="col-md-2 mb-3">
                             <label for="validationCustom01">Customer * :</label>
@@ -565,10 +565,7 @@
                                                                                     <option
                                                                                         {{ $transection->account_id ?? '0' == $value->id ? 'selected' : '' }}
                                                                                         value="{{ $value->id }}">
-                                                                                        {{ $value->accountCode .
-                                                                                            ' -
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ' .
-                                                                                            $value->account_name }}
+                                                                                        {{ $value->accountCode . ' - ' . $value->account_name }}
                                                                                     </option>
                                                                                 @endforeach
                                                                             </select>
@@ -870,44 +867,42 @@
                     return false;
                 } else {
 
-                    $("#show_item tbody").append('<tr class="new_item' + proId +
-                        '">\n\
-                                                                                                                                                                                                                                                                                                                                                                        <td style="padding-left:15px;">' +
+                    $("#show_item tbody").append('<tr class="new_item' + proId + '">' +
+                        '<td style="padding-left:15px;">' +
                         catName +
                         '<input type="hidden" name="catName[]" value="' +
                         catId +
-                        '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                                                        <td align="right">' +
+                        '"></td>' +
+                        '<td align="right">' +
                         proName +
                         '<input type="hidden" class="add_quantity" name="proName[]" value="' +
                         proId +
-                        '"></td>\n\    \n\
-                                                                                                <td align="right">' +
+                        '"></td>' +
+                        '<td align="right">' +
                         purchasetypetext +
                         '<input type="hidden" class="add_quantity" name="purchasetype[]" value="' +
                         purchasetypeval +
-                        '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                                                        <td align="right">' +
+                        '"></td>' +
+                        '<td align="right">' +
                         qty +
                         '<input type="hidden" class="ttlqty" name="qty[]" value="' +
                         qty +
-                        '"></td>\n\
-                                                                                                    \n\    \n\\n\  <td align="right">' +
+                        '"></td>' +
+                        '<td align="right">' +
                         vat +
                         '<input type="hidden" class="ttlqty" name="vat[]" value="' + vat +
-                        '"></td>\n\\n\                                                                                                                                                                                                                                                                  <td align="right">' +
+                        '"></td>' +
+                        '<td align="right">' +
                         unitprice +
                         '<input type="hidden" class="ttlunitprice unitparice" name="unitprice[]" value="' +
                         unitprice +
-                        '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                                                        <td align="right">' +
+                        '"></td>' +
+                        '<td align="right">' +
                         total +
                         '<input type="hidden" class="grandtotal" name="total[]" value="' +
                         total +
-                        '"></td>\n\
-                                                                                                                                                                                                                                                                                                                                                                        \n\
-                                                                                                                                                                                                                                                                                                                                                                        \n\
-                                                                                                                                                                                                                                                                                                                                                                        <td><a del_id="' +
+                        '"></td>' +
+                        '<td><a del_id="' +
                         proId +
                         '" class="delete_item btn form-control btn-danger" href="javascript:;" title=""><i class="fa fa-times"></i></a></td></tr>'
                     );
@@ -1154,6 +1149,7 @@
         function getUnitPrice(v) {
             let branch_id = $('#branch_id option:selected').val();
             let purchasetype = $('.purchasetype option:selected').val();
+            let warehouseId = $('[name="warehouse_id"]').val();
             let productId = $('#productID option:selected').val();
             $.ajax({
                 "url": "{{ route('sale.sale.saleunitPrice') }}",
@@ -1164,7 +1160,8 @@
                     productId: productId
                 },
                 success: function(data) {
-                    $("#unitpice").val(data);
+                    // $("#unitpice").val(data);
+                    $("#unitpice").val((data && typeof data === 'object') ? data.sale_price : data);
                 }
             });
 
@@ -1176,7 +1173,8 @@
                     "_token": "{{ csrf_token() }}",
                     productId: productId,
                     type: purchasetype,
-                    branch_id: branch_id,
+                    // branch_id: branch_id,
+                    warehouseId: warehouseId,
 
                 },
                 success: function(data) {

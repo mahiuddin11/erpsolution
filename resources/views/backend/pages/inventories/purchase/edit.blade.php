@@ -131,68 +131,43 @@
                                 @enderror
                             </div> --}}
 
-                            <div class="col-md-2 mb-3">
-                                <label for="validationCustom01">Branch * :</label>
-                                <select class="form-control select2" id="branch_id_display" disabled>
-                                    <option selected disabled value="">--Select Branch--</option>
-                                    @foreach ($branch as $key => $value)
+                            {{-- READ-ONLY: disabled নয়, তাই মান submit-এ যাবে; শুধু বদলানো আটকানো --}}
+                            <div class="col-md-2 mb-3 readonly-select">
+                                <label>Branch * :</label>
+                                <select class="form-control select2" id="branch_id" name="branch_id">
+                                    <option disabled value="">--Select Branch--</option>
+                                    @foreach ($branch as $value)
                                         <option value="{{ $value->id }}"
-                                            {{ $parentBranchId == $value->id ? 'selected' : '' }}>
+                                            {{ $editInfo->branch_id == $value->id ? 'selected' : '' }}>
                                             {{ $value->branchCode . ' - ' . $value->name }}
                                         </option>
                                     @endforeach
                                 </select>
-                                {{-- >>> NEW — actual submitted value, since the visible select is disabled --}}
-                                <input type="hidden" name="branch_id" value="{{ $parentBranchId }}">
-                                {{-- <<< END NEW --}}
                                 @error('branch_id')
                                     <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
 
-                            <div class="col-md-2 mb-3">
-                                <label for="validationCustom02">Warehouse * :</label>
-                                <select class="form-control select2" id="sub_warehouse_id_display" disabled>
-                                    <option selected disabled value="">--Select Warehouse--</option>
-                                    @foreach ($subWarehouses as $subWarehouse)
-                                        <option value="{{ $subWarehouse->id }}"
-                                            {{ $subWarehouse->id == $selectedWarehouseId ? 'selected' : '' }}>
-                                            {{ $subWarehouse->text }}
+                            <div class="col-md-2 mb-3 readonly-select">
+                                <label>Warehouse * :</label>
+                                <select class="form-control select2" id="sub_warehouse_id" name="sub_warehouse_id">
+                                    <option disabled value="">--Select Warehouse--</option>
+                                    @foreach ($warehouses as $w)
+                                        <option value="{{ $w->id }}"
+                                            {{ $editInfo->warehouse_id == $w->id ? 'selected' : '' }}>
+                                            {{ ($w->warehouseCode ? $w->warehouseCode . ' - ' : '') . $w->name }}
                                         </option>
                                     @endforeach
                                 </select>
-                                {{-- >>> NEW — actual submitted values, since the visible select is disabled --}}
-                                <input type="hidden" name="sub_warehouse_id" value="{{ $selectedWarehouseId }}">
-                                <input type="hidden" name="warehouse_source" value="{{ $warehouseSource }}">
-                                <input type="hidden" name="old_branch_id" value="{{ $editInfo->branch_id }}">
-
+                                <input type="hidden" name="warehouse_source" value="new">
                                 @error('sub_warehouse_id')
                                     <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
 
 
-                            {{-- <div class="col-md-3 mb-3">
-                                <label>Supplier * :</label>
-                                <select class="form-control select2 supid" name="supplier_id">
-                                    <option selected disabled value="">--Select Supplier--</option>
-                                    @foreach ($supplier as $key => $value)
-                                        <option value="{{ $value->id }}"
-                                            {{ $editInfo->supplier_id == $value->id ? 'selected' : '' }}>
-                                            {{ $value->supplierCode . ' - ' . $value->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('supplier_id')
-                                    <span class=" error text-red text-bold">{{ $message }}</span>
-                                @enderror
-                            </div> --}}
-                            <div class="col-md-2 mb-3">
-                                <label for="ledger_id">Ledger * :
-                                    <button type="button" class="btn btn-sm btn-primary ml-2" data-toggle="modal"
-                                        data-target="#addSupplierModal">
-                                        +
-                                    </button>
-                                </label>
+                            <div class="col-md-2 mb-3 readonly-select">
+                                <label for="ledger_id">Ledger * :</label>
                                 <select class="form-control select2 supid" name="ledger_id" id="ledger_id">
                                     <option selected disabled value="">--Select Ledger--</option>
                                     <x-account :setAccounts="$ledgers" :selectVal="$editInfo->ledger_id" />
@@ -575,6 +550,19 @@
         </div>
     </div>
     <!-- /.col-->
+
+    {{-- READ-ONLY style: Branch, Warehouse, Ledger --}}
+    <style>
+        .readonly-select select,
+        .readonly-select .select2-container {
+            pointer-events: none;
+        }
+
+        .readonly-select .select2-container--default .select2-selection--single {
+            background-color: #e9ecef;
+        }
+    </style>
+
     <script type="text/javascript">
         $(document).ready(function() {
             // Supplier  Create
@@ -601,6 +589,12 @@
                 });
                 $("button[type='submit']").prop('disabled', false);
             });
+
+            // READ-ONLY: কিবোর্ড/অন্য উপায়ে select2 খোলা বা বদলানো আটকানো
+            $(document).on('select2:opening select2:unselecting', '.readonly-select select', function(e) {
+                e.preventDefault();
+            });
+            $('.readonly-select select').attr('tabindex', '-1');
         });
 
         $(document).ready(function() {
@@ -646,10 +640,8 @@
                 //  var unit = $('.unit').val();
 
                 var qty = number_format(parent.find('.qty').val());
-
                 var purchasetypeval = $('.purchasetype').find('option:selected').val();
                 var purchasetypetext = $('.purchasetype').find('option:selected').text();
-
                 var unitprice = number_format(parent.find('.unitprice').val());
 
                 // start check duplicate product
@@ -1128,51 +1120,51 @@
                 // // Set debounce delay to 300ms
 
                 // >>> NEW — same dynamic branch->warehouse AJAX as create page (new warehouses table with old-branch fallback)
-                function getWarehousesByBranch(branch_id) {
-                    if (!branch_id) return;
+                // function getWarehousesByBranch(branch_id) {
+                //     if (!branch_id) return;
 
-                    $('#loadingSpinner').show();
+                //     $('#loadingSpinner').show();
 
-                    $.ajax({
-                        url: "{{ route('inventorySetup.getWarehousesByBranch') }}",
-                        type: "GET",
-                        dataType: 'json',
-                        cache: false,
-                        data: {
-                            "_token": "{{ csrf_token() }}",
-                            branch_id: branch_id
-                        },
-                        success: function(response) {
-                            let $warehouseSelect = $('#sub_warehouse_id');
+                //     $.ajax({
+                //         url: "{{ route('inventorySetup.getWarehousesByBranch') }}",
+                //         type: "GET",
+                //         dataType: 'json',
+                //         cache: false,
+                //         data: {
+                //             "_token": "{{ csrf_token() }}",
+                //             branch_id: branch_id
+                //         },
+                //         success: function(response) {
+                //             let $warehouseSelect = $('#sub_warehouse_id');
 
-                            $warehouseSelect.select2('destroy');
-                            $warehouseSelect.empty().append(
-                                '<option selected disabled value="">--Select Sub-Warehouse--</option>'
-                            );
+                //             $warehouseSelect.select2('destroy');
+                //             $warehouseSelect.empty().append(
+                //                 '<option selected disabled value="">--Select Sub-Warehouse--</option>'
+                //             );
 
-                            if (response.data.length > 0) {
-                                $.each(response.data, function(index, item) {
-                                    $warehouseSelect.append(
-                                        `<option value="${item.id}">${item.text}</option>`
-                                    );
-                                });
-                            } else {
-                                $warehouseSelect.append(
-                                    '<option disabled value="">--No Warehouse Found--</option>'
-                                );
-                            }
+                //             if (response.data.length > 0) {
+                //                 $.each(response.data, function(index, item) {
+                //                     $warehouseSelect.append(
+                //                         `<option value="${item.id}">${item.text}</option>`
+                //                     );
+                //                 });
+                //             } else {
+                //                 $warehouseSelect.append(
+                //                     '<option disabled value="">--No Warehouse Found--</option>'
+                //                 );
+                //             }
 
-                            $('#warehouse_source').val(response.source);
-                            $warehouseSelect.select2();
-                        },
-                        error: function() {
-                            alertMessage.error('Failed to load warehouses for this branch.');
-                        },
-                        complete: function() {
-                            $('#loadingSpinner').hide();
-                        }
-                    });
-                }
+                //             $('#warehouse_source').val(response.source);
+                //             $warehouseSelect.select2();
+                //         },
+                //         error: function() {
+                //             alertMessage.error('Failed to load warehouses for this branch.');
+                //         },
+                //         complete: function() {
+                //             $('#loadingSpinner').hide();
+                //         }
+                //     });
+                // }
 
 
             });

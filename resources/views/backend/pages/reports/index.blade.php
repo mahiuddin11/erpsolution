@@ -434,9 +434,9 @@
                                     <th>Product Code</th>
                                     <th>Product Name</th>
                                     <th>Category</th>
-                                    <th>Branch</th>
-                                    <th>Type</th>
+                                    {{-- <th>Branch</th> --}}
                                     <th>Warehouse</th>
+                                    <th>Type</th>
                                     <th class="text-right">Qty</th>
                                     @if ($isAdmin)
                                         <th class="text-right">Avg Unit Price</th>
@@ -447,17 +447,16 @@
                             <tbody>
                                 @foreach ($rows as $item)
                                     <tr class="ledger-row" tabindex="0" data-product-id="{{ $item->product_id }}"
-                                        data-branch-id="{{ $item->branch_id }}"
-                                        data-warehouse-id="{{ $item->warehouse_id }}"
+                                        {{-- data-branch-id="{{ $item->branch_id }}" --}} data-warehouse-id="{{ $item->warehouse_id }}"
                                         data-purchase-type="{{ $item->purchasetype ?? '' }}">
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ optional($item->products)->getRawOriginal('productCode') }}</td>
                                         <td>{{ trim(optional($item->products)->getRawOriginal('name') . ' ' . ($item->products->brand->name ?? '')) }}
                                         </td>
                                         <td>{{ optional(optional($item->products)->category)->name ?? 'N/A' }}</td>
-                                        <td>{{ $item->branch->name ?? '-' }}</td>
-                                        <td>{{ $item->purchasetype ?? '-' }}</td>
+                                        {{-- <td>{{ $item->branch->name ?? '-' }}</td> --}}
                                         <td>{{ $item->warehouse->name ?? '-' }}</td>
+                                        <td>{{ $item->purchasetype ?? '-' }}</td>
                                         <td class="text-right font-weight-bold" data-order="{{ $item->stock_qty }}">
                                             {{ $item->stock_qty }}</td>
                                         @if ($isAdmin)
@@ -477,7 +476,7 @@
                                     <th></th>
                                     <th>Total</th>
                                     <th></th>
-                                    <th></th>
+                                    {{-- <th></th> --}}
                                     <th></th>
                                     <th></th>
                                     <th class="text-right">{{ $totalQty }}</th>
@@ -555,19 +554,25 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script>
         let modalProductId = null;
-        let modalBranchId = null;
+        // let modalBranchId = null;
+        let modalWarehouseId = 'null';
         let modalPurchaseType = null;
         let diagnosisLoadedForProductId = null;
-
-        // >>> NEW (2026-09-21)
         const IS_ADMIN = {{ $isAdmin ? 'true' : 'false' }};
-        // column index map (must match <thead> order)
+
+        // const COL = {
+        //     branch: 4,
+        //     type: 5,
+        //     warehouse: 6,
+        //     qty: 7,
+        //     total: 9
+        // };
+
         const COL = {
-            branch: 4,
+            warehouse: 4,
             type: 5,
-            warehouse: 6,
-            qty: 7,
-            total: 9
+            qty: 6,
+            total: 8
         };
         // Bug fix: to_date was 'Y-12-d' (e.g. 2026-12-21) -> now proper year end
         const LEDGER_FROM_DATE = "{{ date('2020-01-01') }}";
@@ -606,14 +611,14 @@
 
         function openLedgerFromRow($tr) {
             modalProductId = $tr.data('product-id');
-            modalBranchId = $tr.data('branch-id');
+            // modalBranchId = $tr.data('branch-id');
             modalWarehouseId = $tr.data('warehouse-id');
             modalPurchaseType = $tr.data('purchase-type');
             diagnosisLoadedForProductId = null; // force diagnosis reload for the newly selected product
 
             let url = "{{ route('inventorySetup.productledger.modal') }}" +
                 "?product_id=" + modalProductId +
-                "&branch_id=" + modalBranchId +
+                // "&branch_id=" + modalBranchId +
                 "&warehouse_id=" + modalWarehouseId +
                 "&purchase_type=" + encodeURIComponent(modalPurchaseType || '') +
                 "&from_date=" + LEDGER_FROM_DATE +
@@ -622,7 +627,7 @@
             showModalTab('ledger'); // always open on the Ledger tab
             loadLedgerIntoModal(url);
         }
-        // <<< END NEW
+
 
         $(document).ready(function() {
             $('#categorysubmit').on('change', function() {

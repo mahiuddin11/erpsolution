@@ -11,32 +11,28 @@ use Illuminate\Support\Facades\DB;
 class ProductLedgerService
 {
 
-public function getProductLedgerData($product_id, $branch_id, $from_date, $to_date, $purchase_type = 'all', $warehouse_id = 'all') // >>> NEW: $warehouse_id
+    public function getProductLedgerData($product_id,  $from_date, $to_date, $purchase_type = 'all', $warehouse_id = 'all') // >>> NEW: $warehouse_id
     {
+        $branch_id = null ;
         $isAllBranch = ($branch_id === 'all' || empty($branch_id));
         $isAllType   = ($purchase_type === 'all' || empty($purchase_type));
 
-        // >>> NEW: warehouse filter
-        // $warehouse_id: number = oi warehouse | 'null' = legacy branch-level (warehouse_id NULL) | 'all'/empty/onno kichu = filter nai
+        
         $isNullWarehouse = ($warehouse_id === 'null');
         $isAllWarehouse  = !$isNullWarehouse && !is_numeric($warehouse_id); // 'undefined' / '' / 'all' shob-i filter chhara
         $applyWarehouse  = function ($q, $column) use ($isNullWarehouse, $warehouse_id) {
             return $isNullWarehouse ? $q->whereNull($column) : $q->where($column, (int) $warehouse_id);
         };
-        // <<< END NEW
-
-        // >>> NEW: warehouse id -> name (ekbar-i query, N+1 nai)
-        // TODO-CONFIRM: table 'warehouses', column 'name'
+       
         $warehouseNames = DB::table('warehouses')->pluck('name', 'id');
-        // warehouse_id NULL = legacy branch-level row -> '—'
         $whName = fn($id) => $id ? ($warehouseNames->get($id) ?? '—') : '—';
-        // <<< END NEW
+     
 
         // ── 1. Opening Stock ──────────────────────────────────────────────
         $openingRows = ProductOpeningStockDetails::with(['branch:id,name', 'product:id,name', 'ProductOpeningStock:id,invoice_no'])
             ->where('product_id', $product_id)
             ->when(!$isAllBranch, fn($q) => $q->where('branch_id', $branch_id))
-            ->when(!$isAllWarehouse, fn($q) => $applyWarehouse($q, 'warehouse_id')) // >>> NEW: warehouse filter
+            ->when(!$isAllWarehouse, fn($q) => $applyWarehouse($q, 'warehouse_id')) 
             ->when(!$isAllType, fn($q) => $q->where('purchasetype', $purchase_type))
             ->whereNull('deleted_at')
             ->get()

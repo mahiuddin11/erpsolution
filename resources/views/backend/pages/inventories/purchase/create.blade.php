@@ -139,7 +139,7 @@
 
                             <div class="col-md-2 col-sm-6 col-12 mb-3">
                                 <label for="validationCustom01">Branch * :</label>
-                                <select class="form-control select2" id="branch_id" name="branch_id"
+                                <select class="form-control select2" id="branch_id" name="branch_id" required
                                     onchange="getWarehousesByBranch(this.value)">
                                     <option selected disabled value="">--Select Branch--</option>
                                     @foreach ($branch as $key => $value)
@@ -155,7 +155,7 @@
 
                             <div class="col-md-2 col-sm-6 col-12 mb-3">
                                 <label for="validationCustom02">Warehouse * :</label>
-                                <select class="form-control select2" id="sub_warehouse_id" name="sub_warehouse_id">
+                                <select class="form-control select2" id="sub_warehouse_id" name="sub_warehouse_id" required>
                                     <option selected disabled value="">--Select Branch First--</option>
                                 </select>
 
@@ -418,6 +418,7 @@
     <script type="text/javascript">
         // Added: 2026-09-01 - modal-এ দ্বিতীয়বার/একাধিকবার খুললে select2 dropdown সংকুচিত হয়ে যাওয়ার ফিক্স
         function initPurchaseSelect2() {
+
             $('.select2').not('#productID').not('.accounts').each(function() {
                 let $select = $(this);
                 if ($select.hasClass('select2-hidden-accessible')) {
@@ -451,8 +452,35 @@
             });
         });
 
+        // NEW: প্রথম item add করার পর Branch, Warehouse, Ledger লক / সব item মুছলে আনলক
+        function updateHeaderLock() {
+            let itemCount = $('#show_item tbody tr[class^="new_item"]').length;
+            let lock = itemCount > 0;
+
+            // select2 নিজে disabled অবস্থা বুঝে নেয়, তাই এখানে change trigger করা হয়নি
+            // (trigger করলে branch-এর onchange চলে warehouse রিসেট হয়ে যেত)
+            $('#branch_id, #sub_warehouse_id, #ledger_id').prop('disabled', lock);
+            $('[data-target="#addSupplierModal"]').prop('disabled', lock);
+        }
+
         $(document).ready(function() {
             initPurchaseSelect2();
+
+            $('form.needs-validation').on('submit', function(e) {
+                if (!$('#branch_id').val()) {
+                    alertMessage.error('Please select a Branch.');
+                    e.preventDefault();
+                    return false;
+                }
+                if (!$('#sub_warehouse_id').val()) {
+                    alertMessage.error('Please select a Warehouse.');
+                    e.preventDefault();
+                    return false;
+                }
+
+                // NEW: submit-এর আগে enable করুন, নাহলে disabled select-এর মান সার্ভারে যাবে না
+                $('#branch_id, #sub_warehouse_id, #ledger_id').prop('disabled', false);
+            });
 
             // Supplier  Create 
             $('#addSupplierForm').on('submit', function(e) {
@@ -688,6 +716,7 @@
                 findqtyamoun();
                 findunitamount();
                 findgrandtottal();
+                updateHeaderLock(); // NEW
             });
 
             $(document).on('click', '.delete_item', function() {
@@ -697,6 +726,7 @@
                     findqtyamoun();
                     findunitamount();
                     findgrandtottal();
+                    updateHeaderLock(); // NEW
                 }
 
                 alertMessage.confirm('You want to remove this', deleteitem);

@@ -460,10 +460,7 @@ class SaleController extends Controller
         $user = auth()->user();
         $customerGroup = CustomerGroup::all();
 
-        $branch = Branch::where("parent_id", 0)->where('status', 'Active');
-        if ($user->branch_id) {
-            $branch = $branch->where('id', $user->branch_id);
-        }
+        $branch = Branch::where("parent_id", 0)->where('status', 'Active'); 
         $branch = $branch->get();
 
         if ($user->type == "Admin" || !$user->branch_id) {
@@ -479,27 +476,7 @@ class SaleController extends Controller
 
         $saletlist = Sale::findOrFail($id);
 
-
-        $selectedWarehouse = Warehouse::find($saletlist->warehouse_id);
-
-        if ($selectedWarehouse) {
-            $warehouseSource = 'new';
-            $selectedParentBranchId = $selectedWarehouse->branch_id;
-
-
-            $subWarehouses = Warehouse::where('branch_id', $selectedParentBranchId)
-                ->where('status', 'Active')
-                ->get();
-        } else {
-            $warehouseSource = 'old';
-            $selectedSubBranch = Branch::find($saletlist->branch_id);
-            $selectedParentBranchId = $selectedSubBranch->parent_id ?? null;
-
-
-            $subWarehouses = Branch::where('parent_id', $selectedParentBranchId)
-                ->where('status', 'Active')
-                ->get();
-        }
+        $Warehouse = Warehouse::get();
 
         $saledetails = sales_Details::where('sale_id', $id)->get();
 
@@ -655,12 +632,17 @@ class SaleController extends Controller
 
         $product_id = $request->productId;
 
+        
+
         $productStock = StockSummary::where('product_id', $product_id)
-            ->where('branch_id', $request->branch_id)
+            // ->where('branch_id', $request->branch_id)
             ->where('warehouse_id', $request->warehouseId)
             ->where('type', 'Branch')
             ->where('purchasetype', $request->type)
             ->first();
+
+
+
 
         if (!empty($productStock->quantity) && $productStock->quantity > 0) :
             echo $productStock->quantity;

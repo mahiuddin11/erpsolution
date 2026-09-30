@@ -92,7 +92,9 @@
                     <h3 class="card-title">New Sale Create</h3>
                 </div>
                 <div class="card-body">
-                    <form class="needs-validation" method="POST" action="{{ route('sale.sale.store') }}" novalidate>
+                    {{-- CHANGED: id="saleForm" added --}}
+                    <form class="needs-validation" id="saleForm" method="POST" action="{{ route('sale.sale.store') }}"
+                        novalidate>
                         @csrf
                         <div class="form-row">
                             <div class="col-md-2 col-sm-6 col-12 mb-3">
@@ -140,7 +142,8 @@
 
                             <div class="col-md-2 col-sm-6 col-12 mb-3">
                                 <label for="validationCustom01">Branch * :</label>
-                                <select class="form-control select2" id="branch_id" name="branch_id"
+                                {{-- CHANGED: required added --}}
+                                <select class="form-control select2" id="branch_id" name="branch_id" required
                                     onchange="getWarehousesByBranch(this.value)">
                                     <option selected disabled value="">--Select Branch--</option>
                                     @foreach ($branch as $key => $value)
@@ -156,7 +159,8 @@
 
                             <div class="col-md-2 col-sm-6 col-12 mb-3">
                                 <label for="validationCustom02">Warehouse * :</label>
-                                <select class="form-control select2" id="warehouse_id" name="warehouse_id">
+                                {{-- CHANGED: required added --}}
+                                <select class="form-control select2" id="warehouse_id" name="warehouse_id" required>
                                     <option selected disabled value="">--Select Branch First--</option>
                                 </select>
 
@@ -174,7 +178,8 @@
                                         +
                                     </button>
                                 </label>
-                                <select class="form-control select2" name="ledger_id" id="ledger_id">
+                                {{-- CHANGED: required added --}}
+                                <select class="form-control select2" name="ledger_id" id="ledger_id" required>
                                     <option selected disabled value="">--Select Ledger--</option>
                                     <x-account :setAccounts="$ledgers" />
                                 </select>
@@ -184,10 +189,12 @@
                             </div>
 
                             <div class="col-md-2 col-sm-6 col-12 mb-3">
-                                <label for="sales_person_id">Sales Representative :</label>
+                                {{-- CHANGED: label * added, placeholder option added --}}
+                                <label for="sales_person_id">Sales Representative * :</label>
 
                                 <select class="form-control select2" id="sales_person_id" name="sales_person_id"
                                     required>
+                                    <option selected disabled value="">--Select Sales Representative--</option>
 
                                     @foreach ($employees as $employee)
                                         <option value="{{ $employee->id }}">
@@ -591,6 +598,63 @@
 
 
     <script type="text/javascript">
+        // ===================== NEW: Header lock / validation =====================
+        // Branch, Warehouse, Ledger, Sales Representative:
+        //  - must be selected before adding an item
+        //  - locked while at least one item row exists
+        //  - unlocked again when all item rows are removed
+        const HEADER_LOCK_FIELDS = '#branch_id, #warehouse_id, #ledger_id, #sales_person_id';
+        const ADDED_ROWS = '#show_item tbody tr[class^="new_item"]';
+
+        function lockHeaderFields() {
+            $(HEADER_LOCK_FIELDS).prop('disabled', true);
+            $('button[data-target="#addCustomerModel"]').prop('disabled', true);
+        }
+
+        function unlockHeaderFields() {
+            $(HEADER_LOCK_FIELDS).prop('disabled', false);
+            $('button[data-target="#addCustomerModel"]').prop('disabled', false);
+        }
+
+        function toggleHeaderLock() {
+            if ($(ADDED_ROWS).length > 0) {
+                lockHeaderFields();
+            } else {
+                unlockHeaderFields();
+            }
+        }
+
+        function validateHeaderFields() {
+            const checks = [
+                ['#branch_id', 'Please select a Branch.'],
+                ['#warehouse_id', 'Please select a Warehouse.'],
+                ['#ledger_id', 'Please select a Ledger.'],
+                ['#sales_person_id', 'Please select a Sales Representative.'],
+            ];
+            for (const [selector, message] of checks) {
+                if (!$(selector).val()) {
+                    alertMessage.error(message);
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // Disabled fields are NOT posted, so re-enable them right before a valid submit.
+        $(document).on('submit', '#saleForm', function(e) {
+            if (!validateHeaderFields()) {
+                e.preventDefault();
+                return false;
+            }
+            if ($(ADDED_ROWS).length === 0) {
+                e.preventDefault();
+                alertMessage.error('Please add at least one item.');
+                return false;
+            }
+            unlockHeaderFields();
+        });
+        // ===================== END NEW =====================
+
         function initSaleSelect2() {
 
             $('.select2').each(function() {
@@ -685,6 +749,11 @@
 
 
             $("#add_item").click(function() {
+
+                // NEW: Branch / Warehouse / Ledger / Sales Rep must be selected first
+                if (!validateHeaderFields()) {
+                    return false;
+                }
 
                 // start check duplicate product  
                 let seaschproduct = $('#productID option:selected')[0].getAttribute("value");
@@ -806,6 +875,9 @@
                 findunitamount();
                 findgrandtottal();
                 checkDepositAndCreditBalance();
+
+                // NEW: lock header fields once an item exists
+                toggleHeaderLock();
             });
 
             $('#branch_id').on('change', function() {
@@ -821,6 +893,9 @@
                     findunitamount();
                     findgrandtottal();
                     checkDepositAndCreditBalance();
+
+                    // NEW: unlock header fields when no item is left
+                    toggleHeaderLock();
                 }
 
                 alertMessage.confirm('You want to remove this', deleteitem);
@@ -1275,7 +1350,6 @@
                     "_token": "{{ csrf_token() }}",
                     productId: productId,
                     type: purchasetype,
-                    branch_id: branch_id,
                     warehouseId: warehouseId,
                 },
                 success: function(data) {

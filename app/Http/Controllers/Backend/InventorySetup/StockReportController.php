@@ -131,10 +131,9 @@ public function index(Request $request)
 
 
    
-
         $product_id = $request->product_id;
         $purchase_type = $request->purchase_type ?? 'all';
-        $branch_id  = $request->branch_id ?? 'all';
+        // $branch_id  = $request->branch_id ?? 'all';
         $warehouse_id  = $request->warehouse_id ?? 'all';
         $from_date  = $request->from_date ?? '';
         $to_date    = $request->to_date   ?? '';
@@ -150,8 +149,7 @@ public function index(Request $request)
 
         $datas = $this->getProductLedger->getProductLedgerData(
             $product_id,
-            $branch_id,
-           
+            // $branch_id,
             $from_date,
             $to_date,
             $purchase_type,

@@ -267,10 +267,11 @@ class SaleReturnController extends Controller
     public function approve($id)
     {
         $saleReturn = SaleReturn::with(['sale', 'details.saleDetail'])->findOrFail($id);
-
+        
         if ($saleReturn->status !== 'pending') {
             return back()->with('error', 'Only pending returns can be approved.');
-        }
+            }
+     
 
         DB::beginTransaction();
         try {
@@ -281,14 +282,12 @@ class SaleReturnController extends Controller
 
             foreach ($saleReturn->details as $detail) {
 
+            $purchasetype = optional($detail->saleDetail)->purchasetype;
 
                 if ($detail->condition === 'good') {
-                    $this->restockReturnedItem($saleReturn, $detail, $targetBranchId, $targetWarehouseId);
+                    $this->restockReturnedItem($saleReturn, $purchasetype, $detail, $targetBranchId, $targetWarehouseId);
                 }
             }
-
-
-
 
             $returnAmount = (float) $saleReturn->grand_total;
 
@@ -331,8 +330,9 @@ class SaleReturnController extends Controller
     }
 
 
-    private function restockReturnedItem($saleReturn, $detail, $branchId, $warehouseId)
+    private function restockReturnedItem($saleReturn, $purchasetype, $detail, $branchId, $warehouseId)
     {
+
 
         $stock = new Stock();
         $stock->product_id   = $detail->product_id;
@@ -350,29 +350,32 @@ class SaleReturnController extends Controller
 
         $purchasetype = optional($detail->saleDetail)->purchasetype;
 
-        $summaryQuery = StockSummary::where('product_id', $detail->product_id)
+        $summary= StockSummary::where('product_id', $detail->product_id)
             ->where('type', 'Branch')
-            ->where('branch_id', $branchId)
-            ->where('purchasetype', $purchasetype);
+            // ->where('branch_id', $branchId)
+            ->where('purchasetype', $purchasetype)
+            ->where('warehouse_id', $warehouseId)->first();
+            
+            
 
-        if ($warehouseId) {
-            $summaryQuery->where('warehouse_id', $warehouseId);
-        }
-
-        $summary = $summaryQuery->first();
-
+            $qty =(int) $detail->returned_qty;
         if ($summary) {
-            $summary->increment('quantity', $detail->returned_qty);
+
+        
+        $summary->quantity = $summary->quantity + $qty;
+      
+        
+        $summary->save();
         } else {
-            $newSummary = new StockSummary();
-            $newSummary->product_id   = $detail->product_id;
-            $newSummary->branch_id    = $branchId;
-            $newSummary->warehouse_id = $warehouseId;
-            $newSummary->type         = 'Branch';
-            $newSummary->purchasetype = $purchasetype;
-            $newSummary->quantity     = $detail->returned_qty;
-            $newSummary->save();
-        }
+                    $summary = new StockSummary();
+                    $summary->branch_id    = $branchId;
+                    $summary->warehouse_id = $request->sub_warehouse_id ?? null;
+                    $summary->product_id   = $detail->product_id;;
+                    $summary->purchasetype = $purchasetype;
+                    $summary->quantity     = $qty;
+                    $summary->type         = 'Branch';
+                    $summary->save();
+        }          
     }
 
 
