@@ -740,7 +740,7 @@ public function update($request, $id)
 
         if ($branchId > 0) {
             // warehouse must belong to the selected branch
-            $validWarehouse = Warehouse::where('id', $warehouseId)->where('branch_id', $branchId)->exists();
+            $validWarehouse = Warehouse::where('id', $warehouseId)->where('status', 'Active')->exists();
             if (!$validWarehouse) {
                 throw new \Exception('Please select a valid warehouse for the selected branch.');
             }

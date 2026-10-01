@@ -222,16 +222,8 @@ class ProductOpeningStockController extends Controller
       
         $warehouses = collect();
         if (!empty($editInfo->branch_id)) {
-            $warehouses = Warehouse::where('branch_id', $editInfo->branch_id)
-                ->where(function ($q) use ($editInfo) {
-                    $q->where('status', 'Active');
-                    if (!empty($editInfo->warehouse_id)) {
-                        $q->orWhere('id', $editInfo->warehouse_id);
-                    }
-                })
-                ->get();
+            $warehouses = Warehouse::where('status', 'Active')->get();
         }
- 
         $projects = Project::get();
  
         $title = 'Edit Product Opening Stock'; // change: was 'Edit Stock Ajdustment'

@@ -512,8 +512,7 @@ class StockAjdustmentController extends Controller
 
     public function getWarehouseList(Request $request)
     {
-        $warehouses = Warehouse::where('status', 'Active')
-            ->get();
+        $warehouses = Warehouse::where('status', 'Active')->get();
 
         $output = '';
         foreach ($warehouses as $warehouse) {

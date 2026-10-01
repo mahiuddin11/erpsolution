@@ -219,8 +219,7 @@ class PurchaseController extends Controller
         if (!$branch_id) {
             return response()->json(['source' => 'none', 'data' => []]);
         }
-        $warehouses = Warehouse::where('status', 'Active')
-            ->get();
+        $warehouses = Warehouse::where('status', 'Active')->get();
 
         if ($warehouses->isNotEmpty()) {
             $data = $warehouses->map(function ($w) {
