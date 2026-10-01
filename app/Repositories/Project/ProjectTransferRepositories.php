@@ -968,7 +968,6 @@ class ProjectTransferRepositories
                 $purchaseorder->purchase_requisition_id = $request->purchase_requisition;
                 $purchaseorder->warehouse_id            = $request->from_warehouse_id;
                 $purchaseorder->backup_branch_id        = $request->from_branch_id;
-    
                 $fromBranchId = $request->from_branch_id;
                 $toProjectId  = $request->to_project_id_a;
             } elseif ($type === 'project_to_project') {
@@ -983,7 +982,6 @@ class ProjectTransferRepositories
                 $purchaseorder->branch_id        = $request->to_branch_id;
                 $purchaseorder->warehouse_id     = $request->to_warehouse_id;
                 $purchaseorder->backup_branch_id = $request->to_branch_id;
-    
                 $fromProjectId = $request->from_project_id;
             }
     
@@ -1070,11 +1068,8 @@ class ProjectTransferRepositories
                     $stock->save();
                 }
     
-                // ---- 2c. Stock summary FROM / TO ----
-                // Project row => type + project_id + branch_id(0) + product_id + purchasetype
-                // Branch row  => type + branch_id + warehouse_id + product_id + purchasetype
                 if ($type === 'branch_to_project') {
-                    $fromMatchKey = ['type' => 'Branch', 'branch_id' => $request->from_branch_id, 'warehouse_id' => $request->from_warehouse_id, 'product_id' => $productId, 'purchasetype' => $ptype];
+                    $fromMatchKey = ['type' => 'Branch', 'warehouse_id' => $request->from_warehouse_id, 'product_id' => $productId, 'purchasetype' => $ptype];
                     $toMatchKey   = ['type' => 'Project', 'project_id' => $request->to_project_id_a, 'branch_id' => 0, 'product_id' => $productId, 'purchasetype' => $ptype];
                     $toExtra      = ['warehouse_id' => null, 'backup_branch_id' => null];
                 } elseif ($type === 'project_to_project') {
@@ -1083,7 +1078,7 @@ class ProjectTransferRepositories
                     $toExtra      = ['warehouse_id' => null, 'backup_branch_id' => null];
                 } else { // project_to_branch
                     $fromMatchKey = ['type' => 'Project', 'project_id' => $request->from_project_id, 'branch_id' => 0, 'product_id' => $productId, 'purchasetype' => $ptype];
-                    $toMatchKey   = ['type' => 'Branch', 'branch_id' => $request->to_branch_id, 'warehouse_id' => $request->to_warehouse_id, 'product_id' => $productId, 'purchasetype' => $ptype];
+                    $toMatchKey   = ['type' => 'Branch',  'warehouse_id' => $request->to_warehouse_id, 'product_id' => $productId, 'purchasetype' => $ptype];
                     $toExtra      = ['project_id' => null, 'backup_branch_id' => $request->to_branch_id];
                 }
     
@@ -1091,6 +1086,7 @@ class ProjectTransferRepositories
                 $fromRow   = StockSummary::where($fromMatchKey)->lockForUpdate()->first();
                 $available = $fromRow ? (float) $fromRow->quantity : 0;
     
+              
                 if (!$fromRow || $available < $transferQty) {
                     throw new \Exception('Insufficient stock for product ID ' . $productId . ' (' . $ptype . '). Available: ' . $available . ', requested: ' . $transferQty);
                 }

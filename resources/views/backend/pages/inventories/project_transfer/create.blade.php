@@ -288,7 +288,7 @@
         }
 
         /* Info note shown when remaining qty is auto-loaded from a requisition.
-                   Rows are NOT locked: deleting a row or reducing qty stays possible. */
+                           Rows are NOT locked: deleting a row or reducing qty stays possible. */
         .products-info-note {
             display: none;
             align-items: center;
@@ -651,7 +651,7 @@
                                     </select>
                                 </div>
 
-                                {{-- DESTINATION branch + warehouse (project_to_branch) --}}
+
                                 <div class="col-lg-3 col-md-6 col-sm-6 form-group route-fields rf-dest-branch"
                                     data-rule="project_to_branch">
                                     <label>Destination Branch <span class="required-star">*</span></label>
@@ -791,7 +791,6 @@
                             </div>
 
                             <div class="products-toolbar">
-                                {{-- Manual "Add row" is only available for project -> branch (no requisition) --}}
                                 <button type="button" class="btn btn-outline-primary btn-sm" id="addRowBtn"
                                     style="display:none">
                                     <i class="fas fa-plus"></i> Add Product Row
@@ -818,7 +817,7 @@
         </div>
     </div>
 
-    {{-- Hidden template row (outside the <form>, so it is never submitted) --}}
+
     <table style="display:none">
         <tbody id="rowTemplate">
             <tr>
@@ -1399,7 +1398,7 @@
                             $wh.trigger('change.select2');
                             alert(
                                 'This branch has no warehouse. Create a warehouse first, then make the transfer.'
-                                );
+                            );
                             return;
                         }
                         fillSelect($wh, res, '-- Select Warehouse --');

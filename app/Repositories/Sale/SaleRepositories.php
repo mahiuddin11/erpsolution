@@ -681,7 +681,7 @@ class SaleRepositories
             foreach ($slDetails as $slDetail) {
                 $oldSummary = StockSummary::where('product_id', $slDetail->product_id)
                     ->where('warehouse_id', $slDetail->warehouse_id)
-                    ->where('purchasetype', $slDetail->purchasetype) // null হলে Laravel নিজে IS NULL করে
+                    ->where('purchasetype', $slDetail->purchasetype) 
                     ->where('type', 'Branch')
                     ->lockForUpdate()
                     ->first();
@@ -722,12 +722,11 @@ class SaleRepositories
                 $stock->unit_price = $subtotal[$i];
                 $stock->total_price = $grand_total[$i];
                 $stock->general_id = $Sale_id;
-                $stock->invoice_no = $request->invoice_no; // store()-এর মতো
+                $stock->invoice_no = $request->invoice_no; 
                 $stock->date = $request->date;
                 $stock->status = 'Sale';
                 $stock->save();
 
-               
                 $ptype = $request->purchasetype[$i] ?? null;
 
                 $summary = StockSummary::where('product_id', $proName[$i])

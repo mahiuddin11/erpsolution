@@ -15,6 +15,7 @@ use App\Models\Project;
 use App\Models\ProjectTransfer;
 use App\Models\ProjectTransferDetails;
 use App\Models\StockSummary;
+use App\Models\Warehouse;
 use App\Services\InventorySetup\PurchaseOrderService;
 use App\Services\Project\ProjectTransferService;
 use App\Transformers\ProjectTransformer;
@@ -377,20 +378,20 @@ class ProjectTransferController extends Controller
 
     public function availableStock(Request $request)
     {
-   
-    
-    $type = $request->source_type === 'project'
+
+       $type = $request->source_type === 'project'
             ? 'Project'
             : 'Branch';
 
         if ($type === 'Branch') {
 
             $query = StockSummary::where([
-                'branch_id'    => $request->branch_id,
+                // 'branch_id'    => $request->branch_id,
                 'warehouse_id' => $request->warehouse_id,
                 'product_id'   => $request->product_id,
                 'type'         => 'Branch',
-            ]);
+                'purchasetype'         =>  $request->purchase_type,
+                ]);
         } else {
 
             $query = StockSummary::where([
@@ -416,8 +417,7 @@ class ProjectTransferController extends Controller
 
     public function getWarehouses(Request $request)
     {
-        $warehouses = Branch::where('parent_id', $request->branch_id)
-            ->get(['id', 'name']);
+        $warehouses = Warehouse::get(['id', 'name']);
 
         return response()->json($warehouses);
     }
