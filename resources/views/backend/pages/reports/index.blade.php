@@ -394,12 +394,12 @@
                             </select>
                         </form>
 
-                        <div class="col-6 col-md-6 col-lg-3 mb-2">
+                        {{-- <div class="col-6 col-md-6 col-lg-3 mb-2">
                             <label for="filterBranch">Branch</label>
                             <select id="filterBranch" class="form-control form-control-sm">
                                 <option value="">All</option>
                             </select>
-                        </div>
+                        </div> --}}
                         <div class="col-6 col-md-4 col-lg-2 mb-2">
                             <label for="filterType">Type</label>
                             <select id="filterType" class="form-control form-control-sm">
@@ -701,7 +701,6 @@
                 },
                 initComplete: function() {
                     const api = this.api();
-                    fillColumnFilter(api, COL.branch, '#filterBranch');
                     fillColumnFilter(api, COL.type, '#filterType');
                     fillColumnFilter(api, COL.warehouse, '#filterWarehouse');
                 }
@@ -709,7 +708,7 @@
 
             // >>> NEW (2026-09-21) - reset all client-side filters
             $('#btnResetFilters').on('click', function() {
-                $('#filterBranch, #filterType, #filterWarehouse').val('');
+                $('#filterType, #filterWarehouse').val('');
                 table.search('').columns().search('').draw();
             });
 

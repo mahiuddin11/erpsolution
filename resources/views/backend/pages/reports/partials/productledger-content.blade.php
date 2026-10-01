@@ -181,6 +181,16 @@
             color: #dc2626;
         }
 
+        .badge-sale-return {
+            background: #cffafe;
+            color: #155e75;
+        }
+
+        .badge-project {
+            background: #ffedd5;
+            color: #9a3412;
+        }
+
         /* <<< END NEW */
 
         /* Toolbar: Export buttons + Type filter + Search */
@@ -439,7 +449,9 @@
                                     <td>{{ $row['branch'] }}</td>
                                     {{-- >>> NEW: Warehouse (controller row-e 'warehouse' key na thakle '-' dekhabe) --}}
                                     <td>{{ $row['warehouse'] ?? '-' }}</td>
-                                    <td><span class="type-badge {{ $typeClass }}">{{ $row['type'] }}</span></td>
+                                    <td><span
+                                            class="type-badge {{ $row['badge'] ?? 'badge-adjustment' }}">{{ $row['type'] }}</span>
+                                    </td>
                                     {{-- >>> NEW: data-order = number sort thik kaj korbe ("+1,200" string sort hoto) --}}
                                     <td class="text-right in-col" data-order="{{ $row['in'] }}">
                                         {{ $row['in'] > 0 ? '+' . number_format($row['in']) : '—' }}</td>

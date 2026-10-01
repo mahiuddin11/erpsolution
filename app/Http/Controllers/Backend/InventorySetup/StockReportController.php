@@ -81,13 +81,64 @@ class StockReportController extends Controller
     //     return view('backend.pages.reports.index', get_defined_vars());
     // }
     
+// public function index(Request $request)
+// {
+//     $title = 'Stock Summary';
+//     $companyInfo = Company::latest('id')->first();
+
+   
+//     $currentSrock = StockSummary::with(['products.brand', 'products.category', 'branch', 'warehouse'])
+//         ->select('stock_summaries.*', 'stock_summaries.quantity as stock_qty')
+//         ->orderBy('stock_summaries.id', 'desc')
+//         ->orderBy('stock_summaries.product_id', 'asc');
+
+//     if ($request->method() == "POST") {
+//         if ($request->category_id != "all") {
+//             $productid = Product::where('category_id', $request->category_id)->pluck('id');
+//             $currentSrock = $currentSrock->whereIn('product_id', $productid);
+//         }
+//     }
+
+//     $currentSrock = $currentSrock->get();
+
+   
+//     $productIds = $currentSrock->pluck('product_id')->unique();
+
+//     $purchase = PurchasesDetails::whereIn('product_id', $productIds)
+//         ->selectRaw('product_id, SUM(unit_price) as s, COUNT(unit_price) as c')
+//         ->groupBy('product_id')->get()->keyBy('product_id');
+
+//     $opening = ProductOpeningStockDetails::whereIn('product_id', $productIds)
+//         ->selectRaw('product_id, SUM(unit_price) as s, COUNT(unit_price) as c')
+//         ->groupBy('product_id')->get()->keyBy('product_id');
+
+//     $avgPrices = [];
+//     foreach ($productIds as $pid) {
+//         $sum = ($purchase[$pid]->s ?? 0) + ($opening[$pid]->s ?? 0);
+//         $cnt = ($purchase[$pid]->c ?? 0) + ($opening[$pid]->c ?? 0);
+//         $avgPrices[$pid] = $cnt ? $sum / $cnt : 0;
+//     }
+   
+
+//     $categorys = Category::get();
+
+//     return view('backend.pages.reports.index', get_defined_vars());
+// }
+
 public function index(Request $request)
 {
     $title = 'Stock Summary';
     $companyInfo = Company::latest('id')->first();
 
-   
     $currentSrock = StockSummary::with(['products.brand', 'products.category', 'branch', 'warehouse'])
+    
+        ->whereHas('branch', function ($q) {
+            $q->where('status', 1);
+        })
+        ->whereHas('warehouse', function ($q) {
+            $q->where('status', 1);
+        })
+      
         ->select('stock_summaries.*', 'stock_summaries.quantity as stock_qty')
         ->orderBy('stock_summaries.id', 'desc')
         ->orderBy('stock_summaries.product_id', 'asc');
@@ -101,7 +152,6 @@ public function index(Request $request)
 
     $currentSrock = $currentSrock->get();
 
-   
     $productIds = $currentSrock->pluck('product_id')->unique();
 
     $purchase = PurchasesDetails::whereIn('product_id', $productIds)
@@ -118,7 +168,6 @@ public function index(Request $request)
         $cnt = ($purchase[$pid]->c ?? 0) + ($opening[$pid]->c ?? 0);
         $avgPrices[$pid] = $cnt ? $sum / $cnt : 0;
     }
-   
 
     $categorys = Category::get();
 
