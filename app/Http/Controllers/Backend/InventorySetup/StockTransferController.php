@@ -141,6 +141,7 @@ class StockTransferController extends Controller
     //     return view('backend.pages.inventories.transfer.create', get_defined_vars());
     // }
 
+    
     public function create()
     {
         $title = 'Add New Transfer';
