@@ -17,6 +17,7 @@ use App\Models\StockAjdustmentDetailst;
 use App\Models\Warehouse;
 use App\Services\InventorySetup\StockAdjustmentService;
 use App\Transformers\StockAdjustmentTransformer;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class StockAjdustmentController extends Controller
@@ -154,12 +155,11 @@ class StockAjdustmentController extends Controller
         return view('backend.pages.inventories.stockAdjustment.create', get_defined_vars());
     }
 
-    public function show(Request $request, $id)
+    public function show($id)
     {
         $title = 'Purchase Invoice';
         $invoice = StockAjdustment::with(['details.product.category', 'branch'])->findOrFail($id);
         $companyInfo = Company::latest('id')->first();
-
         return view('backend.pages.inventories.stockAdjustment.invoice', get_defined_vars());
     }
 

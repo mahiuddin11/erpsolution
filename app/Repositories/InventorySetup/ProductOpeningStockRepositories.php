@@ -758,16 +758,15 @@ public function update($request, $id)
             throw new \Exception('Invalid product rows.');
         }
 
-        // ---------- StockSummary key (store() er sathe hubohu ek) ----------
-        // Branch  : type + warehouse_id + product_id + purchasetype   (branch_id-er kono effect nei)
-        // Project : type + project_id   + product_id + purchasetype
         $summaryKey = function ($warehouseId, $projectId, $productId, $ptype) {
+            
             if ((int) $projectId > 0) {
                 return [
                     ['type' => 'Project', 'project_id' => $projectId, 'product_id' => $productId, 'purchasetype' => $ptype],
                     ['branch_id' => 0, 'warehouse_id' => null],   // shudhu notun row-er default
                 ];
             }
+
             return [
                 ['type' => 'Branch', 'warehouse_id' => $warehouseId, 'product_id' => $productId, 'purchasetype' => $ptype],
                 [],
