@@ -45,7 +45,7 @@
             outline-offset: -2px;
         }
 
-        /* >>> NEW (2026-09-21) - filter bar, hint, type badge */
+
         .filter-bar label {
             font-size: 12px;
             font-weight: 600;
@@ -71,9 +71,6 @@
             display: none;
         }
 
-        /* <<< END NEW */
-
-        /* Added: 2026-07-20 - ledger badges/summary styles needed since partial loads inside modal too */
         #ledgerTable thead th {
             background: #1a56db;
             color: #fff;
