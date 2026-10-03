@@ -18,7 +18,7 @@ class WarehousesRepositories
     private $warehouses;
 
 
-    public function __construct(Branch $branch)
+    public function __construct(Warehouse $branch)
     {
         $this->warehouses = $branch;
 
@@ -32,6 +32,7 @@ class WarehousesRepositories
      * @param $request
      * @return mixed
      */
+
     public function getAllwarehouses()
     {
         return  $this->warehouses::get();
@@ -63,7 +64,6 @@ class WarehousesRepositories
         if (empty($request->input('search.value'))) {
             $warehouses = $this->warehouses::offset($start)
                 ->limit($limit)
-                ->where("parent_id", "!=", 0)
                 ->orderBy($order, $dir)
                 //->orderBy('status', 'desc')
                 ->get();
@@ -85,16 +85,17 @@ class WarehousesRepositories
         $data = array();
         if ($warehouses) {
             foreach ($warehouses as $key => $branch) {
+
                 $nestedData['id'] = $key + 1;
                 $nestedData['name'] = $branch->name;
-                $nestedData['branchCode'] = $branch->branchCode;
+                $nestedData['branchCode'] = $branch->warehouseCode ?? '-';
                 $nestedData['email'] = $branch->email;
                 $nestedData['phone'] = $branch->phone;
                 $nestedData['address'] = $branch->address;
                 if ($branch->status == 'Active') :
-                    $status = '<input class="status_row" status_route="' . route('settings.branch.status', [$branch->id, 'Inactive']) . '"   id="toggle-demo" type="checkbox" name="my-checkbox" checked data-bootstrap-switch data-off-color="danger" data-on-color="success">';
+                    $status = '<input class="status_row" status_route="' . route('settings.warehouses.status', [$branch->id, 'Inactive']) . '"   id="toggle-demo" type="checkbox" name="my-checkbox" checked data-bootstrap-switch data-off-color="danger" data-on-color="success">';
                 else :
-                    $status = '<input  class="status_row" status_route="' . route('settings.branch.status', [$branch->id, 'Active']) . '"  id="toggle-demo" type="checkbox" name="my-checkbox"  data-bootstrap-switch data-off-color="danger" data-on-color="success">';
+                    $status = '<input  class="status_row" status_route="' . route('settings.warehouses.status', [$branch->id, 'Active']) . '"  id="toggle-demo" type="checkbox" name="my-checkbox"  data-bootstrap-switch data-off-color="danger" data-on-color="success">';
                 endif;
                 $nestedData['status'] = $status;
 
@@ -201,11 +202,12 @@ class WarehousesRepositories
     public function statusUpdate($id, $status)
     {
 
-        $branch = $this->warehouses::find($id);
-        $branch->status = $status;
-        $branch->save();
+   
+       $warehosue = Warehouse::find($id);
+       $warehosue->status = $status;
+       $warehosue->save();
 
-        return $branch;
+        return $warehosue;
     }
 
     public function destroy($id)

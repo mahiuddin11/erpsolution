@@ -176,6 +176,7 @@ class BranchRepositories
 
     public function statusUpdate($id, $status)
     {
+        
         $branch = $this->branch::find($id);
         $branch->status = $status;
         $branch->save();

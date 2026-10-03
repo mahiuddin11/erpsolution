@@ -34,6 +34,7 @@ use App\Http\Controllers\Backend\Dashboard\ProjectDashboardController;
 use App\Http\Controllers\Backend\Dashboard\ManagementDashboardController;
 use App\Http\Controllers\Backend\Dashboard\PosDashboardController;
 use App\Http\Controllers\Backend\Settings\AccountsController;
+use App\Http\Controllers\Backend\Settings\BranchController;
 use App\Http\Controllers\Backend\Settings\ChartOfAccountTreeController;
 use App\Http\Controllers\Backend\Settings\SmsSettingController;
 use App\Http\Controllers\Backend\Usermanage\UserController;
@@ -439,7 +440,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/settings-branch-show/{id}', 'BranchController@show')->name('settings.branch.show');
         Route::post('/settings-branch-update/{id}', 'BranchController@update')->name('settings.branch.update');
         Route::get('/settings-branch-delete/{id}', 'BranchController@destroy')->name('settings.branch.destroy');
-        Route::get('/settings-branch-status/{id}/{status}', 'BranchController@statusUpdate')->name('settings.branch.status');
+        Route::get('/settings-branch-status/{id}/{status}', [BranchController::class, 'statusUpdate'])->name('settings.branch.status');
         //branch crud operation end
 
         //Warehouses crud operation start

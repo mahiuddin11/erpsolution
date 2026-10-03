@@ -214,6 +214,9 @@ class PurchaseController extends Controller
 
     public function getWarehousesByBranch(Request $request)
     {
+
+   
+
         $branch_id = $request->branch_id;
 
         if (!$branch_id) {
@@ -232,8 +235,7 @@ class PurchaseController extends Controller
         }
 
         // Fallback: old branch-based sub-warehouse system
-        $oldWarehouses = Branch::where('parent_id', $branch_id)
-            ->where('status', 'Active')
+        $oldWarehouses = Warehouse::where('status', 'Active')
             ->get();
 
         $data = $oldWarehouses->map(function ($b) {

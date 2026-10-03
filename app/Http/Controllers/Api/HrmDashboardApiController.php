@@ -501,32 +501,64 @@ class HrmDashboardApiController extends Controller
     // Point 7: Recent Leave Applications (unchanged in this phase —
     // approve/edit modal Phase 3 e asbe)
     // ---------------------------------------------------------------
-    public function recentLeaveApplications()
-    {
-        $user       = Auth::user();
-        $isAdmin    = $user->type == 'Admin';
-        $monthStart = Carbon::now()->startOfMonth();
-        $monthEnd   = Carbon::now()->endOfMonth();
+    // public function recentLeaveApplications()
+    // {
+    //     $user       = Auth::user();
+    //     $isAdmin    = $user->type == 'Admin';
+    //     $monthStart = Carbon::now()->startOfMonth();
+    //     $monthEnd   = Carbon::now()->endOfMonth();
 
-        $query = LeaveApplication::with('employee')
-            ->whereBetween('apply_date', [$monthStart, $monthEnd]);
+    //     $query = LeaveApplication::with('employee')
+    //         ->whereBetween('apply_date', [$monthStart, $monthEnd]);
 
-        if (!$isAdmin) {
-            $query->where('employee_id', $user->employee_id);
-        }
+    //     if (!$isAdmin) {
+    //         $query->where('employee_id', $user->employee_id);
+    //     }
 
-        $data = $query->latest('apply_date')->take(100)->get()->map(fn($l) => [
+    //     $data = $query->latest('apply_date')->take(100)->get()->map(fn($l) => [
+    //         'id'            => $l->id,
+    //         'employee_name' => $l->employee->name ?? 'N/A',
+    //         'leave_type'    => $l->reason ?? 'Leave',
+    //         'start_date'    => $l->apply_date,
+    //         'end_date'      => $l->end_date,
+    //         'total_days'    => Carbon::parse($l->apply_date)->diffInDays(Carbon::parse($l->end_date)) + 1,
+    //         'status'        => ucfirst($l->status),
+    //     ]);
+
+    //     return response()->json($data);
+    // }
+
+
+public function recentLeaveApplications()
+{
+    $user    = Auth::user();
+    $isAdmin = $user->type == 'Admin';
+
+    $query = LeaveApplication::with('employee');
+
+    if (!$isAdmin) {
+        $query->where('employee_id', $user->employee_id);
+    }
+
+    $data = $query
+        ->latest('apply_date')
+        ->take(100)
+        ->get()
+        ->map(fn($l) => [
             'id'            => $l->id,
             'employee_name' => $l->employee->name ?? 'N/A',
             'leave_type'    => $l->reason ?? 'Leave',
             'start_date'    => $l->apply_date,
             'end_date'      => $l->end_date,
-            'total_days'    => Carbon::parse($l->apply_date)->diffInDays(Carbon::parse($l->end_date)) + 1,
+            'total_days'    => Carbon::parse($l->apply_date)
+                ->diffInDays(Carbon::parse($l->end_date)) + 1,
             'status'        => ucfirst($l->status),
         ]);
 
-        return response()->json($data);
-    }
+    return response()->json($data);
+}
+
+
 
     // ---------------------------------------------------------------
     // Point 3 (Announcements list) + Point 8 (details/update Phase 3 e)

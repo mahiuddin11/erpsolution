@@ -6286,8 +6286,6 @@ NULLIF(
     public function productledger(Request $request)
     {
 
-
-
         $title      = 'Product Ledger';
         $branch_id  = $request->branch_id ?? 'all';
         $product_id = $request->product_id ?? null;
@@ -6297,11 +6295,13 @@ NULLIF(
 
         if ($request->isMethod('POST') && $product_id) {
 
-            $datas = $this->ledgerService->getProductLedgerData(
+
+            $datas =   $this->ledgerService->getProductLedgerData(
                 $product_id,
-                $branch_id,
                 $from_date,
-                $to_date
+                $to_date,
+                $request->purchase_type ?? 'all',
+                $request->warehouse_id ?? 'all'
             );
         }
 
