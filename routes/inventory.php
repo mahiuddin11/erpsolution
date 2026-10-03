@@ -265,6 +265,8 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::get('/inventory-purchase-show/{id}', [PurchaseController::class, 'show'])->name('inventorySetup.purchase.show');
         Route::get('inventory-setup/get-warehouses-by-branch', [PurchaseController::class, 'getWarehousesByBranch'])->name('inventorySetup.getWarehousesByBranch');
 
+        Route::get('inventory-setup/get-ledgers', [PurchaseController::class, 'getLedgers'])->name('inventorySetup.purchase.getLedgers');
+
 
         Route::post('/inventory-purchase-update/{id}', [PurchaseController::class, 'update'])->name('inventorySetup.purchase.update');
         Route::get('/inventory-purchase-delete/{id}', [PurchaseController::class, 'destroy'])->name('inventorySetup.purchase.destroy');

@@ -634,7 +634,7 @@ class PurchaseRepositories
                 $purchaseDetail->warehouse_id = $request->sub_warehouse_id ?? null;
                 $purchaseDetail->save();
 
-                // ---------- STOCK (ledger row, প্রতি purchase-এ নতুন row) ----------
+                
                 $stock = new Stock();
                 $stock->product_id   = $proName[$i];
                 $stock->quantity     = $qty[$i];
@@ -649,24 +649,22 @@ class PurchaseRepositories
                 $stock->created_by   = Auth::user()->id;
                 $stock->save();
 
-                // ---------- STOCK SUMMARY ----------
-                // মিলানো হবে: product + warehouse + purchasetype + type
-                // branch_id দিয়ে মেলানো হবে না
+               
                 $ptype = $request->purchasetype[$i] ?? null;
 
                 $summary = StockSummary::where('product_id', $proName[$i])
                     ->where('warehouse_id', $request->sub_warehouse_id)
-                    ->where('purchasetype', $ptype) // null হলে Laravel নিজে IS NULL করে
+                    ->where('purchasetype', $ptype) 
                     ->where('type', 'Branch')
                     ->lockForUpdate()
                     ->first();
 
                 if ($summary) {
-                    // আগের row আছে: branch যাই হোক, শুধু quantity যোগ হবে
+                   
                     $summary->quantity = $summary->quantity + $qty[$i];
                     $summary->save();
                 } else {
-                    // না থাকলে নতুন row
+                   
                     $summary = new StockSummary();
                     $summary->branch_id    = $request->branch_id;
                     $summary->warehouse_id = $request->sub_warehouse_id ?? null;

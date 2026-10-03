@@ -153,13 +153,18 @@ class PurchaseController extends Controller
         $category_info = Category::with('parent')->where('status', 'Active')->get();
         $supplier = Supplier::where('status', 'Active')->get();
 
-        $ledgers = ChartOfAccount::whereIn('accountable_type', [
-            \App\Models\Customer::class,
-            \App\Models\Supplier::class,
-        ])
-            ->where('status', 'Active')
+       $ledgers = ChartOfAccount::where('status', 'Active')
+            ->where(function ($q) {
+                $q->whereIn('accountable_type', [
+                        \App\Models\Customer::class,
+                        \App\Models\Supplier::class,
+                    ])
+                    ->orWhere('parent_id', 4);
+            })
             ->with(['subAccount', 'parent'])
             ->get();
+
+      
 
         $user = auth()->user();
         $branch = Branch::where('status', 'Active')->where("parent_id", 0)->get();
@@ -193,18 +198,6 @@ class PurchaseController extends Controller
         $projects = Project::where('condition', 'One Going')->get();
 
         return view('backend.pages.inventories.purchase.create', get_defined_vars());
-
-        // DB::enableQueryLog();
-        // $html = view('backend.pages.inventories.purchase.create', get_defined_vars())->render();
-        // $queries = DB::getQueryLog();
-        // $totalTime = 0;
-        // foreach ($queries as $q) {
-        //     $totalTime += $q['time'];
-        // }
-        // \Log::info('PURCHASE CREATE PAGE - Total queries: ' . count($queries) . ', Total DB time: ' . $totalTime . 'ms');
-        // \Log::info(json_encode(array_slice($queries, 0, 30)));
-
-        // return  $html;
     }
 
 
