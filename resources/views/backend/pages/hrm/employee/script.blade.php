@@ -59,6 +59,10 @@
                 orderable: true
             },
             {
+                data: "position",
+                orderable: true
+            },
+            {
                 data: "present_address",
                 orderable: true
             },
@@ -74,6 +78,20 @@
                 data: "join_date",
                 orderable: true
             },
+
+            {
+                data: "achieved_degree",
+                orderable: true
+            },
+            {
+                data: "institution",
+                orderable: true
+            },
+            {
+                data: "passing_year",
+                orderable: true
+            },
+
             {
                 data: "action",
                 class: 'text-nowrap',
@@ -88,6 +106,7 @@
                 offColor: "danger"
             });
         },
+
     });
 
     // DataTable Export Buttons

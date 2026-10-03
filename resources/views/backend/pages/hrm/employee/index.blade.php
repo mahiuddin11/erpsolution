@@ -34,6 +34,26 @@
             width: 18px;
         }
     </style>
+    {{-- >>> NEW: Columns বাটন search box এর পাশে বসানোর CSS --}}
+    <style>
+        #systemDatatable_filter {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        #systemDatatable_filter label {
+            margin-bottom: 0;
+        }
+
+        div.dt-button-collection {
+            max-height: 360px;
+            overflow-y: auto;
+        }
+    </style>
+    {{-- <<< END NEW --}}
 @endsection
 
 @section('navbar-content')
@@ -104,10 +124,14 @@
                                     <th>Nid</th>
                                     <th>Email</th>
                                     <th>Department</th>
+                                    <th>Position</th>
                                     <th>Present Address</th>
                                     <th>Salary</th>
                                     <th>Overtime</th>
                                     <th>Join Date</th>
+                                    <th>Achieved Degree</th>
+                                    <th>Institution</th>
+                                    <th>Passing Year</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -127,10 +151,14 @@
                                     <th>Nid</th>
                                     <th>Email</th>
                                     <th>Department</th>
+                                    <th>Position</th>
                                     <th>Present Address</th>
                                     <th>Salary</th>
-                                    <th>Join Date</th>
                                     <th>Overtime</th>
+                                    <th>Join Date</th>
+                                    <th>Achieved Degree</th>
+                                    <th>Institution</th>
+                                    <th>Passing Year</th>
                                     <th>Action</th>
                                 </tr>
                             </tfoot>

@@ -38,6 +38,8 @@ class EmployeeController extends Controller
 
     public function index(Request $request)
     {
+
+  
         $title = 'Employee List';
         return view('backend.pages.hrm.employee.index', get_defined_vars());
     }

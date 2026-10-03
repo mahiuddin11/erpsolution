@@ -165,6 +165,8 @@ class EmployeeRepositories
             1 => 'name',
         ];
 
+    
+
         $edit = Helper::roleAccess('hrm.employee.edit') ? 1 : 0;
         $delete = Helper::roleAccess('hrm.employee.destroy') ? 1 : 0;
         $view = Helper::roleAccess('hrm.employee.show') ? 1 : 0;
@@ -186,13 +188,18 @@ class EmployeeRepositories
         // =============================
         // 2. SEARCH + FILTER
         // =============================
-        if (!empty($search)) {
+       
+            if (!empty($search)) {
 
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('id_card', $search);
-            });
-        }
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+                ->orWhere('id_card', $search)
+                ->orWhere('department', $search)
+                ->orWhereHas('position', function ($positionQuery) use ($search) {
+                    $positionQuery->where('name', 'like', "%{$search}%");
+                });
+           });
+         }
 
         $totalFiltered = $query->count();
 
@@ -219,12 +226,16 @@ class EmployeeRepositories
             $nestedData['office_phone'] = $value->office_phone;
             $nestedData['nid'] = $value->nid;
             $nestedData['email'] = $value->email;
-            $nestedData['department'] = $value->department;
+            $nestedData['department'] = $value->department ?? '-';
+            $nestedData['position'] = $value->position->name ?? '-';
             $nestedData['present_address'] = $value->present_address;
             $nestedData['salary'] = $value->salary;
             $nestedData['over_time_is'] = $value->over_time_is;
             $nestedData['join_date'] = $value->join_date;
-
+            $nestedData['achieved_degree'] = $value->achieved_degree ?? '-';
+            $nestedData['institution'] = $value->institution ?? '-';
+            $nestedData['passing_year'] = $value->passing_year ?? '-';
+           
             // =============================
             // ACTION BUTTONS
             // =============================
