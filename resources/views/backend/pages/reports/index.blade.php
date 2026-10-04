@@ -741,13 +741,15 @@
                     return;
                 }
 
-                if (diagnosisLoadedForProductId === modalProductId) {
-                    return; // already loaded for this product, no refetch needed
+                const cacheKey = modalProductId + '|' + modalWarehouseId + '|' + modalPurchaseType;
+                if (diagnosisLoadedForProductId === cacheKey) {
+                    return;
                 }
+
 
                 let url = "{{ route('inventorySetup.stockDiagnosis.modal') }}" +
                     "?product_id=" + modalProductId +
-                    "&branch_id=" + modalBranchId +
+                    "&warehouse_id=" + modalWarehouseId +
                     "&purchase_type=" + encodeURIComponent(modalPurchaseType || '') +
                     "&from_date=" + LEDGER_FROM_DATE +
                     "&to_date=" + LEDGER_TO_DATE;
@@ -781,7 +783,7 @@
         }
 
         // Added: 2026-08-13 - loads the Stock Diagnosis partial into its own pane
-        function loadDiagnosisIntoModal(url) {
+        function loadDiagnosisIntoModal(url, cacheKey) {
             $('#diagnosisPane').html(
                 '<div class="text-center py-5"><i class="fas fa-spinner fa-spin fa-2x"></i><p class="mt-2 mb-0">Loading diagnosis...</p></div>'
             );
@@ -791,11 +793,11 @@
                 type: 'GET',
                 success: function(html) {
                     $('#diagnosisPane').html(html);
-                    diagnosisLoadedForProductId = modalProductId;
+                    diagnosisLoadedForProductId = cacheKey;
                 },
                 error: function() {
                     $('#diagnosisPane').html(
-                        '<div class="alert alert-danger m-3"> Something went wrong loading the diagnosis. Please try again. </div>'
+                        '<div class="alert alert-danger m-3">Something went wrong loading the diagnosis. Please try again.</div>'
                     );
                     diagnosisLoadedForProductId = null;
                 }
