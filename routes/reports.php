@@ -49,7 +49,6 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::any('/report-purchase-po', [ReportController::class, 'purchaseorder'])->name('report.purchase.po');
         Route::any('/report-purchase-grn', [ReportController::class, 'goodrcvnote'])->name('report.purchase.grn');
         Route::any('/report-stock-productledger', [ReportController::class, 'productledger'])->name('report.stock.productledger');
-
         Route::any('/report-stock-qty-update', [ReportController::class, 'product_update'])->name('report.stock.qty.update');
 
         Route::any('/report-stock-lowstocks', [ReportController::class, 'lowstocks'])->name('report.stock.lowstocks');

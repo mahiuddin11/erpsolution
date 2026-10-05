@@ -68,6 +68,21 @@
             color: #5b21b6;
         }
 
+        .badge-project {
+            background: #fce7f3;
+            color: #9d174d;
+        }
+
+        .badge-sale-return {
+            background: #cffafe;
+            color: #155e75;
+        }
+
+        .badge-secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
         .in-col {
             color: #166534;
             font-weight: 600;
@@ -120,6 +135,19 @@
 @endsection
 
 @section('admin-content')
+    @php
+        // নিরাপদ ডিফল্ট: কোনো কারণে ভ্যারিয়েবল না এলেও পেজ ভাঙবে না
+        $branch_id = $branch_id ?? 'all';
+        $warehouse_id = $warehouse_id ?? 'all';
+        $purchase_type = $purchase_type ?? 'all';
+        $product_id = $product_id ?? null;
+        $from_date = $from_date ?? '2020-01-01';
+        $to_date = $to_date ?? date('Y-m-t');
+        $branches = $branches ?? collect();
+        $warehouses = $warehouses ?? collect();
+        $products = $products ?? collect();
+        $datas = $datas ?? [];
+    @endphp
     <div class="row">
         <div class="col-md-12">
 
@@ -130,9 +158,10 @@
                     <div class="card-body">
                         <div class="row g-2 align-items-end">
 
+                            {{-- সারি ১: Branch | Warehouse | Purchase Type | Product --}}
                             <div class="col-md-3">
                                 <label class="font-weight-bold">Branch</label>
-                                <select class="form-control select2" name="branch_id">
+                                <select class="form-control select2" name="branch_id" id="branch_id">
                                     <option value="all" {{ $branch_id === 'all' ? 'selected' : '' }}>All Branches
                                     </option>
                                     @foreach ($branches as $b)
@@ -140,6 +169,34 @@
                                             {{ $b->branchCode }} - {{ $b->name }}
                                         </option>
                                     @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="font-weight-bold">Warehouse</label>
+                                <select class="form-control select2" name="warehouse_id" id="warehouse_id">
+                                    <option value="all" {{ $warehouse_id === 'all' ? 'selected' : '' }}>All Warehouses
+                                    </option>
+                                    <option value="null" {{ $warehouse_id === 'null' ? 'selected' : '' }}>No Warehouse
+                                    </option>
+                                    @foreach ($warehouses as $w)
+                                        <option value="{{ $w->id }}" data-branch="{{ $w->branch_id }}"
+                                            {{ (string) $warehouse_id === (string) $w->id ? 'selected' : '' }}>
+                                            {{ $w->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="font-weight-bold">Purchase Type</label>
+                                <select class="form-control" name="purchase_type">
+                                    <option value="all" {{ $purchase_type === 'all' ? 'selected' : '' }}>All Types
+                                    </option>
+                                    <option value="imported" {{ $purchase_type === 'imported' ? 'selected' : '' }}>
+                                        Imported</option>
+                                    <option value="local" {{ $purchase_type === 'local' ? 'selected' : '' }}>Local
+                                    </option>
                                 </select>
                             </div>
 
@@ -158,17 +215,18 @@
                                 @enderror
                             </div>
 
-                            <div class="col-md-2">
+                            {{-- সারি ২: From | To | Search --}}
+                            <div class="col-md-3 mt-3">
                                 <label class="font-weight-bold">From Date</label>
                                 <input type="date" name="from_date" class="form-control" value="{{ $from_date }}">
                             </div>
 
-                            <div class="col-md-2">
+                            <div class="col-md-3 mt-3">
                                 <label class="font-weight-bold">To Date</label>
                                 <input type="date" name="to_date" class="form-control" value="{{ $to_date }}">
                             </div>
 
-                            <div class="col-md-2">
+                            <div class="col-md-2 mt-3">
                                 <button type="submit" class="btn btn-success btn-block">
                                     <i class="fa fa-search"></i> Search
                                 </button>
@@ -223,7 +281,10 @@
                             $totalIn = collect($datas)->sum('in');
                             $totalOut = collect($datas)->sum('out');
                             $closing = collect($datas)->last()['remaining'] ?? 0;
-                            $opening = collect($datas)->where('type', 'Opening Stock')->sum('in');
+                            // type এখন "Opening Stock (Imported)" ধরনের হতে পারে, তাই str_starts_with
+                            $opening = collect($datas)
+                                ->filter(fn($r) => str_starts_with($r['type'], 'Opening Stock'))
+                                ->sum('in');
                         @endphp
                         <div class="summary-bar no-print">
                             <div class="row">
@@ -258,7 +319,8 @@
                                         <th>SL</th>
                                         <th>Date</th>
                                         <th>Invoice</th>
-                                        <th>Branch/Project</th>
+                                        <th>Branch</th>
+                                        <th>Warehouse/Project</th>
                                         <th>Product</th>
                                         <th>Type</th>
                                         <th class="text-right">In</th>
@@ -268,28 +330,15 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($datas as $row)
-                                        @php
-                                            $typeClass = match (true) {
-                                                str_contains($row['type'], 'Opening') => 'badge-opening',
-                                                str_contains($row['type'], 'Purchase') => 'badge-purchase',
-                                                str_contains($row['type'], 'Sale') => 'badge-sale',
-                                                str_contains($row['type'], 'Transfer In') => 'badge-transfer-in',
-                                                str_contains($row['type'], 'Transfer Out') => 'badge-transfer-out',
-                                                str_contains($row['type'], 'Gain') => 'badge-transfer-in',
-                                                str_contains($row['type'], 'Loss') => 'badge-sale',
-                                                str_contains($row['type'], 'Damage') => 'badge-sale',
-                                                str_contains($row['type'], 'Adjustment') => 'badge-adjustment',
-                                                default => 'badge-secondary',
-                                            };
-                                        @endphp
                                         <tr>
                                             <td>{{ $row['sl'] }}</td>
                                             <td>{{ $row['date'] }}</td>
                                             <td><small>{{ $row['invoice'] }}</small></td>
-                                            <td>{{ $row['branch'] }}</td>
+                                            <td>{{ $row['branch'] ?? '—' }}</td>
+                                            <td>{{ $row['warehouse'] ?? '—' }}</td>
                                             <td>{{ $row['product'] }}</td>
                                             <td>
-                                                <span class="type-badge {{ $typeClass }}">
+                                                <span class="type-badge {{ $row['badge'] ?? 'badge-secondary' }}">
                                                     {{ $row['type'] }}
                                                 </span>
                                             </td>
@@ -307,7 +356,7 @@
                                 </tbody>
                                 <tfoot>
                                     <tr class="table-dark font-weight-bold">
-                                        <td colspan="6" class="text-right">Total</td>
+                                        <td colspan="7" class="text-right">Total</td>
                                         <td class="text-right in-col">+{{ number_format($totalIn) }}</td>
                                         <td class="text-right out-col">-{{ number_format($totalOut) }}</td>
                                         <td class="text-right rem-col">{{ number_format($closing) }}</td>
@@ -316,36 +365,12 @@
                             </table>
                         </div>
 
-                        {{-- Adjust Quantity Form --}}
-                        <form action="{{ route('report.stock.qty.update') }}" method="get" class="mt-4 no-print">
-                            <div class="row align-items-center">
-                                <div class="col-md-3">
-                                    <label class="font-weight-bold">Purchase Type</label>
-                                    <select name="type" class="form-control">
-                                        <option value="imported">Imported</option>
-                                        <option value="local">Local</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="font-weight-bold">Current Balance</label>
-                                    <input type="text" class="form-control" value="{{ number_format($closing) }}"
-                                        readonly>
-                                </div>
-                                <input type="hidden" name="qty" value="{{ $closing }}">
-                                <input type="hidden" name="branch_id" value="{{ $branch_id }}">
-                                <input type="hidden" name="product_id" value="{{ $product_id }}">
-                                <div class="col-md-3 mt-4">
-                                    <button type="submit" class="btn btn-success">
-                                        <i class="fas fa-box"></i> Adjust Quantity
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
+                        {{-- Adjust Quantity ফর্ম আপাতত বন্ধ রাখা হয়েছে (qty.update যাচাই না হওয়া পর্যন্ত) --}}
                     @else
                         <div class="alert alert-info text-center py-5">
                             <i class="fas fa-info-circle fa-2x mb-3 d-block"></i>
-                            <h5>Product select Search</h5>
-                            <small class="text-muted">Branch optional </small>
+                            <h5>Select a product and Search</h5>
+                            <small class="text-muted">Branch, Warehouse and Purchase Type are optional</small>
                         </div>
                     @endif
 
@@ -390,5 +415,29 @@
             a.download = 'product-ledger-{{ $product_id }}-{{ $from_date }}-{{ $to_date }}.csv';
             a.click();
         }
+
+        // Branch বাছলে Warehouse তালিকা ওই ব্রাঞ্চের warehouse-এ সীমিত হবে
+        document.addEventListener('DOMContentLoaded', function() {
+            const $wh = $('#warehouse_id');
+            const allOpts = $wh.find('option').clone();
+
+            function filterWarehouses() {
+                const b = $('#branch_id').val();
+                const current = $wh.val();
+                $wh.empty();
+                allOpts.each(function() {
+                    const br = $(this).data('branch');
+                    // all / null অপশনে data-branch নেই, তাই সবসময় থাকবে
+                    if (br === undefined || b === 'all' || String(br) === String(b)) {
+                        $wh.append($(this).clone());
+                    }
+                });
+                $wh.val($wh.find('option[value="' + current + '"]').length ? current : 'all');
+                $wh.trigger('change.select2');
+            }
+
+            $('#branch_id').on('change', filterWarehouses);
+            filterWarehouses();
+        });
     </script>
 @endsection

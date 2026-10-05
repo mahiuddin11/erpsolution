@@ -26,14 +26,12 @@ public function getProductLedgerData($product_id,  $from_date, $to_date, $purcha
     $warehouseNames = DB::table('warehouses')->pluck('name', 'id');
     $whName = fn($id) => $id ? ($warehouseNames->get($id) ?? '—') : '—';
 
-    // >>> NEW (PT): type label-er sathe purchase type jure dey (imported / local)
+   
     $ptTag  = fn($v) => $v ? ' (' . ucfirst($v) . ')' : '';   // jemon: Sale (Imported)
     $ptDash = fn($v) => $v ? ' - ' . ucfirst($v) : '';        // jehetu label-e age theke bracket ache: Adjustment (Gain) - Imported
-    // <<< END NEW (PT)
+  
 
-    // >>> FIX (TRANSFER): transfer-er purchasetype NULL/faka thakle-o record dekhabe
-    // karon notun warehouse transfer-e shudhu from/to_warehouse_id save hoy, purchasetype NULL thake
-    // TODO-CONFIRM: transfer store()-e purchasetype save kora uchit, noile NULL-type transfer shob type-er ledger-e ashbe
+   
     $matchTypeOrNull = function ($q, $column) use ($purchase_type) {
         return $q->where(function ($w) use ($column, $purchase_type) {
             $w->where($column, $purchase_type)
@@ -41,13 +39,12 @@ public function getProductLedgerData($product_id,  $from_date, $to_date, $purcha
               ->orWhere($column, '');
         });
     };
-    // transfer_details-e purchasetype column na thakle error na diye filter bad
+    
     $tdHasType     = \Illuminate\Support\Facades\Schema::hasColumn('transfer_details', 'purchasetype');
     $tdTypeSelect  = $tdHasType ? 'td.purchasetype' : DB::raw('NULL as purchasetype');
-    // <<< END FIX (TRANSFER)
+   
 
-    // >>> NEW (ACTIVE): shudhu active branch ও active warehouse-er data dekhabe
-    // TODO-CONFIRM: branches.status ও warehouses.status (1 = active)
+ 
     $activeBranchIds    = DB::table('branches')->where('status', 1)->pluck('id')->all();
     $activeWarehouseIds = DB::table('warehouses')->where('status', 1)->pluck('id')->all();
 
@@ -61,7 +58,7 @@ public function getProductLedgerData($product_id,  $from_date, $to_date, $purcha
             $w->whereNull($column)->orWhereIn($column, $activeWarehouseIds);
         });
     };
-    // <<< END NEW (ACTIVE)
+   
 
     // ── 1. Opening Stock ──────────────────────────────────────────────
     $openingRows = ProductOpeningStockDetails::with(['branch:id,name', 'product:id,name', 'ProductOpeningStock:id,invoice_no'])
@@ -69,20 +66,16 @@ public function getProductLedgerData($product_id,  $from_date, $to_date, $purcha
         ->when(!$isAllBranch, fn($q) => $q->where('branch_id', $branch_id))
         ->when(!$isAllWarehouse, fn($q) => $applyWarehouse($q, 'warehouse_id'))
         ->when(!$isAllType, fn($q) => $q->where('purchasetype', $purchase_type))
-        // >>> NEW (ACTIVE)
         ->where(fn($q) => $onlyActiveBranch($q, 'branch_id'))
         ->where(fn($q) => $onlyActiveWarehouse($q, 'warehouse_id'))
-        // <<< END NEW (ACTIVE)
+      
         ->whereNull('deleted_at')
         ->get()
         ->map(fn($item) => [
             'date'       => $item->date ?? '0000-00-00',
             'invoice'    => $item->ProductOpeningStock->invoice_no ?? '—',
             'branch'     => $item->branch->name ?? 'N/A',
-            // >>> NEW
-            // TODO-CONFIRM: product_opening_stock_details.warehouse_id
             'warehouse'  => $whName($item->warehouse_id ?? null),
-            // <<< END NEW
             'product'    => $item->product->name ?? 'N/A',
             'type'       => 'Opening Stock' . $ptTag($item->purchasetype ?? null),
             'badge'      => 'badge-opening', // >>> NEW (BADGE)
@@ -126,10 +119,8 @@ public function getProductLedgerData($product_id,  $from_date, $to_date, $purcha
             'branch'     => $item->branch->name
                 ?? optional($item->purchase?->project)->name
                 ?? 'N/A',
-            // >>> NEW
-            // TODO-CONFIRM: purchases_details.warehouse_id
+            
             'warehouse'  => $whName($item->warehouse_id ?? null),
-            // <<< END NEW
             'product'    => $item->product->name ?? 'N/A',
             'type'       => 'Purchase (' . ucfirst($item->purchasetype) . ')',
             'badge'      => 'badge-purchase', // >>> NEW (BADGE)
@@ -232,18 +223,13 @@ public function getProductLedgerData($product_id,  $from_date, $to_date, $purcha
         ->where('td.product_id', $product_id)
         ->where('td.status', 'Approved')
         ->when(!$isAllBranch, fn($q) => $q->where('td.to_branch_id', $branch_id))
-        ->when(!$isAllWarehouse, fn($q) => $applyWarehouse($q, 'td.to_warehouse_id')) // >>> NEW: warehouse filter
-        // >>> FIX (TRANSFER): purchasetype NULL/faka hole-o transfer ashbe; column na thakle filter bad
+        ->when(!$isAllWarehouse, fn($q) => $applyWarehouse($q, 'td.to_warehouse_id')) 
         ->when(!$isAllType && $tdHasType, fn($q) => $matchTypeOrNull($q, 'td.purchasetype'))
-        // <<< END FIX (TRANSFER)
-        // >>> NEW (ACTIVE)
         ->where(fn($q) => $onlyActiveBranch($q, 'td.to_branch_id'))
         ->where(fn($q) => $onlyActiveWarehouse($q, 'td.to_warehouse_id'))
-        // <<< END NEW (ACTIVE)
+       
         ->whereNull('td.deleted_at')
         ->whereBetween('td.date', [$from_date, $to_date])
-        // >>> NEW: 'td.to_warehouse_id' added (NULL = legacy branch-level transfer)
-        // >>> FIX (TRANSFER): $tdTypeSelect (column na thakle NULL)
         ->select('td.date', 'td.approve_qty', 'td.transfer_id', 'td.created_at', 'td.to_warehouse_id', $tdTypeSelect, 'b.name as branch_name', 'p.name as product_name')
         ->get()
         ->map(fn($item) => [
@@ -270,30 +256,22 @@ public function getProductLedgerData($product_id,  $from_date, $to_date, $purcha
         ->where('td.product_id', $product_id)
         ->where('td.status', 'Approved')
         ->when(!$isAllBranch, fn($q) => $q->where('td.from_branch_id', $branch_id))
-        ->when(!$isAllWarehouse, fn($q) => $applyWarehouse($q, 'td.from_warehouse_id')) // >>> NEW: warehouse filter
-        // >>> FIX (TRANSFER): purchasetype NULL/faka hole-o transfer ashbe; column na thakle filter bad
+        ->when(!$isAllWarehouse, fn($q) => $applyWarehouse($q, 'td.from_warehouse_id')) 
         ->when(!$isAllType && $tdHasType, fn($q) => $matchTypeOrNull($q, 'td.purchasetype'))
-        // <<< END FIX (TRANSFER)
-        // >>> NEW (ACTIVE)
         ->where(fn($q) => $onlyActiveBranch($q, 'td.from_branch_id'))
         ->where(fn($q) => $onlyActiveWarehouse($q, 'td.from_warehouse_id'))
-        // <<< END NEW (ACTIVE)
         ->whereNull('td.deleted_at')
         ->whereBetween('td.date', [$from_date, $to_date])
-        // >>> NEW: 'td.from_warehouse_id' added
-        // >>> FIX (TRANSFER): $tdTypeSelect (column na thakle NULL)
         ->select('td.date', 'td.approve_qty', 'td.transfer_id', 'td.created_at', 'td.from_warehouse_id', $tdTypeSelect, 'b.name as branch_name', 'p.name as product_name')
         ->get()
         ->map(fn($item) => [
             'date'       => $item->date,
             'invoice'    => 'TR-' . $item->transfer_id,
             'branch'     => $item->branch_name ?? 'N/A',
-            // >>> NEW
             'warehouse'  => $whName($item->from_warehouse_id),
-            // <<< END NEW
             'product'    => $item->product_name ?? 'N/A',
             'type'       => 'Transfer Out' . $ptTag($item->purchasetype ?? null),
-            'badge'      => 'badge-transfer-out', // >>> NEW (BADGE)
+            'badge'      => 'badge-transfer-out', 
             'quantity'   => (int) $item->approve_qty,
             'in'         => 0,
             'out'        => (int) $item->approve_qty,
@@ -301,29 +279,28 @@ public function getProductLedgerData($product_id,  $from_date, $to_date, $purcha
             'created_at' => $item->created_at,
         ]);
 
+
+
     // ── 6. Sales ──────────────────────────────────────────────────────
     $salesRows = sales_Details::with(['branch:id,name', 'product:id,name', 'sales:id,invoice_no'])
         ->where('product_id', $product_id)
         ->when(!$isAllBranch, fn($q) => $q->where('branch_id', $branch_id))
-        ->when(!$isAllWarehouse, fn($q) => $applyWarehouse($q, 'warehouse_id')) // >>> NEW: warehouse filter
+        ->when(!$isAllWarehouse, fn($q) => $applyWarehouse($q, 'warehouse_id')) 
         ->when(!$isAllType, fn($q) => $q->where('purchasetype', $purchase_type))
-        // >>> NEW (ACTIVE)
         ->where(fn($q) => $onlyActiveBranch($q, 'branch_id'))
         ->where(fn($q) => $onlyActiveWarehouse($q, 'warehouse_id'))
-        // <<< END NEW (ACTIVE)
         ->whereBetween('date', [$from_date, $to_date])
         ->get()
         ->map(fn($item) => [
             'date'       => $item->date,
             'invoice'    => $item->sales->invoice_no ?? '—',
             'branch'     => $item->branch->name ?? 'N/A',
-            // >>> NEW
-            // TODO-CONFIRM: sales_details.warehouse_id
+
             'warehouse'  => $whName($item->warehouse_id ?? null),
-            // <<< END NEW
+        
             'product'    => $item->product->name ?? 'N/A',
             'type'       => 'Sale' . $ptTag($item->purchasetype ?? null),
-            'badge'      => 'badge-sale', // >>> NEW (BADGE)
+            'badge'      => 'badge-sale', 
             'quantity'   => (int) $item->qty,
             'in'         => 0,
             'out'        => (int) $item->qty,
@@ -338,20 +315,13 @@ public function getProductLedgerData($product_id,  $from_date, $to_date, $purcha
         ->leftJoin('products as p', 'p.id', '=', 'ptd.product_id')
         ->leftJoin('projects as pr', 'pr.id', '=', 'ptd.project_id')
         ->where('ptd.product_id', $product_id)
-        // >>> FIX (TRANSFER): warehouse theke project-er transfer_type-o ধরা হলো
-        // TODO-CONFIRM: project_transfers.transfer_type-er asol man (warehouse_to_project ache kina)
         ->whereIn('pt.transfer_type', ['branch_to_project', 'warehouse_to_project'])
-        // <<< END FIX (TRANSFER)
         ->where('ptd.status', 'Accepted')
         ->when(!$isAllBranch, fn($q) => $q->where('ptd.branch_id', $branch_id))
         ->when(!$isAllWarehouse, fn($q) => $applyWarehouse($q, 'ptd.warehouse_id')) // >>> NEW: warehouse filter
-        // >>> FIX (TRANSFER): purchasetype NULL/faka hole-o ashbe
         ->when(!$isAllType, fn($q) => $matchTypeOrNull($q, 'ptd.purchasetype'))
-        // <<< END FIX (TRANSFER)
-        // >>> NEW (ACTIVE)
         ->where(fn($q) => $onlyActiveBranch($q, 'ptd.branch_id'))
         ->where(fn($q) => $onlyActiveWarehouse($q, 'ptd.warehouse_id'))
-        // <<< END NEW (ACTIVE)
         ->whereBetween('pt.order_date', [$from_date, $to_date])
         ->select(
             'pt.order_date as date',
@@ -398,20 +368,13 @@ public function getProductLedgerData($product_id,  $from_date, $to_date, $purcha
         ->leftJoin('products as p', 'p.id', '=', 'ptd.product_id')
         ->leftJoin('projects as pr', 'pr.id', '=', 'ptd.project_id')
         ->where('ptd.product_id', $product_id)
-        // >>> FIX (TRANSFER): project theke warehouse-er transfer_type-o ধরা হলো
-        // TODO-CONFIRM: project_transfers.transfer_type-er asol man (project_to_warehouse ache kina)
         ->whereIn('pt.transfer_type', ['project_to_branch', 'project_to_warehouse'])
-        // <<< END FIX (TRANSFER)
         ->where('ptd.status', 'Accepted')
         ->when(!$isAllBranch, fn($q) => $q->where('ptd.branch_id', $branch_id))
-        ->when(!$isAllWarehouse, fn($q) => $applyWarehouse($q, 'ptd.warehouse_id')) // >>> NEW: warehouse filter
-        // >>> FIX (TRANSFER): purchasetype NULL/faka hole-o ashbe
+        ->when(!$isAllWarehouse, fn($q) => $applyWarehouse($q, 'ptd.warehouse_id')) 
         ->when(!$isAllType, fn($q) => $matchTypeOrNull($q, 'ptd.purchasetype'))
-        // <<< END FIX (TRANSFER)
-        // >>> NEW (ACTIVE)
         ->where(fn($q) => $onlyActiveBranch($q, 'ptd.branch_id'))
         ->where(fn($q) => $onlyActiveWarehouse($q, 'ptd.warehouse_id'))
-        // <<< END NEW (ACTIVE)
         ->whereBetween('pt.order_date', [$from_date, $to_date])
         ->select(
             'pt.order_date as date',
@@ -433,16 +396,12 @@ public function getProductLedgerData($product_id,  $from_date, $to_date, $purcha
             return [
                 'date'       => $item->date,
                 'invoice'    => $item->invoice_no ?? ('PT-' . $item->project_transfer_id),
-
                 'branch'     => $item->branch_name ?: ($item->project_name ?: 'N/A'),
                 'warehouse'  => $whName($item->warehouse_id),
-                // <<< END NEW
                 'product'    => $item->product_name ?? 'N/A',
-                // >>> FIX (TRANSFER): purchasetype faka hole "()" dekhabe na
                 'type'       => 'Transfer In' . $ptTag($item->purchasetype) . ': '
                     . $source . ' → ' . $destination,
-                // <<< END FIX (TRANSFER)
-                'badge'      => 'badge-transfer-in', // >>> NEW (BADGE)
+                'badge'      => 'badge-transfer-in',
                 'quantity'   => (int) $item->qty,
                 'in'         => (int) $item->qty,
                 'out'        => 0,
@@ -451,10 +410,7 @@ public function getProductLedgerData($product_id,  $from_date, $to_date, $purcha
             ];
         });
 
-    // >>> NEW ── 9. Sale Return (Customer → Branch/Warehouse, stock IN) ─────────
-    // TODO-CONFIRM: sale_returns.status-er approved value ('Approved' dhore nisi)
-    // TODO-CONFIRM: 'condition' (jemon Damaged) return stock-e ferot jay kina — ekhon shob approved return IN dhora hocche
-    // purchasetype sale_return_details-e nai, tai original sale detail (sale_detail_id) theke filter kora hoyeche
+ 
     $salesDetailsTable = (new sales_Details)->getTable();
 
     $saleReturnRows = DB::table('sale_return_details as srd')

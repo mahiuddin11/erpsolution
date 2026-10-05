@@ -94,7 +94,7 @@
                                 @enderror
                             </div>
 
-                            {{-- >>> NEW: From Warehouse (নির্বাচিত From Branch এর অধীনের warehouse) --}}
+                            {{-- >>> FIX: From Warehouse — branch যেটাই বাছা হোক, সব Active warehouse (locked user হলে শুধু নিজের warehouse) --}}
                             <div class="col-md-3 mb-3">
                                 <label>From Warehouse * :</label>
                                 <select class="form-control select2" id="from_warehouse_id" name="from_warehouse_id"
@@ -105,6 +105,7 @@
                                     <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
+                            {{-- <<< END FIX --}}
 
 
                             {{-- To Branch --}}
@@ -124,7 +125,7 @@
                                 @enderror
                             </div>
 
-                            {{-- >>> NEW: To Warehouse --}}
+                            {{-- >>> FIX: To Warehouse — branch যেটাই বাছা হোক, সব Active warehouse --}}
                             <div class="col-md-3 mb-3">
                                 <label>To Warehouse * :</label>
                                 <select class="form-control select2" id="to_warehouse_id" name="to_warehouse_id" disabled>
@@ -134,7 +135,7 @@
                                     <span class="error text-red text-bold">{{ $message }}</span>
                                 @enderror
                             </div>
-                            {{-- <<< END NEW --}}
+                            {{-- <<< END FIX --}}
 
                             {{-- Product Table --}}
                             <table class="table-responsive table table-bordered w-100">
@@ -360,8 +361,11 @@
     </div>
 
     <script type="text/javascript">
-        var fromWarehouseMap = @json($fromWarehousesByBranch ?? []);
-        var toWarehouseMap = @json($toWarehousesByBranch ?? []);
+        // >>> FIX: আগে branch-wise map (fromWarehouseMap / toWarehouseMap) ছিল।
+        // এখন branch নির্বিশেষে সব Active warehouse-এর সরল লিস্ট।
+        var fromWarehouseList = @json($fromWarehouses ?? []);
+        var toWarehouseList = @json($toWarehouses ?? []);
+        // <<< END FIX
 
         var stockReqSeq = 0;
 
@@ -411,11 +415,10 @@
                 var total = parseFloat($('#total').val()) || 0;
                 var stock = parseFloat($('#currentStock').val()) || 0;
 
-                // >>> NEW: From ব্রাঞ্চ + warehouse ছাড়া item যোগ করা যাবে না
+                // From ব্রাঞ্চ + warehouse ছাড়া item যোগ করা যাবে না
                 if (!fromLocationReady()) {
                     return false;
                 }
-                // <<< END NEW
 
                 // Validation
                 if (!catId) {
@@ -609,17 +612,17 @@
         }
 
 
+        // >>> FIX: warehouse এখন branch-wise নয়; branch বাছা থাকলে এবং Active warehouse লিস্ট খালি না হলে বাধ্যতামূলক
         function warehouseRequired(side) {
             var branchId = $('#' + side + '_branch_id').val();
-            var map = (side === 'from') ? fromWarehouseMap : toWarehouseMap;
-            return !!(branchId && map[branchId] && map[branchId].length > 0);
+            var list = (side === 'from') ? fromWarehouseList : toWarehouseList;
+            return !!(branchId && list.length > 0);
         }
 
 
         function loadWarehouses(side) {
             var branchId = $('#' + side + '_branch_id').val();
-            var map = (side === 'from') ? fromWarehouseMap : toWarehouseMap;
-            var list = (branchId && map[branchId]) ? map[branchId] : [];
+            var list = (side === 'from') ? fromWarehouseList : toWarehouseList;
             var $sel = $('#' + side + '_warehouse_id');
 
             $sel.empty();
@@ -643,6 +646,7 @@
 
             $sel.trigger('change');
         }
+        // <<< END FIX
 
 
         function fromLocationReady() {
@@ -657,32 +661,28 @@
             return true;
         }
 
+        // >>> FIX: warehouse এখন branch-নিরপেক্ষ, তাই একই warehouse From ও To-তে বাছলেই (branch যাই হোক) আটকাবে
         function duplicateLocationCheck() {
             var fromBranch = $('#from_branch_id').val();
             var toBranch = $('#to_branch_id').val();
-            if (!fromBranch || !toBranch || fromBranch !== toBranch) {
-                return;
-            }
-
             var fromWh = $('#from_warehouse_id').val() || '';
             var toWh = $('#to_warehouse_id').val() || '';
-            if (fromWh !== toWh) {
-                return;
-            }
 
-
-            if (fromWh === '' && (warehouseRequired('from') || warehouseRequired('to'))) {
-                return;
-            }
-
-            if (fromWh !== '') {
+            // দুই পাশেই একই warehouse বাছা হলে
+            if (fromWh !== '' && toWh !== '' && fromWh === toWh) {
                 alertMessage.error('From Warehouse and To Warehouse cannot be the same.');
                 $('#to_warehouse_id').val('').trigger('change');
-            } else {
+                return;
+            }
+
+            // warehouse ছাড়া (branch-level) ট্রান্সফারে একই branch আটকানো
+            if (fromWh === '' && toWh === '' && fromBranch && toBranch && fromBranch === toBranch &&
+                !warehouseRequired('from') && !warehouseRequired('to')) {
                 alertMessage.error('From Branch and To Branch cannot be the same.');
                 $('#to_branch_id').val('').trigger('change');
             }
         }
+        // <<< END FIX
 
 
 
@@ -691,19 +691,17 @@
             if (!cat_id) {
                 return;
             }
-            // <<< END FIX
 
-            // >>> FIX: আগে শুধু From Branch দেখত, এখন warehouse ও দেখে
+            // From ব্রাঞ্চ + warehouse দুটোই দেখে
             if (!fromLocationReady()) {
                 $('#form-field-select-3').val(null).trigger('change');
                 return;
             }
-            // <<< END FIX
 
             var from_branch_id = $('#from_branch_id').val();
-            var from_warehouse_id = $('#from_warehouse_id').val() || ''; // >>> NEW
+            var from_warehouse_id = $('#from_warehouse_id').val() || '';
 
-            stockReqSeq++; // >>> NEW
+            stockReqSeq++;
 
             // Product + Type dropdown reset while loading
             $('#productID').empty().append('<option disabled selected>Loading...</option>');
@@ -721,7 +719,7 @@
                     "_token": "{{ csrf_token() }}",
                     cat_id: cat_id,
                     branch_id: from_branch_id,
-                    warehouse_id: from_warehouse_id // >>> NEW
+                    warehouse_id: from_warehouse_id
                 },
                 success: function(data) {
                     $('#productID').empty();
@@ -735,7 +733,7 @@
         function getUnitPrice(productId) {
             if (!productId) return;
 
-            stockReqSeq++; // >>> NEW: পুরনো product এর দেরিতে আসা response বাতিল
+            stockReqSeq++; // পুরনো product এর দেরিতে আসা response বাতিল
 
             $('#purchaseType').val(''); // নতুন প্রোডাক্ট বাছলে টাইপ আবার বেছে নিতে হবে
             $('#unitpice').val('');
@@ -749,7 +747,7 @@
             var productId = $('#productID').val();
             var purchaseType = $('#purchaseType').val();
             var from_branch_id = $('#from_branch_id').val();
-            var from_warehouse_id = $('#from_warehouse_id').val() || ''; // >>> NEW
+            var from_warehouse_id = $('#from_warehouse_id').val() || '';
 
             $('#unitpice').val('');
             $('#currentStock').val('');
@@ -766,7 +764,7 @@
                 return;
             }
 
-            var seq = ++stockReqSeq; // >>> NEW
+            var seq = ++stockReqSeq;
 
             // Unit Price (product + branch + warehouse + type wise)
             $.ajax({
@@ -777,11 +775,11 @@
                     "_token": "{{ csrf_token() }}",
                     productId: productId,
                     branch_id: from_branch_id,
-                    warehouse_id: from_warehouse_id, // 
+                    warehouse_id: from_warehouse_id,
                     purchase_type: purchaseType
                 },
                 success: function(data) {
-                    if (seq !== stockReqSeq) return; // 
+                    if (seq !== stockReqSeq) return;
 
                     var parsed = (typeof data === 'string') ? JSON.parse(data) : data;
                     $('#unitpice').val(parsed.purchases_price);
@@ -801,7 +799,7 @@
                 data: {
                     "_token": "{{ csrf_token() }}",
                     productId: productId,
-                    branch_id: from_branch_id,
+                    // branch_id: from_branch_id,
                     warehouse_id: from_warehouse_id,
                     purchase_type: purchaseType
                 },

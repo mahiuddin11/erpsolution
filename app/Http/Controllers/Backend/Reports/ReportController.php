@@ -6283,45 +6283,44 @@ NULLIF(
     //     ));
     // }
 
-    public function productledger(Request $request)
-    {
 
-        $title      = 'Product Ledger';
-        $branch_id  = $request->branch_id ?? 'all';
-        $product_id = $request->product_id ?? null;
-        $from_date  = $request->from_date ?? date('Y-01-01');
-        $to_date    = $request->to_date   ?? date('Y-m-d');
-        $datas      = [];
-
-        if ($request->isMethod('POST') && $product_id) {
-
-
-            $datas =   $this->ledgerService->getProductLedgerData(
-                $product_id,
-                $from_date,
-                $to_date,
-                $request->purchase_type ?? 'all',
-                $request->warehouse_id ?? 'all'
-            );
-        }
-
-        $products    = Product::where('status', 'Active')->orderBy('name')->get(['id', 'productCode', 'name']);
-        $companyInfo = Company::latest('id')->first();
-        $branches    = Branch::where('status', 'Active')->orderBy('name')->get(['id', 'branchCode', 'name']);
-
-        return view('backend.pages.reports.productledger', compact(
-            'title',
-            'branch_id',
-            'product_id',
-            'datas',
-            'from_date',
-            'to_date',
-            'products',
-            'companyInfo',
-            'branches',
-            'request'
-        ));
+public function productledger(Request $request)
+{
+    $title        = 'Product Ledger';
+    $branch_id    = $request->branch_id    ?? 'all';
+    $warehouse_id = $request->warehouse_id ?? 'all';
+    $product_id   = $request->product_id   ?? null;
+    $from_date    = $request->from_date ?: '2020-01-01';
+    $to_date      = $request->to_date   ?: date('Y-m-t');
+    $datas        = [];
+ 
+    $purchase_type = $request->purchase_type ?? 'all';
+    if (!in_array($purchase_type, ['all', 'imported', 'local'])) {
+        $purchase_type = 'all';
     }
+ 
+    if ($request->isMethod('POST') && $product_id) {
+        $datas = $this->ledgerService->getProductLedgerData(
+            $product_id,
+            $from_date,
+            $to_date,
+            $purchase_type,
+            $warehouse_id,
+            $branch_id
+        );
+    }
+ 
+    $products    = Product::where('status', 'Active')->orderBy('name')->get(['id', 'productCode', 'name']);
+    $companyInfo = Company::latest('id')->first();
+    $branches    = Branch::where('status', 'Active')->where('parent_id', 0)->orderBy('name')->get(['id', 'branchCode', 'name']);
+    $warehouses  = Warehouse::where('status', 'Active')->orderBy('name')->get(['id', 'name', 'branch_id']);
+ 
+    return view('backend.pages.reports.productledger', compact(
+        'title', 'branch_id', 'warehouse_id', 'purchase_type', 'product_id', 'datas',
+        'from_date', 'to_date', 'products', 'companyInfo',
+        'branches', 'warehouses', 'request'
+    ));
+}
 
     public function product_update(Request $request)
     {

@@ -142,81 +142,73 @@ class StockTransferController extends Controller
     // }
 
     
-    public function create()
+     public function create()
     {
         $title = 'Add New Transfer';
         $user = auth()->user();
-
+ 
         $category_info = Category::where('status', 'Active')->get();
-
+ 
         $realBranchQuery = Branch::where('status', 'Active')
             ->where(function ($q) {
                 $q->whereNull('parent_id')->orWhere('parent_id', 0);
             });
-
+ 
         $branchQuery = clone $realBranchQuery;
         $lockedWarehouseId = null;
-
+ 
         if ($user->branch_id !== null) {
             $userBranch = Branch::find($user->branch_id);
-
+ 
             if ($userBranch && !empty($userBranch->parent_id) && $userBranch->parent_id > 0) {
-
+ 
                 $realBranchId = $userBranch->parent_id;
                 $lockedWarehouseId = $userBranch->warehouse_id;
             } else {
                 $realBranchId = $user->branch_id;
             }
-
+ 
             $branchQuery = $branchQuery->where('id', $realBranchId);
         }
-
+ 
         $branches = $branchQuery->orderBy('name')->get();
         $toBranches = (clone $realBranchQuery)->orderBy('name')->get();
-
-
+ 
+ 
         $formattedBranches = $branches->map(function ($branch) {
             $branch->display_name = $branch->branchCode . ' - ' . $branch->name;
             return $branch;
         });
-
+ 
         $formattedToBranches = $toBranches->map(function ($branch) {
             $branch->display_name = $branch->branchCode . ' - ' . $branch->name;
             return $branch;
         });
-
-        $warehouseRows = DB::table('branches as b')
-            ->join('warehouses as w', 'w.id', '=', 'b.warehouse_id')
-            ->where('b.status', 'Active')
-            ->select(
-                'w.id as warehouse_id',
-                'w.name as warehouse_name',
-                DB::raw('IF(COALESCE(b.parent_id, 0) != 0, b.parent_id, b.id) as real_branch_id')
-            )
-            ->orderBy('w.name')
-            ->get();
-
-        $toWarehousesByBranch = $warehouseRows
-            ->groupBy('real_branch_id')
-            ->map(function ($rows) {
-                return $rows->unique('warehouse_id')
-                    ->map(function ($r) {
-                        return ['id' => $r->warehouse_id, 'name' => $r->warehouse_name];
-                    })
-                    ->values();
-            });
-
-        $fromWarehousesByBranch = $toWarehousesByBranch;
-        if ($lockedWarehouseId) {
-            $fromWarehousesByBranch = $toWarehousesByBranch->map(function ($list) use ($lockedWarehouseId) {
-                return $list->where('id', $lockedWarehouseId)->values();
-            });
-        }
-
+ 
+        
+        $activeWarehouses = DB::table('warehouses')
+            ->where('status', 'Active')  
+            ->orderBy('name')
+            ->select('id', 'name')
+            ->get()
+            ->map(function ($w) {
+                return ['id' => $w->id, 'name' => $w->name];
+            })
+            ->values();
+ 
+        // To side: সব Active warehouse
+        $toWarehouses = $activeWarehouses;
+ 
+        // From side: user-এর branch যদি কোনো warehouse-এ locked থাকে, শুধু সেটাই
+        $fromWarehouses = $lockedWarehouseId
+            ? $activeWarehouses->where('id', $lockedWarehouseId)->values()
+            : $activeWarehouses;
+        // <<< END FIX
+ 
         $stockTransferData = Transfer::latest('id')->first();
         $stockTransfer = $stockTransferData ? $stockTransferData->id + 1 : 1;
         $invoice_no = 'TV' . str_pad($stockTransfer, 5, "0", STR_PAD_LEFT);
-
+ 
         return view('backend.pages.inventories.transfer.create', get_defined_vars());
     }
 
@@ -620,11 +612,14 @@ class StockTransferController extends Controller
 
     function getProductStock(Request $request)
     {
+
         $query = StockSummary::where('product_id', $request->productId)
-            ->where('branch_id', $request->branch_id);
+            ->where('warehouse_id', $request->warehouse_id);
+
         if (!empty($request->purchase_type)) {
             $query->where('purchasetype', $request->purchase_type);
         }
+
         $productStock = $query->first();
         if (!empty($productStock->quantity) && $productStock->quantity > 0) {
             echo $productStock->quantity;
