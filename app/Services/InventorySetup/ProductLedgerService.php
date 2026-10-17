@@ -23,6 +23,8 @@ public function getProductLedgerData($product_id,  $from_date, $to_date, $purcha
         return $isNullWarehouse ? $q->whereNull($column) : $q->where($column, (int) $warehouse_id);
     };
 
+    
+
     $warehouseNames = DB::table('warehouses')->pluck('name', 'id');
     $whName = fn($id) => $id ? ($warehouseNames->get($id) ?? '—') : '—';
 
@@ -308,6 +310,7 @@ public function getProductLedgerData($product_id,  $from_date, $to_date, $purcha
             'created_at' => $item->created_at,
         ]);
 
+
     // ── 7. Project Transfer Out (Branch/Warehouse → Project) ────────────
     $projectTransferOutRows = DB::table('project_transfer_details as ptd')
         ->join('project_transfers as pt', 'pt.id', '=', 'ptd.project_transfer_id')
@@ -318,7 +321,7 @@ public function getProductLedgerData($product_id,  $from_date, $to_date, $purcha
         ->whereIn('pt.transfer_type', ['branch_to_project', 'warehouse_to_project'])
         ->where('ptd.status', 'Accepted')
         ->when(!$isAllBranch, fn($q) => $q->where('ptd.branch_id', $branch_id))
-        ->when(!$isAllWarehouse, fn($q) => $applyWarehouse($q, 'ptd.warehouse_id')) // >>> NEW: warehouse filter
+        ->when(!$isAllWarehouse, fn($q) => $applyWarehouse($q, 'ptd.warehouse_id')) 
         ->when(!$isAllType, fn($q) => $matchTypeOrNull($q, 'ptd.purchasetype'))
         ->where(fn($q) => $onlyActiveBranch($q, 'ptd.branch_id'))
         ->where(fn($q) => $onlyActiveWarehouse($q, 'ptd.warehouse_id'))
@@ -330,7 +333,7 @@ public function getProductLedgerData($product_id,  $from_date, $to_date, $purcha
             'ptd.qty',
             'ptd.purchasetype',
             'ptd.created_at',
-            'ptd.warehouse_id', // >>> NEW  TODO-CONFIRM: project_transfer_details.warehouse_id (na thakle from_warehouse_id kina dekhun)
+            'ptd.warehouse_id', 
             'b.name as branch_name',
             'p.name as product_name',
             'pr.name as project_name'
@@ -348,11 +351,9 @@ public function getProductLedgerData($product_id,  $from_date, $to_date, $purcha
                 'warehouse'  => $whName($item->warehouse_id),
 
                 'product'    => $item->product_name ?? 'N/A',
-                // >>> FIX (TRANSFER): purchasetype faka hole "()" dekhabe na
                 'type'       => 'Transfer Out' . $ptTag($item->purchasetype) . ': '
                     . $source . ' → ' . $destination,
-                // <<< END FIX (TRANSFER)
-                'badge'      => 'badge-transfer-out', // >>> NEW (BADGE)
+                'badge'      => 'badge-transfer-out', 
                 'quantity'   => (int) $item->qty,
                 'in'         => 0,
                 'out'        => (int) $item->qty,
@@ -360,6 +361,8 @@ public function getProductLedgerData($product_id,  $from_date, $to_date, $purcha
                 'created_at' => $item->created_at,
             ];
         });
+
+
 
     // ── 8. Project Transfer In (Project → Branch/Warehouse, return) ─────
     $projectTransferInRows = DB::table('project_transfer_details as ptd')

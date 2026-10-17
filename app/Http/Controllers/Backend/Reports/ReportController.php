@@ -2711,34 +2711,75 @@ public function sale(Request $request)
     }
 
 
+    // public function retainedearning(Request $request)
+    // {
+    //     $title = 'Retained Earning Report';
+
+    //     $account = new ChartOfAccount();
+    //     $year = $request->year ?? date('Y');
+
+    //     $expenseHeadIds = $account->getaccount(6)->pluck('id');
+    //     $incomeHeadIds = $account->getaccount(8)->pluck('id');
+
+    //     $incomes = AccountTransaction::selectRaw('SUM(credit) as credit, YEAR(created_at) as year')
+    //         ->whereYear('created_at', '<=', $year)
+    //         ->whereIn('account_id', $incomeHeadIds)
+    //         ->groupBy('year')
+    //         ->orderBy('year')
+    //         ->get();
+
+    //     $expenses = AccountTransaction::selectRaw('SUM(debit) as debit, YEAR(created_at) as year')
+    //         ->whereYear('created_at', '<=', $year)
+    //         ->whereIn('account_id', $expenseHeadIds)
+    //         ->groupBy('year')
+    //         ->orderBy('year')
+    //         ->get();
+
+    //     $companyInfo = Company::latest('id')->first();
+
+    //     return view('backend.pages.reports.retainedearning', get_defined_vars());
+    // }
+
     public function retainedearning(Request $request)
-    {
-        $title = 'Retained Earning Report';
+{
+    $title = 'Retained Earning Report';
+    $year  = (int) ($request->year ?? date('Y'));
 
-        $account = new ChartOfAccount();
-        $year = $request->year ?? date('Y');
+    
+    $all = ChartOfAccount::withTrashed()->get(['id', 'parent_id']);
 
-        $expenseHeadIds = $account->getaccount(6)->pluck('id');
-        $incomeHeadIds = $account->getaccount(8)->pluck('id');
+    $descendants = function (int $rootId) use ($all) {
+        $ids = [$rootId];
+        $queue = [$rootId];
+        while ($queue) {
+            $current = array_shift($queue);
+            foreach ($all->where('parent_id', $current) as $child) {
+                if (!in_array($child->id, $ids)) {
+                    $ids[]   = $child->id;
+                    $queue[] = $child->id;
+                }
+            }
+        }
+        return $ids;
+    };
 
-        $incomes = AccountTransaction::selectRaw('SUM(credit) as credit, YEAR(created_at) as year')
-            ->whereYear('created_at', '<=', $year)
-            ->whereIn('account_id', $incomeHeadIds)
-            ->groupBy('year')
-            ->orderBy('year')
-            ->get();
+    $incomeHeadIds  = $descendants(17);                       // INCOME
+    $expenseHeadIds = array_diff($descendants(21), [25]);    
 
-        $expenses = AccountTransaction::selectRaw('SUM(debit) as debit, YEAR(created_at) as year')
-            ->whereYear('created_at', '<=', $year)
-            ->whereIn('account_id', $expenseHeadIds)
-            ->groupBy('year')
-            ->orderBy('year')
-            ->get();
+    $incomes = AccountTransaction::selectRaw('SUM(credit) - SUM(debit) as credit, YEAR(created_at) as year')
+        ->whereYear('created_at', '<=', $year)
+        ->whereIn('account_id', $incomeHeadIds)
+        ->groupBy('year')->orderBy('year')->get();
 
-        $companyInfo = Company::latest('id')->first();
+    $expenses = AccountTransaction::selectRaw('SUM(debit) - SUM(credit) as debit, YEAR(created_at) as year')
+        ->whereYear('created_at', '<=', $year)
+        ->whereIn('account_id', $expenseHeadIds)
+        ->groupBy('year')->orderBy('year')->get();
 
-        return view('backend.pages.reports.retainedearning', get_defined_vars());
-    }
+    $companyInfo = Company::latest('id')->first();
+
+    return view('backend.pages.reports.retainedearning', get_defined_vars());
+}
 
     public function bankbook(Request $request)
     {
@@ -4471,8 +4512,7 @@ public function sale(Request $request)
             $groupDebitCell  = $groupDebitTotal  > 0 ? number_format($groupDebitTotal, 2)  : '-';
             $groupCreditCell = $groupCreditTotal > 0 ? number_format($groupCreditTotal, 2) : '-';
 
-            // Added: 2026-07-25 — group er shokol voucher-wise item JSON hisebe data-items attribute e boshano hocche,
-            // eta 2nd modal e detail dekhanor jonno babohar hobe
+           
             $itemsArray = [];
             foreach ($txns as $txn) {
                 $itemsArray[] = [
