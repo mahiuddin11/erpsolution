@@ -53,6 +53,8 @@ Route::middleware('auth')->prefix('financial-dashboard')->group(function () {
     Route::get('invoices', [FinancialDashboardApiController::class, 'invoices']);
     Route::get('/ar-ap-aging', [FinancialDashboardApiController::class, 'arApAging']);
     Route::get('/bank-cash-balance', [FinancialDashboardApiController::class, 'bankCashBalance']);
+    Route::get('aging-account-details', [FinancialDashboardApiController::class, 'agingAccountDetails']);
+
 });
 
 

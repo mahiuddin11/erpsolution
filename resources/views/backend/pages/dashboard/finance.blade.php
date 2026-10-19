@@ -105,7 +105,6 @@
             margin-left: 4px;
         }
 
-        /* add new: AR/AP Aging Summary search input + section header with range filter */
         .aging-search-input {
             max-width: 220px;
         }
@@ -123,6 +122,64 @@
             font-weight: 700;
             font-size: 1.05rem;
             margin: 0;
+        }
+
+        /* NEW: drill-down link */
+        .aging-acc-link {
+            color: #2563eb;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .aging-acc-link:hover {
+            color: #1d4ed8;
+            text-decoration: underline;
+        }
+
+        /* Aging drill-down modal: responsive + user friendly */
+        #agingAccountModal .modal-body {
+            padding: 18px 20px;
+        }
+
+        .aging-bucket-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            margin: 14px 0 6px;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: .92rem;
+        }
+
+        .aging-bucket-head .sub {
+            font-weight: 600;
+            font-size: .82rem;
+            color: #6b7280;
+        }
+
+        @media (max-width: 576px) {
+            #agingAccountModal .modal-header {
+                flex-wrap: wrap;
+                row-gap: 8px;
+            }
+
+            #agingAccountModal .modal-title {
+                width: 100%;
+                font-size: 1rem;
+            }
+
+            #agingAccountModal .modal-body {
+                padding: 12px;
+            }
+
+            #agingAccountModal .kpi-detail-table th,
+            #agingAccountModal .kpi-detail-table td {
+                font-size: .75rem;
+                padding: 6px 8px;
+            }
         }
     </style>
 @endsection
@@ -238,14 +295,14 @@
             </div>
 
             {{-- ============ AR Aging ============ --}}
-            {{-- add new: section header with range filter (7d/30d/90d/year) --}}
             <div class="aging-section-header">
                 <h5 class="aging-section-title">Accounts Receivable Aging</h5>
                 <div class="fin-tabs" id="arAgingRangeFilter">
                     <button type="button" class="fin-range-btn" data-arrange="7d">7 Days</button>
                     <button type="button" class="fin-range-btn" data-arrange="30d">30 Days</button>
                     <button type="button" class="fin-range-btn" data-arrange="90d">90+ Days</button>
-                    <button type="button" class="fin-range-btn active" data-arrange="year">1 Year</button>
+                    <button type="button" class="fin-range-btn" data-arrange="year">1 Year</button>
+                    <button type="button" class="fin-range-btn active" data-arrange="all">All Time</button>
                 </div>
             </div>
             <div class="row g-3 mb-3" id="arAgingKpis"></div>
@@ -277,7 +334,6 @@
                     <div class="panel fin-panel">
                         <div class="panel-header fin-panel-header">
                             <span class="fin-panel-title">Accounts Receivable Aging -- Summary</span>
-                            {{-- add new: customer name search --}}
                             <input type="text" class="form-control form-control-sm aging-search-input"
                                 id="arAgingSearch" placeholder="Search customer...">
                         </div>
@@ -289,14 +345,14 @@
             </div>
 
             {{-- ============ AP Aging ============ --}}
-            {{-- add new: section header with range filter (7d/30d/90d/year) --}}
             <div class="aging-section-header">
                 <h5 class="aging-section-title">Accounts Payable Aging</h5>
                 <div class="fin-tabs" id="apAgingRangeFilter">
                     <button type="button" class="fin-range-btn" data-arrange="7d">7 Days</button>
                     <button type="button" class="fin-range-btn" data-arrange="30d">30 Days</button>
                     <button type="button" class="fin-range-btn" data-arrange="90d">90+ Days</button>
-                    <button type="button" class="fin-range-btn active" data-arrange="year">1 Year</button>
+                    <button type="button" class="fin-range-btn" data-arrange="year">1 Year</button>
+                    <button type="button" class="fin-range-btn active" data-arrange="all">All Time</button>
                 </div>
             </div>
             <div class="row g-3 mb-3" id="apAgingKpis"></div>
@@ -328,7 +384,6 @@
                     <div class="panel fin-panel">
                         <div class="panel-header fin-panel-header">
                             <span class="fin-panel-title">Accounts Payable Aging -- Summary</span>
-                            {{-- add new: supplier name search --}}
                             <input type="text" class="form-control form-control-sm aging-search-input"
                                 id="apAgingSearch" placeholder="Search supplier...">
                         </div>
@@ -431,6 +486,44 @@
                 </div>
                 <div class="modal-footer kpi-modal-footer" id="kpiDetailModalFooter" style="display:none">
                     <div class="kpi-modal-pagination" id="kpiModalPagination"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- ============ Aging Account Drill-down Modal ============ --}}
+    <div class="modal fade" id="agingAccountModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="agingAccountModalTitle">Account Details</h5>
+                    <div class="d-flex" style="gap:8px">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-success dropdown-toggle" type="button" data-toggle="dropdown">
+                                <i class="bi bi-printer"></i> Print
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right" id="agingPrintMenu">
+                                <a class="dropdown-item" href="#" data-bucket="all">All Buckets</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#" data-bucket="current">Current</a>
+                                <a class="dropdown-item" href="#" data-bucket="d1_30">1–30 Days</a>
+                                <a class="dropdown-item" href="#" data-bucket="d31_60">31–60 Days</a>
+                                <a class="dropdown-item" href="#" data-bucket="d61_90">61–90 Days</a>
+                                <a class="dropdown-item" href="#" data-bucket="d91_plus">91+ Days</a>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary" type="button" id="agingExcelBtn">
+                            <i class="bi bi-file-earmark-excel"></i> Excel
+                        </button>
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <div class="modal-body" id="agingAccountModalBody">
+                    <div class="text-center text-muted py-3">Loading...</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -1154,12 +1247,12 @@
                     </thead>
                     <tbody>
                         ${rows.map(r => `
-                                <tr>
-                                    <td>${r.voucher ?? '-'}</td>
-                                    <td>${r.title}</td>
-                                    <td class="text-right">${r.date}</td>
-                                    <td class="text-right">৳${Number(r.amount).toLocaleString()}</td>
-                                </tr>`).join('')}
+                                                                            <tr>
+                                                                                <td>${r.voucher ?? '-'}</td>
+                                                                                <td>${r.title}</td>
+                                                                                <td class="text-right">${r.date}</td>
+                                                                                <td class="text-right">৳${Number(r.amount).toLocaleString()}</td>
+                                                                            </tr>`).join('')}
                     </tbody>
                 </table>`;
         }
@@ -1251,12 +1344,12 @@
                         <thead><tr><th>Voucher</th><th>Description</th><th>Date</th><th class="amount">Amount</th></tr></thead>
                         <tbody>
                             ${rows.map(r => `
-                                    <tr>
-                                        <td>${r.voucher ?? '-'}</td>
-                                        <td>${r.title}</td>
-                                        <td>${r.date}</td>
-                                        <td class="amount">৳${Number(r.amount).toLocaleString()}</td>
-                                    </tr>`).join('')}
+                                                                                <tr>
+                                                                                    <td>${r.voucher ?? '-'}</td>
+                                                                                    <td>${r.title}</td>
+                                                                                    <td>${r.date}</td>
+                                                                                    <td class="amount">৳${Number(r.amount).toLocaleString()}</td>
+                                                                                </tr>`).join('')}
                         </tbody>
                     </table>
                 </body></html>`;
@@ -1561,7 +1654,6 @@
         }
 
         /* ---------------- AR / AP Aging ---------------- */
-        // add new: agingState-e search field add kora holo (client-side filter-er jonno)
         const agingState = {
             receivable: {
                 data: null,
@@ -1572,17 +1664,18 @@
                 search: ''
             }
         };
-        // add new: প্রতিটা section-er নিজস্ব range state
-        let arAgingRange = 'year',
-            apAgingRange = 'year';
+        // FIX: default 'year' → 'all' (aging point-in-time statement)
+        let arAgingRange = 'all',
+            apAgingRange = 'all';
         let arBarInst = null,
             arDonutInst = null,
             apBarInst = null,
             apDonutInst = null;
 
+        // FIX: ৫টা card সমান width-এর জন্য col-lg (auto)
         function agingKpiCard(label, value, icon, iconBg, iconColor) {
             return `
-        <div class="col-6 col-lg-3">
+        <div class="col-6 col-lg">
             <div class="fin-kpi-card aging-kpi-card" style="cursor:default">
                 <div class="aging-kpi-icon-wrap" style="background:${iconBg};color:${iconColor}">
                     <i class="bi ${icon}"></i>
@@ -1593,12 +1686,15 @@
         </div>`;
         }
 
+        // FIX: ৫ম card — advance amount (negative আর "Unpaid"-এ মিশবে না)
         function renderAgingKpis(kpiContainerId, kpis, prefix) {
             document.getElementById(kpiContainerId).innerHTML = [
                 agingKpiCard(`Unpaid ${prefix} Amount`, kpis.unpaid_amount, 'bi-receipt', '#eff6ff', '#2563eb'),
                 agingKpiCard('Overdue Amount', kpis.overdue_amount, 'bi-clock-history', '#fef2f2', '#dc2626'),
                 agingKpiCard('Overdue 30+ Days', kpis.overdue_30_plus, 'bi-calendar-x', '#fff7ed', '#ea580c'),
                 agingKpiCard('Overdue 90+ Days', kpis.overdue_90_plus, 'bi-exclamation-octagon', '#fdf2f8', '#be185d'),
+                agingKpiCard(kpis.advance_label || 'Advances', kpis.advance_amount || 0, 'bi-wallet2', '#f0fdf4',
+                    '#16a34a'),
             ].join('') + `<div class="col-12"><div class="aging-caption">in home currency</div></div>`;
         }
 
@@ -1702,80 +1798,284 @@
             instRefSetter(barChart, donutChart);
         }
 
-        // change: pagination logic sorano holo -- ekhon shudhu search-diye filter kore
-        // shob matching row ekbari dekhabe (table-responsive scroll diye)
+        // FIX: advance আলাদা section + account name click → drill-down modal
         function renderAgingTable(containerId, type) {
             const state = agingState[type];
             const data = state.data;
             const searchTerm = (state.search || '').toLowerCase().trim();
 
-            // add new: customer/supplier name diye client-side filter
-            const filteredRows = searchTerm ?
-                data.rows.filter(r => r.name.toLowerCase().includes(searchTerm)) :
-                data.rows;
+            const firstCol = type === 'receivable' ? 'Customer' : 'Supplier';
+            const mainTitle = type === 'receivable' ? 'Receivables' : 'Payables';
+            const advTitle = type === 'receivable' ? 'Advance from Customers' : 'Advance to Suppliers';
 
-            // add new: grand total filtered rows theke live-calculate, jate search
-            // korle footer-o thik matching total dekhay
-            const grand = {
-                current: filteredRows.reduce((s, r) => s + r.current, 0),
-                d1_30: filteredRows.reduce((s, r) => s + r.d1_30, 0),
-                d31_60: filteredRows.reduce((s, r) => s + r.d31_60, 0),
-                d61_90: filteredRows.reduce((s, r) => s + r.d61_90, 0),
-                d91_plus: filteredRows.reduce((s, r) => s + r.d91_plus, 0),
-                total: filteredRows.reduce((s, r) => s + r.total, 0),
+            const filtered = (data.rows || []).filter(r => !searchTerm || r.name.toLowerCase().includes(searchTerm));
+            const filteredAdv = (data.advance_rows || []).filter(r => !searchTerm || r.name.toLowerCase().includes(
+                searchTerm));
+
+            const calcGrand = rows => ({
+                current: rows.reduce((s, r) => s + r.current, 0),
+                d1_30: rows.reduce((s, r) => s + r.d1_30, 0),
+                d31_60: rows.reduce((s, r) => s + r.d31_60, 0),
+                d61_90: rows.reduce((s, r) => s + r.d61_90, 0),
+                d91_plus: rows.reduce((s, r) => s + r.d91_plus, 0),
+                total: rows.reduce((s, r) => s + r.total, 0),
+            });
+
+            const tableHtml = (title, rows) => {
+                if (!rows.length) return '';
+                const grand = calcGrand(rows);
+                return `
+                <div style="font-size:.95rem;margin:12px 0 6px;font-weight:700">${title}</div>
+                <div class="table-responsive" style="max-height:420px;overflow-y:auto">
+                    <table class="table table-sm kpi-detail-table aging-table">
+                        <thead>
+                            <tr>
+                                <th>${firstCol}</th>
+                                <th class="text-right">Current</th>
+                                <th class="text-right">1-30</th>
+                                <th class="text-right">31-60</th>
+                                <th class="text-right">61-90</th>
+                                <th class="text-right">91 and over</th>
+                                <th class="text-right">Amount Due</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows.map(r => `
+                                                                                <tr>
+                                                                                    <td><a href="javascript:void(0)" class="aging-acc-link" data-child="${r.id}" data-isar="${type === 'receivable' ? 1 : 0}">${r.name}</a></td>
+                                                                                    <td class="text-right">${Number(r.current).toLocaleString()}</td>
+                                                                                    <td class="text-right">${Number(r.d1_30).toLocaleString()}</td>
+                                                                                    <td class="text-right">${Number(r.d31_60).toLocaleString()}</td>
+                                                                                    <td class="text-right">${Number(r.d61_90).toLocaleString()}</td>
+                                                                                    <td class="text-right">${Number(r.d91_plus).toLocaleString()}</td>
+                                                                                    <td class="text-right" style="font-weight:700">${Number(r.total).toLocaleString()}</td>
+                                                                                </tr>`).join('')}
+                        </tbody>
+                        <tfoot>
+                            <tr style="font-weight:700;background:#f9fafb">
+                                <td>Total</td>
+                                <td class="text-right">${Number(grand.current).toLocaleString()}</td>
+                                <td class="text-right">${Number(grand.d1_30).toLocaleString()}</td>
+                                <td class="text-right">${Number(grand.d31_60).toLocaleString()}</td>
+                                <td class="text-right">${Number(grand.d61_90).toLocaleString()}</td>
+                                <td class="text-right">${Number(grand.d91_plus).toLocaleString()}</td>
+                                <td class="text-right">${Number(grand.total).toLocaleString()}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="text-muted small text-center mt-1">${rows.length} record${rows.length > 1 ? 's' : ''}</div>`;
             };
 
             let html;
-            if (!filteredRows.length) {
+            if (!filtered.length && !filteredAdv.length) {
                 html = `<div class="empty-state"><i class="bi bi-inbox"></i><p>No matching records</p></div>`;
             } else {
-                html =
-                    `
-            <div class="table-responsive" style="max-height:420px;overflow-y:auto">
-                <table class="table table-sm kpi-detail-table aging-table">
-                    <thead>
-                        <tr>
-                            <th>${type === 'receivable' ? 'Customer' : 'Supplier'}</th>
-                            <th class="text-right">Current</th>
-                            <th class="text-right">1-30</th>
-                            <th class="text-right">31-60</th>
-                            <th class="text-right">61-90</th>
-                            <th class="text-right">91 and over</th>
-                            <th class="text-right">Amount Due</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${filteredRows.map(r => `
-                                <tr>
-                                    <td>${r.name}</td>
-                                    <td class="text-right">${Number(r.current).toLocaleString()}</td>
-                                    <td class="text-right">${Number(r.d1_30).toLocaleString()}</td>
-                                    <td class="text-right">${Number(r.d31_60).toLocaleString()}</td>
-                                    <td class="text-right">${Number(r.d61_90).toLocaleString()}</td>
-                                    <td class="text-right">${Number(r.d91_plus).toLocaleString()}</td>
-                                    <td class="text-right" style="font-weight:700">${Number(r.total).toLocaleString()}</td>
-                                </tr>`).join('')}
-                    </tbody>
-                    <tfoot>
-                        <tr style="font-weight:700;background:#f9fafb">
-                            <td>Grand Total</td>
-                            <td class="text-right">${Number(grand.current).toLocaleString()}</td>
-                            <td class="text-right">${Number(grand.d1_30).toLocaleString()}</td>
-                            <td class="text-right">${Number(grand.d31_60).toLocaleString()}</td>
-                            <td class="text-right">${Number(grand.d61_90).toLocaleString()}</td>
-                            <td class="text-right">${Number(grand.d91_plus).toLocaleString()}</td>
-                            <td class="text-right">${Number(grand.total).toLocaleString()}</td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-            <div class="text-muted small text-center mt-1">${filteredRows.length} record${filteredRows.length > 1 ? 's' : ''}</div>`;
+                html = tableHtml(mainTitle, filtered) + tableHtml(advTitle, filteredAdv);
             }
 
-            document.getElementById(containerId).innerHTML = html;
+            const container = document.getElementById(containerId);
+            container.innerHTML = html;
+
+            // drill-down: name-এ click → modal (axios-style fetch)
+            container.querySelectorAll('.aging-acc-link').forEach(a => {
+                a.addEventListener('click', () => openAgingAccountModal(a.dataset.child, a.dataset.isar, a
+                    .textContent.trim(), type));
+            });
         }
 
-        // add new: search input listener -- customer/supplier name diye filter
+        /* ---------------- Aging drill-down modal (NEW) ---------------- */
+        const agingModalState = {
+            data: null,
+            range: 'all',
+            name: ''
+        };
+
+        function openAgingAccountModal(childId, isAr, name, type) {
+            const range = type === 'receivable' ? arAgingRange : apAgingRange;
+            document.getElementById('agingAccountModalTitle').textContent = name;
+            document.getElementById('agingAccountModalBody').innerHTML =
+                `<div class="text-center text-muted py-3">Loading...</div>`;
+            $('#agingAccountModal').modal('show');
+
+            fetch(`${API_BASE}/aging-account-details?child_id=${childId}&is_ar=${isAr}&range=${range}`)
+                .then(r => {
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    return r.json();
+                })
+                .then(res => renderAgingAccountModal(res, range))
+                .catch(() => {
+                    document.getElementById('agingAccountModalBody').innerHTML =
+                        `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load account details</p></div>`;
+                });
+        }
+
+        function renderAgingAccountModal(res, range) {
+            // print/excel-এর জন্য state save
+            agingModalState.data = res;
+            agingModalState.range = range;
+            agingModalState.name = res.account_name;
+
+            const rangeLabels = {
+                '7d': '7 Days',
+                '30d': '30 Days',
+                '90d': '90+ Days',
+                'year': '1 Year',
+                'all': 'All Time'
+            };
+            const badgeText = res.is_advance ?
+                (res.is_ar ? 'Advance from Customer' : 'Advance to Supplier') :
+                (res.is_ar ? 'Receivable' : 'Payable');
+
+            let html = `
+        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap" style="gap:8px">
+            <div>
+                <span class="badge ${res.is_advance ? 'badge-warning' : 'badge-success'}" style="font-size:.8rem">${badgeText}</span>
+                <span class="text-muted small ml-2">Range: ${rangeLabels[range] || range} &middot; ${res.txn_count} transaction(s)</span>
+            </div>
+            <div style="font-weight:700;font-size:1.05rem">Net Total: ৳${Number(res.net_total).toLocaleString()}</div>
+        </div>`;
+
+            let hasAny = false;
+            res.buckets.forEach(b => {
+                if (!b.transactions.length) return;
+                hasAny = true;
+                html += `
+        <div class="aging-bucket-head"><span>${b.label}</span><span class="sub">Subtotal: ৳${Number(b.total).toLocaleString()}</span></div>
+        <div class="table-responsive">
+            <table class="table table-sm kpi-detail-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Voucher</th>
+                        <th>Type</th>
+                        <th>Remark</th>
+                        <th class="text-right">Debit</th>
+                        <th class="text-right">Credit</th>
+                        <th class="text-right">Net</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${b.transactions.map(t => `
+                                            <tr>
+                                                <td style="white-space:nowrap">${t.date}</td>
+                                                <td>${t.voucher}</td>
+                                                <td>${t.type}</td>
+                                                <td>${t.remark}</td>
+                                                <td class="text-right">${t.debit === null ? '-' : Number(t.debit).toLocaleString()}</td>
+                                                <td class="text-right">${t.credit === null ? '-' : Number(t.credit).toLocaleString()}</td>
+                                                <td class="text-right" style="font-weight:600;color:${t.amount < 0 ? '#dc2626' : '#111827'}">${Number(t.amount).toLocaleString()}</td>
+                                            </tr>`).join('')}
+                </tbody>
+            </table>
+        </div>`;
+            });
+
+            if (!hasAny) {
+                html += `<div class="empty-state"><i class="bi bi-inbox"></i><p>No transactions in this range</p></div>`;
+            }
+
+            document.getElementById('agingAccountModalBody').innerHTML = html;
+        }
+
+        /* ---------------- Aging modal: Print (bucket-wise, A4) + Excel ---------------- */
+        document.querySelectorAll('#agingPrintMenu .dropdown-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                printAgingAccount(this.dataset.bucket);
+            });
+        });
+        document.getElementById('agingExcelBtn').addEventListener('click', downloadAgingExcel);
+
+        function printAgingAccount(bucketKey) {
+            const res = agingModalState.data;
+            if (!res) return;
+
+            const rangeLabels = {
+                '7d': '7 Days',
+                '30d': '30 Days',
+                '90d': '90+ Days',
+                'year': '1 Year',
+                'all': 'All Time'
+            };
+            const buckets = res.buckets.filter(b => (bucketKey === 'all' || b.key === bucketKey) && b.transactions.length);
+            const badgeText = res.is_advance ?
+                (res.is_ar ? 'Advance from Customer' : 'Advance to Supplier') :
+                (res.is_ar ? 'Receivable' : 'Payable');
+            const grandTotal = bucketKey === 'all' ? res.net_total : buckets.reduce((s, b) => s + b.total, 0);
+
+            const rows = buckets.map(b => `
+        <div class="bucket-title">${b.label} <span>— Subtotal: ৳${Number(b.total).toLocaleString()}</span></div>
+        <table>
+            <thead>
+                <tr><th style="width:11%">Date</th><th style="width:14%">Voucher</th><th style="width:13%">Type</th><th>Remark</th><th class="num" style="width:12%">Debit</th><th class="num" style="width:12%">Credit</th><th class="num" style="width:13%">Net</th></tr>
+            </thead>
+            <tbody>
+                ${b.transactions.map(t => `
+                            <tr>
+                                <td>${t.date}</td><td>${t.voucher}</td><td>${t.type}</td><td>${t.remark}</td>
+                                <td class="num">${t.debit === null ? '-' : Number(t.debit).toLocaleString()}</td>
+                                <td class="num">${t.credit === null ? '-' : Number(t.credit).toLocaleString()}</td>
+                                <td class="num"><b>${Number(t.amount).toLocaleString()}</b></td>
+                            </tr>`).join('')}
+            </tbody>
+        </table>`).join('');
+
+            const win = window.open('', '_blank');
+            win.document.write(`<html><head><title>${res.account_name} - Aging</title><meta charset="utf-8">
+        <style>
+            @page { size: A4; margin: 14mm 12mm; }
+            body { font-family: Arial, Helvetica, sans-serif; color: #111; font-size: 12px; margin: 0; padding: 0; }
+            .hdr { border-bottom: 2px solid #111; padding-bottom: 8px; margin-bottom: 6px; }
+            .hdr h2 { margin: 0 0 4px; font-size: 18px; }
+            .meta { color: #555; font-size: 11px; }
+            .bucket-title { font-size: 14px; font-weight: 700; margin: 14px 0 6px; }
+            .bucket-title span { font-weight: 400; color: #555; font-size: 12px; }
+            table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+            th, td { border: 1px solid #999; padding: 5px 7px; font-size: 11px; text-align: left; word-wrap: break-word; }
+            th { background: #eee; }
+            thead { display: table-header-group; }
+            tr { page-break-inside: avoid; }
+            td.num, th.num { text-align: right; }
+            .grand { margin-top: 12px; text-align: right; font-size: 14px; font-weight: 700; }
+            .ft { margin-top: 16px; font-size: 10px; color: #777; border-top: 1px solid #ccc; padding-top: 6px; }
+        </style></head><body>
+            <div class="hdr">
+                <h2>${res.account_name}</h2>
+                <div class="meta">${badgeText} &middot; Range: ${rangeLabels[agingModalState.range] || agingModalState.range} &middot; Printed: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</div>
+            </div>
+            ${rows || '<p>No transactions in the selected bucket.</p>'}
+            <div class="grand">Total: ৳${Number(grandTotal).toLocaleString()}</div>
+            <div class="ft">Financial Dashboard &middot; For internal use</div>
+        </body></html>`);
+            win.document.close();
+            win.focus();
+            win.print();
+        }
+
+        function downloadAgingExcel() {
+            const res = agingModalState.data;
+            if (!res) return;
+            const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+            let csv = 'Bucket,Date,Voucher,Type,Remark,Debit,Credit,Net\n';
+            res.buckets.forEach(b => {
+                b.transactions.forEach(t => {
+                    csv +=
+                        `${q(b.label)},${q(t.date)},${q(t.voucher)},${q(t.type)},${q(t.remark)},${t.debit ?? ''},${t.credit ?? ''},${t.amount}\n`;
+                });
+            });
+            const blob = new Blob(["\ufeff" + csv], {
+                type: 'text/csv;charset=utf-8;'
+            });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            const safe = (agingModalState.name || 'account').replace(/[^\w\-]+/g, '_').substring(0, 60);
+            link.download = `${safe}-aging-${agingModalState.range}.csv`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+
         document.getElementById('arAgingSearch').addEventListener('input', function() {
             agingState.receivable.search = this.value;
             renderAgingTable('arAgingBody', 'receivable');
@@ -1785,7 +2085,6 @@
             renderAgingTable('apAgingBody', 'payable');
         });
 
-        // change: range parameter add kora holo, ar function-e range pass kora hocche
         function loadArAging(range) {
             fetch(`${API_BASE}/ar-ap-aging?range=${range}`)
                 .then(r => r.json())
@@ -1806,7 +2105,6 @@
                 });
         }
 
-        // add new: AP aging-er jonno alada loader (age eta ekta combined loadArApAging()-e chhilo)
         function loadApAging(range) {
             fetch(`${API_BASE}/ar-ap-aging?range=${range}`)
                 .then(r => r.json())
@@ -1827,13 +2125,11 @@
                 });
         }
 
-        // change: age ekta call-e AR+AP dutoi loading hoto, ekhon dutoi nijer nijer range diye chole
         function loadArApAging() {
             loadArAging(arAgingRange);
             loadApAging(apAgingRange);
         }
 
-        // add new: AR Aging section-er range filter click handler
         document.querySelectorAll('#arAgingRangeFilter .fin-range-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('#arAgingRangeFilter .fin-range-btn').forEach(b => b.classList
@@ -1843,7 +2139,6 @@
                 loadArAging(arAgingRange);
             });
         });
-        // add new: AP Aging section-er range filter click handler
         document.querySelectorAll('#apAgingRangeFilter .fin-range-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('#apAgingRangeFilter .fin-range-btn').forEach(b => b.classList

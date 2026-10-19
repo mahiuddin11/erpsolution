@@ -3875,7 +3875,7 @@ public function sale(Request $request)
         $startDate = $request->input('start_date') ?? date("Y-m-d");
         $endDate   = $request->input('end_date')   ?? date("Y-m-d");
 
-        // Bug 1 & 2 Fix: getAccountByUniqueID দিয়ে সব নাও, hardcoded id ব্যবহার করো না - Modified: 2026-06-29
+        
         $assetAccount       = getAccountByUniqueID(1);
         $liabilitiesAccount = getAccountByUniqueID(9);
         $incomeAccount      = getAccountByUniqueID(17);
