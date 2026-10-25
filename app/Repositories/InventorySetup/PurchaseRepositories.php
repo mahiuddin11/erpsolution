@@ -535,7 +535,7 @@ class PurchaseRepositories
 
     public function store($request)
     {
-
+      
         DB::beginTransaction();
         try {
 
@@ -688,6 +688,7 @@ class PurchaseRepositories
             $transactionPay['warehouse_id'] = $request->sub_warehouse_id ?? null;
             $transactionPay['debit'] =  array_sum($request->total);
             $transactionPay['remark'] = $request->narration;
+            $transactionPay['voucher_date'] = $request->date;
             $transactionPay['created_by'] = Auth::id();
             $transactionPay['supplier_id'] = $request->supplier_id ?? 0;
             $transactionPay['created_at'] = $request->date;
@@ -702,6 +703,7 @@ class PurchaseRepositories
             $transaction['warehouse_id'] = $request->sub_warehouse_id ?? null;
             $transaction['credit'] = (array_sum($request->total));
             $transaction['remark'] = $request->narration;
+            $transaction['voucher_date'] = $request->date;
             $transaction['created_by'] = Auth::id();
             $transaction['supplier_id'] = $request->supplier_id ?? 0;
             $transaction['created_at'] = $request->date;
@@ -2797,7 +2799,7 @@ class PurchaseRepositories
         try {
             $purchase = $this->purchases::findOrFail($id);
 
-            // বদলানোর আগের warehouse ধরে রাখুন (পুরনো stock কাটার জন্য)
+         
             $oldWarehouseId = $purchase->warehouse_id;
 
             $purchase->date = $request->date;
@@ -2860,11 +2862,10 @@ class PurchaseRepositories
                 }
             }
 
-            // পুরনো details ও stock ledger মুছুন
+            
             PurchasesDetails::where('purchases_id', $purchase->id)->forceDelete();
             Stock::where('general_id', $purchase->id)->where('status', 'Purchase')->forceDelete();
 
-            // ---------- ২) নতুন item সেভ + stock যোগ ----------
             for ($i = 0; $i < count($category_id); $i++) {
 
                 $purchaseDetail = new PurchasesDetails();
@@ -2896,7 +2897,7 @@ class PurchaseRepositories
                 $stock->created_by   = Auth::user()->id;
                 $stock->save();
 
-                // StockSummary: product + warehouse + purchasetype + type দিয়ে মেলান
+                // StockSummary: product + warehouse + purchasetype + type 
                 $ptype = $request->purchasetype[$i] ?? null;
 
                 $summary = StockSummary::where('product_id', $proName[$i])
@@ -2907,11 +2908,11 @@ class PurchaseRepositories
                     ->first();
 
                 if ($summary) {
-                    // আছে: quantity যোগ
+                    
                     $summary->quantity = $summary->quantity + $qty[$i];
                     $summary->save();
                 } else {
-                    // নেই: নতুন row
+                    
                     $summary = new StockSummary();
                     $summary->branch_id    = $request->branch_id;
                     $summary->warehouse_id = $request->sub_warehouse_id ?? null;
@@ -2923,7 +2924,6 @@ class PurchaseRepositories
                 }
             }
 
-            // ---------- ACCOUNT (আগের মতোই, অপরিবর্তিত) ----------
             supplierLedger::where('purchase_id', $purchases_id)->delete();
             AccountTransaction::where('table_id', $purchases_id)->where('type', 1)->delete();
 
@@ -2938,6 +2938,7 @@ class PurchaseRepositories
             $transactionPay['remark'] = $request->narration;
             $transactionPay['created_by'] = Auth::id();
             $transactionPay['supplier_id'] = $request->supplier_id ?? 0;
+            $transactionPay['voucher_date'] = $request->date;
             $transactionPay['created_at'] = $request->date;
             AccountTransaction::create($transactionPay);
 
@@ -2952,6 +2953,7 @@ class PurchaseRepositories
             $transaction['remark'] = $request->narration;
             $transaction['created_by'] = Auth::id();
             $transaction['supplier_id'] = $request->supplier_id ?? 0;
+            $transaction['voucher_date'] = $request->date;
             $transaction['created_at'] = $request->date;
             AccountTransaction::create($transaction);
 

@@ -149,7 +149,6 @@ class CreditVoucherRepositories
     public function store($request)
     {
 
-   
 
         DB::beginTransaction();
         try {
@@ -299,6 +298,7 @@ class CreditVoucherRepositories
                 $transaction['customer_id'] = $creditVoucher->customer_id;
                 $transaction['employee_id'] = $creditVoucher->employee_id;
                 $transaction['project_id'] = $creditVoucherDetail->project_id;
+                $transaction['voucher_date'] = $creditVoucher->date;
                 $transaction['created_at'] = $creditVoucher->date;
                 AccountTransaction::create($transaction);
 

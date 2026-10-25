@@ -24,6 +24,7 @@ class AccountTransaction extends Model
         'customer_id',
         'employee_id',
         'project_id',
+        'voucher_date',
         'created_at',
         'payment_invoice',
         'party_type',
@@ -145,43 +146,6 @@ class AccountTransaction extends Model
         return 'N/A';
     }
 
-    /*     public function getVoucherUrlAttribute()
-    {
-
-        switch ($this->type) {
-            case 'purchase':
-                $purchase = $this->transactionable; // Purchases model
-
-                if (!$purchase) {
-                    return null;
-                }
-
-                if ($purchase->purchase_type === 'Manual') {
-                    return route('inventorySetup.purchase.pvinvoice', $this->table_id);
-                }
-
-                return route('inventorySetup.purchase.show', $this->table_id); // Direct
-
-            case 'sale':
-                return route('sale.sale.show', $this->table_id);
-
-            case 'debit_voucher':
-                return route('settings.dabit.voucher.show', $this->table_id);
-
-            case 'credit_voucher':
-                return route('settings.credit.voucher.show', $this->table_id);
-
-            case 'contra_voucher':
-                return route('settings.contra.voucher.show', $this->table_id);
-
-            case 'journal_voucher':
-
-                return route('settings.journal.voucher.show', $this->table_id);
-
-            default:
-                return null;
-        }
-    } */
 
     public function getVoucherUrlAttribute()
     {

@@ -440,9 +440,7 @@ class SaleRepositories
                 $stock->status = 'Sale';
                 $stock->save();
 
-                // ---------- STOCK SUMMARY ----------
-                // মিলানো হবে: product + warehouse + purchasetype + type
-                // branch_id দিয়ে মেলানো হবে না (purchase store-এর মতো)
+                
                 $ptype = $request->purchasetype[$i] ?? null;
 
                 $summary = StockSummary::where('product_id', $proName[$i])
@@ -469,6 +467,7 @@ class SaleRepositories
             $transaction['credit'] = $finalprice;
             $transaction['remark'] = $request->narration;
             $transaction['created_by'] = Auth::id();
+            $transaction['voucher_date'] = $request->date;
             $transaction['created_at'] = $request->date;
             AccountTransaction::create($transaction);
 
@@ -485,6 +484,7 @@ class SaleRepositories
             $transactionPay['debit'] =  $finalprice;
             $transactionPay['remark'] = $request->narration;
             $transactionPay['created_by'] = Auth::id();
+            $transactionPay['voucher_date'] = $request->date;
             $transactionPay['created_at'] = $request->date;
             AccountTransaction::create($transactionPay);
 
@@ -756,6 +756,7 @@ class SaleRepositories
             $transaction['credit'] = $finalprice;
             $transaction['remark'] = $request->narration;
             $transaction['created_by'] = Auth::id();
+            $transaction['voucher_date'] = $request->date;
             $transaction['created_at'] = $request->date;
             AccountTransaction::create($transaction);
 
@@ -768,6 +769,7 @@ class SaleRepositories
             $transactionPay['debit'] =  $finalprice;
             $transactionPay['remark'] = $request->narration;
             $transactionPay['created_by'] = Auth::id();
+            $transactionPay['voucher_date'] = $request->date;
             $transactionPay['created_at'] = $request->date;
             AccountTransaction::create($transactionPay);
             DB::commit();

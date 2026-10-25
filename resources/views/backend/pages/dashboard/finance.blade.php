@@ -1247,12 +1247,12 @@
                     </thead>
                     <tbody>
                         ${rows.map(r => `
-                                                                            <tr>
-                                                                                <td>${r.voucher ?? '-'}</td>
-                                                                                <td>${r.title}</td>
-                                                                                <td class="text-right">${r.date}</td>
-                                                                                <td class="text-right">৳${Number(r.amount).toLocaleString()}</td>
-                                                                            </tr>`).join('')}
+                                                                                        <tr>
+                                                                                            <td>${r.voucher ?? '-'}</td>
+                                                                                            <td>${r.title}</td>
+                                                                                            <td class="text-right">${r.date}</td>
+                                                                                            <td class="text-right">৳${Number(r.amount).toLocaleString()}</td>
+                                                                                        </tr>`).join('')}
                     </tbody>
                 </table>`;
         }
@@ -1344,12 +1344,12 @@
                         <thead><tr><th>Voucher</th><th>Description</th><th>Date</th><th class="amount">Amount</th></tr></thead>
                         <tbody>
                             ${rows.map(r => `
-                                                                                <tr>
-                                                                                    <td>${r.voucher ?? '-'}</td>
-                                                                                    <td>${r.title}</td>
-                                                                                    <td>${r.date}</td>
-                                                                                    <td class="amount">৳${Number(r.amount).toLocaleString()}</td>
-                                                                                </tr>`).join('')}
+                                                                                            <tr>
+                                                                                                <td>${r.voucher ?? '-'}</td>
+                                                                                                <td>${r.title}</td>
+                                                                                                <td>${r.date}</td>
+                                                                                                <td class="amount">৳${Number(r.amount).toLocaleString()}</td>
+                                                                                            </tr>`).join('')}
                         </tbody>
                     </table>
                 </body></html>`;
@@ -1841,15 +1841,15 @@
                         </thead>
                         <tbody>
                             ${rows.map(r => `
-                                                                                <tr>
-                                                                                    <td><a href="javascript:void(0)" class="aging-acc-link" data-child="${r.id}" data-isar="${type === 'receivable' ? 1 : 0}">${r.name}</a></td>
-                                                                                    <td class="text-right">${Number(r.current).toLocaleString()}</td>
-                                                                                    <td class="text-right">${Number(r.d1_30).toLocaleString()}</td>
-                                                                                    <td class="text-right">${Number(r.d31_60).toLocaleString()}</td>
-                                                                                    <td class="text-right">${Number(r.d61_90).toLocaleString()}</td>
-                                                                                    <td class="text-right">${Number(r.d91_plus).toLocaleString()}</td>
-                                                                                    <td class="text-right" style="font-weight:700">${Number(r.total).toLocaleString()}</td>
-                                                                                </tr>`).join('')}
+                                                                                            <tr>
+                                                                                                <td><a href="javascript:void(0)" class="aging-acc-link" data-child="${r.id}" data-isar="${type === 'receivable' ? 1 : 0}">${r.name}</a></td>
+                                                                                                <td class="text-right">${Number(r.current).toLocaleString()}</td>
+                                                                                                <td class="text-right">${Number(r.d1_30).toLocaleString()}</td>
+                                                                                                <td class="text-right">${Number(r.d31_60).toLocaleString()}</td>
+                                                                                                <td class="text-right">${Number(r.d61_90).toLocaleString()}</td>
+                                                                                                <td class="text-right">${Number(r.d91_plus).toLocaleString()}</td>
+                                                                                                <td class="text-right" style="font-weight:700">${Number(r.total).toLocaleString()}</td>
+                                                                                            </tr>`).join('')}
                         </tbody>
                         <tfoot>
                             <tr style="font-weight:700;background:#f9fafb">
@@ -1936,6 +1936,53 @@
             <div style="font-weight:700;font-size:1.05rem">Net Total: ৳${Number(res.net_total).toLocaleString()}</div>
         </div>`;
 
+            // NEW 2026-10-24: group-এর নিচের ledger breakdown — merged group-এর
+            // advance (0 নয়) কোন কোন ledger থেকে এসেছে তা দেখাবে।
+            // Single ledger-এ click করলে (ledgers.length <= 1) section দেখাবে না।
+            if (res.ledgers && res.ledgers.length > 1) {
+                const ledTotal = res.ledgers.reduce((s, l) => s + l.total, 0);
+                html += `
+        <div class="aging-bucket-head"><span>Ledgers under this group</span><span class="sub">${res.ledgers.length} ledger(s) &middot; Total: ৳${Number(ledTotal).toLocaleString()}</span></div>
+        <div class="table-responsive">
+            <table class="table table-sm kpi-detail-table">
+                <thead>
+                    <tr>
+                        <th>Ledger</th>
+                        <th class="text-right">Current</th>
+                        <th class="text-right">1-30</th>
+                        <th class="text-right">31-60</th>
+                        <th class="text-right">61-90</th>
+                        <th class="text-right">91+</th>
+                        <th class="text-right">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${res.ledgers.map(l => `
+                                                        <tr>
+                                                            <td>${l.name}</td>
+                                                            <td class="text-right">${Number(l.current).toLocaleString()}</td>
+                                                            <td class="text-right">${Number(l.d1_30).toLocaleString()}</td>
+                                                            <td class="text-right">${Number(l.d31_60).toLocaleString()}</td>
+                                                            <td class="text-right">${Number(l.d61_90).toLocaleString()}</td>
+                                                            <td class="text-right">${Number(l.d91_plus).toLocaleString()}</td>
+                                                            <td class="text-right" style="font-weight:600;color:${l.total < 0 ? '#dc2626' : '#111827'}">${Number(l.total).toLocaleString()}</td>
+                                                        </tr>`).join('')}
+                </tbody>
+                <tfoot>
+                    <tr style="font-weight:700;background:#f9fafb">
+                        <td>Total</td>
+                        <td class="text-right">${Number(res.ledgers.reduce((s, l) => s + l.current, 0)).toLocaleString()}</td>
+                        <td class="text-right">${Number(res.ledgers.reduce((s, l) => s + l.d1_30, 0)).toLocaleString()}</td>
+                        <td class="text-right">${Number(res.ledgers.reduce((s, l) => s + l.d31_60, 0)).toLocaleString()}</td>
+                        <td class="text-right">${Number(res.ledgers.reduce((s, l) => s + l.d61_90, 0)).toLocaleString()}</td>
+                        <td class="text-right">${Number(res.ledgers.reduce((s, l) => s + l.d91_plus, 0)).toLocaleString()}</td>
+                        <td class="text-right">${Number(ledTotal).toLocaleString()}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>`;
+            }
+
             let hasAny = false;
             res.buckets.forEach(b => {
                 if (!b.transactions.length) return;
@@ -1957,15 +2004,15 @@
                 </thead>
                 <tbody>
                     ${b.transactions.map(t => `
-                                            <tr>
-                                                <td style="white-space:nowrap">${t.date}</td>
-                                                <td>${t.voucher}</td>
-                                                <td>${t.type}</td>
-                                                <td>${t.remark}</td>
-                                                <td class="text-right">${t.debit === null ? '-' : Number(t.debit).toLocaleString()}</td>
-                                                <td class="text-right">${t.credit === null ? '-' : Number(t.credit).toLocaleString()}</td>
-                                                <td class="text-right" style="font-weight:600;color:${t.amount < 0 ? '#dc2626' : '#111827'}">${Number(t.amount).toLocaleString()}</td>
-                                            </tr>`).join('')}
+                                                        <tr>
+                                                            <td style="white-space:nowrap">${t.date}</td>
+                                                            <td>${t.voucher}</td>
+                                                            <td>${t.type}</td>
+                                                            <td>${t.remark}</td>
+                                                            <td class="text-right">${t.debit === null ? '-' : Number(t.debit).toLocaleString()}</td>
+                                                            <td class="text-right">${t.credit === null ? '-' : Number(t.credit).toLocaleString()}</td>
+                                                            <td class="text-right" style="font-weight:600;color:${t.amount < 0 ? '#dc2626' : '#111827'}">${Number(t.amount).toLocaleString()}</td>
+                                                        </tr>`).join('')}
                 </tbody>
             </table>
         </div>`;
@@ -2004,6 +2051,28 @@
                 (res.is_ar ? 'Receivable' : 'Payable');
             const grandTotal = bucketKey === 'all' ? res.net_total : buckets.reduce((s, b) => s + b.total, 0);
 
+            // NEW 2026-10-24: All Buckets print-এ ledger breakdown-ও আসবে
+            // (single-bucket print-এ শুধু ওই bucket-এর data-ই থাকবে, আগের মতো)
+            const ledgerRows = (bucketKey === 'all' && res.ledgers && res.ledgers.length > 1) ? `
+        <div class="bucket-title">Ledgers under this group</div>
+        <table>
+            <thead>
+                <tr><th>Ledger</th><th class="num" style="width:12%">Current</th><th class="num" style="width:11%">1-30</th><th class="num" style="width:11%">31-60</th><th class="num" style="width:11%">61-90</th><th class="num" style="width:11%">91+</th><th class="num" style="width:13%">Total</th></tr>
+            </thead>
+            <tbody>
+                ${res.ledgers.map(l => `
+                                        <tr>
+                                            <td>${l.name}</td>
+                                            <td class="num">${Number(l.current).toLocaleString()}</td>
+                                            <td class="num">${Number(l.d1_30).toLocaleString()}</td>
+                                            <td class="num">${Number(l.d31_60).toLocaleString()}</td>
+                                            <td class="num">${Number(l.d61_90).toLocaleString()}</td>
+                                            <td class="num">${Number(l.d91_plus).toLocaleString()}</td>
+                                            <td class="num"><b>${Number(l.total).toLocaleString()}</b></td>
+                                        </tr>`).join('')}
+            </tbody>
+        </table>` : '';
+
             const rows = buckets.map(b => `
         <div class="bucket-title">${b.label} <span>— Subtotal: ৳${Number(b.total).toLocaleString()}</span></div>
         <table>
@@ -2012,12 +2081,12 @@
             </thead>
             <tbody>
                 ${b.transactions.map(t => `
-                            <tr>
-                                <td>${t.date}</td><td>${t.voucher}</td><td>${t.type}</td><td>${t.remark}</td>
-                                <td class="num">${t.debit === null ? '-' : Number(t.debit).toLocaleString()}</td>
-                                <td class="num">${t.credit === null ? '-' : Number(t.credit).toLocaleString()}</td>
-                                <td class="num"><b>${Number(t.amount).toLocaleString()}</b></td>
-                            </tr>`).join('')}
+                                        <tr>
+                                            <td>${t.date}</td><td>${t.voucher}</td><td>${t.type}</td><td>${t.remark}</td>
+                                            <td class="num">${t.debit === null ? '-' : Number(t.debit).toLocaleString()}</td>
+                                            <td class="num">${t.credit === null ? '-' : Number(t.credit).toLocaleString()}</td>
+                                            <td class="num"><b>${Number(t.amount).toLocaleString()}</b></td>
+                                        </tr>`).join('')}
             </tbody>
         </table>`).join('');
 
@@ -2044,6 +2113,7 @@
                 <h2>${res.account_name}</h2>
                 <div class="meta">${badgeText} &middot; Range: ${rangeLabels[agingModalState.range] || agingModalState.range} &middot; Printed: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</div>
             </div>
+            ${ledgerRows}
             ${rows || '<p>No transactions in the selected bucket.</p>'}
             <div class="grand">Total: ৳${Number(grandTotal).toLocaleString()}</div>
             <div class="ft">Financial Dashboard &middot; For internal use</div>
@@ -2064,6 +2134,14 @@
                         `${q(b.label)},${q(t.date)},${q(t.voucher)},${q(t.type)},${q(t.remark)},${t.debit ?? ''},${t.credit ?? ''},${t.amount}\n`;
                 });
             });
+            // NEW 2026-10-24: ledger breakdown Excel-এর শেষে আলাদা section হিসেবে
+            if (res.ledgers && res.ledgers.length > 1) {
+                csv += '\nLedgers under this group\nLedger,Current,1-30 Days,31-60 Days,61-90 Days,91+ Days,Total\n';
+                res.ledgers.forEach(l => {
+                    csv +=
+                    `${q(l.name)},${l.current},${l.d1_30},${l.d31_60},${l.d61_90},${l.d91_plus},${l.total}\n`;
+                });
+            }
             const blob = new Blob(["\ufeff" + csv], {
                 type: 'text/csv;charset=utf-8;'
             });

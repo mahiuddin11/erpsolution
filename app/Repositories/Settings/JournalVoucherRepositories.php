@@ -201,6 +201,7 @@ class JournalVoucherRepositories
                     'remark' => $request->note,
                     'created_by' => Auth::id(),
                     'project_id' => 0,
+                    'voucher_date' => $request->date,
                     'created_at' => $request->date,
                 ];
 
@@ -278,6 +279,7 @@ class JournalVoucherRepositories
                     'remark' => $request->note,
                     'created_by' => Auth::id(),
                     'project_id' => 0,
+                    'voucher_date' => $request->date,
                     'created_at' => $request->date,
                 ];
 

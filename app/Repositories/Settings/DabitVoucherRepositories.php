@@ -316,11 +316,13 @@ class DabitVoucherRepositories
      */
     public function approve($id)
     {
-        try {
 
+        try {
+            
             DB::beginTransaction();
             $debitVoucher = DabitVoucher::findOrFail($id);
-
+            
+           
             $debitVoucherDetails = DabitVoucherDetails::where('dabit_voucher_id', $id)->get();
 
             foreach ($debitVoucherDetails as  $debitVoucherDetail) {
@@ -338,6 +340,7 @@ class DabitVoucherRepositories
                 $transaction['customer_id'] = $debitVoucher->customer_id;
                 $transaction['employee_id'] = $debitVoucher->employee_id;
                 $transaction['project_id'] = $debitVoucherDetail->project_id;
+                $transaction['voucher_date'] = $debitVoucher->date;
                 $transaction['created_at'] = $debitVoucher->date;
                 AccountTransaction::create($transaction);
 
