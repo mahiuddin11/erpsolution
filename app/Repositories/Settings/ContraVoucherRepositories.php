@@ -166,6 +166,7 @@ class ContraVoucherRepositories
                 $transaction["credit"] = $request->amount[$i];
                 $transaction['remark'] = $request->note;
                 $transaction['created_by'] = Auth::id();
+                $transaction['voucher_date'] = $request->date;
                 $transaction['created_at'] = $request->date;
                 // $transaction['supplier_id'] = $request->supplier_id;
                 AccountTransaction::create($transaction);
@@ -177,6 +178,7 @@ class ContraVoucherRepositories
                 $transactionPay["debit"] =   $request->amount[$i];
                 $transactionPay['remark'] = $request->note;
                 $transactionPay['created_by'] = Auth::id();
+                $transactionPay['voucher_date'] = $request->date;
                 $transactionPay['created_at'] = $request->date;
                 // $transactionPay['supplier_id'] = $request->supplier_id;
                 // dd($transactionPay);
@@ -201,6 +203,10 @@ class ContraVoucherRepositories
             $contravoucher->note = $request->note;
             $contravoucher->save();
 
+           
+            $oldDetailIds = $contravoucher->details->pluck('id');
+            AccountTransaction::where('type', 7)->whereIn('table_id', $oldDetailIds)->delete();
+            ContraVoucherDetails::where('contra_voucher_id', $contravoucher->id)->delete();
 
             for ($i = 0; $i < count($request->account_id); $i++) {
                 $contravoucherdetails = new ContraVoucherDetails();
@@ -219,6 +225,7 @@ class ContraVoucherRepositories
                 $transaction['remark'] = $request->note;
                 $transaction['created_by'] = Auth::id();
                 $transaction['created_at'] = $request->date;
+                $transaction['voucher_date'] = $request->date;
                 AccountTransaction::create($transaction);
 
                 $transactionPay['invoice'] = $contravoucher->voucher_no;
@@ -230,6 +237,7 @@ class ContraVoucherRepositories
                 $transactionPay['remark'] = $request->note;
                 $transactionPay['created_by'] = Auth::id();
                 $transactionPay['created_at'] = $request->date;
+                $transactionPay['voucher_date'] = $request->date;
                 AccountTransaction::create($transactionPay);
             }
             DB::commit();
@@ -240,6 +248,55 @@ class ContraVoucherRepositories
             return 0;
         }
     }
+
+    // public function update($request, $id)
+    // {
+    //     DB::beginTransaction();
+    //     try {
+    //         $contravoucher = ContraVoucher::find($id);
+    //         $contravoucher->date = $request->date;
+    //         $contravoucher->note = $request->note;
+    //         $contravoucher->save();
+
+
+    //         for ($i = 0; $i < count($request->account_id); $i++) {
+    //             $contravoucherdetails = new ContraVoucherDetails();
+    //             $contravoucherdetails->contra_voucher_id = $contravoucher->id;
+    //             $contravoucherdetails->account_id = $request->account_id[$i];
+    //             $contravoucherdetails->to_account_id = $request->to_account_id[$i];
+    //             $contravoucherdetails->amount = $request->amount[$i];
+    //             $contravoucherdetails->save();
+
+    //             $transaction['invoice'] = $contravoucher->voucher_no;
+    //             $transaction['table_id'] = $contravoucherdetails->id;
+    //             $transaction['account_id'] = $request->account_id[$i]; // from account
+    //             $transaction['type'] = 7;
+    //             $transaction['branch_id'] = $request->branch_id ?? 0;
+    //             $transaction['credit'] = $request->amount[$i];
+    //             $transaction['remark'] = $request->note;
+    //             $transaction['created_by'] = Auth::id();
+    //             $transaction['created_at'] = $request->date;
+    //             AccountTransaction::create($transaction);
+
+    //             $transactionPay['invoice'] = $contravoucher->voucher_no;
+    //             $transactionPay['table_id'] = $contravoucherdetails->id;
+    //             $transactionPay['account_id'] = $request->to_account_id[$i]; // to account
+    //             $transactionPay['type'] = 7;
+    //             $transactionPay['branch_id'] = $request->branch_id ?? 0;
+    //             $transactionPay['debit'] =   $request->amount[$i];
+    //             $transactionPay['remark'] = $request->note;
+    //             $transactionPay['created_by'] = Auth::id();
+    //             $transactionPay['created_at'] = $request->date;
+    //             AccountTransaction::create($transactionPay);
+    //         }
+    //         DB::commit();
+    //         return $contravoucher;
+    //     } catch (\Throwable $th) {
+    //         DB::rollBack();
+    //         dd($th->getMessage(), $th->getLine(), $th->getFile());
+    //         return 0;
+    //     }
+    // }
 
     public function statusUpdate($id, $status)
     {

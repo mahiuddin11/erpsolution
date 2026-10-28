@@ -105,7 +105,9 @@ class ContraVoucherController extends Controller
         $title = 'Edit Contra Voucher';
         $branch = Branch::get()->where('status', 'Active');
         $creditaccountheas = ChartOfAccount::whereIn('id', [16, 17])->get();
-        $accounts = ChartOfAccount::where('parent_id', 6)->get();
+        // $accounts = ChartOfAccount::where('parent_id', 6)->get();
+        $accounts = ChartOfAccount::whereIN('parent_id', [6,14,15])->get();
+
 
         return view('backend.pages.settings.contra_voucher.edit', get_defined_vars());
     }

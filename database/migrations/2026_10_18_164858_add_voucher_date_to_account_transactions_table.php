@@ -6,11 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 class AddVoucherDateToAccountTransactionsTable extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
+  
     public function up()
     {
         Schema::table('account_transactions', function (Blueprint $table) {
@@ -18,11 +14,6 @@ class AddVoucherDateToAccountTransactionsTable extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
     public function down()
     {
         Schema::table('account_transactions', function (Blueprint $table) {

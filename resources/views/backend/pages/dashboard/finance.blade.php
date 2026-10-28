@@ -1247,12 +1247,12 @@
                     </thead>
                     <tbody>
                         ${rows.map(r => `
-                                                                                        <tr>
-                                                                                            <td>${r.voucher ?? '-'}</td>
-                                                                                            <td>${r.title}</td>
-                                                                                            <td class="text-right">${r.date}</td>
-                                                                                            <td class="text-right">৳${Number(r.amount).toLocaleString()}</td>
-                                                                                        </tr>`).join('')}
+                                                                                                <tr>
+                                                                                                    <td>${r.voucher ?? '-'}</td>
+                                                                                                    <td>${r.title}</td>
+                                                                                                    <td class="text-right">${r.date}</td>
+                                                                                                    <td class="text-right">৳${Number(r.amount).toLocaleString()}</td>
+                                                                                                </tr>`).join('')}
                     </tbody>
                 </table>`;
         }
@@ -1344,12 +1344,12 @@
                         <thead><tr><th>Voucher</th><th>Description</th><th>Date</th><th class="amount">Amount</th></tr></thead>
                         <tbody>
                             ${rows.map(r => `
-                                                                                            <tr>
-                                                                                                <td>${r.voucher ?? '-'}</td>
-                                                                                                <td>${r.title}</td>
-                                                                                                <td>${r.date}</td>
-                                                                                                <td class="amount">৳${Number(r.amount).toLocaleString()}</td>
-                                                                                            </tr>`).join('')}
+                                                                                                    <tr>
+                                                                                                        <td>${r.voucher ?? '-'}</td>
+                                                                                                        <td>${r.title}</td>
+                                                                                                        <td>${r.date}</td>
+                                                                                                        <td class="amount">৳${Number(r.amount).toLocaleString()}</td>
+                                                                                                    </tr>`).join('')}
                         </tbody>
                     </table>
                 </body></html>`;
@@ -1841,15 +1841,15 @@
                         </thead>
                         <tbody>
                             ${rows.map(r => `
-                                                                                            <tr>
-                                                                                                <td><a href="javascript:void(0)" class="aging-acc-link" data-child="${r.id}" data-isar="${type === 'receivable' ? 1 : 0}">${r.name}</a></td>
-                                                                                                <td class="text-right">${Number(r.current).toLocaleString()}</td>
-                                                                                                <td class="text-right">${Number(r.d1_30).toLocaleString()}</td>
-                                                                                                <td class="text-right">${Number(r.d31_60).toLocaleString()}</td>
-                                                                                                <td class="text-right">${Number(r.d61_90).toLocaleString()}</td>
-                                                                                                <td class="text-right">${Number(r.d91_plus).toLocaleString()}</td>
-                                                                                                <td class="text-right" style="font-weight:700">${Number(r.total).toLocaleString()}</td>
-                                                                                            </tr>`).join('')}
+                                                                                                    <tr>
+                                                                                                        <td><a href="javascript:void(0)" class="aging-acc-link" data-child="${r.id}" data-isar="${type === 'receivable' ? 1 : 0}">${r.name}</a></td>
+                                                                                                        <td class="text-right">${Number(r.current).toLocaleString()}</td>
+                                                                                                        <td class="text-right">${Number(r.d1_30).toLocaleString()}</td>
+                                                                                                        <td class="text-right">${Number(r.d31_60).toLocaleString()}</td>
+                                                                                                        <td class="text-right">${Number(r.d61_90).toLocaleString()}</td>
+                                                                                                        <td class="text-right">${Number(r.d91_plus).toLocaleString()}</td>
+                                                                                                        <td class="text-right" style="font-weight:700">${Number(r.total).toLocaleString()}</td>
+                                                                                                    </tr>`).join('')}
                         </tbody>
                         <tfoot>
                             <tr style="font-weight:700;background:#f9fafb">
@@ -1958,15 +1958,15 @@
                 </thead>
                 <tbody>
                     ${res.ledgers.map(l => `
-                                                        <tr>
-                                                            <td>${l.name}</td>
-                                                            <td class="text-right">${Number(l.current).toLocaleString()}</td>
-                                                            <td class="text-right">${Number(l.d1_30).toLocaleString()}</td>
-                                                            <td class="text-right">${Number(l.d31_60).toLocaleString()}</td>
-                                                            <td class="text-right">${Number(l.d61_90).toLocaleString()}</td>
-                                                            <td class="text-right">${Number(l.d91_plus).toLocaleString()}</td>
-                                                            <td class="text-right" style="font-weight:600;color:${l.total < 0 ? '#dc2626' : '#111827'}">${Number(l.total).toLocaleString()}</td>
-                                                        </tr>`).join('')}
+                                                                <tr>
+                                                                    <td>${l.name}</td>
+                                                                    <td class="text-right">${Number(l.current).toLocaleString()}</td>
+                                                                    <td class="text-right">${Number(l.d1_30).toLocaleString()}</td>
+                                                                    <td class="text-right">${Number(l.d31_60).toLocaleString()}</td>
+                                                                    <td class="text-right">${Number(l.d61_90).toLocaleString()}</td>
+                                                                    <td class="text-right">${Number(l.d91_plus).toLocaleString()}</td>
+                                                                    <td class="text-right" style="font-weight:600;color:${l.total < 0 ? '#dc2626' : '#111827'}">${Number(l.total).toLocaleString()}</td>
+                                                                </tr>`).join('')}
                 </tbody>
                 <tfoot>
                     <tr style="font-weight:700;background:#f9fafb">
@@ -2004,15 +2004,15 @@
                 </thead>
                 <tbody>
                     ${b.transactions.map(t => `
-                                                        <tr>
-                                                            <td style="white-space:nowrap">${t.date}</td>
-                                                            <td>${t.voucher}</td>
-                                                            <td>${t.type}</td>
-                                                            <td>${t.remark}</td>
-                                                            <td class="text-right">${t.debit === null ? '-' : Number(t.debit).toLocaleString()}</td>
-                                                            <td class="text-right">${t.credit === null ? '-' : Number(t.credit).toLocaleString()}</td>
-                                                            <td class="text-right" style="font-weight:600;color:${t.amount < 0 ? '#dc2626' : '#111827'}">${Number(t.amount).toLocaleString()}</td>
-                                                        </tr>`).join('')}
+                                                                <tr>
+                                                                    <td style="white-space:nowrap">${t.date}</td>
+                                                                    <td>${t.voucher}</td>
+                                                                    <td>${t.type}</td>
+                                                                    <td>${t.remark}</td>
+                                                                    <td class="text-right">${t.debit === null ? '-' : Number(t.debit).toLocaleString()}</td>
+                                                                    <td class="text-right">${t.credit === null ? '-' : Number(t.credit).toLocaleString()}</td>
+                                                                    <td class="text-right" style="font-weight:600;color:${t.amount < 0 ? '#dc2626' : '#111827'}">${Number(t.amount).toLocaleString()}</td>
+                                                                </tr>`).join('')}
                 </tbody>
             </table>
         </div>`;
@@ -2061,15 +2061,15 @@
             </thead>
             <tbody>
                 ${res.ledgers.map(l => `
-                                        <tr>
-                                            <td>${l.name}</td>
-                                            <td class="num">${Number(l.current).toLocaleString()}</td>
-                                            <td class="num">${Number(l.d1_30).toLocaleString()}</td>
-                                            <td class="num">${Number(l.d31_60).toLocaleString()}</td>
-                                            <td class="num">${Number(l.d61_90).toLocaleString()}</td>
-                                            <td class="num">${Number(l.d91_plus).toLocaleString()}</td>
-                                            <td class="num"><b>${Number(l.total).toLocaleString()}</b></td>
-                                        </tr>`).join('')}
+                                                <tr>
+                                                    <td>${l.name}</td>
+                                                    <td class="num">${Number(l.current).toLocaleString()}</td>
+                                                    <td class="num">${Number(l.d1_30).toLocaleString()}</td>
+                                                    <td class="num">${Number(l.d31_60).toLocaleString()}</td>
+                                                    <td class="num">${Number(l.d61_90).toLocaleString()}</td>
+                                                    <td class="num">${Number(l.d91_plus).toLocaleString()}</td>
+                                                    <td class="num"><b>${Number(l.total).toLocaleString()}</b></td>
+                                                </tr>`).join('')}
             </tbody>
         </table>` : '';
 
@@ -2081,12 +2081,12 @@
             </thead>
             <tbody>
                 ${b.transactions.map(t => `
-                                        <tr>
-                                            <td>${t.date}</td><td>${t.voucher}</td><td>${t.type}</td><td>${t.remark}</td>
-                                            <td class="num">${t.debit === null ? '-' : Number(t.debit).toLocaleString()}</td>
-                                            <td class="num">${t.credit === null ? '-' : Number(t.credit).toLocaleString()}</td>
-                                            <td class="num"><b>${Number(t.amount).toLocaleString()}</b></td>
-                                        </tr>`).join('')}
+                                                <tr>
+                                                    <td>${t.date}</td><td>${t.voucher}</td><td>${t.type}</td><td>${t.remark}</td>
+                                                    <td class="num">${t.debit === null ? '-' : Number(t.debit).toLocaleString()}</td>
+                                                    <td class="num">${t.credit === null ? '-' : Number(t.credit).toLocaleString()}</td>
+                                                    <td class="num"><b>${Number(t.amount).toLocaleString()}</b></td>
+                                                </tr>`).join('')}
             </tbody>
         </table>`).join('');
 
@@ -2139,7 +2139,7 @@
                 csv += '\nLedgers under this group\nLedger,Current,1-30 Days,31-60 Days,61-90 Days,91+ Days,Total\n';
                 res.ledgers.forEach(l => {
                     csv +=
-                    `${q(l.name)},${l.current},${l.d1_30},${l.d31_60},${l.d61_90},${l.d91_plus},${l.total}\n`;
+                        `${q(l.name)},${l.current},${l.d1_30},${l.d31_60},${l.d61_90},${l.d91_plus},${l.total}\n`;
                 });
             }
             const blob = new Blob(["\ufeff" + csv], {

@@ -312,16 +312,10 @@ class JournalVoucherRepositories
     {
 
         DB::transaction(function () use ($id) {
-            // Find the Journal Voucher by ID
+        
             $journalVoucher = JournalVoucher::findOrFail($id);
-
-            // Delete associated JournalVoucherDetails
             JournalVoucherDetails::where('journal_voucher_id', $journalVoucher->id)->delete();
-
-            // Delete associated AccountTransactions
             AccountTransaction::where('invoice', $journalVoucher->voucher_no)->delete();
-
-            // Delete the Journal Voucher
             $journalVoucher->delete();
         });
 
