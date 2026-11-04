@@ -24,8 +24,9 @@ class Project extends Model
     public function getDurationAttribute()
     {
         if ($this->start_date && $this->end_date) {
-            return \Carbon\Carbon::parse($this->start_date)
-                ->diffInMonths(\Carbon\Carbon::parse($this->end_date)) . ' Months';
+            return ((int) \Carbon\Carbon::parse($this->start_date)
+               ->diffInMonths(\Carbon\Carbon::parse($this->end_date), true)) . ' Months';
+
         }
 
         return '';

@@ -186,7 +186,7 @@ class LeaveApplicationRepositories
 
             $to   = \Carbon\Carbon::parse($value->end_date);
             $from = \Carbon\Carbon::parse($value->apply_date);
-            $days = $from->diffInDays($to) + 1;
+            $days = (int) $from->diffInDays($to, true) + 1;
 
             $nestedData['id'] = $start + $key + 1;
             $nestedData['employee_id'] = $value->employee->name ?? '';

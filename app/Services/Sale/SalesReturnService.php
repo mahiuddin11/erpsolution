@@ -84,17 +84,9 @@ class SalesReturnService
                     $stock->created_by  = auth()->id();
                     $stock->save();
 
-                    // purchasetype isn't stored on sale_return_details, so pull it from
-                    // the original sale line via the sale_detail relationship — needed
-                    // to match the correct StockSummary row.
+                
                     $purchasetype = optional($detail->saleDetail)->purchasetype;
 
-                    // >>> NEW: increment, mirroring Sale::store()'s StockSummary lookup
-                    // (same product_id/type=Branch/branch_id/purchasetype match), but
-                    // reversed direction (+= instead of -=). Unlike the original sale
-                    // code, this also creates the summary row if none exists yet —
-                    // a defensive addition so a return can never silently vanish if a
-                    // matching summary row is somehow missing.
                     $summary = StockSummary::where('product_id', $detail->product_id)
                         ->where('type', 'Branch')
                         ->where('branch_id', $targetBranchId)
@@ -121,20 +113,10 @@ class SalesReturnService
 
             $returnAmount = (float) $saleReturn->grand_total;
 
-            // NOTE: Sale::store() used a separate $accountbranch (the TRUE branch,
-            // captured BEFORE the sub_warehouse override) for its AccountTransaction
-            // rows — that original value is never persisted anywhere on the Sale
-            // record, so it can't be recovered exactly here. Using $sale->branch_id
-            // (the resolved value) as the closest available substitute. Flag if this
-            // matters for branch-wise financial reports in your case.
+         
             $accountBranchId = $sale->branch_id;
 
-            // >>> NEW: reverses the exact two AccountTransaction rows Sale::store()
-            // creates, direction flipped — Revenue account debited (reduced) instead
-            // of credited, customer ledger credited (reduced) instead of debited.
-            // payment_invoice intentionally left unset here too, matching the
-            // established convention that it's never set on sale-type rows.
-
+          
             AccountTransaction::create([
                 'invoice'    => $saleReturn->return_no,
                 'table_id'   => $saleReturn->id,
@@ -158,16 +140,7 @@ class SalesReturnService
                 'created_by' => auth()->id(),
                 'created_at' => $saleReturn->return_date,
             ]);
-            // <<< END NEW
-
-            // >>> NEW — BEST-EFFORT, please review before relying on this:
-            // If the original sale was paid in Cash, the customer is now owed a
-            // refund. I haven't seen an existing "refund/payable to customer"
-            // pattern anywhere in your shared code, so this reconstructs it by
-            // mirroring Sale::store()'s Cash-payment Transection block with the
-            // direction reversed (credit = money going OUT, instead of debit).
-            // If a Due sale is being returned, no Transection is needed — the
-            // AccountTransaction credit above already reduces what the customer owes.
+          
             if ($sale->payment_type === 'Cash') {
                 $refund = new Transection();
                 $refund->date       = $saleReturn->return_date;

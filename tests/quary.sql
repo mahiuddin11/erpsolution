@@ -72,3 +72,7 @@ FROM sales__details sd
 LEFT JOIN sales s ON s.id = sd.sale_id
 WHERE sd.product_id = 1608
 ORDER BY s.date DESC, sd.sale_id DESC;
+
+
+-- product issue 
+-- product id  1648 , 1645

@@ -420,7 +420,8 @@ class FinancialStatementController extends Controller
 
             if ($net == 0) continue;
 
-            $age = Carbon::parse($r->created_at)->diffInDays($asOf);
+            $age = (int) Carbon::parse($r->created_at)->diffInDays($asOf, true);
+
 
             if ($age <= 30) $buckets['0-30'] += $net;
             elseif ($age <= 60) $buckets['31-60'] += $net;

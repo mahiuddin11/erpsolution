@@ -99,10 +99,9 @@ public function getProductLedgerData($product_id,  $from_date, $to_date, $purcha
         ->when(!$isAllBranch, fn($q) => $q->where('branch_id', $branch_id))
         ->when(!$isAllWarehouse, fn($q) => $applyWarehouse($q, 'warehouse_id')) // >>> NEW: warehouse filter
         ->when(!$isAllType, fn($q) => $q->where('purchasetype', $purchase_type))
-        // >>> NEW (ACTIVE)
         ->where(fn($q) => $onlyActiveBranch($q, 'branch_id'))
         ->where(fn($q) => $onlyActiveWarehouse($q, 'warehouse_id'))
-        // <<< END NEW (ACTIVE)
+      
         ->whereBetween('date', [$from_date, $to_date])
         ->get();
 
@@ -464,6 +463,52 @@ public function getProductLedgerData($product_id,  $from_date, $to_date, $purcha
             'created_at' => $item->created_at,
         ]);
 
+       // ── 9b. Purchase Return (Branch/Warehouse → Supplier, stock OUT) ─────
+        $purchaseReturnRows = DB::table('purchase_return_details as prd')
+            ->join('purchase_returns as pr', 'pr.id', '=', 'prd.purchase_return_id')
+            ->leftJoin('purchases_details as pd', 'pd.id', '=', 'prd.purchase_detail_id')
+            ->leftJoin('purchases as pu', 'pu.id', '=', 'pr.original_purchase_id')
+            ->leftJoin('branches as b', 'b.id', '=', 'pr.branch_id')
+            ->leftJoin('products as p', 'p.id', '=', 'prd.product_id')
+            ->leftJoin('projects as prj', 'prj.id', '=', 'pu.project_id')
+            ->where('prd.product_id', $product_id)
+            ->where('pr.status', 'approved') 
+            ->whereNull('pr.deleted_at')
+            ->when(!$isAllBranch, fn($q) => $q->where('pr.branch_id', $branch_id))
+            ->when(!$isAllWarehouse, fn($q) => $applyWarehouse($q, 'pr.warehouse_id'))
+            ->when(!$isAllType, fn($q) => $matchTypeOrNull($q, 'prd.purchasetype'))
+            ->where(fn($q) => $onlyActiveBranch($q, 'pr.branch_id'))
+            ->where(fn($q) => $onlyActiveWarehouse($q, 'pr.warehouse_id'))
+            ->whereBetween('pr.return_date', [$from_date, $to_date])
+            ->select(
+                'pr.return_date as date',
+                'pr.return_no',
+                'pr.id as purchase_return_id',
+                'pr.warehouse_id',
+                'prd.returned_qty',
+                'prd.created_at',
+                'prd.purchasetype as purchase_purchasetype',
+                'b.name as branch_name',
+                'p.name as product_name',
+                'prj.name as project_name'
+            )
+            ->get()
+            ->map(fn($item) => [
+                'date'       => $item->date,
+                'invoice'    => $item->return_no ?? ('PR-' . $item->purchase_return_id),
+                'branch'     => $item->branch_name ?: ($item->project_name ?: 'N/A'),
+                'warehouse'  => $whName($item->warehouse_id),
+                'product'    => $item->product_name ?? 'N/A',
+                'type'       => 'Purchase Return' . $ptDash($item->purchase_purchasetype),
+                'badge'      => 'badge-purchase-return', // >>> NEW (BADGE)
+                'quantity'   => (int) $item->returned_qty,
+                'in'         => 0,
+                'out'        => (int) $item->returned_qty,
+                'sort_key'   => '8',
+                'created_at' => $item->created_at,
+            ]);
+
+
     // ── Merge + Sort ──────────────────────────────────────────────────
     $allRows = collect()
         ->merge($openingRows)
@@ -475,6 +520,7 @@ public function getProductLedgerData($product_id,  $from_date, $to_date, $purcha
         ->merge($projectTransferOutRows)
         ->merge($projectTransferInRows)
         ->merge($saleReturnRows)
+        ->merge($purchaseReturnRows) 
         ->sortBy('created_at')
         ->values();
 

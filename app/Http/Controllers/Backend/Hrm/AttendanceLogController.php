@@ -207,7 +207,8 @@ class AttendanceLogController extends Controller
 
                 if ($checkInTime && $checkOutTime && $checkOutTime->gt($checkInTime)) {
 
-                    $diffMin = $checkInTime->diffInMinutes($checkOutTime);
+                    $diffMin = (int) $checkInTime->diffInMinutes($checkOutTime, true);
+
                     $hours = floor($diffMin / 60) . 'h ' . ($diffMin % 60) . 'm';
 
                     if ($diffMin > 480) {
@@ -276,7 +277,7 @@ class AttendanceLogController extends Controller
         $overtime = '0h 0m';
 
         if ($checkInTime && $checkOutTime && $checkOutTime->gt($checkInTime)) {
-            $diffMin  = $checkInTime->diffInMinutes($checkOutTime);
+            $diffMin  = (int) $checkInTime->diffInMinutes($checkOutTime, true);
             $hours    = floor($diffMin / 60) . 'h ' . ($diffMin % 60) . 'm';
 
             if ($diffMin > 480) {
@@ -394,7 +395,7 @@ class AttendanceLogController extends Controller
                             $in  = Carbon::parse($row->sign_in);
                             $out = Carbon::parse($row->sign_out);
                             if ($out->gt($in)) {
-                                $workedMinutes += $in->diffInMinutes($out);
+                                $workedMinutes += (int) $in->diffInMinutes($out, true);
                             }
                         } elseif ($hasCheckIn && !$hasCheckOut) {
                             $incompleteDays[] = Carbon::parse($dateStr)->format('d M');

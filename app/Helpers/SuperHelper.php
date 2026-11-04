@@ -470,8 +470,8 @@ function PAID_LEAVE_COUNT($EMPLOYEE, $month)
     $DAYS = 0;
 
     foreach ($LEAVES as $LEAVE) {
-        $DAYS += Carbon::parse($LEAVE->apply_date)
-            ->diffInDays(Carbon::parse($LEAVE->end_date)) + 1;
+        $DAYS += (int) Carbon::parse($LEAVE->apply_date)
+      ->diffInDays(Carbon::parse($LEAVE->end_date), true) + 1;
     }
 
     return $DAYS;
@@ -484,7 +484,7 @@ function UNPAID_LEAVE_COUNT($EMPLOYEE)
     foreach ($LEAVES as $LEAVE) {
         $START = Carbon::parse($LEAVE->apply_date);
         $END = Carbon::parse($LEAVE->end_date);
-        $DAYS += $START->diffInDays($END);
+        $DAYS += (int) $START->diffInDays($END, true);
         if ($DAYS != 0)
             $DAYS += 1;
     }

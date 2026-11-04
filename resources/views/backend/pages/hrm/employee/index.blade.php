@@ -53,7 +53,6 @@
             overflow-y: auto;
         }
     </style>
-    {{-- <<< END NEW --}}
 @endsection
 
 @section('navbar-content')
@@ -219,7 +218,7 @@
                 });
             });
 
-            // Context Menu Item Click
+
             // Context Menu Item Click
             $('.context-item').on('click', function() {
                 let action = $(this).data('action');
@@ -234,15 +233,18 @@
                 }
 
                 if (action === 'view') {
-                    window.location.href = "{{ route('hrm.employee.show', '') }}/" + employeeId;
+                    window.location.href = "{{ route('hrm.employee.show', '__EMPID__') }}".replace(
+                        '__EMPID__', employeeId);
                 } else if (action === 'edit') {
-                    window.location.href = "{{ route('hrm.employee.edit', '') }}/" + employeeId;
+                    window.location.href = "{{ route('hrm.employee.edit', '__EMPID__') }}".replace(
+                        '__EMPID__', employeeId);
                 } else if (action === 'delete') {
                     if (confirm(
                             'Are you sure you want to delete this employee? This action cannot be undone.'
                         )) {
                         $.ajax({
-                            url: "{{ route('hrm.employee.destroy', '') }}/" + employeeId,
+                            url: "{{ route('hrm.employee.destroy', '__EMPID__') }}".replace(
+                                '__EMPID__', employeeId),
                             type: 'DELETE',
                             data: {
                                 "_token": "{{ csrf_token() }}"

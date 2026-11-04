@@ -269,14 +269,15 @@ $parent_menu = array(
                 'icon' => 'fa fa-th-large',
                 'parent_id' => null,
                 'childMenu' => (object) array(
-                    (object) array('label' => 'All Purchase Return', 'route' => 'inventorySetup.purchase.return', 'icon' => 'fa fa-reply', 'navigate_status' => 1),
-                    (object) array('label' => 'Add New Purchase', 'route' => 'inventorySetup.purchase.create', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
-                    (object) array('label' => 'Edit Purchase', 'route' => 'inventorySetup.purchase.edit', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
-                    (object) array('label' => 'Show Purchase', 'route' => 'inventorySetup.purchase.show', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
+                    (object) array('label' => 'All Purchase Return', 'route' => 'inventorySetup.purchase.return.index', 'icon' => 'fa fa-reply', 'navigate_status' => 1),
+                    (object) array('label' => 'Add Purchase Return', 'route' => 'inventorySetup.purchase.return.create', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
+                    (object) array('label' => 'Edit Purchase', 'route' => 'inventorySetup.purchase.return.edit', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
+                    (object) array('label' => 'Approve', 'route' => 'inventorySetup.purchase.return.approve', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
+                    (object) array('label' => 'Purchase Approve', 'route' => 'inventorySetup.purchase.return.approvePage', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
+                    (object) array('label' => 'Show Purchase', 'route' => 'inventorySetup.purchase.return.show', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
                     (object) array('label' => 'Destroy Purchase', 'route' => 'inventorySetup.purchase.destroy', 'icon' => 'fa fa-dashboard', 'navigate_status' => null),
                 )
             ),
-
 
         )
     ),

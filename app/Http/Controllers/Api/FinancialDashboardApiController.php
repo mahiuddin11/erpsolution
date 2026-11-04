@@ -317,7 +317,7 @@ class FinancialDashboardApiController extends Controller
 
                     // voucher_date ভিত্তিক বয়স; future-dated → Current
                     $voucherDate = Carbon::parse($t->voucher_date ?? $t->created_at)->startOfDay();
-                    $days = $voucherDate->isFuture() ? 0 : $voucherDate->diffInDays($now);
+                    $days = $voucherDate->isFuture() ? 0 : (int) $voucherDate->diffInDays($now, true);
 
                     if ($days <= 0) {
                         $buckets['current'] += $amount;
@@ -483,7 +483,7 @@ class FinancialDashboardApiController extends Controller
             $amount = $isAr ? ($t->debit - $t->credit) : ($t->credit - $t->debit);
 
             $voucherDate = Carbon::parse($t->voucher_date ?? $t->created_at)->startOfDay();
-            $days = $voucherDate->isFuture() ? 0 : $voucherDate->diffInDays($now);
+            $days = $voucherDate->isFuture() ? 0 : (int) $voucherDate->diffInDays($now, true);
 
             if ($days <= 0) {
                 $bk = 'current';

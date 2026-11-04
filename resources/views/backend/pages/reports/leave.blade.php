@@ -48,9 +48,12 @@
                                     <label for="employee_id">Status</label>
                                     <select name="status" id="status" class="form-control select2">
                                         <option value="All">All</option>
-                                        <option {{ $request->status == 'approved' ? 'selected' : '' }} value="approved">Approved</option>
-                                        <option {{ $request->status == 'pending' ? 'selected' : '' }} value="pending">Pending</option>
-                                        <option {{ $request->status == 'cancel' ? 'selected' : '' }} value="cancel">Cancel</option>
+                                        <option {{ $request->status == 'approved' ? 'selected' : '' }} value="approved">
+                                            Approved</option>
+                                        <option {{ $request->status == 'pending' ? 'selected' : '' }} value="pending">
+                                            Pending</option>
+                                        <option {{ $request->status == 'cancel' ? 'selected' : '' }} value="cancel">Cancel
+                                        </option>
                                     </select>
                                 </div>
                             </div>
@@ -134,11 +137,10 @@
                                                 $approve_amount = 0;
                                             @endphp
                                             @foreach ($reqests as $key => $reqest)
-
                                                 @php
                                                     $start_date = Carbon\Carbon::parse($reqest->apply_date ?? now());
                                                     $end_date = Carbon\Carbon::parse($reqest->end_date ?? now());
-                                                    $leave_days = $start_date->diffInDays($end_date) + 1;
+                                                    $leave_days = (int) $start_date->diffInDays($end_date, true) + 1;
                                                 @endphp
 
                                                 <tr>
@@ -195,9 +197,6 @@
                 </div>
             </div>
         @endif
-
-
-
 
     </div>
 @endsection

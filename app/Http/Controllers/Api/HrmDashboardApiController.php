@@ -133,7 +133,8 @@ class HrmDashboardApiController extends Controller
         foreach ($leaves as $l) {
             $start = Carbon::parse($l->apply_date)->max($monthStart);
             $end   = Carbon::parse($l->end_date)->min($monthEnd);
-            $leaveDaysThisMonth += $start->diffInDays($end) + 1;
+            $leaveDaysThisMonth += (int) $start->diffInDays($end, true) + 1;
+
 
             // Absent calculation-er jonno shudhu ajke porjonto leave date gulo
             $cursor = $start->copy();
@@ -394,7 +395,7 @@ class HrmDashboardApiController extends Controller
         $data = $query->latest('apply_date')->take(10)->get()->map(fn($l) => [
             'name'       => $l->employee->name ?? 'N/A',
             'leave_type' => $l->reason ?? 'Leave',
-            'days'       => Carbon::parse($l->apply_date)->diffInDays(Carbon::parse($l->end_date)) + 1,
+            'days'       => (int) Carbon::parse($l->apply_date)->diffInDays(Carbon::parse($l->end_date), true) + 1,
         ]);
 
         return response()->json($data);
@@ -550,8 +551,7 @@ public function recentLeaveApplications()
             'leave_type'    => $l->reason ?? 'Leave',
             'start_date'    => $l->apply_date,
             'end_date'      => $l->end_date,
-            'total_days'    => Carbon::parse($l->apply_date)
-                ->diffInDays(Carbon::parse($l->end_date)) + 1,
+            'total_days'    => (int) Carbon::parse($l->apply_date)->diffInDays(Carbon::parse($l->end_date), true) + 1,
             'status'        => ucfirst($l->status),
         ]);
 

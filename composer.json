@@ -8,25 +8,24 @@
   ],
   "license": "MIT",
   "require": {
-    "php": "^7.3|^8.0",
-    "fideloper/proxy": "^4.4",
-    "fruitcake/laravel-cors": "^2.0",
+    "php": "^8.2",
     "guzzlehttp/guzzle": "^7.0.1",
     "intervention/image": "^2.5",
-    "laravel/framework": "^8.40",
+    "laravel/framework": "^12.0",
+    "nesbot/carbon": "^3.0",
     "laravel/tinker": "^2.5",
-    "laravel/ui": "^3.3",
+    "laravel/ui": "^4.0",
     "rats/zkteco": "^002.0",
     "riskihajar/terbilang": "^1.2"
   },
   "require-dev": {
-    "facade/ignition": "^2.5",
     "fakerphp/faker": "^1.9.1",
     "laravel/sail": "^1.0.1",
-    "laravel/telescope": "4.9",
+    "laravel/telescope": "^5.0",
     "mockery/mockery": "^1.4.2",
-    "nunomaduro/collision": "^5.0",
-    "phpunit/phpunit": "^9.3.3"
+    "nunomaduro/collision": "^8.1",
+    "phpunit/phpunit": "^11.0",
+    "spatie/laravel-ignition": "^2.0"
   },
   "autoload": {
     "psr-4": {
@@ -66,8 +65,21 @@
   "config": {
     "optimize-autoloader": true,
     "preferred-install": "dist",
-    "sort-packages": true
+    "sort-packages": true,
+    "policy": {
+      "advisories": {
+        "ignore-id": [
+          "PKSA-b41t-wbzk-9q51",
+          "PKSA-d5tc-s1qs-h781",
+          "PKSA-m5cs-t1y6-qpcs",
+          "PKSA-3r5d-mb8f-1qw9",
+          "PKSA-mdq4-51ck-6kdq",
+          "PKSA-8qx3-n5y5-vvnd",
+          "PKSA-w7xr-vk7n-rstm"
+        ]
+      }
+    }
   },
-  "minimum-stability": "dev",
+  "minimum-stability": "stable",
   "prefer-stable": true
 }

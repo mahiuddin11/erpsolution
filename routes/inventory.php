@@ -57,7 +57,6 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         //product crud operation start
         // Route::get('/inventory-setup-product-list', 'ProductController@index')->name('inventorySetup.product.index');
         Route::get('/inventory-setup-product-list', [ProductController::class, 'index'])->name('inventorySetup.product.index');
-
         Route::get('/dataProcessingProduct', [ProductController::class, 'dataProcessingProduct'])->name('inventorySetup.product.dataProcessingProduct');
         Route::get('/inventory-setup-product-create', [ProductController::class, 'create'])->name('inventorySetup.product.create');
         Route::post('/inventory-setup-product-store', [ProductController::class, 'store'])->name('inventorySetup.product.store');
@@ -279,9 +278,23 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Backend'], function () {
         Route::post('/inventory-purchase-invoisupplierCreate', [PurchaseController::class, 'supplierCreate'])->name('inventorySetup.purchase.supplierCreate');
         //purchase crud operation end
 
-        //purchase return start 
-        Route::get('/inventory-purchase-return', [PurchaseReturnController::class, 'index'])->name('inventorySetup.purchase.return');
-        //purchase return end
+        
+
+
+        // Purchase Return — direct system
+        Route::get('/inventory-purchase-return', [PurchaseReturnController::class, 'index'])->name('inventorySetup.purchase.return.index');
+        Route::get('/inventory-purchase-return-data', [PurchaseReturnController::class, 'dataProcessing'])->name('inventorySetup.purchase.return.dataProcessing');
+        Route::get('/inventory-purchase-return-create', [PurchaseReturnController::class, 'create'])->name('inventorySetup.purchase.return.create');
+        Route::post('/inventory-purchase-return-store', [PurchaseReturnController::class, 'store'])->name('inventorySetup.purchase.return.store');
+        Route::get('/inventory-purchase-return-edit/{id}', [PurchaseReturnController::class, 'edit'])->name('inventorySetup.purchase.return.edit');
+        Route::put('/inventory-purchase-return-update/{id}', [PurchaseReturnController::class, 'update'])->name('inventorySetup.purchase.return.update');
+        Route::get('/inventory-purchase-return-approve-page/{id}', [PurchaseReturnController::class, 'approvePage'])->name('inventorySetup.purchase.return.approvePage');
+        Route::get('/inventory-purchase-return-show/{id}', [PurchaseReturnController::class, 'show'])->name('inventorySetup.purchase.return.show');
+        Route::post('/inventory-purchase-return-destroy/{id}', [PurchaseReturnController::class, 'destroy'])->name('inventorySetup.purchase.return.destroy');
+        Route::post('/inventory-purchase-return-approve/{id}', [PurchaseReturnController::class, 'approve'])->name('inventorySetup.purchase.return.approve');
+        Route::post('/inventory-purchase-return-reject/{id}', [PurchaseReturnController::class, 'reject'])->name('inventorySetup.purchase.return.reject');
+        Route::get('/inventory-purchase-return-search-products', [PurchaseReturnController::class, 'searchProducts'])->name('inventorySetup.purchase.return.searchProducts');
+        Route::get('/inventory-purchase-return-supplier-ledger', [PurchaseReturnController::class, 'getSupplierLedger'])->name('inventorySetup.purchase.return.getSupplierLedger');
 
 
         //stock adjustment crud operation start

@@ -78,6 +78,12 @@
             color: #155e75;
         }
 
+        .badge-purchase-return {
+            background: #ffedd5;
+            color: #9a3412;
+        }
+
+
         .badge-secondary {
             background: #e5e7eb;
             color: #374151;

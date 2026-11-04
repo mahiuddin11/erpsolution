@@ -203,8 +203,6 @@ class SaleReturnController extends Controller
     {
         $title = 'Sale Return Details';
 
-
-
         $saleReturn = SaleReturn::with([
             'sale',
             'branch',
@@ -273,7 +271,7 @@ class SaleReturnController extends Controller
             }
      
 
-        DB::beginTransaction();
+         DB::beginTransaction();
         try {
             $sale = $saleReturn->sale;
 
@@ -291,10 +289,15 @@ class SaleReturnController extends Controller
 
             $returnAmount = (float) $saleReturn->grand_total;
 
+            $salesReturnAccount = ChartOfAccount::where('account_name', 'Sales Return')
+                ->where('parent_id', 18)->where('status', 'Active')->first();
+            
+           
+
             AccountTransaction::create([
                 'invoice'    => $saleReturn->return_no,
                 'table_id'   => $saleReturn->id,
-                'account_id' => 1522, // same Sales Revenue account the original sale used
+                'account_id' => $salesReturnAccount->id, // same Sales Revenue account the original sale used
                 'type'       => 28,
                 'branch_id'  => $targetBranchId,
                 'debit'      => $returnAmount,

@@ -32,6 +32,7 @@ class SyncAttendanceFromApi extends Command
 
             $url = env('ZKTECO_IP') . "/iclock/api/transactions/?start_time={$startDate}%2000:00:00&end_time={$endDate}%2023:59:59&page_size=1000";
 
+          
             // $url = env('ZKTECO_IP') . '/iclock/api/transactions/?page_size=500';
             // $url = env('ZKTECO_IP') . "/iclock/api/transactions/?start_time={$today}%2000:00:00&end_time={$today}%2023:59:59&page_size=1000";
 
@@ -45,11 +46,8 @@ class SyncAttendanceFromApi extends Command
                 'Content-Type'  => 'application/json',
             ])->get($url);
 
-
             if ($response->successful()) {
                 $data = $response->json();
-
-
 
                 if (!empty($data['data'])) {
                     $groupedPunches = [];

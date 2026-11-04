@@ -1,14 +1,11 @@
-{{-- Modified: 2026-07-20 - professional styling matched to exact types from getProductLedgerData() --}}
-{{-- Updated: 2026-09-21 - responsive layout, sticky header, type filter, clean print, scoped CSS --}}
 <div id="ledgerPartial">
     <style>
-        /* Updated: 2026-09-21 - sob selector #ledgerPartial-er moddhe scope kora (age .btn-secondary / .alert-warning shara page-e leak korto) */
         #ledgerPartial #simpleLedgerTable thead th {
             background: #1e293b;
             color: #fff;
             white-space: nowrap;
             font-size: 12.5px;
-            /* >>> NEW: sticky header (scroll korle heading thake) */
+
             position: sticky;
             top: 0;
             z-index: 2;
