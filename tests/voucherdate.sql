@@ -28,3 +28,6 @@ WHERE voucher_date IS NULL;
 SELECT COUNT(*) FROM account_transactions WHERE voucher_date IS NULL;
 
 SELECT type, COUNT(*) AS cnt FROM account_transactions WHERE voucher_date IS NULL GROUP BY type ORDER BY cnt DESC;
+
+
+

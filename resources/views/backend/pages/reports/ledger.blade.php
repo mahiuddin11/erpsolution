@@ -12,12 +12,166 @@
         .ledger-table {
             table-layout: fixed;
             width: 100%;
+            min-width: 900px;
         }
 
         .ledger-table td,
         .ledger-table th {
             word-wrap: break-word;
             white-space: normal;
+        }
+
+        .invoice-logo-img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .print-spacer-row {
+            display: none;
+        }
+
+        @media (max-width: 575.98px) {
+            .invoice-logo-img {
+                width: 130px !important;
+            }
+
+            .invoice h3 {
+                font-size: 1.25rem;
+            }
+
+            .invoice h4 {
+                font-size: 0.95rem;
+            }
+        }
+
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        @media print {
+
+            .no-print,
+            .modal,
+            .content-header {
+                display: none !important;
+            }
+
+            .main-header,
+            .main-sidebar,
+            .control-sidebar,
+            .main-footer {
+                display: none !important;
+            }
+
+            .content-wrapper {
+                margin: 10mm !important;
+                padding: 14mm 10mm !important;
+                background: #fff !important;
+            }
+
+            .card {
+                border: none !important;
+                box-shadow: none !important;
+            }
+
+            .card-body {
+                padding: 0 !important;
+            }
+
+            .invoice {
+                padding: 0 !important;
+                margin: 0 !important;
+                border: none !important;
+            }
+
+            .invoice>.row {
+                display: block !important;
+            }
+
+            .ledger-print-footer {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+
+            .invoice h3 {
+                font-size: 18px;
+            }
+
+            .invoice h4 {
+                font-size: 13px;
+            }
+
+            .table-responsive {
+                overflow: visible !important;
+            }
+
+            .ledger-table {
+                width: 100% !important;
+                min-width: 0 !important;
+                font-size: 12px;
+            }
+
+            .ledger-table th,
+            .ledger-table td {
+                padding: 5px 5px !important;
+            }
+
+            .print-spacer-row {
+                display: table-row !important;
+            }
+
+            .print-spacer-row th {
+                height: 10mm !important;
+                padding: 0 !important;
+                border: none !important;
+                background: transparent !important;
+                line-height: 0 !important;
+                font-size: 0 !important;
+            }
+
+            .ledger-table td:first-child {
+                white-space: nowrap;
+            }
+
+            thead {
+                display: table-header-group;
+            }
+
+            tr {
+                page-break-inside: avoid;
+            }
+
+            a {
+                color: #000 !important;
+                text-decoration: none !important;
+            }
+
+            .voucher-link {
+                background: none !important;
+                background-color: transparent !important;
+                border: none !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                color: #000 !important;
+                display: inline !important;
+                padding: 0 !important;
+                font-size: 12px !important;
+            }
+
+            .voucher-link i {
+                display: none !important;
+            }
+
+            img {
+                max-width: 100% !important;
+            }
+
+            .badge,
+            .bg-success {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
         }
     </style>
 @endsection
@@ -40,7 +194,6 @@
             <div class="card card-default">
                 <div class="card-body">
                     <form method="GET" action="{{ route('report.ledger.ledger') }}">
-                        @csrf
                         <div class="row">
                             <div class="col-md-3">
                                 <div class="form-group">
@@ -98,7 +251,7 @@
                                                     <a href="{{ route('home') }}">
                                                         <img width="200px"
                                                             src="{{ asset('/backend/invoicelogo/' . $companyInfo->invoice_logo) }}"
-                                                            style="" alt="">
+                                                            style="" alt="" class="invoice-logo-img">
                                                     </a>
                                                 @endif
                                             </td>
@@ -115,21 +268,23 @@
                                     </table>
                                     <table class="table table-bordered mt-2 ledger-table">
                                         <colgroup>
-                                            <col style="width: 6%;"> {{-- Date --}}
-                                            <col style="width: 8%;"> {{-- Voucher No --}}
-                                            <col style="width: 7%;"> {{-- custom invoice (same as Voucher No) --}}
-                                            <col style="width: 20%;"> {{-- Account Name --}}
-                                            <col style="width: 24%;"> {{-- Description --}}
-                                            <col style="width: 11%;"> {{-- Debit --}}
-                                            <col style="width: 11%;"> {{-- Credit --}}
-                                            <col style="width: 12%;"> {{-- Balance --}}
+                                            <col style="width: 11%;"> {{-- Date --}}
+                                            <col style="width: 9%;"> {{-- Voucher No --}}
+                                            <col style="width: 10%;"> {{-- custom invoice (same as Voucher No) --}}
+                                            <col style="width: 17%;"> {{-- Account Name --}}
+                                            <col style="width: 16%;"> {{-- Description --}}
+                                            <col style="width: 10%;"> {{-- Debit --}}
+                                            <col style="width: 10%;"> {{-- Credit --}}
+                                            <col style="width: 16%;"> {{-- Balance --}}
                                         </colgroup>
                                         <thead>
+                                            <tr class="print-spacer-row">
+                                                <th colspan="8">&nbsp;</th>
+                                            </tr>
                                             <tr>
                                                 <th>Date</th>
                                                 <th class="voucher-no-col">Voucher No</th>
-                                                <th class="custom-invoice-col">
-                                                    custom invoice</th>
+                                                <th class="custom-invoice-col">Custom Invoice</th>
                                                 <th>Account Name</th>
                                                 <th>Description</th>
                                                 <th>Debit</th>
@@ -224,31 +379,35 @@
                                     </table>
                                 </div>
 
-                                <div class="col-4  float-left">
-                                    <br>
-                                    <br>
+                                <div class="col-12 ledger-print-footer">
+                                    <div class="row">
+                                        <div class="col-6 col-md-4  float-left">
+                                            <br>
+                                            <br>
 
-                                    <p>Prepared By:_____________<br />
-                                        Date:____________________
-                                    </p>
-                                </div>
-                                <div class="col-6 text-center">
-                                </div>
-                                <div class="col-2  ">
-                                    <br>
-                                    <br>
-                                    <p>Approved By:________________<br />
-                                        Date:_________________</p>
-                                </div>
+                                            <p>Prepared By:_____________<br />
+                                                Date:____________________
+                                            </p>
+                                        </div>
+                                        <div class="col-md-6 d-none d-md-block text-center">
+                                        </div>
+                                        <div class="col-6 col-md-2  ">
+                                            <br>
+                                            <br>
+                                            <p>Approved By:________________<br />
+                                                Date:_________________</p>
+                                        </div>
+                                    </div>
 
-                                <hr>
+                                    <hr>
 
 
-                                <div class="col-md-12 bg-success" style="text-align: center">
-                                    Thank you for choosing {{ $companyInfo->company_name ?? 'N/A' }} products.
-                                    We believe you will be satisfied by our services.
+                                    <div class="col-md-12 bg-success" style="text-align: center">
+                                        Thank you for choosing {{ $companyInfo->company_name ?? 'N/A' }} products.
+                                        We believe you will be satisfied by our services.
+                                    </div>
+                                    <!-- /.col -->
                                 </div>
-                                <!-- /.col -->
 
 
 

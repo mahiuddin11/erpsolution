@@ -6,4 +6,4 @@
 .env
 /.idea
 /public/storage/
-/public/backend/
+/public/backend/bootstrap/cache/*.tmp
