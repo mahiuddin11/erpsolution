@@ -41,10 +41,16 @@ class SyncAttendanceFromApi extends Command
             //     'Authorization' => "Token $token",
             // ])->get($url);
 
+            // $response = Http::withHeaders([
+            //     'Authorization' => "Token $token",
+            //     'Content-Type'  => 'application/json',
+            // ])->get($url);
+
             $response = Http::withHeaders([
-                'Authorization' => "Token $token",
-                'Content-Type'  => 'application/json',
-            ])->get($url);
+             'Authorization' => "Token $token",
+              'Content-Type'  => 'application/json',
+            ])->timeout(120)->connectTimeout(10)->get($url);
+
 
             if ($response->successful()) {
                 $data = $response->json();
