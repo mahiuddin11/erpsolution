@@ -72,6 +72,8 @@ class JournalVoucherController extends Controller
         $branches = Branch::where('status', 'Active')->where('parent_id', 0)->get();
         $creditaccountheas = ChartOfAccount::whereIn('id', [16, 17])->get();
         $accounts = ChartOfAccount::where('parent_id', 0)->get();
+
+        
         $creditvoucher = JournalVoucher::get();
 
         $creditvoucherLastData = JournalVoucher::latest('id')->first();

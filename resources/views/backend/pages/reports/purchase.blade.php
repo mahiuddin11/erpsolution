@@ -424,10 +424,10 @@
                                             <td>{{ optional($firstItem->purchase)->invoice_no ?? '' }}</td>
                                             <td>
                                                 @if (optional($firstItem->purchase)->type == 'Branch')
-                                                    {{ optional($firstItem->purchase->branch)->branchCode }}
-                                                    {{ optional($firstItem->purchase->branch)->name }}
+                                                    {{ optional(optional($firstItem->purchase)->branch)->branchCode }}
+                                                    {{ optional(optional($firstItem->purchase)->branch)->name }}
                                                 @else
-                                                    {{ optional($firstItem->purchase->project)->name }}
+                                                    {{ optional(optional($firstItem->purchase)->project)->name ?? '-' }}
                                                 @endif
                                             </td>
                                             <td>{{ optional(optional($firstItem->purchase)->warehouse)->name ?? '-' }}</td>

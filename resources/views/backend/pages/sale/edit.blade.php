@@ -412,11 +412,12 @@
                                                                             name="cty_size[]"
                                                                             value="{{ $value->cty_size }}">
                                                                     </td> --}}
-                                                                            <td align="right">{{ $value->qty }}<input
-                                                                                    type="hidden" class=""
+                                                                            <td align="right">{{ $value->qty }}
+                                                                                <input type="hidden" class="ttlqty"
                                                                                     name="qty[]"
                                                                                     value="{{ $value->qty }}">
                                                                             </td>
+
                                                                             <td align="right">{{ $value->vat }}<input
                                                                                     type="hidden" class=""
                                                                                     name="vat[]"
@@ -899,7 +900,7 @@
                         '"></td>' +
                         '<td align="right">' +
                         total +
-                        '<input type="hidden" class="grandtotal" name="total[]" value="' +
+                        '<input type="hidden" class="grandtotal" name="price[]" value="' +
                         total +
                         '"></td>' +
                         '<td><a del_id="' +
@@ -932,8 +933,7 @@
                 // }
 
                 let deleteitem = () => {
-                    var id = $(this).attr("del_id");
-                    $('.new_item' + id).remove();
+                    $(this).closest('tr').remove();
                     findqtyamount();
                     findunitamount();
                     findgrandtottal();

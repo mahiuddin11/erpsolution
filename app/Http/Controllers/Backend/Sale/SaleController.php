@@ -457,7 +457,7 @@ class SaleController extends Controller
         $ledgers = ChartOfAccount::whereIn('id', [getAccountByUniqueID(5)->id, getAccountByUniqueID(16)->id])->get();
         $category_info = Category::get()->where('status', 'Active');
         $customer = Customer::get()->where('status', 'Active');
-        $user = auth()->user();
+        $user = Auth::user();
         $customerGroup = CustomerGroup::all();
 
         $branch = Branch::where("parent_id", 0)->where('status', 'Active'); 

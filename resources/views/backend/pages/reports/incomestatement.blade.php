@@ -98,6 +98,25 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group">
+                                    <label>Branch:</label>
+                                    <select name="branch_id" id="branch_id" class="form-control">
+                                        <option value="all" {{ ($branch_id ?? 'all') == 'all' ? 'selected' : '' }}>All
+                                            Branches</option>
+                                        <option value="unassigned"
+                                            {{ ($branch_id ?? 'all') == 'unassigned' ? 'selected' : '' }}>Unassigned (No
+                                            Branch)</option>
+
+                                        @foreach ($branches ?? [] as $branch)
+                                            <option value="{{ $branch->id }}"
+                                                {{ (string) ($branch_id ?? 'all') === (string) $branch->id ? 'selected' : '' }}>
+                                                {{ $branch->branchCode }} - {{ $branch->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
                                     <label>&nbsp;</label><br>
                                     <button type="submit" class="btn btn-success btn-sm">
                                         <i class="fa fa-search"></i> Search
@@ -133,6 +152,8 @@
                                 <p>From: <strong>{{ $startDate }}</strong> &nbsp;|&nbsp; To:
                                     <strong>{{ $endDate }}</strong>
                                 </p>
+                                <p>Branch: <strong>{{ $selectedBranchName ?? 'All Branches' }}</strong></p>
+
                             </div>
                         </div>
 
@@ -326,6 +347,8 @@
                 var category = $(this).data('category');
                 var fromDate = $('#from_date').val();
                 var toDate = $('#to_date').val();
+                var branchId = $('#branch_id').val();
+
                 var rowLabel = $(this).closest('tr').find('td:first').text().trim();
 
                 $('#detailsModalTitle').text(rowLabel + ' — Details');
@@ -340,7 +363,9 @@
                     data: {
                         category: category,
                         from_date: fromDate,
-                        to_date: toDate
+                        to_date: toDate,
+                        branch_id: branchId
+
                     },
                     success: function(response) {
                         $('#detailsModalBody').html(response);

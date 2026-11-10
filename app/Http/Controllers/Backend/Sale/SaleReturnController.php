@@ -21,6 +21,7 @@ use App\Services\Sale\SalesReturnService;
 use App\Transformers\SaleReturnTransformer;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use PhpParser\Node\Stmt\TryCatch;
 
@@ -60,7 +61,7 @@ class SaleReturnController extends Controller
     {
         $title = 'Add New Sale Return';
 
-        $user = auth()->user();
+        $user = Auth::user();
 
         $accountEagerLoad = [
             'parent',
@@ -302,7 +303,7 @@ class SaleReturnController extends Controller
                 'branch_id'  => $targetBranchId,
                 'debit'      => $returnAmount,
                 'remark'     =>  $saleReturn->return_no . ' against Invoice ' . optional($sale)->invoice_no . '--' . 'Note :' . $saleReturn->remarks,
-                'created_by' => auth()->id(),
+                'created_by' => Auth::user(),
                 'created_at' => $saleReturn->return_date,
             ]);
 
@@ -314,12 +315,12 @@ class SaleReturnController extends Controller
                 'branch_id'  => $targetBranchId,
                 'credit'     => $returnAmount,
                 'remark'     => $saleReturn->return_no . ' against Invoice ' . optional($sale)->invoice_no . '--' . 'Note :' . $saleReturn->remarks,
-                'created_by' => auth()->id(),
+                'created_by' => Auth::user(),
                 'created_at' => $saleReturn->return_date,
             ]);
 
             $saleReturn->status      = 'approved';
-            $saleReturn->approved_by = auth()->id();
+            $saleReturn->approved_by = Auth::user();
             $saleReturn->approved_at = now();
             $saleReturn->save();
 

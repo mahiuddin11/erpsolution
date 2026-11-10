@@ -4209,75 +4209,180 @@ public function sale(Request $request)
     //     return view('backend.pages.reports.incomestatement', get_defined_vars());
     // }
 
-    public function incomestatement(Request $request)
-    {
-        $title = 'Income Statement Report';
+public function incomestatement(Request $request)
+{
+    $title = 'Income Statement Report';
 
-        $startDate = $request->input('from_date', date('Y-m-01'));
-        $endDate   = $request->input('to_date',   date('Y-m-t'));
+    $startDate = $request->input('from_date', date('Y-m-01'));
+    $endDate   = $request->input('to_date',   date('Y-m-t'));
 
-        $salesIds        = getOldAccount(0, 18)->pluck('id')->toArray();
-        $directIncomeIds = getOldAccount(0, 19)->pluck('id')->toArray();
-        $revenueIds      = array_merge($salesIds, $directIncomeIds);
+    $branch_id = $request->input('branch_id', 'all');
 
-        $directExpenseIds = getOldAccount(0, 22)->pluck('id')->toArray();
-        $purchaseIds      = getOldAccount(0, 24)->pluck('id')->toArray();
-        $cogsIds          = array_merge($directExpenseIds, $purchaseIds);
+    // Branch mane parent_id = 0 (2 Chemical, 3 RO, 4 WTBL, 8 EIA); sub-location (5,6,7,9) branch na
+    $branches = Branch::where('status', 'Active')
+        ->where('parent_id', 0)
+        ->select('id', 'branchCode', 'name')
+        ->orderBy('id')
+        ->get();
 
-        $opexIds = getOldAccount(0, 23)->pluck('id')->toArray();
-
-        $nonOpIncomeIds = getOldAccount(0, 20)->pluck('id')->toArray();
-
-        // $revenue = AccountTransaction::whereIn('account_id', $revenueIds)
-        //     ->whereDate('created_at', '>=', $startDate)
-        //     ->whereDate('created_at', '<=', $endDate)
-        //     ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
-        //     ->first();
-
-        $revenue = AccountTransaction::whereIn('account_id', $revenueIds)
-            ->whereDate('created_at', '>=', $startDate)
-            ->whereDate('created_at', '<=', $endDate)
-            ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
-            ->first();
-
-        $cogs = AccountTransaction::whereIn('account_id', $cogsIds)
-            ->whereDate('created_at', '>=', $startDate)
-            ->whereDate('created_at', '<=', $endDate)
-            ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
-            ->first();
-
-        $operatingExpenses = AccountTransaction::whereIn('account_id', $opexIds)
-            ->whereDate('created_at', '>=', $startDate)
-            ->whereDate('created_at', '<=', $endDate)
-            ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
-            ->first();
-
-        $nonOperatingIncome = AccountTransaction::whereIn('account_id', $nonOpIncomeIds)
-            ->whereDate('created_at', '>=', $startDate)
-            ->whereDate('created_at', '<=', $endDate)
-            ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
-            ->first();
-
-        $totalRevenue = ($revenue->total_credit ?? 0) - ($revenue->total_debit ?? 0);
-        // $totalRevenue     = ($revenue->total_credit         ?? 0) - ($revenue->total_debit         ?? 0);
-        $totalCOGS        = ($cogs->total_debit             ?? 0) - ($cogs->total_credit           ?? 0);
-        $grossProfit      = $totalRevenue - $totalCOGS;
-        $totalOpex        = ($operatingExpenses->total_debit ?? 0) - ($operatingExpenses->total_credit ?? 0);
-        $operatingIncome  = $grossProfit - $totalOpex;
-        $totalNonOpIncome = ($nonOperatingIncome->total_credit ?? 0) - ($nonOperatingIncome->total_debit ?? 0);
-        $netIncome        = $operatingIncome + $totalNonOpIncome;
-
-        $companyInfo = Company::latest('id')->first();
-
-        return view('backend.pages.reports.incomestatement', get_defined_vars());
+    $selectedBranchName = 'All Branches';
+    if ($branch_id === 'unassigned') {
+        $selectedBranchName = 'Unassigned (No Branch)';
+    } elseif ($branch_id !== 'all') {
+        $selectedBranch = $branches->firstWhere('id', (int) $branch_id);
+        $selectedBranchName = $selectedBranch
+            ? ($selectedBranch->branchCode . ' - ' . $selectedBranch->name)
+            : 'Branch #' . $branch_id;
     }
 
+    // 'unassigned' mane branch_id NULL ba 0; na hole nirdisto branch
+    $branchScope = function ($query) use ($branch_id) {
+        if ($branch_id === 'unassigned') {
+            $query->where(function ($q) {
+                $q->whereNull('branch_id')->orWhere('branch_id', 0);
+            });
+        } else {
+            $query->where('branch_id', $branch_id);
+        }
+    };
+
+    $salesIds        = getOldAccount(0, 18)->pluck('id')->toArray();
+    $directIncomeIds = getOldAccount(0, 19)->pluck('id')->toArray();
+    $revenueIds      = array_merge($salesIds, $directIncomeIds);
+
+    $directExpenseIds = getOldAccount(0, 22)->pluck('id')->toArray();
+    $purchaseIds      = getOldAccount(0, 24)->pluck('id')->toArray();
+    $cogsIds          = array_merge($directExpenseIds, $purchaseIds);
+
+    $opexIds = getOldAccount(0, 23)->pluck('id')->toArray();
+
+    $nonOpIncomeIds = getOldAccount(0, 20)->pluck('id')->toArray();
+
+    $revenue = AccountTransaction::whereIn('account_id', $revenueIds)
+        ->whereDate('created_at', '>=', $startDate)
+        ->whereDate('created_at', '<=', $endDate)
+        ->when($branch_id !== 'all', $branchScope)
+        ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
+        ->first();
+
+    $cogs = AccountTransaction::whereIn('account_id', $cogsIds)
+        ->whereDate('created_at', '>=', $startDate)
+        ->whereDate('created_at', '<=', $endDate)
+        ->when($branch_id !== 'all', $branchScope)
+        ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
+        ->first();
+
+    $operatingExpenses = AccountTransaction::whereIn('account_id', $opexIds)
+        ->whereDate('created_at', '>=', $startDate)
+        ->whereDate('created_at', '<=', $endDate)
+        ->when($branch_id !== 'all', $branchScope)
+        ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
+        ->first();
+
+    $nonOperatingIncome = AccountTransaction::whereIn('account_id', $nonOpIncomeIds)
+        ->whereDate('created_at', '>=', $startDate)
+        ->whereDate('created_at', '<=', $endDate)
+        ->when($branch_id !== 'all', $branchScope)
+        ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
+        ->first();
+
+    $totalRevenue      = ($revenue->total_credit ?? 0) - ($revenue->total_debit ?? 0);
+    $totalCOGS         = ($cogs->total_debit ?? 0) - ($cogs->total_credit ?? 0);
+    $grossProfit       = $totalRevenue - $totalCOGS;
+    $totalOpex         = ($operatingExpenses->total_debit ?? 0) - ($operatingExpenses->total_credit ?? 0);
+    $operatingIncome   = $grossProfit - $totalOpex;
+    $totalNonOpIncome  = ($nonOperatingIncome->total_credit ?? 0) - ($nonOperatingIncome->total_debit ?? 0);
+    $netIncome         = $operatingIncome + $totalNonOpIncome;
+
+    $companyInfo = Company::latest('id')->first();
+
+    return view('backend.pages.reports.incomestatement', get_defined_vars());
+}
+
+
+
+
+    // public function incomestatement(Request $request)
+    // {
+    //     $title = 'Income Statement Report';
+
+    //     $startDate = $request->input('from_date', date('Y-m-01'));
+    //     $endDate   = $request->input('to_date',   date('Y-m-t'));
+
+    //     $salesIds        = getOldAccount(0, 18)->pluck('id')->toArray();
+    //     $directIncomeIds = getOldAccount(0, 19)->pluck('id')->toArray();
+    //     $revenueIds      = array_merge($salesIds, $directIncomeIds);
+
+    //     $directExpenseIds = getOldAccount(0, 22)->pluck('id')->toArray();
+    //     $purchaseIds      = getOldAccount(0, 24)->pluck('id')->toArray();
+    //     $cogsIds          = array_merge($directExpenseIds, $purchaseIds);
+
+    //     $opexIds = getOldAccount(0, 23)->pluck('id')->toArray();
+
+    //     $nonOpIncomeIds = getOldAccount(0, 20)->pluck('id')->toArray();
+
+    //     // $revenue = AccountTransaction::whereIn('account_id', $revenueIds)
+    //     //     ->whereDate('created_at', '>=', $startDate)
+    //     //     ->whereDate('created_at', '<=', $endDate)
+    //     //     ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
+    //     //     ->first();
+
+    //     $revenue = AccountTransaction::whereIn('account_id', $revenueIds)
+    //         ->whereDate('created_at', '>=', $startDate)
+    //         ->whereDate('created_at', '<=', $endDate)
+    //         ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
+    //         ->first();
+
+    //     $cogs = AccountTransaction::whereIn('account_id', $cogsIds)
+    //         ->whereDate('created_at', '>=', $startDate)
+    //         ->whereDate('created_at', '<=', $endDate)
+    //         ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
+    //         ->first();
+
+    //     $operatingExpenses = AccountTransaction::whereIn('account_id', $opexIds)
+    //         ->whereDate('created_at', '>=', $startDate)
+    //         ->whereDate('created_at', '<=', $endDate)
+    //         ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
+    //         ->first();
+
+    //     $nonOperatingIncome = AccountTransaction::whereIn('account_id', $nonOpIncomeIds)
+    //         ->whereDate('created_at', '>=', $startDate)
+    //         ->whereDate('created_at', '<=', $endDate)
+    //         ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
+    //         ->first();
+
+    //     $totalRevenue = ($revenue->total_credit ?? 0) - ($revenue->total_debit ?? 0);
+    //     // $totalRevenue     = ($revenue->total_credit         ?? 0) - ($revenue->total_debit         ?? 0);
+    //     $totalCOGS        = ($cogs->total_debit             ?? 0) - ($cogs->total_credit           ?? 0);
+    //     $grossProfit      = $totalRevenue - $totalCOGS;
+    //     $totalOpex        = ($operatingExpenses->total_debit ?? 0) - ($operatingExpenses->total_credit ?? 0);
+    //     $operatingIncome  = $grossProfit - $totalOpex;
+    //     $totalNonOpIncome = ($nonOperatingIncome->total_credit ?? 0) - ($nonOperatingIncome->total_debit ?? 0);
+    //     $netIncome        = $operatingIncome + $totalNonOpIncome;
+
+    //     $companyInfo = Company::latest('id')->first();
+
+    //     return view('backend.pages.reports.incomestatement', get_defined_vars());
+    // }
 
     public function incomestatementDetails(Request $request)
     {
         $category  = $request->input('category');
         $startDate = $request->input('from_date');
         $endDate   = $request->input('to_date');
+        $branch_id = $request->input('branch_id', 'all'); // new add
+
+        // 'unassigned' mane branch_id NULL ba 0; na hole nirdisto branch
+        $branchScope = function ($query) use ($branch_id) {
+            if ($branch_id === 'unassigned') {
+                $query->where(function ($q) {
+                    $q->whereNull('branch_id')->orWhere('branch_id', 0);
+                });
+            } else {
+                $query->where('branch_id', $branch_id);
+            }
+        };
+
 
         switch ($category) {
             case 'revenue':
@@ -4308,6 +4413,7 @@ public function sale(Request $request)
 
         $transactions = AccountTransaction::with('account:id,account_name')
             ->whereIn('account_id', $ids)
+            ->when($branch_id !== 'all', $branchScope)
             ->whereDate('created_at', '>=', $startDate)
             ->whereDate('created_at', '<=', $endDate)
             ->orderBy('created_at', 'asc')
@@ -4370,6 +4476,110 @@ public function sale(Request $request)
 
         return response($html);
     }
+
+
+    // public function incomestatementDetails(Request $request)
+    // {
+    //     $category  = $request->input('category');
+    //     $startDate = $request->input('from_date');
+    //     $endDate   = $request->input('to_date');
+    //     $branch_id = $request->input('branch_id', 'all'); // new add
+
+
+    //     switch ($category) {
+    //         case 'revenue':
+    //             $ids = array_merge(
+    //                 getOldAccount(0, 18)->pluck('id')->toArray(),
+    //                 getOldAccount(0, 19)->pluck('id')->toArray()
+    //             );
+    //             $natureCredit = true;
+    //             break;
+    //         case 'cogs':
+    //             $ids = array_merge(
+    //                 getOldAccount(0, 22)->pluck('id')->toArray(),
+    //                 getOldAccount(0, 24)->pluck('id')->toArray()
+    //             );
+    //             $natureCredit = false;
+    //             break;
+    //         case 'opex':
+    //             $ids = getOldAccount(0, 23)->pluck('id')->toArray();
+    //             $natureCredit = false;
+    //             break;
+    //         case 'nonop':
+    //             $ids = getOldAccount(0, 20)->pluck('id')->toArray();
+    //             $natureCredit = true;
+    //             break;
+    //         default:
+    //             return response('<p class="text-danger">Invalid category</p>', 400);
+    //     }
+
+    //     $transactions = AccountTransaction::with('account:id,account_name')
+    //         ->whereIn('account_id', $ids)
+    //         ->when($branch_id !== 'all', fn($q) => $q->where('branch_id', $branch_id))
+    //         ->whereDate('created_at', '>=', $startDate)
+    //         ->whereDate('created_at', '<=', $endDate)
+    //         ->orderBy('created_at', 'asc')
+    //         ->get();
+
+    //     $total = 0;
+    //     $rows = '';
+
+    //     if ($transactions->isEmpty()) {
+    //         $rows = '<tr><td colspan="5" class="text-center text-muted">NO Record Found</td></tr>';
+    //     } else {
+    //         foreach ($transactions as $txn) {
+    //             $value = $natureCredit
+    //                 ? ($txn->credit - $txn->debit)
+    //                 : ($txn->debit - $txn->credit);
+    //             $total += $value;
+
+    //             $date       = \Carbon\Carbon::parse($txn->created_at)->format('d-M-Y');
+    //             $accName    = $txn->account->account_name ?? 'N/A';
+    //             $voucherNo  = $txn->invoice ?? '-';
+    //             $debit      = $txn->debit > 0  ? number_format($txn->debit, 2)  : '-';
+    //             $credit     = $txn->credit > 0 ? number_format($txn->credit, 2) : '-';
+
+    //             $rows .= "<tr>
+    //             <td>{$date}</td>
+    //             <td>{$accName}</td>
+    //             <td>{$voucherNo}</td>
+    //             <td class='text-right'>{$debit}</td>
+    //             <td class='text-right'>{$credit}</td>
+    //         </tr>";
+    //         }
+    //     }
+
+    //     $totalFormatted = number_format(abs($total), 2);
+
+    //     // Added: 2026-06-30 — total 
+    //     $debitTotalCell  = $natureCredit ? "<td class='text-right'>-</td>" : "<td class='text-right'>{$totalFormatted}</td>";
+    //     $creditTotalCell = $natureCredit ? "<td class='text-right'>{$totalFormatted}</td>" : "<td class='text-right'>-</td>";
+
+    //     $html = "
+    // <table class='table table-bordered table-sm'>
+    //     <thead>
+    //         <tr style='background:#f4f4f4;'>
+    //             <th>Date</th>
+    //             <th>Account Name</th>
+    //             <th>Voucher No</th>
+    //             <th class='text-right'>Debit</th>
+    //             <th class='text-right'>Credit</th>
+    //         </tr>
+    //     </thead>
+    //     <tbody>{$rows}</tbody>
+    //     <tfoot>
+    //         <tr style='background:#e9ecef; font-weight:600;'>
+    //             <td colspan='3'>Net Total</td>
+    //             {$debitTotalCell}
+    //             {$creditTotalCell}
+    //         </tr>
+    //     </tfoot>
+    // </table>";
+
+    //     return response($html);
+    // }
+
+
 
     // public function incomestatement(Request $request)
     // {
