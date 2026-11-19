@@ -400,7 +400,6 @@ class PurchaseRepositories
     public function getpvList($request)
     {
 
-
         $columns = [
             0 => 'id',
             1 => 'invoice_no',
@@ -535,6 +534,7 @@ class PurchaseRepositories
 
     public function store($request)
     {
+        //   dd($request->all());
       
         DB::beginTransaction();
         try {
@@ -686,7 +686,10 @@ class PurchaseRepositories
             $transactionPay['type'] = 1;
             $transactionPay['branch_id'] = $request->branch_id ?? null;
             $transactionPay['warehouse_id'] = $request->sub_warehouse_id ?? null;
-            $transactionPay['debit'] =  array_sum($request->total);
+            $transactionPay['debit'] = array_sum($request->total);
+            if(!empty($request->discount)){
+                 $transactionPay['debit'] = $request->input_net_total;
+            }
             $transactionPay['remark'] = $request->narration;
             $transactionPay['voucher_date'] = $request->date;
             $transactionPay['created_by'] = Auth::id();
@@ -702,6 +705,9 @@ class PurchaseRepositories
             $transaction['branch_id'] = $request->branch_id ?? null;
             $transaction['warehouse_id'] = $request->sub_warehouse_id ?? null;
             $transaction['credit'] = (array_sum($request->total));
+            if(!empty($request->discount)){
+                 $transaction['credit'] = $request->input_net_total;
+            }
             $transaction['remark'] = $request->narration;
             $transaction['voucher_date'] = $request->date;
             $transaction['created_by'] = Auth::id();
@@ -2795,6 +2801,8 @@ class PurchaseRepositories
 
     public function update($request, $id)
     {
+        
+
         DB::beginTransaction();
         try {
             $purchase = $this->purchases::findOrFail($id);
@@ -2935,12 +2943,17 @@ class PurchaseRepositories
             $transactionPay['branch_id'] = $request->branch_id ?? 0;
             $transactionPay['warehouse_id'] = $request->sub_warehouse_id ?? null;
             $transactionPay['debit'] =  array_sum($request->total);
+            if(!empty($request->discount)){
+                $transactionPay['debit'] = $request->input_net_total;
+            }
             $transactionPay['remark'] = $request->narration;
             $transactionPay['created_by'] = Auth::id();
             $transactionPay['supplier_id'] = $request->supplier_id ?? 0;
             $transactionPay['voucher_date'] = $request->date;
             $transactionPay['created_at'] = $request->date;
             AccountTransaction::create($transactionPay);
+
+         
 
             $transaction['payment_invoice'] = null;
             $transaction['invoice'] = $purchase->invoice_no;
@@ -2950,12 +2963,17 @@ class PurchaseRepositories
             $transaction['branch_id'] = $request->branch_id ?? 0;
             $transaction['warehouse_id'] = $request->sub_warehouse_id ?? null;
             $transaction['credit'] = (array_sum($request->total));
+            if(!empty($request->discount)){
+                $transaction['credit'] = $request->input_net_total;
+            }
             $transaction['remark'] = $request->narration;
             $transaction['created_by'] = Auth::id();
             $transaction['supplier_id'] = $request->supplier_id ?? 0;
             $transaction['voucher_date'] = $request->date;
             $transaction['created_at'] = $request->date;
             AccountTransaction::create($transaction);
+
+           
 
             DB::commit();
         } catch (\Exception $e) {

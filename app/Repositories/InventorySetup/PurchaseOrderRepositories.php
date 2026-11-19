@@ -52,8 +52,7 @@ class PurchaseOrderRepositories
     public function getList($request)
     {
 
-        // dd($request->all());
-
+        
         $columns = array(
             0 => 'id',
             1 => 'order_date',
@@ -86,7 +85,13 @@ class PurchaseOrderRepositories
             $totalFiltered = $this->purchaseorder::count();
         } else {
             $search = $request->input('search.value');
-            $purchaseorders = $this->purchaseorder::where('invoice_no', 'like', "%{$search}%");
+            $purchaseorders = $this->purchaseorder::where(function ($q) use ($search) {
+                $q->where('invoice_no', 'like', "%{$search}%")
+                ->orWhere('order_date', 'like', "%{$search}%")
+                    ->orWhereHas('project', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    });
+            });
             if ($auth->branch_id !== null) {
                 $purchaseorders = $purchaseorders->where('branch_id', $auth->branch_id);
             }
@@ -95,7 +100,17 @@ class PurchaseOrderRepositories
                 ->orderBy($order, $dir)
                 // ->orderBy('status', 'desc')
                 ->get();
-            $totalFiltered = $this->purchaseorder::where('invoice_no', 'like', "%{$search}%")->count();
+            $totalFiltered = $this->purchaseorder::where(function ($q) use ($search) {
+                $q->where('invoice_no', 'like', "%{$search}%")
+                ->orWhere('order_date', 'like', "%{$search}%")
+                    ->orWhereHas('project', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    });
+            });
+            if ($auth->branch_id !== null) {
+                $totalFiltered = $totalFiltered->where('branch_id', $auth->branch_id);
+            }
+            $totalFiltered = $totalFiltered->count();
         }
 
         $data = array();
@@ -157,6 +172,7 @@ class PurchaseOrderRepositories
 
         return $json_data;
     }
+
     /**
      * @param $request
      * @return mixed

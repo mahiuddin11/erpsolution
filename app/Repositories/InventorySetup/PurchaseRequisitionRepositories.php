@@ -79,13 +79,25 @@ class PurchaseRequisitionRepositories
             $totalFiltered = $this->prchaserequisition::count();
         } else {
             $search = $request->input('search.value');
-            $prchaserequisitions = $this->prchaserequisition::where('invoice_no', 'like', "%{$search}%");
+            $prchaserequisitions = $this->prchaserequisition::where(function ($q) use ($search) {
+                $q->where('invoice_no', 'like', "%{$search}%")
+                ->orWhere('date', 'like', "%{$search}%")
+                    ->orWhereHas('project', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    });
+            });
 
             $prchaserequisitions = $prchaserequisitions->offset($start)
                 ->limit($limit)
                 ->orderBy($order, $dir)
                 ->get();
-            $totalFiltered = $this->prchaserequisition::where('invoice_no', 'like', "%{$search}%")->count();
+            $totalFiltered = $this->prchaserequisition::where(function ($q) use ($search) {
+                $q->where('invoice_no', 'like', "%{$search}%")
+                ->orWhere('date', 'like', "%{$search}%")
+                    ->orWhereHas('project', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    });
+            })->count();
         }
 
         $data = array();
@@ -145,6 +157,7 @@ class PurchaseRequisitionRepositories
 
         return $json_data;
     }
+
     /**
      * @param $request
      * @return mixed

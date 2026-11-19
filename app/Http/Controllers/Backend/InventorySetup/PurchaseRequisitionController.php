@@ -45,7 +45,7 @@ class PurchaseRequisitionController extends Controller
 
     public function dataProcessingAdjust(Request $request)
     {
-        // dd('ff');
+       
         $json_data = $this->purchaseRequisitionService->getList($request);
         return json_encode($this->systemTransformer->dataTable($json_data));
     }

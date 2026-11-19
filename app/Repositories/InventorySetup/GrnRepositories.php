@@ -82,17 +82,33 @@ class GrnRepositories
             $totalFiltered = $this->goodrcvnote::count();
         } else {
             $search = $request->input('search.value');
-            $goodrcvnote = $this->goodrcvnote::where('invoice_no', 'like', "%{$search}%");
+            $goodrcvnote = $this->goodrcvnote::where(function ($q) use ($search) {
+                $q->where('invoice_no', 'like', "%{$search}%")
+                 ->orWhere('date', 'like', "%{$search}%")
+                    ->orWhereHas('project', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    });
+            });
             if ($auth->branch_id !== null) {
                 $goodrcvnote = $goodrcvnote->where('branch_id', $auth->branch_id);
             }
+
             $goodrcvnote = $goodrcvnote
                 ->offset($start)
                 ->limit($limit)
                 ->orderBy($order, $dir)
                 ->orderBy('id', 'desc')
                 ->get();
-            $totalFiltered = $this->goodrcvnote::where('invoice_no', 'like', "%{$search}%")->count();
+            $totalFiltered = $this->goodrcvnote::where(function ($q) use ($search) {
+                $q->where('invoice_no', 'like', "%{$search}%")
+                    ->orWhereHas('project', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    });
+            });
+            if ($auth->branch_id !== null) {
+                $totalFiltered = $totalFiltered->where('branch_id', $auth->branch_id);
+            }
+            $totalFiltered = $totalFiltered->count();
         }
 
 

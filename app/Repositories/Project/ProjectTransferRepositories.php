@@ -64,7 +64,6 @@ class ProjectTransferRepositories
         );
 
 
-
         $edit = Helper::roleAccess('project.transferproject.edit')  ? 1 : 0;
         $delete = Helper::roleAccess('project.transferproject.destroy') ? 1 : 0;
         $invoice = Helper::roleAccess('project.transferproject.invoice') ? 1 : 0;
@@ -90,13 +89,25 @@ class ProjectTransferRepositories
             $totalFiltered = $totalData;
         } else {
 
-            $search = $request->input('search.value');
+             $search = $request->input('search.value');
 
-            $purchaseorders = (clone $baseQuery)->where('invoice_no', 'like', "%{$search}%")->offset($start)->limit($limit)
+            $purchaseorders = (clone $baseQuery)->where(function ($q) use ($search) {
+                $q->where('invoice_no', 'like', "%{$search}%")
+                    ->orWhere('order_date', 'like', "%{$search}%")
+                    ->orWhereHas('project', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    });
+            })->offset($start)->limit($limit)
                 ->orderBy($order, $dir)
                 ->get();
 
-            $totalFiltered = (clone $baseQuery)->where('invoice_no', 'like', "%{$search}%")->count();
+            $totalFiltered = (clone $baseQuery)->where(function ($q) use ($search) {
+                $q->where('invoice_no', 'like', "%{$search}%")
+                    ->orWhere('order_date', 'like', "%{$search}%")
+                    ->orWhereHas('project', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    });
+            })->count();
         }
 
         $data = array();
